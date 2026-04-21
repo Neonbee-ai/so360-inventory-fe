@@ -52,13 +52,18 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({ imageUrls, onImagesChange
             if (file.type !== 'image/svg+xml') {
                 try {
                     processedFile = await imageCompression(file, {
-                        maxSizeMB: 0.85,           // target 850KB (headroom under 900KB limit)
-                        maxWidthOrHeight: 2048,     // cap at 2K resolution for product images
-                        useWebWorker: true,         // non-blocking
-                        preserveExif: false,        // strip EXIF metadata to reduce size
-                        initialQuality: 0.95,       // near-lossless for JPEG (95% quality)
-                        // fileType NOT set → preserves original format (PNG stays PNG = lossless)
+                        maxSizeMB: 0.85,
+                        maxWidthOrHeight: 2048,
+                        useWebWorker: true,
+                        preserveExif: false,
+                        initialQuality: 0.95,
                     });
+                    // imageCompression returns a Blob, not a File. FormData.append with a
+                    // Blob defaults the multipart filename to "blob" → backend path.extname
+                    // returns "" → 400 Invalid file type. Re-wrap as a real File.
+                    const ext = file.type === 'image/png' ? '.png' : '.jpg';
+                    const baseName = file.name.replace(/\.[^/.]+$/, '');
+                    processedFile = new File([processedFile], `${baseName}${ext}`, { type: processedFile.type });
                 } catch {
                     processedFile = file; // fallback: upload original
                 }
