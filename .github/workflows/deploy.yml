@@ -122,3 +122,15 @@ jobs:
           cp -r dist/* "${NGINX_ROOT}/"
           echo "✅ Deployed to https://cdn.neonbee.app/${MODULE}/"
         DEPLOY_SCRIPT
+
+    - name: Purge Cloudflare cache for /inventory/
+      if: github.ref == 'refs/heads/main'
+      run: |
+        echo "🌀 Purging cdn.neonbee.app/inventory/ from Cloudflare edge cache"
+        RESP=$(curl -sX POST "https://api.cloudflare.com/client/v4/zones/${{ secrets.CF_ZONE_ID }}/purge_cache" \
+          -H "Authorization: Bearer ${{ secrets.CF_PURGE_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          -d '{"files":["https://cdn.neonbee.app/inventory/assets/remoteEntry.js","https://cdn.neonbee.app/inventory/index.html"]}')
+        echo "$RESP"
+        echo "$RESP" | grep -q '"success":true' || { echo "❌ CF purge failed"; exit 1; }
+        echo "✅ Cloudflare cache purged for /inventory/"
