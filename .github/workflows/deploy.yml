@@ -32,9 +32,9 @@ jobs:
         NGINX_ROOT: /var/www/dev.inventory.skyoffice360.com/html
       run: |
         ssh-keyscan $SERVER_IP >> ~/.ssh/known_hosts
-        ssh root@$SERVER_IP "mkdir -p '$BUILD_DIR'"
+        ssh $SSH_OPTS root@$SERVER_IP "mkdir -p '$BUILD_DIR'"
         rsync -avz --delete --exclude 'node_modules' --exclude 'dist' --exclude '.git' ./ "root@$SERVER_IP:$BUILD_DIR/"
-        ssh root@$SERVER_IP "BUILD_DIR='$BUILD_DIR' DOMAIN='$DOMAIN' NGINX_ROOT='$NGINX_ROOT' bash -s" << 'DEPLOY_SCRIPT'
+        ssh $SSH_OPTS root@$SERVER_IP "BUILD_DIR='$BUILD_DIR' DOMAIN='$DOMAIN' NGINX_ROOT='$NGINX_ROOT' bash -s" << 'DEPLOY_SCRIPT'
           set -e
           cd "${BUILD_DIR}"
           export NVM_DIR="$HOME/.nvm"
@@ -60,9 +60,9 @@ jobs:
         NGINX_ROOT: /var/www/staging.inventory.skyoffice360.com/html
       run: |
         ssh-keyscan $SERVER_IP >> ~/.ssh/known_hosts
-        ssh root@$SERVER_IP "mkdir -p '$BUILD_DIR'"
+        ssh $SSH_OPTS root@$SERVER_IP "mkdir -p '$BUILD_DIR'"
         rsync -avz --delete --exclude 'node_modules' --exclude 'dist' --exclude '.git' ./ "root@$SERVER_IP:$BUILD_DIR/"
-        ssh root@$SERVER_IP "BUILD_DIR='$BUILD_DIR' DOMAIN='$DOMAIN' NGINX_ROOT='$NGINX_ROOT' bash -s" << 'DEPLOY_SCRIPT'
+        ssh $SSH_OPTS root@$SERVER_IP "BUILD_DIR='$BUILD_DIR' DOMAIN='$DOMAIN' NGINX_ROOT='$NGINX_ROOT' bash -s" << 'DEPLOY_SCRIPT'
           set -e
           cd "${BUILD_DIR}"
           export NVM_DIR="$HOME/.nvm"
@@ -88,9 +88,9 @@ jobs:
         NGINX_ROOT: /var/www/cdn.neonbee.app/html/inventory
       run: |
         ssh-keyscan $SERVER_IP >> ~/.ssh/known_hosts
-        ssh root@$SERVER_IP "mkdir -p '$BUILD_DIR'"
+        ssh $SSH_OPTS root@$SERVER_IP "mkdir -p '$BUILD_DIR'"
         rsync -avz --delete --exclude 'node_modules' --exclude 'dist' --exclude '.git' ./ "root@$SERVER_IP:$BUILD_DIR/"
-        ssh root@$SERVER_IP "BUILD_DIR='$BUILD_DIR' DOMAIN='$DOMAIN' NGINX_ROOT='$NGINX_ROOT' MODULE='inventory' bash -s" << 'DEPLOY_SCRIPT'
+        ssh $SSH_OPTS root@$SERVER_IP "BUILD_DIR='$BUILD_DIR' DOMAIN='$DOMAIN' NGINX_ROOT='$NGINX_ROOT' MODULE='inventory' bash -s" << 'DEPLOY_SCRIPT'
           set -e
           cd "${BUILD_DIR}"
           export NVM_DIR="$HOME/.nvm"
