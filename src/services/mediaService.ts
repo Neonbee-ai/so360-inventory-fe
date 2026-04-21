@@ -1,6 +1,23 @@
+// Uploads to Core BE's DigitalOcean Spaces pipe (see
+// so360-core/src/media/media.service.ts). Previously used bare `/v1/*`
+// paths that only worked locally via Vite's dev proxy — in prod they
+// resolved against window.location.origin (dashboard.neonbee.app) and
+// 405'd on the static-asset nginx. Composing an absolute URL from
+// VITE_SO360_CORE_API matches the pattern used in inventoryService.ts.
+function resolveCoreOrigin(): string {
+    const win = typeof window !== 'undefined' ? (window as any) : undefined;
+    const env = (import.meta as any)?.env || {};
+    const origin =
+        (win && win.VITE_SO360_CORE_API) ||
+        env.VITE_SO360_CORE_API ||
+        env.VITE_API_BASE_URL ||
+        'http://localhost:3000';
+    return String(origin).replace(/\/$/, '');
+}
+
 class MediaService {
     private accessToken: string | null = null;
-    private baseUrl = '/v1/media';
+    private readonly coreOrigin = resolveCoreOrigin();
 
     setAccessToken(token: string) {
         this.accessToken = token;
@@ -12,7 +29,7 @@ class MediaService {
         const formData = new FormData();
         formData.append('file', file);
 
-        const response = await fetch(`${this.baseUrl}/upload`, {
+        const response = await fetch(`${this.coreOrigin}/v1/media/upload`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${this.accessToken}`,
@@ -34,7 +51,7 @@ class MediaService {
         const formData = new FormData();
         formData.append('file', file);
 
-        const response = await fetch('/v1/documents/upload', {
+        const response = await fetch(`${this.coreOrigin}/v1/documents/upload`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${this.accessToken}`,
