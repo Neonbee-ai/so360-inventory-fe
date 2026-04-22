@@ -46,6 +46,8 @@ const MfeShellInitializer = ({ children }: { children: React.ReactNode }) => {
                 inventoryService.setTenantId(shell.currentTenant.id);
             }
             mediaService.setAccessToken(shell.accessToken);
+            mediaService.setTenantId(shell.currentTenant?.id || '');
+            mediaService.setOrgId(shell.currentOrg?.id || '');
             // Procurement and Vendor services might need similar initialization if not shared
             (procurementService as any).accessToken = shell.accessToken;
             (vendorService as any).accessToken = shell.accessToken;

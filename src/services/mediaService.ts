@@ -17,11 +17,14 @@ function resolveCoreOrigin(): string {
 
 class MediaService {
     private accessToken: string | null = null;
-    private readonly coreOrigin = resolveCoreOrigin();
+    private tenantId: string | null = null;
+    private orgId: string | null = null;
 
-    setAccessToken(token: string) {
-        this.accessToken = token;
-    }
+    private get coreOrigin(): string { return resolveCoreOrigin(); }
+
+    setAccessToken(token: string) { this.accessToken = token; }
+    setTenantId(id: string) { this.tenantId = id; }
+    setOrgId(id: string) { this.orgId = id; }
 
     async uploadFile(file: File): Promise<{ url: string }> {
         if (!this.accessToken) throw new Error('Access token not set');
@@ -33,6 +36,8 @@ class MediaService {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${this.accessToken}`,
+                ...(this.tenantId && { 'X-Tenant-Id': this.tenantId }),
+                ...(this.orgId && { 'X-Org-Id': this.orgId }),
             },
             body: formData,
         });
