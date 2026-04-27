@@ -50,6 +50,15 @@ jobs:
       working-directory: workspace/this-repo
       run: |
         npm install --legacy-peer-deps --no-audit --no-fund --prefer-offline
+
+        # file:../../so360-shell-fe deps don't resolve cleanly in this nested
+        # layout — cp built shell-fe packages directly into node_modules/@so360.
+        mkdir -p node_modules/@so360
+        for pkg in shell-context design-system event-bus formatters; do
+          rm -rf "node_modules/@so360/$pkg"
+          cp -r "../so360-shell-fe/packages/$pkg" "node_modules/@so360/$pkg"
+        done
+
         if [ "${{ github.ref }}" = "refs/heads/develop" ]; then
           export VITE_BASE_URL=https://dev.inventory.skyoffice360.com/
           export VITE_SO360_CORE_API=https://dev.api.skyoffice360.com/core
