@@ -40,10 +40,9 @@ jobs:
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
             nvm use 22
 
-            # Symlink shell packages so file: deps resolve
-            SHELL_PKG=/github/neonbee/so360-shell-fe
-            mkdir -p "$SHELL_PKG"
-            ln -sfn "$SHELL_PKG" "$(dirname "$BUILD_DIR")/so360-shell-fe" 2>/dev/null || true
+            # Ensure shell packages are reachable for both ../  and ../../ file: paths
+            ln -sfn /github/neonbee/so360-shell-fe /github/neonbee/so360-shell-fe 2>/dev/null || true
+            ln -sfn /github/neonbee/so360-shell-fe /github/so360-shell-fe 2>/dev/null || true
 
             npm install --legacy-peer-deps
 
@@ -56,7 +55,6 @@ jobs:
 
             npm run build
 
-            mkdir -p "$NGINX_ROOT"
             rsync -a --delete dist/ "$NGINX_ROOT/"
             nginx -s reload
             echo "Deployed Inventory to cdn.neonbee.app/inventory"
