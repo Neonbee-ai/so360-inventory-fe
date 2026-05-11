@@ -14,11 +14,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
       - name: Build shell packages
         run: |
-          export NVM_DIR="$HOME/.nvm"
-          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-          nvm use 22
           for pkg in shell-context design-system event-bus formatters; do
             pkgdir="/github/neonbee/so360-shell-fe/packages/$pkg"
             if [ -d "$pkgdir" ]; then
@@ -29,9 +30,6 @@ jobs:
 
       - name: Install and build
         run: |
-          export NVM_DIR="$HOME/.nvm"
-          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-          nvm use 22
           npm install --legacy-peer-deps
           printf '%s\n' \
             "VITE_BASE_URL=https://cdn.neonbee.app/inventory/" \
