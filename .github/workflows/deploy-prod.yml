@@ -46,7 +46,10 @@ jobs:
             # Install shell package deps so TypeScript can resolve @types/react etc.
             for pkg in shell-context design-system event-bus formatters; do
               pkgdir="/github/neonbee/so360-shell-fe/packages/$pkg"
-              [ -d "$pkgdir" ] && (cd "$pkgdir" && npm install --legacy-peer-deps 2>/dev/null || true)
+              if [ -d "$pkgdir" ]; then
+              (cd "$pkgdir" && npm install --legacy-peer-deps 2>/dev/null || true)
+              (cd "$pkgdir" && npm run build 2>/dev/null || true)
+            fi
             done
 
             npm install --legacy-peer-deps
