@@ -1,4 +1,4 @@
-name: Deploy Inventory Frontend to Server
+name: Deploy Inventory Frontend
 
 on:
   push:
@@ -14,162 +14,60 @@ jobs:
   deploy:
     runs-on: self-hosted
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Setup SSH
-      uses: webfactory/ssh-agent@v0.9.0
-      with:
-        ssh-private-key: ${{ secrets.CONTABO_SSH_KEY }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
 
-    - name: Deploy to Dev
-      if: github.ref == 'refs/heads/develop'
-      env:
-        SERVER_IP: ${{ secrets.SERVER_IP }}
-        DOMAIN: dev.inventory.skyoffice360.com
-        BUILD_DIR: /github/SO360 V.2/so360-inventory/so360-inventory-fe
-        NGINX_ROOT: /var/www/dev.inventory.skyoffice360.com/html
-      run: |
-        ssh-keyscan $SERVER_IP >> ~/.ssh/known_hosts
-        ssh root@$SERVER_IP "mkdir -p '$BUILD_DIR'"
-        rsync -avz --delete --exclude 'node_modules' --exclude 'dist' --exclude '.git' ./ "root@$SERVER_IP:$BUILD_DIR/"
-        ssh root@$SERVER_IP "BUILD_DIR='$BUILD_DIR' DOMAIN='$DOMAIN' NGINX_ROOT='$NGINX_ROOT' bash -s" << 'DEPLOY_SCRIPT'
-          set -e
-          cd "${BUILD_DIR}"
-          export NVM_DIR="$HOME/.nvm"
-          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-          nvm use 22
-          ln -sfn "/github/SO360 V.2/so360-shell-fe" "$(dirname "${BUILD_DIR}")/so360-shell-fe" 2>/dev/null || true
+      - name: Install dependencies and build (dev)
+        if: github.ref == 'refs/heads/develop'
+        run: |
           npm install --legacy-peer-deps
-          export VITE_BASE_URL=https://dev.inventory.skyoffice360.com/
-          export VITE_SO360_CORE_API=https://dev.api.skyoffice360.com/core
-          export VITE_SO360_INVENTORY_API=https://dev.api.skyoffice360.com/inventory
+          printf '%s\n' \
+              "VITE_BASE_URL=https://dev.inventory.skyoffice360.com/" \
+              "VITE_SO360_CORE_API=https://dev.api.skyoffice360.com/core" \
+              "VITE_SO360_INVENTORY_API=https://dev.api.skyoffice360.com/inventory" \
+              "VITE_ENVIRONMENT=cloud" \
+              > .env
           npm run build
-          mkdir -p "${NGINX_ROOT}"
-          cp -r dist/* "${NGINX_ROOT}/"
-          {
-            echo "server {"
-            echo "    listen 80;"
-            echo "    server_name ${DOMAIN};"
-            echo "    root ${NGINX_ROOT};"
-            echo "    index index.html;"
-            echo ""
-            echo "    access_log /var/log/nginx/${DOMAIN}-access.log;"
-            echo "    error_log /var/log/nginx/${DOMAIN}-error.log;"
-            echo ""
-            echo "    gzip on;"
-            echo "    gzip_vary on;"
-            echo "    gzip_min_length 256;"
-            echo "    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript application/vnd.ms-fontobject application/x-font-ttf font/opentype image/svg+xml image/x-icon;"
-            echo ""
-            echo "    location ~* /assets/remoteEntry\\.js\$ {"
-            echo "        add_header Cache-Control \"no-cache, no-store, must-revalidate\" always;"
-            echo "        add_header Pragma \"no-cache\" always;"
-            echo "        add_header Expires \"0\" always;"
-            echo "        add_header Access-Control-Allow-Origin \"*\" always;"
-            echo "        add_header Access-Control-Allow-Methods \"GET, OPTIONS\" always;"
-            echo "        add_header Access-Control-Allow-Headers \"DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range\" always;"
-            echo "        try_files \$uri =404;"
-            echo "    }"
-            echo ""
-            echo "    location ~* \\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|otf|map)\$ {"
-            echo "        expires 1y;"
-            echo "        add_header Cache-Control \"public, immutable\" always;"
-            echo "        add_header Access-Control-Allow-Origin \"*\" always;"
-            echo "        add_header Access-Control-Allow-Methods \"GET, OPTIONS\" always;"
-            echo "        try_files \$uri =404;"
-            echo "    }"
-            echo ""
-            echo "    location / {"
-            echo "        try_files \$uri \$uri/ /index.html;"
-            echo "    }"
-            echo "}"
-          } > "/etc/nginx/sites-available/${DOMAIN}"
-          ln -sfn "/etc/nginx/sites-available/${DOMAIN}" "/etc/nginx/sites-enabled/${DOMAIN}"
-          nginx -t && systemctl reload nginx
-          echo "Deployed to https://${DOMAIN}"
-        DEPLOY_SCRIPT
 
-    - name: Deploy to Staging
-      if: github.ref == 'refs/heads/qa'
-      env:
-        SERVER_IP: ${{ secrets.SERVER_IP }}
-        DOMAIN: staging.inventory.skyoffice360.com
-        BUILD_DIR: /github/SO360 V.2/so360-inventory/so360-inventory-fe
-        NGINX_ROOT: /var/www/staging.inventory.skyoffice360.com/html
-      run: |
-        ssh-keyscan $SERVER_IP >> ~/.ssh/known_hosts
-        ssh root@$SERVER_IP "mkdir -p '$BUILD_DIR'"
-        rsync -avz --delete --exclude 'node_modules' --exclude 'dist' --exclude '.git' ./ "root@$SERVER_IP:$BUILD_DIR/"
-        ssh root@$SERVER_IP "BUILD_DIR='$BUILD_DIR' DOMAIN='$DOMAIN' NGINX_ROOT='$NGINX_ROOT' bash -s" << 'DEPLOY_SCRIPT'
-          set -e
-          cd "${BUILD_DIR}"
-          export NVM_DIR="$HOME/.nvm"
-          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-          nvm use 22
-          ln -sfn "/github/SO360 V.2/so360-shell-fe" "$(dirname "${BUILD_DIR}")/so360-shell-fe" 2>/dev/null || true
+      - name: Install dependencies and build (staging)
+        if: github.ref == 'refs/heads/qa'
+        run: |
           npm install --legacy-peer-deps
-          export VITE_BASE_URL=https://staging.inventory.skyoffice360.com/
-          export VITE_SO360_CORE_API=https://staging.api.skyoffice360.com/core
-          export VITE_SO360_INVENTORY_API=https://staging.api.skyoffice360.com/inventory
+          printf '%s\n' \
+              "VITE_BASE_URL=https://staging.inventory.skyoffice360.com/" \
+              "VITE_SO360_CORE_API=https://staging.api.skyoffice360.com/core" \
+              "VITE_SO360_INVENTORY_API=https://staging.api.skyoffice360.com/inventory" \
+              "VITE_ENVIRONMENT=cloud" \
+              > .env
           npm run build
-          mkdir -p "${NGINX_ROOT}"
-          cp -r dist/* "${NGINX_ROOT}/"
-          {
-            echo "server {"
-            echo "    listen 80;"
-            echo "    server_name ${DOMAIN};"
-            echo "    root ${NGINX_ROOT};"
-            echo "    index index.html;"
-            echo ""
-            echo "    access_log /var/log/nginx/${DOMAIN}-access.log;"
-            echo "    error_log /var/log/nginx/${DOMAIN}-error.log;"
-            echo ""
-            echo "    gzip on;"
-            echo "    gzip_vary on;"
-            echo "    gzip_min_length 256;"
-            echo "    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript application/vnd.ms-fontobject application/x-font-ttf font/opentype image/svg+xml image/x-icon;"
-            echo ""
-            echo "    location ~* /assets/remoteEntry\\.js\$ {"
-            echo "        add_header Cache-Control \"no-cache, no-store, must-revalidate\" always;"
-            echo "        add_header Pragma \"no-cache\" always;"
-            echo "        add_header Expires \"0\" always;"
-            echo "        add_header Access-Control-Allow-Origin \"*\" always;"
-            echo "        add_header Access-Control-Allow-Methods \"GET, OPTIONS\" always;"
-            echo "        add_header Access-Control-Allow-Headers \"DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range\" always;"
-            echo "        try_files \$uri =404;"
-            echo "    }"
-            echo ""
-            echo "    location ~* \\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|otf|map)\$ {"
-            echo "        expires 1y;"
-            echo "        add_header Cache-Control \"public, immutable\" always;"
-            echo "        add_header Access-Control-Allow-Origin \"*\" always;"
-            echo "        add_header Access-Control-Allow-Methods \"GET, OPTIONS\" always;"
-            echo "        try_files \$uri =404;"
-            echo "    }"
-            echo ""
-            echo "    location / {"
-            echo "        try_files \$uri \$uri/ /index.html;"
-            echo "    }"
-            echo "}"
-          } > "/etc/nginx/sites-available/${DOMAIN}"
-          ln -sfn "/etc/nginx/sites-available/${DOMAIN}" "/etc/nginx/sites-enabled/${DOMAIN}"
-          nginx -t && systemctl reload nginx
-          echo "Deployed to https://${DOMAIN}"
-        DEPLOY_SCRIPT
 
-    - name: Deployment Summary
-      if: always()
-      run: |
-        echo ""
-        echo "========================================="
-        if [ "${{ github.ref }}" == "refs/heads/develop" ]; then
-          echo "Environment: Development"
-          echo "Service: inventory-fe"
-          echo "URL: https://dev.inventory.skyoffice360.com"
-        elif [ "${{ github.ref }}" == "refs/heads/qa" ]; then
-          echo "Environment: Staging"
-          echo "Service: inventory-fe"
-          echo "URL: https://staging.inventory.skyoffice360.com"
-        fi
-        echo "========================================="
+      - uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.CONTABO_SSH_KEY }}
+
+      - name: Deploy to Dev
+        if: github.ref == 'refs/heads/develop'
+        env:
+          SERVER_IP: ${{ secrets.SERVER_IP }}
+          NGINX_ROOT: /var/www/dev.inventory.skyoffice360.com/html
+        run: |
+          ssh-keyscan -H $SERVER_IP >> ~/.ssh/known_hosts
+          ssh root@$SERVER_IP "mkdir -p '$NGINX_ROOT'"
+          rsync -avz --delete dist/ "root@$SERVER_IP:$NGINX_ROOT/"
+          ssh root@$SERVER_IP "nginx -s reload"
+          echo "Deployed to dev.inventory.skyoffice360.com"
+
+      - name: Deploy to Staging
+        if: github.ref == 'refs/heads/qa'
+        env:
+          SERVER_IP: ${{ secrets.SERVER_IP }}
+          NGINX_ROOT: /var/www/staging.inventory.skyoffice360.com/html
+        run: |
+          ssh-keyscan -H $SERVER_IP >> ~/.ssh/known_hosts
+          ssh root@$SERVER_IP "mkdir -p '$NGINX_ROOT'"
+          rsync -avz --delete dist/ "root@$SERVER_IP:$NGINX_ROOT/"
+          ssh root@$SERVER_IP "nginx -s reload"
+          echo "Deployed to staging.inventory.skyoffice360.com"
