@@ -10,9 +10,30 @@ concurrency:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
+
+      - name: Build shell packages
+        run: |
+          for pkg in shell-context design-system event-bus formatters; do
+            pkgdir="/github/neonbee/so360-shell-fe/packages/$pkg"
+            if [ -d "$pkgdir" ]; then
+              (cd "$pkgdir" && npm install --legacy-peer-deps 2>/dev/null || true)
+              (cd "$pkgdir" && npm run build 2>/dev/null || true)
+            fi
+          done
+
+      - name: Install and build
+        run: |
+          npm install --legacy-peer-deps
+          printf '%s\n' \
+            "VITE_BASE_URL=https://cdn.neonbee.app/inventory/" \
+            "VITE_SO360_CORE_API=https://api.neonbee.app/core" \
+            "VITE_SO360_INVENTORY_API=https://api.neonbee.app/inventory" \
+            "VITE_ENVIRONMENT=cloud" \
+            > .env
+          npm run build
 
       - uses: webfactory/ssh-agent@v0.9.0
         with:
@@ -21,49 +42,10 @@ jobs:
       - name: Deploy to Production
         env:
           SERVER_IP: ${{ secrets.PROD_SERVER_IP }}
-          BUILD_DIR: /github/neonbee/so360-inventory-fe
           NGINX_ROOT: /var/www/cdn.neonbee.app/html/inventory
         run: |
           ssh-keyscan -H $SERVER_IP >> ~/.ssh/known_hosts
-          ssh root@$SERVER_IP "mkdir -p '$BUILD_DIR' '$NGINX_ROOT'"
-
-          rsync -avz --delete \
-            --exclude 'node_modules' \
-            --exclude 'dist' \
-            --exclude '.git' \
-            ./ "root@$SERVER_IP:$BUILD_DIR/"
-
-          ssh root@$SERVER_IP "BUILD_DIR='$BUILD_DIR' NGINX_ROOT='$NGINX_ROOT' bash -s" << 'DEPLOY_SCRIPT'
-            set -e
-            cd "$BUILD_DIR"
-            export NVM_DIR="$HOME/.nvm"
-            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-            nvm use 22
-
-            # Ensure shell packages are reachable via ../../ file: paths
-            ln -sfn /github/neonbee/so360-shell-fe /github/so360-shell-fe 2>/dev/null || true
-
-            # Install shell package deps so TypeScript can resolve @types/react etc.
-            for pkg in shell-context design-system event-bus formatters; do
-              pkgdir="/github/neonbee/so360-shell-fe/packages/$pkg"
-              if [ -d "$pkgdir" ]; then
-              (cd "$pkgdir" && npm install --legacy-peer-deps 2>/dev/null || true)
-              (cd "$pkgdir" && npm run build 2>/dev/null || true)
-            fi
-            done
-
-            npm install --legacy-peer-deps
-
-            printf '%s\n' \
-              "VITE_BASE_URL=https://cdn.neonbee.app/inventory/" \
-              "VITE_SO360_CORE_API=https://api.neonbee.app/core" \
-              "VITE_SO360_INVENTORY_API=https://api.neonbee.app/inventory" \
-              "VITE_ENVIRONMENT=cloud" \
-              > .env
-
-            npm run build
-
-            rsync -a --delete dist/ "$NGINX_ROOT/"
-            nginx -s reload
-            echo "Deployed Inventory to cdn.neonbee.app/inventory"
-          DEPLOY_SCRIPT
+          ssh root@$SERVER_IP "mkdir -p '$NGINX_ROOT'"
+          rsync -avz --delete dist/ "root@$SERVER_IP:$NGINX_ROOT/"
+          ssh root@$SERVER_IP "nginx -s reload"
+          echo "Deployed Inventory to cdn.neonbee.app/inventory"
