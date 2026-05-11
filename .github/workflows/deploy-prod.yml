@@ -18,8 +18,10 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Build shell packages
+      - name: Link and build shell packages
         run: |
+          RUNNER_PARENT="$(dirname "$(dirname "$GITHUB_WORKSPACE")")"
+          ln -sfn /github/neonbee/so360-shell-fe "$RUNNER_PARENT/so360-shell-fe" 2>/dev/null || true
           for pkg in shell-context design-system event-bus formatters; do
             pkgdir="/github/neonbee/so360-shell-fe/packages/$pkg"
             if [ -d "$pkgdir" ]; then
