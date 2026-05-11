@@ -29,13 +29,10 @@ jobs:
 
       - name: Install and build
         run: |
+          RUNNER_PARENT="$(dirname "$(dirname "$GITHUB_WORKSPACE")")"
+          ln -sfn "$GITHUB_WORKSPACE/_shell-fe" "$RUNNER_PARENT/so360-shell-fe"
           rm -rf node_modules package-lock.json
           npm install --legacy-peer-deps
-          mkdir -p node_modules/@so360
-          for pkg in shell-context design-system event-bus formatters; do
-            rm -rf "node_modules/@so360/$pkg"
-            cp -r "$GITHUB_WORKSPACE/_shell-fe/packages/$pkg" "node_modules/@so360/$pkg"
-          done
           printf '%s\n' \
             "VITE_BASE_URL=https://cdn.neonbee.app/inventory/" \
             "VITE_SO360_CORE_API=https://api.neonbee.app/core" \
