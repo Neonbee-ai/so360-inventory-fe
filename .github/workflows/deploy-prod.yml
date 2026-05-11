@@ -40,9 +40,14 @@ jobs:
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
             nvm use 22
 
-            # Ensure shell packages are reachable for both ../  and ../../ file: paths
-            ln -sfn /github/neonbee/so360-shell-fe /github/neonbee/so360-shell-fe 2>/dev/null || true
+            # Ensure shell packages are reachable via ../../ file: paths
             ln -sfn /github/neonbee/so360-shell-fe /github/so360-shell-fe 2>/dev/null || true
+
+            # Install shell package deps so TypeScript can resolve @types/react etc.
+            for pkg in shell-context design-system event-bus; do
+              pkgdir="/github/neonbee/so360-shell-fe/packages/$pkg"
+              [ -d "$pkgdir" ] && (cd "$pkgdir" && npm install --legacy-peer-deps 2>/dev/null || true)
+            done
 
             npm install --legacy-peer-deps
 
