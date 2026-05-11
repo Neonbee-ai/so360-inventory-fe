@@ -29,6 +29,7 @@ jobs:
 
       - name: Install and build
         run: |
+          rm -rf node_modules
           npm install --legacy-peer-deps
           mkdir -p node_modules/@so360
           for pkg in shell-context design-system event-bus formatters; do
