@@ -18,12 +18,21 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Checkout shell-fe packages
+        uses: actions/checkout@v4
+        with:
+          repository: Neonbee-ai/so360-shell-fe
+          token: ${{ secrets.PAT_TOKEN }}
+          path: _shell-fe
+          sparse-checkout: packages
+          sparse-checkout-cone-mode: true
+
       - name: Link and build shell packages
         run: |
           RUNNER_PARENT="$(dirname "$(dirname "$GITHUB_WORKSPACE")")"
-          ln -sfn /github/neonbee/so360-shell-fe "$RUNNER_PARENT/so360-shell-fe" 2>/dev/null || true
+          ln -sfn "$GITHUB_WORKSPACE/_shell-fe" "$RUNNER_PARENT/so360-shell-fe"
           for pkg in shell-context design-system event-bus formatters; do
-            pkgdir="/github/neonbee/so360-shell-fe/packages/$pkg"
+            pkgdir="$GITHUB_WORKSPACE/_shell-fe/packages/$pkg"
             if [ -d "$pkgdir" ]; then
               (cd "$pkgdir" && npm install --legacy-peer-deps 2>/dev/null || true)
               (cd "$pkgdir" && npm run build 2>/dev/null || true)
