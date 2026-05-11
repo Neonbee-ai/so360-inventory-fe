@@ -14,32 +14,48 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - uses: webfactory/ssh-agent@v0.9.0
         with:
-          node-version: '22'
+          ssh-private-key: ${{ secrets.DIGITALOCEAN_SSH_KEY }}
 
-      - name: Install dependencies and build
+      - name: Deploy to Production
+        env:
+          SERVER_IP: ${{ secrets.PROD_SERVER_IP }}
+          BUILD_DIR: /github/neonbee/so360-inventory-fe
+          NGINX_ROOT: /var/www/cdn.neonbee.app/html/inventory
         run: |
-          npm install --legacy-peer-deps
-          printf '%s\n' \
+          ssh-keyscan -H $SERVER_IP >> ~/.ssh/known_hosts
+          ssh root@$SERVER_IP "mkdir -p '$BUILD_DIR' '$NGINX_ROOT'"
+
+          rsync -avz --delete \
+            --exclude 'node_modules' \
+            --exclude 'dist' \
+            --exclude '.git' \
+            ./ "root@$SERVER_IP:$BUILD_DIR/"
+
+          ssh root@$SERVER_IP "BUILD_DIR='$BUILD_DIR' NGINX_ROOT='$NGINX_ROOT' bash -s" << 'DEPLOY_SCRIPT'
+            set -e
+            cd "$BUILD_DIR"
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            nvm use 22
+
+            # Ensure shell packages are reachable for both ../  and ../../ file: paths
+            ln -sfn /github/neonbee/so360-shell-fe /github/neonbee/so360-shell-fe 2>/dev/null || true
+            ln -sfn /github/neonbee/so360-shell-fe /github/so360-shell-fe 2>/dev/null || true
+
+            npm install --legacy-peer-deps
+
+            printf '%s\n' \
               "VITE_BASE_URL=https://cdn.neonbee.app/inventory/" \
               "VITE_SO360_CORE_API=https://api.neonbee.app/core" \
               "VITE_SO360_INVENTORY_API=https://api.neonbee.app/inventory" \
               "VITE_ENVIRONMENT=cloud" \
               > .env
-          npm run build
 
-      - uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.DIGITALOCEAN_SSH_KEY }}
+            npm run build
 
-      - name: Deploy to Production CDN
-        env:
-          SERVER_IP: ${{ secrets.PROD_SERVER_IP }}
-          NGINX_ROOT: /var/www/cdn.neonbee.app/html/inventory
-        run: |
-          ssh-keyscan -H $SERVER_IP >> ~/.ssh/known_hosts
-          ssh root@$SERVER_IP "mkdir -p '$NGINX_ROOT'"
-          rsync -avz --delete dist/ "root@$SERVER_IP:$NGINX_ROOT/"
-          ssh root@$SERVER_IP "nginx -s reload"
-          echo "Deployed Inventory to cdn.neonbee.app/inventory"
+            rsync -a --delete dist/ "$NGINX_ROOT/"
+            nginx -s reload
+            echo "Deployed Inventory to cdn.neonbee.app/inventory"
+          DEPLOY_SCRIPT
