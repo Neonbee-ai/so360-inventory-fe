@@ -20,59 +20,35 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Checkout shell-fe packages
-        uses: actions/checkout@v4
-        with:
-          repository: Neonbee-ai/so360-shell-fe
-          ref: ${{ github.ref_name }}
-          token: ${{ secrets.PAT_TOKEN }}
-          path: _shell-fe
-
-      - name: Install dependencies and build (dev)
-        if: github.ref == 'refs/heads/develop'
-        run: |
-          RUNNER_PARENT="$(dirname "$(dirname "$GITHUB_WORKSPACE")")"
-          rm -rf "$RUNNER_PARENT/so360-shell-fe"
-          ln -s "$GITHUB_WORKSPACE/_shell-fe" "$RUNNER_PARENT/so360-shell-fe"
-          rm -rf node_modules package-lock.json
-          npm install --legacy-peer-deps
-          for pkg in shell-context design-system event-bus formatters; do
-            rm -rf "node_modules/@so360/$pkg"
-            cp -r "$GITHUB_WORKSPACE/_shell-fe/packages/$pkg" "node_modules/@so360/$pkg"
-            (cd "node_modules/@so360/$pkg" && npm install --omit=dev --legacy-peer-deps 2>/dev/null || true)
-          done
-          printf '%s\n' \
-              "VITE_BASE_URL=https://dev-cdn.skyoffice360.com/inventory/" \
-              "VITE_SO360_CORE_API=https://dev.api.skyoffice360.com/core" \
-              "VITE_SO360_INVENTORY_API=https://dev.api.skyoffice360.com/inventory" \
-              "VITE_ENVIRONMENT=cloud" \
-              > .env
-          npm run build
-
-      - name: Install dependencies and build (staging)
-        if: github.ref == 'refs/heads/qa'
-        run: |
-          RUNNER_PARENT="$(dirname "$(dirname "$GITHUB_WORKSPACE")")"
-          rm -rf "$RUNNER_PARENT/so360-shell-fe"
-          ln -s "$GITHUB_WORKSPACE/_shell-fe" "$RUNNER_PARENT/so360-shell-fe"
-          rm -rf node_modules package-lock.json
-          npm install --legacy-peer-deps
-          for pkg in shell-context design-system event-bus formatters; do
-            rm -rf "node_modules/@so360/$pkg"
-            cp -r "$GITHUB_WORKSPACE/_shell-fe/packages/$pkg" "node_modules/@so360/$pkg"
-            (cd "node_modules/@so360/$pkg" && npm install --omit=dev --legacy-peer-deps 2>/dev/null || true)
-          done
-          printf '%s\n' \
-              "VITE_BASE_URL=https://staging.inventory.skyoffice360.com/" \
-              "VITE_SO360_CORE_API=https://staging.api.skyoffice360.com/core" \
-              "VITE_SO360_INVENTORY_API=https://staging.api.skyoffice360.com/inventory" \
-              "VITE_ENVIRONMENT=cloud" \
-              > .env
-          npm run build
-
       - uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.CONTABO_SSH_KEY }}
+
+      - name: Install + build
+        run: |
+          npm install --legacy-peer-deps --no-audit --no-fund
+          mkdir -p node_modules/@so360
+          rm -rf node_modules/@so360/* && cp -r .ci-stubs/@so360/* node_modules/@so360/
+          for pkg in shell-context design-system event-bus formatters; do
+            mkdir -p ../../so360-shell-fe/packages/$pkg/dist
+            cp .ci-stubs/@so360/$pkg/index.js ../../so360-shell-fe/packages/$pkg/dist/index.js
+          done
+          if [ "$GITHUB_REF" = "refs/heads/develop" ]; then
+            printf '%s\n' \
+                "VITE_BASE_URL=https://dev-cdn.skyoffice360.com/inventory/" \
+                "VITE_SO360_CORE_API=https://dev.api.skyoffice360.com/core" \
+                "VITE_SO360_INVENTORY_API=https://dev.api.skyoffice360.com/inventory" \
+                "VITE_ENVIRONMENT=cloud" \
+                > .env
+          elif [ "$GITHUB_REF" = "refs/heads/qa" ]; then
+            printf '%s\n' \
+                "VITE_BASE_URL=https://staging.inventory.skyoffice360.com/" \
+                "VITE_SO360_CORE_API=https://staging.api.skyoffice360.com/core" \
+                "VITE_SO360_INVENTORY_API=https://staging.api.skyoffice360.com/inventory" \
+                "VITE_ENVIRONMENT=cloud" \
+                > .env
+          fi
+          npm run build
 
       - name: Deploy to Dev
         if: github.ref == 'refs/heads/develop'
