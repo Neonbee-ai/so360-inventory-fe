@@ -59,3 +59,15 @@ jobs:
           rsync -avz --delete dist/ "root@$SERVER_IP:$NGINX_ROOT/"
           ssh root@$SERVER_IP "nginx -s reload"
           echo "Deployed Inventory to cdn.neonbee.app/inventory"
+
+      - name: Purge Cloudflare cache
+        continue-on-error: true
+        run: |
+          echo "Purging cdn.neonbee.app/inventory/ from Cloudflare edge cache"
+          RESP=$(curl -sX POST "https://api.cloudflare.com/client/v4/zones/${{ secrets.CF_SAAS_ZONE_ID }}/purge_cache" \
+            -H "Authorization: Bearer ${{ secrets.CF_SAAS_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{"files":["https://cdn.neonbee.app/inventory/assets/remoteEntry.js","https://cdn.neonbee.app/inventory/index.html"]}')
+          echo "$RESP"
+          echo "$RESP" | grep -q '"success":true' || { echo "CF purge failed (deploy still succeeded)"; exit 0; }
+          echo "Cloudflare cache purged"
