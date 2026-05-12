@@ -20,7 +20,7 @@ jobs:
     - name: Checkout Shell FE packages
       uses: actions/checkout@v4
       with:
-        repository: praveen-vr-moonhive/so360-shell-fe
+        repository: Neonbee-ai/so360-shell-fe
         token: ${{ secrets.PAT_TOKEN }}
         ref: develop
         path: _shell-fe
