@@ -29,6 +29,7 @@ jobs:
           npm install --legacy-peer-deps --no-audit --no-fund
           mkdir -p node_modules/@so360
           rm -rf node_modules/@so360/* && cp -r .ci-stubs/@so360/* node_modules/@so360/
+          [ -e ../../so360-shell-fe ] && [ ! -d ../../so360-shell-fe ] && rm -f ../../so360-shell-fe
           for pkg in shell-context design-system event-bus formatters; do
             mkdir -p ../../so360-shell-fe/packages/$pkg/dist
             cp .ci-stubs/@so360/$pkg/index.js ../../so360-shell-fe/packages/$pkg/dist/index.js
