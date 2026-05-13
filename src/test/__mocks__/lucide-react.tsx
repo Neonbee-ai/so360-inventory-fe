@@ -270,4 +270,17 @@ export const PanelBottom = createIcon('PanelBottom');
 export const SidebarOpen = createIcon('SidebarOpen');
 export const SidebarClose = createIcon('SidebarClose');
 
+export const Coffee = createIcon('Coffee');
+export const Apple = createIcon('Apple');
+export const Utensils = createIcon('Utensils');
+export const Wine = createIcon('Wine');
+export const Laptop = createIcon('Laptop');
+export const Sofa = createIcon('Sofa');
+export const Leaf = createIcon('Leaf');
+export const Lamp = createIcon('Lamp');
+export const Dumbbell = createIcon('Dumbbell');
+export const Sparkles = createIcon('Sparkles');
+export const Watch = createIcon('Watch');
+export const Grid3X3 = createIcon('Grid3X3');
+
 export type LucideIcon = any;

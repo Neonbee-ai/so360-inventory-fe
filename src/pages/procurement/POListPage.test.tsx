@@ -116,4 +116,51 @@ describe('POListPage', () => {
       });
     });
   });
+
+  describe('Given New PO form', () => {
+    it('When New PO button clicked / Then shows Create Purchase Order heading', async () => {
+      render(<POListPage />);
+      fireEvent.click(screen.getByText('New PO'));
+      const headings = screen.getAllByText('Create Purchase Order');
+      expect(headings.length).toBeGreaterThan(0);
+    });
+
+    it('When New PO form shown / Then shows Select Vendor option', async () => {
+      render(<POListPage />);
+      fireEvent.click(screen.getByText('New PO'));
+      await waitFor(() => {
+        expect(screen.getByText('Select Vendor')).toBeInTheDocument();
+      });
+    });
+
+    it('When New PO form shown / Then shows PO Number input', async () => {
+      render(<POListPage />);
+      fireEvent.click(screen.getByText('New PO'));
+      const poInputs = screen.getAllByRole('textbox');
+      expect(poInputs.length).toBeGreaterThan(0);
+    });
+
+    it('When × clicked in form / Then hides form', async () => {
+      render(<POListPage />);
+      fireEvent.click(screen.getByText('New PO'));
+      const headings = screen.getAllByText('Create Purchase Order');
+      expect(headings.length).toBeGreaterThan(0);
+      // Close button is the × character
+      fireEvent.click(screen.getByText('×'));
+      expect(screen.queryAllByText('Create Purchase Order').length).toBe(0);
+    });
+
+    it('When Add Item Line clicked / Then shows item search row', async () => {
+      render(<POListPage />);
+      fireEvent.click(screen.getByText('New PO'));
+      await waitFor(() => {
+        const headings = screen.getAllByText('Create Purchase Order');
+        expect(headings.length).toBeGreaterThan(0);
+      });
+      fireEvent.click(screen.getByText('+ Add Item'));
+      await waitFor(() => {
+        expect(screen.getByTestId('item-search')).toBeInTheDocument();
+      });
+    });
+  });
 });
