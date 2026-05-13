@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import React from 'react';
 
 vi.mock('browser-image-compression', () => ({
@@ -24,6 +24,9 @@ vi.mock('./ImageThumbnail', () => ({
 }));
 
 import MediaUploader from './MediaUploader';
+import { mediaService } from '../../services/mediaService';
+
+const mockUploadFile = mediaService.uploadFile as ReturnType<typeof vi.fn>;
 
 describe('MediaUploader', () => {
   describe('Given initial state', () => {
@@ -56,6 +59,53 @@ describe('MediaUploader', () => {
     it('When maxFiles is 2 and 2 images already exist / Then no more thumbnails are shown', () => {
       render(<MediaUploader imageUrls={['http://a.com/1.jpg', 'http://a.com/2.jpg']} onImagesChange={vi.fn()} maxFiles={2} />);
       expect(screen.getAllByTestId('thumbnail').length).toBe(2);
+    });
+
+    it('When maxFiles reached / Then shows max images message', () => {
+      render(<MediaUploader imageUrls={['http://a.com/1.jpg', 'http://a.com/2.jpg']} onImagesChange={vi.fn()} maxFiles={2} />);
+      expect(screen.getByText(/Maximum 2 images reached/i)).toBeInTheDocument();
+    });
+  });
+
+  describe('Given drag events', () => {
+    it('When drag over drop zone / Then shows drop files here text', () => {
+      render(<MediaUploader imageUrls={[]} onImagesChange={vi.fn()} />);
+      const dropZone = screen.getByText(/Drag and drop images/i).closest('div')!;
+      fireEvent.dragOver(dropZone, { dataTransfer: { files: [] } });
+      expect(screen.getByText('Drop files here')).toBeInTheDocument();
+    });
+
+    it('When drag leave / Then shows default text again', () => {
+      render(<MediaUploader imageUrls={[]} onImagesChange={vi.fn()} />);
+      const dropZone = screen.getByText(/Drag and drop images/i).closest('div')!;
+      fireEvent.dragOver(dropZone, { dataTransfer: { files: [] } });
+      fireEvent.dragLeave(dropZone);
+      expect(screen.getByText(/Drag and drop images here/i)).toBeInTheDocument();
+    });
+  });
+
+  describe('Given file upload via input', () => {
+    it('When valid image file selected / Then calls onImagesChange with uploaded URL', async () => {
+      const onImagesChange = vi.fn();
+      render(<MediaUploader imageUrls={[]} onImagesChange={onImagesChange} />);
+      const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+      const file = new File(['content'], 'photo.jpg', { type: 'image/jpeg' });
+      fireEvent.change(input, { target: { files: [file] } });
+      await waitFor(() => {
+        expect(onImagesChange).toHaveBeenCalledWith(['http://example.com/img.jpg']);
+      });
+    });
+
+    it('When invalid file type selected / Then does not call onImagesChange', async () => {
+      const onImagesChange = vi.fn();
+      render(<MediaUploader imageUrls={[]} onImagesChange={onImagesChange} />);
+      const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+      const file = new File(['content'], 'doc.pdf', { type: 'application/pdf' });
+      fireEvent.change(input, { target: { files: [file] } });
+      await waitFor(() => {
+        expect(screen.getAllByTestId('thumbnail').length).toBeGreaterThan(0);
+      });
+      expect(onImagesChange).not.toHaveBeenCalled();
     });
   });
 });
