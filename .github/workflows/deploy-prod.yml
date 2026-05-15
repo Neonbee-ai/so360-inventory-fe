@@ -8,6 +8,11 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  actions: read
+  contents: read
+  security-events: write
+
 jobs:
   test:
     runs-on: self-hosted
@@ -62,6 +67,20 @@ jobs:
         run: npm install --legacy-peer-deps
       - name: Check dependency licenses
         run: npx license-checker --failOn "GPL-2.0;GPL-3.0;AGPL-3.0;LGPL-2.0;LGPL-2.1;LGPL-3.0" --excludePrivatePackages
+
+  codeql:
+    runs-on: self-hosted
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+      - uses: github/codeql-action/autobuild@v3
+      - uses: github/codeql-action/analyze@v3
+        with:
+          category: '/language:javascript-typescript'
+          upload: never
 
   build-deploy:
     needs: [test, audit, secrets, licenses]

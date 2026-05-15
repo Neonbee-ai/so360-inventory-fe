@@ -1,8 +1,6 @@
-name: CodeQL Analysis
+name: CodeQL Analysis (Scheduled)
 
 on:
-  push:
-    branches: [main, develop]
   schedule:
     - cron: '0 2 * * 1'
 
