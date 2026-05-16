@@ -6,10 +6,12 @@ import { Warehouse } from '../types/inventory';
 import { Modal } from '../components/common/Modal';
 import { TableSkeleton } from '../components/common/Skeleton';
 import { useAuth } from '../hooks/useAuth';
+import { useActivity } from '@so360/shell-context';
 
 const StockLocationsPage = () => {
     const navigate = useNavigate();
     const { can } = useAuth();
+    const { recordActivity } = useActivity();
     const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -88,6 +90,7 @@ const StockLocationsPage = () => {
         setError(null);
         try {
             await inventoryService.createWarehouse(newWarehouse);
+            recordActivity({ eventType: 'inventory.location.created', eventCategory: 'data', description: `Created warehouse "${newWarehouse.name}"`, resourceType: 'location' }).catch(() => {});
             setIsCreateModalOpen(false);
             fetchWarehouses();
             setNewWarehouse({ name: '', code: '', address: '', is_active: true });
@@ -117,6 +120,7 @@ const StockLocationsPage = () => {
         setError(null);
         try {
             await inventoryService.updateWarehouse(editingWarehouse.id, editForm);
+            recordActivity({ eventType: 'inventory.location.updated', eventCategory: 'data', description: `Updated warehouse "${editForm.name}"`, resourceType: 'location', resourceId: editingWarehouse.id }).catch(() => {});
             setEditingWarehouse(null);
             fetchWarehouses();
             setSuccessMessage('Warehouse updated successfully');

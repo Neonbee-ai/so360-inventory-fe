@@ -10,6 +10,7 @@ import { Modal } from '../../components/common/Modal';
 import { TableSkeleton } from '../../components/common/Skeleton';
 import { useAuth } from '../../hooks/useAuth';
 import { CreateInvoiceModal } from '../../components/vendors/CreateInvoiceModal';
+import { useActivity } from '@so360/shell-context';
 
 interface VendorDetail {
     id: string;
@@ -46,6 +47,7 @@ const VendorDetailPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const { can } = useAuth();
+    const { recordActivity } = useActivity();
     const [vendor, setVendor] = useState<VendorDetail | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -118,6 +120,7 @@ const VendorDetailPage = () => {
         setIsSaving(true);
         try {
             await vendorService.updateVendor(id, editForm);
+            recordActivity({ eventType: 'inventory.vendor.updated', eventCategory: 'data', description: `Updated vendor "${editForm.name}"`, resourceType: 'vendor', resourceId: id }).catch(() => {});
             setIsEditModalOpen(false);
             fetchVendor();
         } catch (err: any) {

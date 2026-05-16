@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { procurementService } from '../../services/procurementService';
 import ItemSearchSelector from '../../components/ItemSearchSelector';
+import { useActivity } from '@so360/shell-context';
 
 interface PRLine {
     id: string;
@@ -22,6 +23,7 @@ interface PR {
 
 const PRListPage = () => {
     const navigate = useNavigate();
+    const { recordActivity } = useActivity();
     const [prs, setPrs] = useState<PR[]>([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
@@ -46,7 +48,7 @@ const PRListPage = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await procurementService.createPR({
+            const createdPR = await procurementService.createPR({
                 ...formData,
                 items: items.map(it => ({
                     item_id: it.item_id,
@@ -55,6 +57,7 @@ const PRListPage = () => {
                     description: it.description || undefined,
                 }))
             });
+            recordActivity({ eventType: 'inventory.pr.created', eventCategory: 'financials', description: `Created Purchase Requisition`, resourceType: 'pr', resourceId: createdPR?.id }).catch(() => {});
             setShowForm(false);
             fetchData();
         } catch (error) {
