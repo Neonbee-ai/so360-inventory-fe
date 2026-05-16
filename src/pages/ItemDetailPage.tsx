@@ -25,6 +25,7 @@ import ShippingTab from './item-create/tabs/ShippingTab';
 import AttributesTab from './item-create/tabs/AttributesTab';
 import LifecycleStatusPanel from '../components/lifecycle/LifecycleStatusPanel';
 import { useInventoryFormatters, useInventoryCurrencySymbol } from '../utils/formatters';
+import { useActivity } from '@so360/shell-context';
 
 // ── Types ─────────────────────────────────────────────
 type ViewTabId = TabId | 'ledger';
@@ -69,6 +70,7 @@ const ItemDetailPage = () => {
     const { can } = useAuth();
     const formatters = useInventoryFormatters();
     const currencySymbol = useInventoryCurrencySymbol();
+    const { recordActivity } = useActivity();
     const [item, setItem] = useState<Item | null>(null);
     const [ledger, setLedger] = useState<StockMovement[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -252,6 +254,7 @@ const ItemDetailPage = () => {
             }
 
             await inventoryService.updateItem(id, dto);
+            recordActivity({ eventType: 'inventory.item.updated', eventCategory: 'data', description: `Updated item "${dto.name}"`, resourceType: 'item', resourceId: id }).catch(() => {});
             setViewTab(editTab);
             setIsEditing(false);
             setEditForm(null);
@@ -268,6 +271,7 @@ const ItemDetailPage = () => {
         setIsDeleting(true);
         try {
             await inventoryService.deleteItem(id);
+            recordActivity({ eventType: 'inventory.item.deleted', eventCategory: 'data', description: `Deleted item "${item?.name}"`, resourceType: 'item', resourceId: id }).catch(() => {});
             navigate('/inventory/items');
         } catch (err: any) {
             setError(err.message || 'Failed to delete item');
@@ -638,6 +642,7 @@ const ItemDetailPage = () => {
                                         productStatus={item.product_status || 'draft'}
                                         onStatusChange={(newStatus) => {
                                             setItem(prev => prev ? { ...prev, product_status: newStatus } : prev);
+                                            recordActivity({ eventType: 'inventory.item.status_changed', eventCategory: 'data', description: `Changed item status to "${newStatus}"`, resourceType: 'item', resourceId: id }).catch(() => {});
                                         }}
                                     />
                                 </div>
@@ -709,6 +714,7 @@ const ItemDetailPage = () => {
                                         productStatus={item.product_status || 'draft'}
                                         onStatusChange={(newStatus) => {
                                             setItem(prev => prev ? { ...prev, product_status: newStatus } : prev);
+                                            recordActivity({ eventType: 'inventory.item.status_changed', eventCategory: 'data', description: `Changed item status to "${newStatus}"`, resourceType: 'item', resourceId: id }).catch(() => {});
                                         }}
                                     />
                                 </div>

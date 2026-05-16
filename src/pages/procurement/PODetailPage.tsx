@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { procurementService } from '../../services/procurementService';
 import { useInventoryFormatters } from '../../utils/formatters';
+import { useActivity } from '@so360/shell-context';
 
 interface POLine {
     id: string;
@@ -38,6 +39,7 @@ const PODetailPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const formatters = useInventoryFormatters();
+    const { recordActivity } = useActivity();
     const [po, setPo] = useState<PO | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -239,6 +241,13 @@ const PODetailPage = () => {
         setStatusAction(status);
         try {
             await procurementService.updatePOStatus(po.id, { status });
+            if (status === 'cancelled') {
+                recordActivity({ eventType: 'inventory.po.cancelled', eventCategory: 'financials', description: `Cancelled Purchase Order #${po.po_number}`, resourceType: 'po', resourceId: po.id }).catch(() => {});
+            } else if (status === 'sent') {
+                recordActivity({ eventType: 'inventory.po.updated', eventCategory: 'financials', description: `Sent Purchase Order #${po.po_number}`, resourceType: 'po', resourceId: po.id }).catch(() => {});
+            } else if (status === 'closed') {
+                recordActivity({ eventType: 'inventory.po.updated', eventCategory: 'financials', description: `Closed Purchase Order #${po.po_number}`, resourceType: 'po', resourceId: po.id }).catch(() => {});
+            }
             await fetchPO();
         } catch (err: any) {
             alert(err.message || `Failed to update PO status to ${label}`);
