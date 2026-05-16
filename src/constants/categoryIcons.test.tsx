@@ -3,13 +3,13 @@ import React from 'react';
 import { renderCategoryIcon, PRESET_ICONS, PRESET_ICON_PREFIX, isPresetUrl, getPresetId } from './categoryIcons';
 import { render } from '@testing-library/react';
 
-describe('categoryIcons', () => {
-  describe('PRESET_ICONS', () => {
-    it('should have multiple preset icons defined', () => {
+describe('Given categoryIcons', () => {
+  describe('Given PRESET_ICONS', () => {
+    it('When accessed / Then has multiple preset icons defined', () => {
       expect(PRESET_ICONS.length).toBeGreaterThan(0);
     });
 
-    it('each icon should have id, label, group, icon, and defaultColor', () => {
+    it('When accessed / Then each icon has id, label, group, icon, and defaultColor', () => {
       const icon = PRESET_ICONS[0];
       expect(icon.id).toBeTruthy();
       expect(icon.label).toBeTruthy();
@@ -19,7 +19,7 @@ describe('categoryIcons', () => {
     });
   });
 
-  describe('isPresetUrl', () => {
+  describe('Given isPresetUrl', () => {
     it('When preset URL provided / Then returns true', () => {
       expect(isPresetUrl('preset:package')).toBe(true);
     });
@@ -37,13 +37,13 @@ describe('categoryIcons', () => {
     });
   });
 
-  describe('getPresetId', () => {
+  describe('Given getPresetId', () => {
     it('When preset URL provided / Then returns the icon id', () => {
       expect(getPresetId('preset:package')).toBe('package');
     });
   });
 
-  describe('renderCategoryIcon', () => {
+  describe('Given renderCategoryIcon', () => {
     it('When no iconUrl, imageUrl / Then renders first letter of name', () => {
       const result = renderCategoryIcon({ name: 'Electronics', size: 28 });
       const { container } = render(<>{result}</>);

@@ -3,7 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
 import TabNavigation from './TabNavigation';
 
-describe('TabNavigation', () => {
+describe('Given TabNavigation', () => {
   it('When rendered / Then shows all tab labels', () => {
     render(<TabNavigation activeTab="basic" onTabChange={vi.fn()} />);
     expect(screen.getByText('Basic Info')).toBeInTheDocument();

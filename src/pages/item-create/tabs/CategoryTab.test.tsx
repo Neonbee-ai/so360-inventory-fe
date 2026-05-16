@@ -30,7 +30,7 @@ const makeProps = (overrides: any = {}) => ({
   ...overrides,
 });
 
-describe('CategoryTab', () => {
+describe('Given CategoryTab', () => {
   it('When rendered / Then shows Item Category section', () => {
     render(<CategoryTab {...makeProps()} />);
     expect(screen.getByText('Item Category')).toBeInTheDocument();
