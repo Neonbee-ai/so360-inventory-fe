@@ -8,39 +8,35 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  actions: read
+  contents: read
+  security-events: write
+
 jobs:
-  test:
-    runs-on: self-hosted
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - name: Install dependencies
-        run: npm install --legacy-peer-deps
-      - name: Run unit tests
-        env:
-          CI: 'true'
-        run: npm test
-
-  audit:
-    runs-on: self-hosted
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - name: Install dependencies
-        run: npm install --legacy-peer-deps
-      - name: Dependency vulnerability audit
-        run: npm audit --audit-level=critical --omit=dev
-
-  secrets:
+  gate:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps --no-audit --no-fund
+      - name: Run unit tests
+        env:
+          CI: 'true'
+        run: npm test
+      - name: Security audit
+        run: npm audit --audit-level=critical --omit=dev
+      - name: Check dependency licenses
+        run: >-
+          npx license-checker
+          --failOn "GPL-2.0;GPL-3.0;AGPL-3.0;LGPL-2.0;LGPL-2.1;LGPL-3.0"
+          --excludePrivatePackages
       - name: Scan for secrets
         run: |
           GITLEAKS_VERSION="8.30.1"
@@ -51,20 +47,22 @@ jobs:
             /tmp/gitleaks detect --source . --verbose
           fi
 
-  licenses:
+  codeql:
     runs-on: self-hosted
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: github/codeql-action/init@v3
         with:
-          node-version: '22'
-      - name: Install dependencies
-        run: npm install --legacy-peer-deps
-      - name: Check dependency licenses
-        run: npx license-checker --failOn "GPL-2.0;GPL-3.0;AGPL-3.0;LGPL-2.0;LGPL-2.1;LGPL-3.0" --excludePrivatePackages
+          languages: javascript-typescript
+      - uses: github/codeql-action/autobuild@v3
+      - uses: github/codeql-action/analyze@v3
+        with:
+          category: '/language:javascript-typescript'
+          upload: never
 
   build-deploy:
-    needs: [test, audit, secrets, licenses]
+    needs: [gate]
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
@@ -72,6 +70,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+          cache: 'npm'
 
       - name: Checkout shell-fe packages
         uses: actions/checkout@v4
