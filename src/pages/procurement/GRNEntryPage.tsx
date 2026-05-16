@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { procurementService } from '../../services/procurementService';
 import { inventoryService } from '../../services/inventoryService';
+import { useActivity } from '@so360/shell-context';
 
 const GRNEntryPage = () => {
+    const { recordActivity } = useActivity();
     const [pos, setPos] = useState<any[]>([]);
     const [selectedPo, setSelectedPo] = useState<any>(null);
     const [loading, setLoading] = useState(true);
@@ -45,7 +47,7 @@ const GRNEntryPage = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await procurementService.createGRN({
+            const createdGRN = await procurementService.createGRN({
                 ...grnData,
                 po_id: selectedPo.id,
                 items: receiptLines.filter(l => l.quantity_received > 0).map(l => ({
@@ -54,6 +56,7 @@ const GRNEntryPage = () => {
                     quantity_received: parseFloat(l.quantity_received)
                 }))
             });
+            recordActivity({ eventType: 'inventory.grn.created', eventCategory: 'financials', description: `Created GRN #${grnData.grn_number} for PO #${selectedPo.po_number}`, resourceType: 'grn', resourceId: createdGRN?.id }).catch(() => {});
             alert('GRN Created Successfully');
             window.location.reload();
         } catch (error) {

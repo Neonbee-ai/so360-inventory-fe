@@ -9,11 +9,13 @@ import { Warehouse } from '../types/inventory';
 import { Modal } from '../components/common/Modal';
 import { TableSkeleton } from '../components/common/Skeleton';
 import { useAuth } from '../hooks/useAuth';
+import { useActivity } from '@so360/shell-context';
 
 const WarehouseDetailPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const { can } = useAuth();
+    const { recordActivity } = useActivity();
     const [warehouse, setWarehouse] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -76,6 +78,7 @@ const WarehouseDetailPage = () => {
         setIsSaving(true);
         try {
             await inventoryService.updateWarehouse(id, editForm);
+            recordActivity({ eventType: 'inventory.warehouse.updated', eventCategory: 'data', description: `Updated warehouse "${editForm.name}"`, resourceType: 'warehouse', resourceId: id }).catch(() => {});
             setIsEditModalOpen(false);
             fetchWarehouse();
         } catch (err: any) {
