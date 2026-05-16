@@ -12,8 +12,8 @@ afterEach(() => {
 
 const runAllTimers = () => vi.runAllTimersAsync();
 
-describe('crmService', () => {
-  describe('getLeads', () => {
+describe('Given crmService', () => {
+  describe('Given getLeads', () => {
     it('When called / Then returns an array of leads', async () => {
       const promise = crmService.getLeads();
       await runAllTimers();
@@ -33,7 +33,7 @@ describe('crmService', () => {
     });
   });
 
-  describe('createLead', () => {
+  describe('Given createLead', () => {
     it('When called with lead data / Then returns a lead with generated id', async () => {
       const newLead = await crmService.createLead({
         company_name: 'Test Corp',
@@ -53,7 +53,7 @@ describe('crmService', () => {
     });
   });
 
-  describe('getLeadById', () => {
+  describe('Given getLeadById', () => {
     it('When called with valid id / Then returns the lead', async () => {
       // MOCK_LEADS has id 'l1' hardcoded
       const lead = await crmService.getLeadById('l1');
@@ -67,7 +67,7 @@ describe('crmService', () => {
     });
   });
 
-  describe('getDeals', () => {
+  describe('Given getDeals', () => {
     it('When called / Then returns an array of deals', async () => {
       const promise = crmService.getDeals();
       await runAllTimers();
@@ -77,14 +77,14 @@ describe('crmService', () => {
     });
   });
 
-  describe('getDealById', () => {
+  describe('Given getDealById', () => {
     it('When called with unknown id / Then returns undefined', async () => {
       const deal = await crmService.getDealById('nonexistent');
       expect(deal).toBeUndefined();
     });
   });
 
-  describe('updateDealStage', () => {
+  describe('Given updateDealStage', () => {
     it('When called / Then resolves without error', async () => {
       await expect(crmService.updateDealStage('d1', 'Won', 'Customer signed')).resolves.toBeUndefined();
     });
@@ -94,7 +94,7 @@ describe('crmService', () => {
     });
   });
 
-  describe('getTasks', () => {
+  describe('Given getTasks', () => {
     it('When called / Then returns an array of tasks', async () => {
       const promise = crmService.getTasks();
       await runAllTimers();
@@ -103,14 +103,14 @@ describe('crmService', () => {
     });
   });
 
-  describe('getTaskById', () => {
+  describe('Given getTaskById', () => {
     it('When called with unknown id / Then returns undefined', async () => {
       const task = await crmService.getTaskById('nonexistent');
       expect(task).toBeUndefined();
     });
   });
 
-  describe('getDealsByLeadId', () => {
+  describe('Given getDealsByLeadId', () => {
     it('When called / Then returns filtered deals array', async () => {
       const promise = crmService.getDealsByLeadId('l1');
       await runAllTimers();
@@ -119,7 +119,7 @@ describe('crmService', () => {
     });
   });
 
-  describe('getTasksByLeadId', () => {
+  describe('Given getTasksByLeadId', () => {
     it('When called / Then returns filtered tasks array', async () => {
       const promise = crmService.getTasksByLeadId('l1');
       await runAllTimers();
@@ -128,7 +128,7 @@ describe('crmService', () => {
     });
   });
 
-  describe('getSettings', () => {
+  describe('Given getSettings', () => {
     it('When called / Then returns settings with deal_stages', async () => {
       const promise = crmService.getSettings();
       await runAllTimers();
@@ -145,7 +145,7 @@ describe('crmService', () => {
     });
   });
 
-  describe('updateSettings', () => {
+  describe('Given updateSettings', () => {
     it('When called with settings / Then returns the same settings', async () => {
       const settings = {
         deal_stages: [],
@@ -162,7 +162,7 @@ describe('crmService', () => {
     });
   });
 
-  describe('updateLead', () => {
+  describe('Given updateLead', () => {
     it('When called / Then returns updated lead', async () => {
       const promise = crmService.updateLead('l1', { company_name: 'Updated Corp' });
       await runAllTimers();
@@ -171,7 +171,7 @@ describe('crmService', () => {
     });
   });
 
-  describe('updateTask', () => {
+  describe('Given updateTask', () => {
     it('When called / Then returns updated task', async () => {
       const promise = crmService.updateTask('t1', { title: 'Updated Task' } as any);
       await runAllTimers();
@@ -180,7 +180,7 @@ describe('crmService', () => {
     });
   });
 
-  describe('updateNote', () => {
+  describe('Given updateNote', () => {
     it('When called / Then resolves without error', async () => {
       const promise = crmService.updateNote('l1', 'n1', 'Updated content');
       await runAllTimers();
@@ -188,7 +188,7 @@ describe('crmService', () => {
     });
   });
 
-  describe('deleteNote', () => {
+  describe('Given deleteNote', () => {
     it('When called / Then resolves without error', async () => {
       const promise = crmService.deleteNote('l1', 'n1');
       await runAllTimers();
@@ -196,7 +196,7 @@ describe('crmService', () => {
     });
   });
 
-  describe('getUsers', () => {
+  describe('Given getUsers', () => {
     it('When called / Then returns array of users', async () => {
       const users = await crmService.getUsers();
       expect(Array.isArray(users)).toBe(true);
@@ -206,7 +206,7 @@ describe('crmService', () => {
     });
   });
 
-  describe('uploadDocument', () => {
+  describe('Given uploadDocument', () => {
     it('When called with file / Then returns attachment with file properties', async () => {
       const file = new File(['content'], 'test.pdf', { type: 'application/pdf' });
       const promise = crmService.uploadDocument('entity-1', file);
@@ -219,7 +219,7 @@ describe('crmService', () => {
     });
   });
 
-  describe('deleteDocument', () => {
+  describe('Given deleteDocument', () => {
     it('When called / Then resolves without error', async () => {
       const promise = crmService.deleteDocument('entity-1', 'doc-1');
       await runAllTimers();

@@ -3,7 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
 import ImageThumbnail from './ImageThumbnail';
 
-describe('ImageThumbnail', () => {
+describe('Given ImageThumbnail', () => {
   it('When url provided / Then renders img with that src', () => {
     render(<ImageThumbnail url="http://example.com/photo.jpg" onRemove={vi.fn()} />);
     const img = screen.getByRole('img');

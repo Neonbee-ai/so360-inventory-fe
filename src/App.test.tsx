@@ -70,7 +70,7 @@ vi.mock('./services/mediaService', () => ({
 
 import App from './App';
 
-describe('App', () => {
+describe('Given App', () => {
   it('When rendered / Then shows routes container', () => {
     const { container } = render(<App />);
     // Routes renders within the layout
