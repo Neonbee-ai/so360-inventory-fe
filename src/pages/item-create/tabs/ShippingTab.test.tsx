@@ -19,7 +19,7 @@ const makeProps = (overrides: any = {}) => ({
   ...overrides,
 });
 
-describe('ShippingTab', () => {
+describe('Given ShippingTab', () => {
   it('When rendered / Then shows Weight section', () => {
     render(<ShippingTab {...makeProps()} />);
     expect(screen.getAllByText('Weight').length).toBeGreaterThan(0);

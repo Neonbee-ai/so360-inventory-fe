@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import React from 'react';
 import FormSection from './FormSection';
 
-describe('FormSection', () => {
+describe('Given FormSection', () => {
   it('When rendered with title / Then shows title text', () => {
     render(<FormSection title="Basic Info"><div>content</div></FormSection>);
     expect(screen.getByText('Basic Info')).toBeInTheDocument();
