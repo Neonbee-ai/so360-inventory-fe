@@ -8,6 +8,7 @@ import CategoryIconLibrary from '../components/categories/CategoryIconLibrary';
 import { buildCategoryTree } from '../utils/categoryTree';
 import { ItemCategory } from '../types/inventory';
 import { renderCategoryIcon, isPresetUrl } from '../constants/categoryIcons';
+import { useActivity } from '@so360/shell-context';
 
 const PRESET_COLORS = ['#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#EC4899', '#06B6D4', '#64748B'];
 
@@ -192,6 +193,7 @@ const CategoryCardsView: React.FC<{
 const CategoriesPage = () => {
     const { can } = useAuth();
     const canManage = can('manage_locations');
+    const { recordActivity } = useActivity();
 
     const [categories, setCategories] = useState<ItemCategory[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -250,6 +252,7 @@ const CategoriesPage = () => {
         setError(null);
         try {
             const created = await inventoryService.createCategory(name, description || undefined, parentId);
+            recordActivity({ eventType: 'inventory.category.created', eventCategory: 'data', description: `Created category "${name}"`, resourceType: 'category', resourceId: created.id }).catch(() => {});
             await fetchCategories();
             setSelectedId(created.id);
         } catch (err: any) {
@@ -261,6 +264,7 @@ const CategoriesPage = () => {
         setError(null);
         try {
             await inventoryService.updateCategory(id, data);
+            recordActivity({ eventType: 'inventory.category.updated', eventCategory: 'data', description: `Updated category "${data.name || id}"`, resourceType: 'category', resourceId: id }).catch(() => {});
             await fetchCategories();
         } catch (err: any) {
             setError(err.message || 'Failed to update category');
@@ -271,6 +275,7 @@ const CategoriesPage = () => {
         setError(null);
         try {
             await inventoryService.deleteCategory(id);
+            recordActivity({ eventType: 'inventory.category.deleted', eventCategory: 'data', description: `Deleted category`, resourceType: 'category', resourceId: id }).catch(() => {});
             if (selectedId === id) setSelectedId(null);
             await fetchCategories();
         } catch (err: any) {
@@ -291,6 +296,7 @@ const CategoriesPage = () => {
                 image_url: editImageUrl,
                 sort_order: editSortOrder,
             });
+            recordActivity({ eventType: 'inventory.category.updated', eventCategory: 'data', description: `Updated category "${editName.trim()}"`, resourceType: 'category', resourceId: selectedId }).catch(() => {});
             setSaveSuccess(true);
             setTimeout(() => setSaveSuccess(false), 2500);
             await fetchCategories();

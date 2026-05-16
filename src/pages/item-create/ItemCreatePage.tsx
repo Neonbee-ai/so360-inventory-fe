@@ -13,6 +13,7 @@ import StockTrackingTab from './tabs/StockTrackingTab';
 import ShippingTab from './tabs/ShippingTab';
 import AttributesTab from './tabs/AttributesTab';
 import { useInventoryCurrencySymbol } from '../../utils/formatters';
+import { useActivity } from '@so360/shell-context';
 
 interface FormData {
     name: string;
@@ -83,6 +84,7 @@ const initialFormData: FormData = {
 const ItemCreatePage = () => {
     const navigate = useNavigate();
     const currencySymbol = useInventoryCurrencySymbol();
+    const { recordActivity } = useActivity();
     const [form, setForm] = useState<FormData>(initialFormData);
     const [activeTab, setActiveTab] = useState<TabId>('basic');
     const [categories, setCategories] = useState<ItemCategory[]>([]);
@@ -261,6 +263,7 @@ const ItemCreatePage = () => {
             }
 
             const created = await inventoryService.createItem(dto);
+            recordActivity({ eventType: 'inventory.item.created', eventCategory: 'data', description: `Created item "${dto.name}"`, resourceType: 'item', resourceId: created.id }).catch(() => {});
             navigate(`/inventory/items/${created.id}`);
         } catch (err: any) {
             setError(err.message || 'Failed to create item');

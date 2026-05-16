@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { procurementService } from '../../services/procurementService';
 import { vendorService } from '../../services/vendorService';
-import { useBusinessSettings } from '@so360/shell-context';
+import { useBusinessSettings, useActivity } from '@so360/shell-context';
 import { useInventoryFormatters } from '../../utils/formatters';
 import ItemSearchSelector from '../../components/ItemSearchSelector';
 
@@ -11,6 +11,7 @@ const POListPage = () => {
     const location = useLocation();
     const { settings } = useBusinessSettings();
     const formatters = useInventoryFormatters();
+    const { recordActivity } = useActivity();
     const [pos, setPos] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
@@ -154,7 +155,7 @@ const POListPage = () => {
 
         setSubmitting(true);
         try {
-            await procurementService.createPO({
+            const createdPO = await procurementService.createPO({
                 vendor_id: formData.vendor_id,
                 po_number: formData.po_number,
                 pr_id: formData.pr_id || undefined,
@@ -170,6 +171,7 @@ const POListPage = () => {
                     pr_line_id: i.pr_line_id || undefined,
                 })),
             });
+            recordActivity({ eventType: 'inventory.po.created', eventCategory: 'financials', description: `Created Purchase Order #${formData.po_number}`, resourceType: 'po', resourceId: createdPO?.id }).catch(() => {});
             setShowForm(false);
             fetchData();
         } catch (error: any) {

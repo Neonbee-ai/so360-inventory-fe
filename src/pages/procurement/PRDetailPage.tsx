@@ -5,6 +5,7 @@ import {
     XCircle, Package, User, Calendar, Loader2, ShoppingCart, ExternalLink
 } from 'lucide-react';
 import { procurementService } from '../../services/procurementService';
+import { useActivity } from '@so360/shell-context';
 
 interface PRLine {
     id: string;
@@ -63,6 +64,7 @@ interface PR {
 const PRDetailPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { recordActivity } = useActivity();
     const [pr, setPr] = useState<PR | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -95,6 +97,7 @@ const PRDetailPage = () => {
                 status: 'approved',
                 comments: 'Approved'
             });
+            recordActivity({ eventType: 'inventory.pr.approved', eventCategory: 'financials', description: `Approved PR gate "${gateName}"`, resourceType: 'pr', resourceId: id }).catch(() => {});
             fetchPR();
         } catch (err: any) {
             setError(err.message || 'Failed to approve');
