@@ -22,7 +22,7 @@ const makeProps = (overrides: any = {}) => ({
   ...overrides,
 });
 
-describe('MediaTab', () => {
+describe('Given MediaTab', () => {
   it('When rendered / Then shows Upload Images section', () => {
     render(<MediaTab {...makeProps()} />);
     expect(screen.getByText('Upload Images')).toBeInTheDocument();
