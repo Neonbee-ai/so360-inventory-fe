@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useActivity } from '@so360/shell-context';
 import { ArrowLeft, Plus, Trash2, Pencil, ChevronRight, AlertCircle, CheckCircle2, Sliders } from 'lucide-react';
 import { ProductType, ProductTypeAttribute } from '../../types/productTypes';
 import { productTypeService } from '../../services/productTypeService';
@@ -9,6 +10,7 @@ const inputClass = 'w-full bg-slate-800 border border-slate-700 rounded-lg px-4 
 
 const ProductTypeSettingsPage = () => {
     const navigate = useNavigate();
+    const { recordActivity } = useActivity();
     const [types, setTypes] = useState<ProductType[]>([]);
     const [selectedType, setSelectedType] = useState<ProductType | null>(null);
     const [loading, setLoading] = useState(true);
@@ -54,6 +56,7 @@ const ProductTypeSettingsPage = () => {
         setError(null);
         try {
             await productTypeService.create({ name: newName.trim(), code: newCode.trim(), description: newDesc.trim() || undefined });
+            recordActivity({ eventType: 'inventory.product_type.created', eventCategory: 'configuration', description: `Created product type "${newName.trim()}"`, resourceType: 'product_type' }).catch(() => {});
             setShowCreateForm(false);
             setNewName('');
             setNewCode('');
@@ -73,6 +76,7 @@ const ProductTypeSettingsPage = () => {
         setError(null);
         try {
             await productTypeService.delete(id);
+            recordActivity({ eventType: 'inventory.product_type.deleted', eventCategory: 'configuration', description: 'Deleted a product type', resourceType: 'product_type', resourceId: id }).catch(() => {});
             if (selectedType?.id === id) setSelectedType(null);
             setSuccess(true);
             setTimeout(() => setSuccess(false), 3000);
@@ -87,6 +91,7 @@ const ProductTypeSettingsPage = () => {
         setError(null);
         try {
             await productTypeService.addAttribute(selectedType.id, data);
+            recordActivity({ eventType: 'inventory.product_type.attribute_added', eventCategory: 'configuration', description: `Added attribute to product type "${selectedType.name}"`, resourceType: 'product_type', resourceId: selectedType.id }).catch(() => {});
             setShowAddAttr(false);
             setSuccess(true);
             setTimeout(() => setSuccess(false), 3000);
@@ -101,6 +106,7 @@ const ProductTypeSettingsPage = () => {
         setError(null);
         try {
             await productTypeService.deleteAttribute(selectedType.id, attrId);
+            recordActivity({ eventType: 'inventory.product_type.attribute_deleted', eventCategory: 'configuration', description: `Removed attribute from product type "${selectedType.name}"`, resourceType: 'product_type', resourceId: selectedType.id }).catch(() => {});
             setSuccess(true);
             setTimeout(() => setSuccess(false), 3000);
             await loadTypeDetail(selectedType.id);
