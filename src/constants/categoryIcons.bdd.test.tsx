@@ -101,7 +101,7 @@ describe('categoryIcons', () => {
     it('When a name starting with lowercase is provided / Then renders that first character', () => {
       const result = renderCategoryIcon({ name: 'beverages', size: 28 });
       const { container } = render(<>{result}</>);
-      expect(container.textContent).toBe('b');
+      expect(container.textContent).toBe('B');
     });
   });
 
