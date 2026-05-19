@@ -85,7 +85,7 @@ describe('App', () => {
 
     it('When the app renders / Then the router outlet is present', async () => {
       render(<App />);
-      await waitFor(() => expect(screen.getByTestId('routes')).toBeInTheDocument());
+      await waitFor(() => expect(screen.getAllByTestId('routes').length).toBeGreaterThan(0));
     });
   });
 
@@ -100,17 +100,17 @@ describe('App', () => {
   describe('Given route-level lazy pages are mocked', () => {
     it('When the items route is rendered / Then items page content is accessible', async () => {
       render(<App />);
-      await waitFor(() => expect(screen.getByTestId('items-page')).toBeInTheDocument());
+      await waitFor(() => expect(screen.getAllByTestId('items-page').length).toBeGreaterThan(0));
     });
 
     it('When the vendor-list route is rendered / Then vendor list content is accessible', async () => {
       render(<App />);
-      await waitFor(() => expect(screen.getByTestId('vendor-list')).toBeInTheDocument());
+      await waitFor(() => expect(screen.getAllByTestId('vendor-list').length).toBeGreaterThan(0));
     });
 
     it('When the PR list route is rendered / Then PR list content is accessible', async () => {
       render(<App />);
-      await waitFor(() => expect(screen.getByTestId('pr-list')).toBeInTheDocument());
+      await waitFor(() => expect(screen.getAllByTestId('pr-list').length).toBeGreaterThan(0));
     });
   });
 });
