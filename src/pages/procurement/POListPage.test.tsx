@@ -28,6 +28,7 @@ vi.mock('react-router-dom', () => ({
 
 vi.mock('@so360/shell-context', () => ({
   useBusinessSettings: () => ({ settings: { base_currency: 'USD', is_tax_inclusive_pricing: false } }),
+  useActivity: () => ({ recordActivity: async () => {} }),
 }));
 
 vi.mock('../../utils/formatters', () => ({
