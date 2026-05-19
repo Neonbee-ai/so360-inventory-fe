@@ -88,7 +88,14 @@ jobs:
           rm -rf "$RUNNER_PARENT/so360-shell-fe"
           ln -s "$GITHUB_WORKSPACE/_shell-fe" "$RUNNER_PARENT/so360-shell-fe"
           rm -rf node_modules package-lock.json
-          npm install --legacy-peer-deps
+          LOCK_HASH=$(md5sum package-lock.json 2>/dev/null | cut -d' ' -f1 || echo 'nohash')
+          CACHE_FILE=".npm-ci-hash"
+          if [ -f "$CACHE_FILE" ] && [ "$(cat $CACHE_FILE)" = "$LOCK_HASH" ]; then
+            echo "node_modules cache hit — skipping install"
+          else
+            npm ci --legacy-peer-deps
+            echo "$LOCK_HASH" > "$CACHE_FILE"
+          fi
           for pkg in shell-context design-system event-bus formatters; do
             rm -rf "node_modules/@so360/$pkg"
             cp -r "$GITHUB_WORKSPACE/_shell-fe/packages/$pkg" "node_modules/@so360/$pkg"
