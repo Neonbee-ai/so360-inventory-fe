@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
+import { waitFor } from '@testing-library/react';
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
@@ -82,9 +83,9 @@ describe('App', () => {
       expect(container.firstChild).toBeTruthy();
     });
 
-    it('When the app renders / Then the router outlet is present', () => {
+    it('When the app renders / Then the router outlet is present', async () => {
       render(<App />);
-      expect(screen.getByTestId('routes')).toBeInTheDocument();
+      await waitFor(() => expect(screen.getByTestId('routes')).toBeInTheDocument());
     });
   });
 
@@ -97,20 +98,19 @@ describe('App', () => {
   });
 
   describe('Given route-level lazy pages are mocked', () => {
-    it('When the items route is rendered / Then items page content is accessible', () => {
+    it('When the items route is rendered / Then items page content is accessible', async () => {
       render(<App />);
-      // Route mock passes element through; items-page testid should eventually appear
-      expect(screen.getByTestId('items-page')).toBeInTheDocument();
+      await waitFor(() => expect(screen.getByTestId('items-page')).toBeInTheDocument());
     });
 
-    it('When the vendor-list route is rendered / Then vendor list content is accessible', () => {
+    it('When the vendor-list route is rendered / Then vendor list content is accessible', async () => {
       render(<App />);
-      expect(screen.getByTestId('vendor-list')).toBeInTheDocument();
+      await waitFor(() => expect(screen.getByTestId('vendor-list')).toBeInTheDocument());
     });
 
-    it('When the PR list route is rendered / Then PR list content is accessible', () => {
+    it('When the PR list route is rendered / Then PR list content is accessible', async () => {
       render(<App />);
-      expect(screen.getByTestId('pr-list')).toBeInTheDocument();
+      await waitFor(() => expect(screen.getByTestId('pr-list')).toBeInTheDocument());
     });
   });
 });
