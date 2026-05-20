@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useActivity } from '@so360/shell-context';
+import { useActivity, useShellBridge } from '@so360/shell-context';
 import { ArrowLeft, Plus, Trash2, Pencil, ChevronRight, AlertCircle, CheckCircle2, Sliders } from 'lucide-react';
 import { ProductType, ProductTypeAttribute } from '../../types/productTypes';
 import { productTypeService } from '../../services/productTypeService';
@@ -11,6 +11,8 @@ const inputClass = 'w-full bg-slate-800 border border-slate-700 rounded-lg px-4 
 const ProductTypeSettingsPage = () => {
     const navigate = useNavigate();
     const { recordActivity } = useActivity();
+    const shell = useShellBridge();
+    const canManageProductTypes = (shell?.isFeatureEnabled?.('action:inventory:product_types:create') ?? true);
     const [types, setTypes] = useState<ProductType[]>([]);
     const [selectedType, setSelectedType] = useState<ProductType | null>(null);
     const [loading, setLoading] = useState(true);
@@ -145,12 +147,14 @@ const ProductTypeSettingsPage = () => {
                 <div className="space-y-3">
                     <div className="flex items-center justify-between mb-2">
                         <h2 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">Types</h2>
-                        <button
-                            onClick={() => setShowCreateForm(true)}
-                            className="text-blue-400 hover:text-blue-300 text-xs flex items-center gap-1"
-                        >
-                            <Plus size={14} /> New
-                        </button>
+                        {canManageProductTypes && (
+                            <button
+                                onClick={() => setShowCreateForm(true)}
+                                className="text-blue-400 hover:text-blue-300 text-xs flex items-center gap-1"
+                            >
+                                <Plus size={14} /> New
+                            </button>
+                        )}
                     </div>
 
                     {showCreateForm && (
@@ -199,7 +203,7 @@ const ProductTypeSettingsPage = () => {
                                         <span className="inline-block mt-1 text-xs text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded">System template — attributes are read-only</span>
                                     )}
                                 </div>
-                                {!selectedType.is_system && (
+                                {!selectedType.is_system && canManageProductTypes && (
                                     <button
                                         onClick={() => handleDelete(selectedType.id)}
                                         className="text-slate-500 hover:text-rose-400 transition-colors"
@@ -227,7 +231,7 @@ const ProductTypeSettingsPage = () => {
                                                     )}
                                                 </div>
                                             </div>
-                                            {!selectedType.is_system && (
+                                            {!selectedType.is_system && canManageProductTypes && (
                                                 <button
                                                     onClick={() => handleDeleteAttribute(attr.id)}
                                                     className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-rose-400 transition-all"
@@ -242,7 +246,7 @@ const ProductTypeSettingsPage = () => {
                                 <p className="text-sm text-slate-500 mb-4">No attributes defined</p>
                             )}
 
-                            {!selectedType.is_system && (
+                            {!selectedType.is_system && canManageProductTypes && (
                                 <>
                                     {showAddAttr ? (
                                         <AttributeEditor

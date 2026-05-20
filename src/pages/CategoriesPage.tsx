@@ -8,7 +8,7 @@ import CategoryIconLibrary from '../components/categories/CategoryIconLibrary';
 import { buildCategoryTree } from '../utils/categoryTree';
 import { ItemCategory } from '../types/inventory';
 import { renderCategoryIcon, isPresetUrl } from '../constants/categoryIcons';
-import { useActivity } from '@so360/shell-context';
+import { useActivity, useShellBridge } from '@so360/shell-context';
 
 const PRESET_COLORS = ['#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#EC4899', '#06B6D4', '#64748B'];
 
@@ -194,6 +194,9 @@ const CategoriesPage = () => {
     const { can } = useAuth();
     const canManage = can('manage_locations');
     const { recordActivity } = useActivity();
+    const shell = useShellBridge();
+    const canCreate = (shell?.isFeatureEnabled?.('action:inventory:items:create') ?? true);
+    const canDelete = (shell?.isFeatureEnabled?.('action:inventory:items:delete') ?? true);
 
     const [categories, setCategories] = useState<ItemCategory[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -325,7 +328,7 @@ const CategoriesPage = () => {
                     </h1>
                     <p className="text-slate-400 mt-1 text-sm">Organize your products with a hierarchical category system</p>
                 </div>
-                {canManage && (
+                {canManage && canCreate && (
                     <button
                         onClick={() => {
                             setSelectedId(null);
@@ -368,9 +371,9 @@ const CategoriesPage = () => {
                         {viewMode === 'tree' ? (
                             <CategoryTreeView
                                 tree={tree}
-                                onAdd={handleAdd}
+                                onAdd={canCreate ? handleAdd : undefined}
                                 onUpdate={handleUpdate}
-                                onDelete={handleDelete}
+                                onDelete={canDelete ? handleDelete : undefined}
                                 canManage={canManage}
                                 onSelect={setSelectedId}
                             />

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Package, Plus, Search } from 'lucide-react';
 import { procurementService } from '../../services/procurementService';
+import { useShellBridge } from '@so360/shell-context';
 
 interface GRN {
     id: string;
@@ -14,6 +15,8 @@ interface GRN {
 
 const GRNListPage = () => {
     const navigate = useNavigate();
+    const shell = useShellBridge();
+    const canCreateGRN = (shell?.isFeatureEnabled?.('action:inventory:procurement:create_pr') ?? true);
     const [grns, setGrns] = useState<GRN[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -49,12 +52,14 @@ const GRNListPage = () => {
                     </h1>
                     <p className="text-slate-400 mt-2 font-medium">Track all received shipments and inventory updates.</p>
                 </div>
-                <button
-                    onClick={() => navigate('/procurement/grn/new')}
-                    className="px-6 py-3 bg-violet-600 hover:bg-violet-500 text-white rounded-xl font-semibold transition-all shadow-lg shadow-violet-900/20 active:scale-95 flex items-center gap-2"
-                >
-                    <Plus size={20} /> New GRN
-                </button>
+                {canCreateGRN && (
+                    <button
+                        onClick={() => navigate('/procurement/grn/new')}
+                        className="px-6 py-3 bg-violet-600 hover:bg-violet-500 text-white rounded-xl font-semibold transition-all shadow-lg shadow-violet-900/20 active:scale-95 flex items-center gap-2"
+                    >
+                        <Plus size={20} /> New GRN
+                    </button>
+                )}
             </div>
 
             {/* Stats */}

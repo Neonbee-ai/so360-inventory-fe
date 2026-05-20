@@ -4,6 +4,7 @@ import { vendorService } from '../../services/vendorService';
 import { Plus, Search, Trash2, Loader2, X, AlertCircle } from 'lucide-react';
 import { Modal } from '../../components/common/Modal';
 import { useAuth } from '../../hooks/useAuth';
+import { useShellBridge } from '@so360/shell-context';
 
 interface Vendor {
     id: string;
@@ -22,6 +23,8 @@ interface Vendor {
 const VendorListPage = () => {
     const navigate = useNavigate();
     const { can } = useAuth();
+    const shell = useShellBridge();
+    const canCreateVendor = (shell?.isFeatureEnabled?.('action:inventory:vendors:create') ?? true);
     const [vendors, setVendors] = useState<Vendor[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -125,7 +128,7 @@ const VendorListPage = () => {
                     </h1>
                     <p className="text-slate-400 mt-2 font-medium">Manage supply chain partners and commercial contracts.</p>
                 </div>
-                {can('manage_vendors') && (
+                {can('manage_vendors') && canCreateVendor && (
                     <button
                         onClick={() => setShowCreateModal(true)}
                         className="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-semibold transition-all shadow-lg shadow-emerald-900/20 active:scale-95 flex items-center gap-2"
@@ -220,7 +223,7 @@ const VendorListPage = () => {
                                     >
                                         View Profile →
                                     </button>
-                                    {can('manage_vendors') && (
+                                    {can('manage_vendors') && canCreateVendor && (
                                         <button
                                             onClick={() => setDeletingVendor(vendor)}
                                             className="text-slate-500 hover:text-rose-400 transition-colors"

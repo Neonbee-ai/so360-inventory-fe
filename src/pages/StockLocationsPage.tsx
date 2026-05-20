@@ -6,12 +6,14 @@ import { Warehouse } from '../types/inventory';
 import { Modal } from '../components/common/Modal';
 import { TableSkeleton } from '../components/common/Skeleton';
 import { useAuth } from '../hooks/useAuth';
-import { useActivity } from '@so360/shell-context';
+import { useActivity, useShellBridge } from '@so360/shell-context';
 
 const StockLocationsPage = () => {
     const navigate = useNavigate();
     const { can } = useAuth();
     const { recordActivity } = useActivity();
+    const shell = useShellBridge();
+    const canCreateWarehouse = (shell?.isFeatureEnabled?.('action:inventory:warehouses:create') ?? true);
     const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -159,7 +161,7 @@ const StockLocationsPage = () => {
                     <h1 className="text-3xl font-bold text-white tracking-tight">Warehouses</h1>
                     <p className="text-slate-400 mt-1">Manage physical storage facilities and fulfillment centers</p>
                 </div>
-                {can('manage_locations') && (
+                {can('manage_locations') && canCreateWarehouse && (
                     <button
                         onClick={() => !atWarehouseLimit && setIsCreateModalOpen(true)}
                         disabled={atWarehouseLimit}
@@ -258,7 +260,7 @@ const StockLocationsPage = () => {
                                     >
                                         View
                                     </button>
-                                    {can('manage_locations') && (
+                                    {can('manage_locations') && canCreateWarehouse && (
                                         <>
                                             <button
                                                 onClick={() => handleEditClick(wh)}
@@ -280,7 +282,7 @@ const StockLocationsPage = () => {
                     ))}
 
 
-                    {can('manage_locations') && (
+                    {can('manage_locations') && canCreateWarehouse && (
                         <button
                             onClick={() => !atWarehouseLimit && setIsCreateModalOpen(true)}
                             disabled={atWarehouseLimit}

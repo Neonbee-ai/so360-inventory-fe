@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { procurementService } from '../../services/procurementService';
 import ItemSearchSelector from '../../components/ItemSearchSelector';
-import { useActivity } from '@so360/shell-context';
+import { useActivity, useShellBridge } from '@so360/shell-context';
 
 interface PRLine {
     id: string;
@@ -24,6 +24,8 @@ interface PR {
 const PRListPage = () => {
     const navigate = useNavigate();
     const { recordActivity } = useActivity();
+    const shell = useShellBridge();
+    const canCreatePR = (shell?.isFeatureEnabled?.('action:inventory:procurement:create_pr') ?? true);
     const [prs, setPrs] = useState<PR[]>([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
@@ -116,12 +118,14 @@ const PRListPage = () => {
                     </h1>
                     <p className="text-slate-400 mt-2 font-medium">Manage and track spending requests across the organization.</p>
                 </div>
-                <button
-                    onClick={() => setShowForm(true)}
-                    className="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-semibold transition-all shadow-lg shadow-blue-900/20 active:scale-95 flex items-center gap-2"
-                >
-                    <span className="text-xl leading-none">+</span> New Requisition
-                </button>
+                {canCreatePR && (
+                    <button
+                        onClick={() => setShowForm(true)}
+                        className="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-semibold transition-all shadow-lg shadow-blue-900/20 active:scale-95 flex items-center gap-2"
+                    >
+                        <span className="text-xl leading-none">+</span> New Requisition
+                    </button>
+                )}
             </div>
 
             {/* Stats Overview */}
@@ -202,7 +206,7 @@ const PRListPage = () => {
                                         >
                                             View Details →
                                         </button>
-                                        {(pr.status === 'draft' || pr.status === 'rejected') && (
+                                        {canCreatePR && (pr.status === 'draft' || pr.status === 'rejected') && (
                                             <button
                                                 onClick={() => handleDelete(pr.id, pr.status)}
                                                 className="text-rose-400 hover:text-rose-300 font-semibold text-sm transition-colors cursor-pointer"
