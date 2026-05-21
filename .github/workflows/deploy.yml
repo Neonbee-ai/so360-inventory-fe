@@ -1,131 +1,21 @@
 name: Deploy Inventory Frontend
 
 on:
-  workflow_dispatch:
   push:
-    branches:
-      - develop
-      - qa
+    branches: [main]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-permissions:
-  actions: read
-  contents: read
-  security-events: write
-
 jobs:
-  gate:
-    runs-on: self-hosted
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'npm'
-      - name: Install dependencies
-        run: npm install --legacy-peer-deps --no-audit --no-fund
-      - name: Run unit tests
-        env:
-          CI: 'true'
-        run: npm test
-      - name: Security audit
-        run: npm audit --audit-level=critical --omit=dev
-      - name: Check dependency licenses
-        run: >-
-          npx license-checker
-          --failOn "GPL-2.0;GPL-3.0;AGPL-3.0;LGPL-2.0;LGPL-2.1;LGPL-3.0"
-          --excludePrivatePackages
-      - name: Scan for secrets
-        run: |
-          GITLEAKS_VERSION="8.30.1"
-          if command -v gitleaks &>/dev/null; then
-            gitleaks detect --source . --verbose
-          else
-            curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" | tar -xz -C /tmp/
-            /tmp/gitleaks detect --source . --verbose
-          fi
-
-  codeql:
-    runs-on: self-hosted
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@v4
-      - uses: github/codeql-action/init@v3
-        with:
-          languages: javascript-typescript
-      - uses: github/codeql-action/autobuild@v3
-      - uses: github/codeql-action/analyze@v3
-        with:
-          category: '/language:javascript-typescript'
-          upload: never
-
-  build-deploy:
-    needs: [gate]
-    runs-on: self-hosted
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'npm'
-
-      - uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.CONTABO_SSH_KEY }}
-
-      - name: Install + build
-        run: |
-          npm install --legacy-peer-deps --no-audit --no-fund
-          mkdir -p node_modules/@so360
-          rm -rf node_modules/@so360/* && cp -r .ci-stubs/@so360/* node_modules/@so360/
-          rm -rf ../../so360-shell-fe 2>/dev/null; true
-          for pkg in shell-context design-system event-bus formatters; do
-            mkdir -p ../../so360-shell-fe/packages/$pkg/dist
-            cp .ci-stubs/@so360/$pkg/index.js ../../so360-shell-fe/packages/$pkg/dist/index.js
-          done
-          if [ "$GITHUB_REF" = "refs/heads/develop" ]; then
-            printf '%s\n' \
-                "VITE_BASE_URL=https://dev-cdn.skyoffice360.com/inventory/" \
-                "VITE_SO360_CORE_API=https://dev.api.skyoffice360.com/core" \
-                "VITE_SO360_INVENTORY_API=https://dev.api.skyoffice360.com/inventory" \
-                "VITE_ENVIRONMENT=cloud" \
-                > .env
-          elif [ "$GITHUB_REF" = "refs/heads/qa" ]; then
-            printf '%s\n' \
-                "VITE_BASE_URL=https://staging.inventory.skyoffice360.com/" \
-                "VITE_SO360_CORE_API=https://staging.api.skyoffice360.com/core" \
-                "VITE_SO360_INVENTORY_API=https://staging.api.skyoffice360.com/inventory" \
-                "VITE_ENVIRONMENT=cloud" \
-                > .env
-          fi
-          npm run build
-
-      - name: Deploy to Dev
-        if: github.ref == 'refs/heads/develop'
-        env:
-          SERVER_IP: ${{ secrets.SERVER_IP }}
-          NGINX_ROOT: /var/www/dev-cdn.skyoffice360.com/html/inventory
-        run: |
-          ssh-keyscan -H $SERVER_IP >> ~/.ssh/known_hosts
-          ssh root@$SERVER_IP "mkdir -p '$NGINX_ROOT'"
-          rsync -avz --delete dist/ "root@$SERVER_IP:$NGINX_ROOT/"
-          ssh root@$SERVER_IP "nginx -s reload"
-          echo "Deployed to dev-cdn.skyoffice360.com/inventory"
-
-      - name: Deploy to Staging
-        if: github.ref == 'refs/heads/qa'
-        env:
-          SERVER_IP: ${{ secrets.SERVER_IP }}
-          NGINX_ROOT: /var/www/staging.inventory.skyoffice360.com/html
-        run: |
-          ssh-keyscan -H $SERVER_IP >> ~/.ssh/known_hosts
-          ssh root@$SERVER_IP "mkdir -p '$NGINX_ROOT'"
-          rsync -avz --delete dist/ "root@$SERVER_IP:$NGINX_ROOT/"
-          ssh root@$SERVER_IP "nginx -s reload"
-          echo "Deployed to staging.inventory.skyoffice360.com"
+  deploy:
+    uses: Neonbee-ai/neonbee-devops/.github/workflows/neonbee-deploy-vite-mfe.yml@main
+    with:
+      service_name: inventory-fe
+      nginx_root_dev: /var/www/dev-cdn.skyoffice360.com/html/inventory
+      nginx_root_staging: /var/www/staging.inventory.skyoffice360.com/html
+      vite_base_url_dev: https://dev-cdn.skyoffice360.com/inventory/
+      vite_base_url_staging: https://staging.inventory.skyoffice360.com/
+      is_mfe: true
+    secrets: inherit
