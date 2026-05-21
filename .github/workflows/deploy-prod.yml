@@ -10,9 +10,10 @@ concurrency:
 
 jobs:
   deploy:
-    uses: Neonbee-ai/neonbee-devops/.github/workflows/neonbee-deploy-prod-vite-mfe.yml@main
+    uses: Neonbee-ai/neonbee-devops/.github/workflows/neonbee-deploy-prod.yml@main
     with:
       service_name: inventory-fe
+      deploy_type: vite-mfe
       nginx_root: /var/www/cdn.neonbee.app/html/inventory
       needs_shell_packages: true
       is_shell: false
