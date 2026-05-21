@@ -1,0 +1,13 @@
+name: Preview Deploy
+
+on:
+  push:
+    branches: [preview]
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, macOS, ARM64]
+    timeout-minutes: 30
+    steps:
+      - name: Deploy to preview
+        run: ~/SO360/preview-deploy.sh inventory-fe so360-inventory/so360-inventory-fe build
