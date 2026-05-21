@@ -24,3 +24,29 @@ describe('Given FormSection', () => {
     expect(screen.getByTestId('child')).toBeInTheDocument();
   });
 });
+
+describe('Given FormSection display variants', () => {
+  it('When rendered / Then title has uppercase styling via className', () => {
+    const { container } = render(<FormSection title="Inventory"><span /></FormSection>);
+    const heading = container.querySelector('h3');
+    expect(heading).not.toBeNull();
+    expect(heading!.className).toContain('uppercase');
+  });
+
+  it('When rendered with long title / Then title is still visible in DOM', () => {
+    const longTitle = 'A Very Long Section Title That Should Still Render Correctly';
+    render(<FormSection title={longTitle}><div /></FormSection>);
+    expect(screen.getByText(longTitle)).toBeInTheDocument();
+  });
+
+  it('When rendered with multiple children / Then all children appear', () => {
+    render(
+      <FormSection title="Multi">
+        <div data-testid="child-a">A</div>
+        <div data-testid="child-b">B</div>
+      </FormSection>
+    );
+    expect(screen.getByTestId('child-a')).toBeInTheDocument();
+    expect(screen.getByTestId('child-b')).toBeInTheDocument();
+  });
+});

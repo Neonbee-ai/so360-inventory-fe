@@ -34,3 +34,44 @@ describe('Modal', () => {
     });
   });
 });
+
+describe('Given Modal backdrop and size variants', () => {
+  it('When backdrop is clicked / Then calls onClose', () => {
+    const onClose = vi.fn();
+    const { container } = render(
+      <Modal isOpen={true} onClose={onClose} title="Backdrop Test">Content</Modal>
+    );
+    // The backdrop is the absolute inset-0 div (first child of the outer fixed div)
+    const backdrop = container.querySelector('.absolute.inset-0') as HTMLElement;
+    if (backdrop) fireEvent.click(backdrop);
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it('When size is sm / Then dialog container has max-w-sm class', () => {
+    const { container } = render(
+      <Modal isOpen={true} onClose={vi.fn()} title="Small" size="sm">body</Modal>
+    );
+    const dialog = container.querySelector('.max-w-sm');
+    expect(dialog).not.toBeNull();
+  });
+
+  it('When size is xl / Then dialog container has max-w-4xl class', () => {
+    const { container } = render(
+      <Modal isOpen={true} onClose={vi.fn()} title="XL" size="xl">body</Modal>
+    );
+    const dialog = container.querySelector('.max-w-4xl');
+    expect(dialog).not.toBeNull();
+  });
+
+  it('When size is not provided / Then defaults to md (max-w-md)', () => {
+    const { container } = render(
+      <Modal isOpen={true} onClose={vi.fn()} title="Default">body</Modal>
+    );
+    expect(container.querySelector('.max-w-md')).not.toBeNull();
+  });
+
+  it('When rendered with isOpen true / Then close button is present', () => {
+    render(<Modal isOpen={true} onClose={vi.fn()} title="Buttons">content</Modal>);
+    expect(screen.getByRole('button')).toBeInTheDocument();
+  });
+});
