@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapPin, Plus, Home, Edit2, AlertCircle, Trash2, Loader2, X, Save } from 'lucide-react';
 import { inventoryService } from '../services/inventoryService';
@@ -6,7 +6,8 @@ import { Warehouse } from '../types/inventory';
 import { Modal } from '../components/common/Modal';
 import { TableSkeleton } from '../components/common/Skeleton';
 import { useAuth } from '../hooks/useAuth';
-import { useActivity, useShellBridge } from '@so360/shell-context';
+import { useActivity, useShellBridge, useQuota } from '@so360/shell-context';
+import { QuotaBar, QuotaGate } from '@so360/design-system';
 
 const StockLocationsPage = () => {
     const navigate = useNavigate();
@@ -14,6 +15,9 @@ const StockLocationsPage = () => {
     const { recordActivity } = useActivity();
     const shell = useShellBridge();
     const canCreateWarehouse = (shell?.isFeatureEnabled?.('action:inventory:warehouses:create') ?? true);
+    const quotaChecks = useMemo(() => [{ module_code: 'inventory', quota_key: 'max_warehouses' }], []);
+    const { getQuota } = useQuota({ checks: quotaChecks, orgId: shell?.currentOrg?.id || '' });
+    const quotaData = getQuota('max_warehouses');
     const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -162,18 +166,36 @@ const StockLocationsPage = () => {
                     <p className="text-slate-400 mt-1">Manage physical storage facilities and fulfillment centers</p>
                 </div>
                 {can('manage_locations') && canCreateWarehouse && (
-                    <button
-                        onClick={() => !atWarehouseLimit && setIsCreateModalOpen(true)}
-                        disabled={atWarehouseLimit}
-                        title={atWarehouseLimit ? `${warehouses.length}/${maxWarehouses} warehouses used — upgrade your plan to add more` : undefined}
-                        className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold transition-all shadow-lg active:scale-95 ${atWarehouseLimit ? 'bg-slate-700 text-slate-400 cursor-not-allowed shadow-none' : 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-900/20'}`}
+                    <QuotaGate
+                        quotaKey="max_warehouses"
+                        moduleCode="inventory"
+                        used={quotaData?.current_usage ?? 0}
+                        limit={quotaData?.limit ?? 0}
+                        isUnlimited={quotaData?.is_unlimited}
+                        disableOnExceeded
                     >
-                        <Plus size={20} />
-                        New Warehouse
-                        {atWarehouseLimit && <span className="text-xs font-normal ml-1">({warehouses.length}/{maxWarehouses})</span>}
-                    </button>
+                        <button
+                            onClick={() => !atWarehouseLimit && setIsCreateModalOpen(true)}
+                            disabled={atWarehouseLimit}
+                            title={atWarehouseLimit ? `${warehouses.length}/${maxWarehouses} warehouses used — upgrade your plan to add more` : undefined}
+                            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold transition-all shadow-lg active:scale-95 ${atWarehouseLimit ? 'bg-slate-700 text-slate-400 cursor-not-allowed shadow-none' : 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-900/20'}`}
+                        >
+                            <Plus size={20} />
+                            New Warehouse
+                            {atWarehouseLimit && <span className="text-xs font-normal ml-1">({warehouses.length}/{maxWarehouses})</span>}
+                        </button>
+                    </QuotaGate>
                 )}
             </header>
+
+            {quotaData && (
+                <QuotaBar
+                    label="Warehouses"
+                    used={quotaData.current_usage}
+                    limit={quotaData.limit}
+                    isUnlimited={quotaData.is_unlimited}
+                />
+            )}
 
             {maxWarehouses !== null && (
                 <div className="mb-6 flex items-center justify-between bg-slate-900/50 border border-slate-800 rounded-lg px-4 py-2.5">

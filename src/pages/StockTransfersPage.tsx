@@ -5,11 +5,13 @@ import { Item, Warehouse } from '../types/inventory';
 import { Table } from '../components/common/Table';
 import { Modal } from '../components/common/Modal';
 import { useAuth } from '../hooks/useAuth';
-import { useActivity } from '@so360/shell-context';
+import { useActivity, useShellBridge } from '@so360/shell-context';
 
 const StockTransfersPage = () => {
     const { can } = useAuth();
     const { recordActivity } = useActivity();
+    const shell = useShellBridge();
+    const canTransferStock = (shell?.isFeatureEnabled?.('action:inventory:stock:transfer') ?? true);
     const [transfers, setTransfers] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -141,7 +143,7 @@ const StockTransfersPage = () => {
                     </h1>
                     <p className="text-slate-400 mt-1">Inter-warehouse stock movements</p>
                 </div>
-                {can('create_transfer') && (
+                {can('create_transfer') && canTransferStock && (
                     <button
                         onClick={() => setIsModalOpen(true)}
                         className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-lg font-semibold transition-all shadow-lg shadow-blue-900/20 active:scale-95"

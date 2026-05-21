@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { vendorService } from '../../services/vendorService';
 import { Plus, Search, Trash2, Loader2, X, AlertCircle } from 'lucide-react';
 import { Modal } from '../../components/common/Modal';
 import { useAuth } from '../../hooks/useAuth';
-import { useShellBridge } from '@so360/shell-context';
+import { useShellBridge, useQuota } from '@so360/shell-context';
+import { QuotaBar, QuotaGate } from '@so360/design-system';
 
 interface Vendor {
     id: string;
@@ -25,6 +26,9 @@ const VendorListPage = () => {
     const { can } = useAuth();
     const shell = useShellBridge();
     const canCreateVendor = (shell?.isFeatureEnabled?.('action:inventory:vendors:create') ?? true);
+    const quotaChecks = useMemo(() => [{ module_code: 'inventory', quota_key: 'max_vendors' }], []);
+    const { getQuota } = useQuota({ checks: quotaChecks, orgId: shell?.currentOrg?.id || '' });
+    const quotaData = getQuota('max_vendors');
     const [vendors, setVendors] = useState<Vendor[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -129,14 +133,32 @@ const VendorListPage = () => {
                     <p className="text-slate-400 mt-2 font-medium">Manage supply chain partners and commercial contracts.</p>
                 </div>
                 {can('manage_vendors') && canCreateVendor && (
-                    <button
-                        onClick={() => setShowCreateModal(true)}
-                        className="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-semibold transition-all shadow-lg shadow-emerald-900/20 active:scale-95 flex items-center gap-2"
+                    <QuotaGate
+                        quotaKey="max_vendors"
+                        moduleCode="inventory"
+                        used={quotaData?.current_usage ?? 0}
+                        limit={quotaData?.limit ?? 0}
+                        isUnlimited={quotaData?.is_unlimited}
+                        disableOnExceeded
                     >
-                        <Plus size={20} /> Add Vendor
-                    </button>
+                        <button
+                            onClick={() => setShowCreateModal(true)}
+                            className="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-semibold transition-all shadow-lg shadow-emerald-900/20 active:scale-95 flex items-center gap-2"
+                        >
+                            <Plus size={20} /> Add Vendor
+                        </button>
+                    </QuotaGate>
                 )}
             </div>
+
+            {quotaData && (
+                <QuotaBar
+                    label="Vendors"
+                    used={quotaData.current_usage}
+                    limit={quotaData.limit}
+                    isUnlimited={quotaData.is_unlimited}
+                />
+            )}
 
             {/* Messages */}
             {error && (

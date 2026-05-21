@@ -33,6 +33,21 @@ import { procurementService } from './services/procurementService';
 import { vendorService } from './services/vendorService';
 import { mediaService } from './services/mediaService';
 
+/** Feature-gated route wrapper: renders children only when the flag is enabled (fail-open). */
+const FeatureGate = ({ flagKey, children }: { flagKey: string; children: React.ReactNode }) => {
+    const shell = useShellBridge();
+    const enabled = shell?.isFeatureEnabled?.(flagKey) ?? true;
+    if (!enabled) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[40vh] gap-3 text-center px-4">
+                <div className="text-slate-600 text-4xl">&#128274;</div>
+                <h2 className="text-lg font-bold text-slate-300">Feature Not Available</h2>
+                <p className="text-slate-500 text-sm max-w-md">This feature is not included in your current plan. Contact your administrator to upgrade.</p>
+            </div>
+        );
+    }
+    return <>{children}</>;
+};
 
 const MfeShellInitializer = ({ children }: { children: React.ReactNode }) => {
     const shell = useShellBridge();
@@ -115,32 +130,32 @@ const App = () => {
                 <Route path="adjustments" element={<StockAdjustmentsPage />} />
                 <Route path="transfers" element={<StockTransfersPage />} />
                 <Route path="settings" element={<SettingsPage />} />
-                <Route path="settings/product-types" element={<ProductTypeSettingsPage />} />
+                <Route path="settings/product-types" element={<FeatureGate flagKey="submodule:inventory:product_types"><ProductTypeSettingsPage /></FeatureGate>} />
                 <Route path="categories" element={<CategoriesPage />} />
 
                 {/* ── Procurement routes (mounted at /procurement/*) ── */}
-                <Route path="pr" element={<PRListPage />} />
-                <Route path="pr/:id" element={<PRDetailPage />} />
-                <Route path="po" element={<POListPage />} />
-                <Route path="po/:id" element={<PODetailPage />} />
-                <Route path="grn" element={<GRNListPage />} />
-                <Route path="grn/new" element={<GRNEntryPage />} />
-                <Route path="grn/:id" element={<GRNDetailPage />} />
-                <Route path="opening-balance" element={<OpeningBalancePage />} />
+                <Route path="pr" element={<FeatureGate flagKey="submodule:inventory:procurement"><PRListPage /></FeatureGate>} />
+                <Route path="pr/:id" element={<FeatureGate flagKey="submodule:inventory:procurement"><PRDetailPage /></FeatureGate>} />
+                <Route path="po" element={<FeatureGate flagKey="submodule:inventory:procurement"><POListPage /></FeatureGate>} />
+                <Route path="po/:id" element={<FeatureGate flagKey="submodule:inventory:procurement"><PODetailPage /></FeatureGate>} />
+                <Route path="grn" element={<FeatureGate flagKey="submodule:inventory:procurement"><GRNListPage /></FeatureGate>} />
+                <Route path="grn/new" element={<FeatureGate flagKey="submodule:inventory:procurement"><GRNEntryPage /></FeatureGate>} />
+                <Route path="grn/:id" element={<FeatureGate flagKey="submodule:inventory:procurement"><GRNDetailPage /></FeatureGate>} />
+                <Route path="opening-balance" element={<FeatureGate flagKey="submodule:inventory:procurement"><OpeningBalancePage /></FeatureGate>} />
 
                 {/* ── Vendor routes (mounted at /vendors/*) ── */}
                 <Route path="contracts" element={<ContractsPage />} />
                 <Route path=":id" element={<VendorDetailPage />} />
 
                 {/* ── Backward-compat: old /inventory/procurement/... and /inventory/vendors/... ── */}
-                <Route path="procurement/pr" element={<PRListPage />} />
-                <Route path="procurement/pr/:id" element={<PRDetailPage />} />
-                <Route path="procurement/po" element={<POListPage />} />
-                <Route path="procurement/po/:id" element={<PODetailPage />} />
-                <Route path="procurement/grn" element={<GRNListPage />} />
-                <Route path="procurement/grn/new" element={<GRNEntryPage />} />
-                <Route path="procurement/grn/:id" element={<GRNDetailPage />} />
-                <Route path="procurement/opening-balance" element={<OpeningBalancePage />} />
+                <Route path="procurement/pr" element={<FeatureGate flagKey="submodule:inventory:procurement"><PRListPage /></FeatureGate>} />
+                <Route path="procurement/pr/:id" element={<FeatureGate flagKey="submodule:inventory:procurement"><PRDetailPage /></FeatureGate>} />
+                <Route path="procurement/po" element={<FeatureGate flagKey="submodule:inventory:procurement"><POListPage /></FeatureGate>} />
+                <Route path="procurement/po/:id" element={<FeatureGate flagKey="submodule:inventory:procurement"><PODetailPage /></FeatureGate>} />
+                <Route path="procurement/grn" element={<FeatureGate flagKey="submodule:inventory:procurement"><GRNListPage /></FeatureGate>} />
+                <Route path="procurement/grn/new" element={<FeatureGate flagKey="submodule:inventory:procurement"><GRNEntryPage /></FeatureGate>} />
+                <Route path="procurement/grn/:id" element={<FeatureGate flagKey="submodule:inventory:procurement"><GRNDetailPage /></FeatureGate>} />
+                <Route path="procurement/opening-balance" element={<FeatureGate flagKey="submodule:inventory:procurement"><OpeningBalancePage /></FeatureGate>} />
                 <Route path="vendors" element={<VendorListPage />} />
                 <Route path="vendors/:id" element={<VendorDetailPage />} />
                 <Route path="vendors/contracts" element={<ContractsPage />} />

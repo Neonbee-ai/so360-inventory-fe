@@ -1,14 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Filter, Plus, Package, Layers, AlertCircle } from 'lucide-react';
 import { inventoryService } from '../services/inventoryService';
 import { Item } from '../types/inventory';
 import { Table } from '../components/common/Table';
 import { useAuth } from '../hooks/useAuth';
+import { useShellBridge, useQuota } from '@so360/shell-context';
+import { QuotaBar, QuotaGate } from '@so360/design-system';
 
 const ItemsPage = () => {
     const navigate = useNavigate();
     const { can } = useAuth();
+    const shell = useShellBridge();
+    const canCreateItem = (shell?.isFeatureEnabled?.('action:inventory:items:create') ?? true);
+    const quotaChecks = useMemo(() => [{ module_code: 'inventory', quota_key: 'max_skus' }], []);
+    const { getQuota } = useQuota({ checks: quotaChecks, orgId: shell?.currentOrg?.id || '' });
+    const quotaData = getQuota('max_skus');
     const [items, setItems] = useState<Item[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -112,16 +119,34 @@ const ItemsPage = () => {
                     <h1 className="text-3xl font-bold text-white tracking-tight">Items</h1>
                     <p className="text-slate-400 mt-1">Manage physical products and trackable assets</p>
                 </div>
-                {can('create_item') && (
-                    <button
-                        onClick={() => navigate('/inventory/items/new')}
-                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-lg font-semibold transition-all shadow-lg shadow-blue-900/20 active:scale-95"
+                {can('create_item') && canCreateItem && (
+                    <QuotaGate
+                        quotaKey="max_skus"
+                        moduleCode="inventory"
+                        used={quotaData?.current_usage ?? 0}
+                        limit={quotaData?.limit ?? 0}
+                        isUnlimited={quotaData?.is_unlimited}
+                        disableOnExceeded
                     >
-                        <Plus size={20} />
-                        Register Item
-                    </button>
+                        <button
+                            onClick={() => navigate('/inventory/items/new')}
+                            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-lg font-semibold transition-all shadow-lg shadow-blue-900/20 active:scale-95"
+                        >
+                            <Plus size={20} />
+                            Register Item
+                        </button>
+                    </QuotaGate>
                 )}
             </header>
+
+            {quotaData && (
+                <QuotaBar
+                    label="SKUs"
+                    used={quotaData.current_usage}
+                    limit={quotaData.limit}
+                    isUnlimited={quotaData.is_unlimited}
+                />
+            )}
 
             {error && (
                 <div className="mb-6 bg-rose-500/10 border border-rose-500/20 text-rose-400 px-4 py-3 rounded-lg flex items-center gap-3">

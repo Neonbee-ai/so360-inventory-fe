@@ -4,11 +4,14 @@ import { inventoryService } from '../services/inventoryService';
 import { StockBalance } from '../types/inventory';
 import { Table } from '../components/common/Table';
 import { useInventoryFormatters } from '../utils/formatters';
+import { useShellBridge } from '@so360/shell-context';
 
 const PAGE_SIZE = 25;
 
 const StockOverviewPage = () => {
     const formatters = useInventoryFormatters();
+    const shell = useShellBridge();
+    const canViewGlValuation = (shell?.isFeatureEnabled?.('action:inventory:stock:gl_valuation') ?? true);
     const [stockLevels, setStockLevels] = useState<StockBalance[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -174,6 +177,7 @@ const StockOverviewPage = () => {
                         {formatters.formatCurrency(stockLevels.reduce((sum, sl) => sum + (sl.valuation || 0), 0))}
                     </div>
                 </div>
+                {canViewGlValuation && (
                 <div className="bg-slate-900/40 border border-slate-800/50 p-4 rounded-xl">
                     <span className="text-slate-500 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
                         <BookOpen size={10} /> GL Balance
@@ -199,6 +203,7 @@ const StockOverviewPage = () => {
                         <div className="text-sm text-slate-500 mt-0.5">Unavailable</div>
                     )}
                 </div>
+                )}
                 <div className="bg-slate-900/40 border border-slate-800/50 p-4 rounded-xl">
                     <span className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Low Stock</span>
                     <div className="text-xl font-bold text-amber-400 mt-0.5">

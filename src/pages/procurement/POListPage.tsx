@@ -1,12 +1,18 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { procurementService } from '../../services/procurementService';
 import { vendorService } from '../../services/vendorService';
-import { useBusinessSettings, useActivity } from '@so360/shell-context';
+import { useBusinessSettings, useActivity, useShellBridge, useQuota } from '@so360/shell-context';
 import { useInventoryFormatters } from '../../utils/formatters';
 import ItemSearchSelector from '../../components/ItemSearchSelector';
+import { QuotaBar, QuotaGate } from '@so360/design-system';
 
 const POListPage = () => {
+    const shell = useShellBridge();
+    const canCreatePO = (shell?.isFeatureEnabled?.('action:inventory:procurement:create_po') ?? true);
+    const quotaChecks = useMemo(() => [{ module_code: 'inventory', quota_key: 'max_po_per_month' }], []);
+    const { getQuota } = useQuota({ checks: quotaChecks, orgId: shell?.currentOrg?.id || '' });
+    const quotaData = getQuota('max_po_per_month');
     const navigate = useNavigate();
     const location = useLocation();
     const { settings } = useBusinessSettings();
@@ -259,14 +265,34 @@ const POListPage = () => {
                     >
                         <span className="text-base leading-none">⚖</span> Opening Balance
                     </button>
-                    <button
-                        onClick={openNewPOForm}
-                        className="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-semibold transition-all shadow-lg shadow-blue-900/20 active:scale-95 flex items-center gap-2"
+                    {canCreatePO && (
+                    <QuotaGate
+                        quotaKey="max_po_per_month"
+                        moduleCode="inventory"
+                        used={quotaData?.current_usage ?? 0}
+                        limit={quotaData?.limit ?? 0}
+                        isUnlimited={quotaData?.is_unlimited}
+                        disableOnExceeded
                     >
-                        <span className="text-xl leading-none">+</span> New PO
-                    </button>
+                        <button
+                            onClick={openNewPOForm}
+                            className="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-semibold transition-all shadow-lg shadow-blue-900/20 active:scale-95 flex items-center gap-2"
+                        >
+                            <span className="text-xl leading-none">+</span> New PO
+                        </button>
+                    </QuotaGate>
+                    )}
                 </div>
             </div>
+
+            {quotaData && (
+                <QuotaBar
+                    label="Purchase Orders"
+                    used={quotaData.current_usage}
+                    limit={quotaData.limit}
+                    isUnlimited={quotaData.is_unlimited}
+                />
+            )}
 
             <div className="bg-slate-900/50 border border-slate-800 rounded-3xl overflow-hidden backdrop-blur-sm">
                 <table className="w-full text-left">
