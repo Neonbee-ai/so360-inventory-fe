@@ -1,0 +1,134 @@
+name: Deploy Inventory Frontend to Production
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  actions: read
+  contents: read
+  security-events: write
+
+jobs:
+  gate:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps --no-audit --no-fund
+      - name: Run unit tests
+        env:
+          CI: 'true'
+        run: npm test
+      - name: Security audit
+        run: npm audit --audit-level=critical --omit=dev
+      - name: Check dependency licenses
+        run: >-
+          npx license-checker
+          --failOn "GPL-2.0;GPL-3.0;AGPL-3.0;LGPL-2.0;LGPL-2.1;LGPL-3.0"
+          --excludePrivatePackages
+      - name: Scan for secrets
+        run: |
+          GITLEAKS_VERSION="8.30.1"
+          if command -v gitleaks &>/dev/null; then
+            gitleaks detect --source . --verbose
+          else
+            curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" | tar -xz -C /tmp/
+            /tmp/gitleaks detect --source . --verbose
+          fi
+
+  codeql:
+    runs-on: self-hosted
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+      - uses: github/codeql-action/autobuild@v3
+      - uses: github/codeql-action/analyze@v3
+        with:
+          category: '/language:javascript-typescript'
+          upload: never
+
+  build-deploy:
+    needs: [gate]
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Checkout shell-fe packages
+        uses: actions/checkout@v4
+        with:
+          repository: Neonbee-ai/so360-shell-fe
+          token: ${{ secrets.PAT_TOKEN }}
+          path: _shell-fe
+
+      - name: Install and build
+        run: |
+          RUNNER_PARENT="$(dirname "$(dirname "$GITHUB_WORKSPACE")")"
+          rm -rf "$RUNNER_PARENT/so360-shell-fe"
+          ln -s "$GITHUB_WORKSPACE/_shell-fe" "$RUNNER_PARENT/so360-shell-fe"
+          rm -rf node_modules package-lock.json
+          LOCK_HASH=$(md5sum package-lock.json 2>/dev/null | cut -d' ' -f1 || echo 'nohash')
+          CACHE_FILE=".npm-ci-hash"
+          if [ -f "$CACHE_FILE" ] && [ "$(cat $CACHE_FILE)" = "$LOCK_HASH" ]; then
+            echo "node_modules cache hit — skipping install"
+          else
+            npm ci --legacy-peer-deps
+            echo "$LOCK_HASH" > "$CACHE_FILE"
+          fi
+          for pkg in shell-context design-system event-bus formatters; do
+            rm -rf "node_modules/@so360/$pkg"
+            cp -r "$GITHUB_WORKSPACE/_shell-fe/packages/$pkg" "node_modules/@so360/$pkg"
+            (cd "node_modules/@so360/$pkg" && npm install --omit=dev --legacy-peer-deps 2>/dev/null || true)
+          done
+          printf '%s\n' \
+            "VITE_BASE_URL=https://cdn.neonbee.app/inventory/" \
+            "VITE_SO360_CORE_API=https://api.neonbee.app/core" \
+            "VITE_SO360_INVENTORY_API=https://api.neonbee.app/inventory" \
+            "VITE_ENVIRONMENT=cloud" \
+            > .env
+          npm run build
+
+      - uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.DIGITALOCEAN_SSH_KEY }}
+
+      - name: Deploy to Production
+        env:
+          SERVER_IP: ${{ secrets.PROD_SERVER_IP }}
+          NGINX_ROOT: /var/www/cdn.neonbee.app/html/inventory
+        run: |
+          ssh-keyscan -H $SERVER_IP >> ~/.ssh/known_hosts
+          ssh root@$SERVER_IP "mkdir -p '$NGINX_ROOT'"
+          rsync -avz --delete dist/ "root@$SERVER_IP:$NGINX_ROOT/"
+          ssh root@$SERVER_IP "nginx -s reload"
+          echo "Deployed Inventory to cdn.neonbee.app/inventory"
+
+      - name: Purge Cloudflare cache
+        continue-on-error: true
+        run: |
+          echo "Purging cdn.neonbee.app/inventory/ from Cloudflare edge cache"
+          RESP=$(curl -sX POST "https://api.cloudflare.com/client/v4/zones/${{ secrets.CF_SAAS_ZONE_ID }}/purge_cache" \
+            -H "Authorization: Bearer ${{ secrets.CF_SAAS_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{"files":["https://cdn.neonbee.app/inventory/assets/remoteEntry.js","https://cdn.neonbee.app/inventory/index.html"]}')
+          echo "$RESP"
+          echo "$RESP" | grep -q '"success":true' || { echo "CF purge failed (deploy still succeeded)"; exit 0; }
+          echo "Cloudflare cache purged"
