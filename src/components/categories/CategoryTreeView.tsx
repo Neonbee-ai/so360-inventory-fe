@@ -8,18 +8,18 @@ const PRESET_COLORS = ['#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#
 
 interface CategoryTreeViewProps {
     tree: TreeNode[];
-    onAdd: (name: string, description: string, parentId?: string) => Promise<void>;
+    onAdd?: (name: string, description: string, parentId?: string) => Promise<void>;
     onUpdate: (id: string, data: { name?: string; description?: string; icon_url?: string | null; image_url?: string | null; color?: string | null }) => Promise<void>;
-    onDelete: (id: string) => Promise<void>;
+    onDelete?: (id: string) => Promise<void>;
     canManage: boolean;
     onSelect: (id: string) => void;
 }
 
 interface TreeItemProps {
     node: TreeNode;
-    onAdd: (name: string, description: string, parentId?: string) => Promise<void>;
+    onAdd?: (name: string, description: string, parentId?: string) => Promise<void>;
     onUpdate: (id: string, data: { name?: string; description?: string; icon_url?: string | null; image_url?: string | null; color?: string | null }) => Promise<void>;
-    onDelete: (id: string) => Promise<void>;
+    onDelete?: (id: string) => Promise<void>;
     canManage: boolean;
     onSelect: (id: string) => void;
 }
@@ -108,7 +108,7 @@ const TreeItem: React.FC<TreeItemProps> = ({ node, onAdd, onUpdate, onDelete, ca
         if (!childName.trim()) return;
         setIsAdding(true);
         try {
-            await onAdd(childName.trim(), '', node.id);
+            await onAdd?.(childName.trim(), '', node.id);
             setChildName('');
             setShowAddChild(false);
             setExpanded(true);
@@ -137,7 +137,7 @@ const TreeItem: React.FC<TreeItemProps> = ({ node, onAdd, onUpdate, onDelete, ca
 
     const handleDelete = async () => {
         if (!confirm(`Delete "${node.name}"?`)) return;
-        await onDelete(node.id);
+        await onDelete?.(node.id);
     };
 
     return (
@@ -254,7 +254,7 @@ const CategoryTreeView: React.FC<CategoryTreeViewProps> = ({ tree, onAdd, onUpda
         if (!rootName.trim()) return;
         setIsAddingRoot(true);
         try {
-            await onAdd(rootName.trim(), '');
+            await onAdd?.(rootName.trim(), '');
             setRootName('');
             setShowAddRoot(false);
         } finally {
