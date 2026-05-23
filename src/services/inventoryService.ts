@@ -389,6 +389,50 @@ class InventoryService {
         });
     }
 
+    // ==================== Attribute Definitions ====================
+
+    async getAttributeDefinitions(categoryId?: string) {
+        const query = categoryId ? `?category_id=${categoryId}` : '';
+        return this.request(`/settings/${this.orgId}/attribute-definitions${query}`);
+    }
+
+    async createAttributeDefinition(dto: {
+        category_id?: string;
+        attribute_key: string;
+        attribute_label: string;
+        attribute_type: 'text' | 'number' | 'select' | 'multi_select' | 'boolean';
+        options?: { value: string; label: string }[];
+        unit?: string;
+        is_required?: boolean;
+        sort_order?: number;
+    }) {
+        return this.request(`/settings/${this.orgId}/attribute-definitions`, {
+            method: 'POST',
+            body: JSON.stringify(dto),
+        });
+    }
+
+    async updateAttributeDefinition(id: string, dto: Partial<{
+        category_id?: string;
+        attribute_label: string;
+        attribute_type: 'text' | 'number' | 'select' | 'multi_select' | 'boolean';
+        options?: { value: string; label: string }[];
+        unit?: string;
+        is_required?: boolean;
+        sort_order?: number;
+    }>) {
+        return this.request(`/settings/${this.orgId}/attribute-definitions/${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify(dto),
+        });
+    }
+
+    async deleteAttributeDefinition(id: string) {
+        return this.request(`/settings/${this.orgId}/attribute-definitions/${id}`, {
+            method: 'DELETE',
+        });
+    }
+
     // ==================== Movement History ====================
 
     async getAdjustmentHistory(itemId?: string) {

@@ -58,6 +58,7 @@ export interface Item {
             sort_order: number;
         }>;
     };
+    metadata?: Record<string, any>;
     cost_center_id?: string;
     default_warehouse_id?: string;
     is_online_visible?: boolean;
@@ -121,6 +122,22 @@ export interface StockMovement {
     created_at: string;
     items: Item;
     warehouses: Warehouse;
+}
+
+export interface ItemAttributeDefinition {
+    id: string;
+    org_id: string;
+    tenant_id: string;
+    category_id?: string | null;
+    attribute_key: string;
+    attribute_label: string;
+    attribute_type: 'text' | 'number' | 'select' | 'multi_select' | 'boolean';
+    options?: { value: string; label: string }[] | null;
+    unit?: string | null;
+    is_required: boolean;
+    sort_order: number;
+    created_at?: string;
+    updated_at?: string;
 }
 
 export interface InventorySettings {

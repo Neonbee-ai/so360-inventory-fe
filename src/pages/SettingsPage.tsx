@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Settings, Save, Box, Tag, MapPin, AlertCircle, CheckCircle2, X, Plus, Sliders, ChevronRight } from 'lucide-react';
+import { Settings, Save, Box, Tag, MapPin, AlertCircle, CheckCircle2, X, Plus, Sliders, ChevronRight, ListFilter } from 'lucide-react';
 import { inventoryService } from '../services/inventoryService';
 import { useAuth } from '../hooks/useAuth';
 import CategoryTreeView from '../components/categories/CategoryTreeView';
 import { buildCategoryTree } from '../utils/categoryTree';
+import ItemAttributeSettingsSection from '../components/settings/ItemAttributeSettingsSection';
 
 interface UomItem {
     id: string;
@@ -257,6 +258,18 @@ const SettingsPage = () => {
                         }}
                         canManage={can('manage_locations')}
                         onSelect={() => {}}
+                    />
+                </section>
+
+                {/* Item Attributes */}
+                <section className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
+                    <h2 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
+                        <ListFilter size={20} className="text-emerald-500" /> Item Attributes
+                    </h2>
+                    <p className="text-sm text-slate-500 mb-4">Define custom attributes per category (e.g. Material, Finish, Shelf Life). Values are stored as flexible metadata on each item.</p>
+                    <ItemAttributeSettingsSection
+                        categories={settings?.categories || []}
+                        canManage={can('manage_locations')}
                     />
                 </section>
 

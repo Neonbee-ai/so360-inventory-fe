@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, Loader2 } from 'lucide-react';
 import { inventoryService } from '../../services/inventoryService';
-import { Unit, ItemCategory, Warehouse } from '../../types/inventory';
+import { Unit, ItemCategory, Warehouse, ItemAttributeDefinition } from '../../types/inventory';
 import { TabId, ItemClassification } from '../../types/itemTypes';
 import TabNavigation from './components/TabNavigation';
 import BasicInfoTab from './tabs/BasicInfoTab';
@@ -42,6 +42,7 @@ interface FormData {
     hsn_code: string;
     product_type_id: string;
     custom_attributes: Record<string, any>;
+    metadata: Record<string, any>;
     cost_center_id: string;
     default_warehouse_id: string;
     is_online_visible: boolean;
@@ -75,6 +76,7 @@ const initialFormData: FormData = {
     hsn_code: '',
     product_type_id: '',
     custom_attributes: {},
+    metadata: {},
     cost_center_id: '',
     default_warehouse_id: '',
     is_online_visible: false,
@@ -96,6 +98,7 @@ const ItemCreatePage = () => {
     const [taxCodes, setTaxCodes] = useState<TaxCodeOption[]>([]);
     const [isTaxCodesLoading, setIsTaxCodesLoading] = useState(true);
     const [taxCodesError, setTaxCodesError] = useState<string | null>(null);
+    const [attributeDefs, setAttributeDefs] = useState<ItemAttributeDefinition[]>([]);
 
     // Inline create states — category
     const [showNewCategory, setShowNewCategory] = useState(false);
@@ -142,8 +145,14 @@ const ItemCreatePage = () => {
 
     const updateField = (field: string, value: any) => {
         setForm(prev => ({ ...prev, [field]: value }));
-        // Clear error for the tab when user edits
         if (field === 'name') setTabErrors(prev => ({ ...prev, basic: false }));
+        if (field === 'category_id') {
+            setAttributeDefs([]);
+            setForm(prev => ({ ...prev, category_id: value, metadata: {} }));
+            if (value) {
+                inventoryService.getAttributeDefinitions(value).then(setAttributeDefs).catch(() => {});
+            }
+        }
     };
 
     const handleCreateCategory = async () => {
@@ -245,6 +254,7 @@ const ItemCreatePage = () => {
             if (form.hsn_code.trim()) dto.hsn_code = form.hsn_code.trim();
             if (form.product_type_id) dto.product_type_id = form.product_type_id;
             if (Object.keys(form.custom_attributes).length > 0) dto.custom_attributes = form.custom_attributes;
+            if (Object.keys(form.metadata).length > 0) dto.metadata = form.metadata;
             if (form.cost_center_id) dto.cost_center_id = form.cost_center_id;
             if (form.default_warehouse_id) dto.default_warehouse_id = form.default_warehouse_id;
             if (form.is_online_visible) dto.is_online_visible = form.is_online_visible;
@@ -325,6 +335,8 @@ const ItemCreatePage = () => {
                         category_id={form.category_id}
                         categories={categories}
                         updateField={updateField}
+                        attributeDefs={attributeDefs}
+                        metadata={form.metadata}
                         onQuickAddCategory={async (name: string) => {
                             try {
                                 const created = await inventoryService.createCategory(name);
