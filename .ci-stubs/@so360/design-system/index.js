@@ -1,4 +1,22 @@
-export const useShellBridge = () => null;
-export const useShell = () => ({});
-export const eventBus = { publish: () => {}, subscribe: () => () => {} };
+import React from 'react';
+const noop = () => {};
+const PassThrough = ({ children }) => React.createElement(React.Fragment, null, children);
+const Empty = () => null;
+
+export const Button = ({ children, ...props }) => React.createElement('button', props, children);
+export const Can = PassThrough;
+export const DepartmentSelector = Empty;
+export const DeleteConfirmDialog = Empty;
+export const FilterBar = Empty;
+export const LeaveCalendar = Empty;
+export const Pagination = Empty;
+export const PeopleSelector = Empty;
+export const QuotaBar = PassThrough;
+export const QuotaGate = PassThrough;
+export const ReviewForm = Empty;
+export const SandboxBanner = Empty;
+export const SortableHeader = ({ children, ...props }) => React.createElement('th', props, children);
+export const UpgradePrompt = Empty;
+export const UserSelector = Empty;
+export const eventBus = { publish: noop, subscribe: () => noop };
 export default {};

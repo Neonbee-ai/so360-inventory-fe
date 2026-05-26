@@ -1,7 +1,7 @@
 import React from 'react';
 import { render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { vi } from 'vitest';
+import { vi, type Mocked } from 'vitest';
 
 // ============================================================================
 // Shared mock factories for Inventory FE tests
@@ -32,7 +32,7 @@ export function renderWithProviders(ui: React.ReactElement, { route = '/' } = {}
   );
 }
 
-export function buildMockService<T extends object>(): jest.Mocked<T> {
+export function buildMockService<T extends object>(): Mocked<T> {
   return new Proxy({} as any, {
     get: (_t, prop) => vi.fn(),
   });
