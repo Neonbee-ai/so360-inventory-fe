@@ -1,17 +1,16 @@
-import { createContext } from 'react';
 const noop = () => {};
 const noopAsync = async () => {};
 const nullHook = () => null;
 
 export const useShell = () => ({});
 export const useShellBridge = nullHook;
-export const ShellContext = createContext(undefined);
+export const ShellContext = { _currentValue: undefined, Provider: ({ children }) => children, Consumer: ({ children }) => children(undefined) };
 export const useIdentity = () => ({ user: null, isAuthenticated: false, isLoading: false });
 export const useTenant = () => ({ tenants: [], currentTenant: null, switchTenant: noop, isLoading: false });
 export const useOrganization = () => ({ orgs: [], currentOrg: null, switchOrg: noop, isLoading: false });
-export const useEntitlements = () => ({ permissions: [], hasPermission: () => false, isLoading: false });
+export const useEntitlements = () => ({ permissions: [], hasPermission: () => false, can: () => false, isLoading: false });
 export const useModules = () => ({ enabledModules: [], isModuleEnabled: () => false, toggleModule: noopAsync, isLoading: false });
-export const useFeatureFlags = () => ({ featureFlags: {}, isFeatureFlagEnabled: () => false, effectiveFlags: {}, isFeatureEnabled: () => true, isFeatureReadOnly: () => false, isFeatureHidden: () => false });
+export const useFeatureFlags = () => ({ featureFlags: {}, isFeatureFlagEnabled: () => false, effectiveFlags: {}, isFeatureEnabled: () => true });
 export const useActivity = () => ({ recordActivity: noopAsync });
 export const useNotify = () => ({ emitNotification: noopAsync });
 export const useBusinessSettings = () => ({ settings: null, isLoading: false, refresh: noopAsync });
@@ -21,12 +20,12 @@ export const usePageEntitlement = () => ({ entitlement: 'enabled', isBlocked: fa
 export const useRoiConfig = () => ({ roiConfig: null, upgradeMessages: {}, industryKey: null });
 export const useStore = () => ({ stores: [], currentStore: null, switchStore: noop, isLoading: false, canCreateStore: true });
 export const useTheme = () => ({ theme: 'light', toggleTheme: noop });
+export const Can = ({ children }) => children;
 export const usePeople = () => ({ people: [], isLoading: false });
 export const usePagination = () => ({ page: 1, pageSize: 20, setPage: noop, setPageSize: noop });
 export const useSorting = () => ({ sortKey: null, sortDirection: 'asc', setSortKey: noop });
 export const useFilters = () => ({ filters: {}, setFilter: noop, clearFilters: noop });
 export const useVocabulary = () => ({ t: (k) => k });
 export const useSubscription = () => ({ plan: null, isLoading: false });
-export const Can = ({ children }) => children;
 export const eventBus = { publish: noop, subscribe: () => noop };
 export default {};
