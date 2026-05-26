@@ -31,6 +31,16 @@ vi.mock('../components/common/Table', () => ({
   ),
 }));
 
+vi.mock('@so360/shell-context', () => ({
+  useModules: () => ({ isModuleEnabled: () => true }),
+  useActivity: () => ({ recordActivity: vi.fn() }),
+  useShellBridge: () => ({ isFeatureEnabled: () => true, currentOrg: { id: 'org-1', name: 'Test Org' } }),
+  useShell: () => ({ currentOrg: { id: 'org-1', name: 'Test Org' } }),
+  useQuota: () => ({ getQuota: () => null, isExceeded: () => false }),
+  useSandboxLimit: () => ({ isSandboxMode: false, sandboxEntryLimit: null, limitItems: (items: any[]) => items, isLimited: false }),
+  useBusinessSettings: () => ({ settings: { base_currency: 'USD', is_tax_inclusive_pricing: false } }),
+}));
+
 import ItemsPage from './ItemsPage';
 
 const makeItem = (overrides: any = {}) => ({

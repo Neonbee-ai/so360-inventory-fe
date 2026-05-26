@@ -282,5 +282,8 @@ export const Dumbbell = createIcon('Dumbbell');
 export const Sparkles = createIcon('Sparkles');
 export const Watch = createIcon('Watch');
 export const Grid3X3 = createIcon('Grid3X3');
+export const ListFilter = createIcon('ListFilter');
+export const FlaskConical = createIcon('FlaskConical');
+export const SlidersHorizontal = createIcon('SlidersHorizontal');
 
 export type LucideIcon = any;

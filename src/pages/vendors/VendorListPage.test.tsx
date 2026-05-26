@@ -28,6 +28,12 @@ vi.mock('../../components/common/Modal', () => ({
     isOpen ? <div data-testid="modal"><h3>{title}</h3>{children}</div> : null,
 }));
 
+vi.mock('@so360/shell-context', () => ({
+  useShellBridge: () => ({ isFeatureEnabled: () => true, currentOrg: { id: 'org-1', name: 'Test Org' } }),
+  useQuota: () => ({ getQuota: () => null, isExceeded: () => false }),
+  useSandboxLimit: () => ({ isSandboxMode: false, sandboxEntryLimit: null, limitItems: (items: any[]) => items, isLimited: false }),
+}));
+
 import VendorListPage from './VendorListPage';
 
 const makeVendor = (overrides: any = {}) => ({

@@ -36,6 +36,13 @@ vi.mock('../components/common/Skeleton', () => ({
   TableSkeleton: () => <div data-testid="skeleton">Loading...</div>,
 }));
 
+vi.mock('@so360/shell-context', () => ({
+  useActivity: () => ({ recordActivity: vi.fn() }),
+  useShellBridge: () => ({ isFeatureEnabled: () => true, currentOrg: { id: 'org-1', name: 'Test Org' } }),
+  useQuota: () => ({ getQuota: () => null, isExceeded: () => false }),
+  useSandboxLimit: () => ({ isSandboxMode: false, sandboxEntryLimit: null, limitItems: (items: any[]) => items, isLimited: false }),
+}));
+
 import StockLocationsPage from './StockLocationsPage';
 
 const makeWarehouse = (overrides: any = {}) => ({

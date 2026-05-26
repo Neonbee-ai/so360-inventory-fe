@@ -22,6 +22,9 @@ vi.mock('../hooks/useAuth', () => ({
 
 vi.mock('@so360/shell-context', () => ({
   useActivity: () => ({ recordActivity: vi.fn().mockResolvedValue(undefined) }),
+  useShellBridge: () => ({ isFeatureEnabled: () => true, currentOrg: { id: 'org-1', name: 'Test Org' } }),
+  useQuota: () => ({ getQuota: () => null, isExceeded: () => false }),
+  useSandboxLimit: () => ({ isSandboxMode: false, sandboxEntryLimit: null, limitItems: (items: any[]) => items, isLimited: false }),
 }));
 
 vi.mock('../components/common/Table', () => ({

@@ -33,6 +33,10 @@ vi.mock('../components/categories/CategoryTreeView', () => ({
   ),
 }));
 
+vi.mock('../components/settings/ItemAttributeSettingsSection', () => ({
+  default: () => <div data-testid="item-attribute-settings">ItemAttributeSettings</div>,
+}));
+
 import SettingsPage from './SettingsPage';
 
 const makeSettings = (overrides: any = {}) => ({
