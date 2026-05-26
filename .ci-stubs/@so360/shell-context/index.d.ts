@@ -1,6 +1,6 @@
 export const useShell: any;
 export const useShellBridge: any;
-export const ShellContext: any;
+export declare const ShellContext: import('react').Context<any>;
 export const useIdentity: any;
 export const useTenant: any;
 export const useOrganization: any;

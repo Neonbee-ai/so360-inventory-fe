@@ -1,11 +1,11 @@
+import { createContext } from 'react';
 const noop = () => {};
 const noopAsync = async () => {};
 const nullHook = () => null;
-const emptyObj = () => ({});
 
-export const useShell = emptyObj;
+export const useShell = () => ({});
 export const useShellBridge = nullHook;
-export const ShellContext = { Provider: ({ children }) => children };
+export const ShellContext = createContext(undefined);
 export const useIdentity = () => ({ user: null, isAuthenticated: false, isLoading: false });
 export const useTenant = () => ({ tenants: [], currentTenant: null, switchTenant: noop, isLoading: false });
 export const useOrganization = () => ({ orgs: [], currentOrg: null, switchOrg: noop, isLoading: false });
