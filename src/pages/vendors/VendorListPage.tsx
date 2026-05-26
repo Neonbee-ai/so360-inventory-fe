@@ -4,7 +4,7 @@ import { vendorService } from '../../services/vendorService';
 import { Plus, Search, Trash2, Loader2, X, AlertCircle } from 'lucide-react';
 import { Modal } from '../../components/common/Modal';
 import { useAuth } from '../../hooks/useAuth';
-import { useShellBridge, useQuota } from '@so360/shell-context';
+import { useShellBridge, useQuota, useSandboxLimit } from '@so360/shell-context';
 import { QuotaBar, QuotaGate } from '@so360/design-system';
 
 interface Vendor {
@@ -29,6 +29,7 @@ const VendorListPage = () => {
     const quotaChecks = useMemo(() => [{ module_code: 'inventory', quota_key: 'max_vendors' }], []);
     const { getQuota } = useQuota({ checks: quotaChecks, orgId: shell?.currentOrg?.id || '' });
     const quotaData = getQuota('max_vendors');
+    const { isSandboxMode, sandboxEntryLimit, isLimited } = useSandboxLimit();
     const [vendors, setVendors] = useState<Vendor[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -189,11 +190,19 @@ const VendorListPage = () => {
                 />
             </div>
 
+            {/* Sandbox limit notice */}
+            {isSandboxMode && isLimited(filteredVendors.length) && (
+                <div className="px-4 py-2.5 bg-amber-500/10 border border-amber-500/30 rounded-lg text-amber-400 text-sm flex items-center gap-2">
+                    <span className="font-semibold">Sandbox mode:</span>
+                    showing {sandboxEntryLimit} of {filteredVendors.length} vendors — full list visible in production.
+                </div>
+            )}
+
             {/* Grid View */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {loading ? (
                     <div className="col-span-full py-12 text-center text-slate-500 animate-pulse font-medium">Loading vendor ecosystem...</div>
-                ) : filteredVendors.length === 0 ? (
+                ) : (isSandboxMode ? filteredVendors.slice(0, sandboxEntryLimit) : filteredVendors).length === 0 ? (
                     <div className="col-span-full py-12 text-center text-slate-500 bg-slate-900/30 border border-dashed border-slate-800 rounded-3xl">
                         <div className="text-4xl mb-4">🤝</div>
                         <div className="text-lg font-semibold text-slate-300">No vendors found</div>
@@ -201,7 +210,7 @@ const VendorListPage = () => {
                             {searchTerm ? 'Try adjusting your search.' : 'Start by adding your first supplier or subcontractor.'}
                         </p>
                     </div>
-                ) : filteredVendors.map((vendor) => {
+                ) : (isSandboxMode ? filteredVendors.slice(0, sandboxEntryLimit) : filteredVendors).map((vendor) => {
                     const profile = vendor.vendor_profiles?.[0];
                     return (
                         <div key={vendor.id} className="bg-slate-900/50 border border-slate-800 rounded-3xl p-6 group hover:border-emerald-500/50 transition-all hover:bg-slate-800/30 backdrop-blur-sm shadow-xl shadow-black/10">

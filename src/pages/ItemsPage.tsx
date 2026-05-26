@@ -5,7 +5,7 @@ import { inventoryService } from '../services/inventoryService';
 import { Item } from '../types/inventory';
 import { Table } from '../components/common/Table';
 import { useAuth } from '../hooks/useAuth';
-import { useShellBridge, useQuota } from '@so360/shell-context';
+import { useShellBridge, useQuota, useSandboxLimit } from '@so360/shell-context';
 import { QuotaBar, QuotaGate } from '@so360/design-system';
 
 const ItemsPage = () => {
@@ -16,6 +16,7 @@ const ItemsPage = () => {
     const quotaChecks = useMemo(() => [{ module_code: 'inventory', quota_key: 'max_skus' }], []);
     const { getQuota } = useQuota({ checks: quotaChecks, orgId: shell?.currentOrg?.id || '' });
     const quotaData = getQuota('max_skus');
+    const { isSandboxMode, sandboxEntryLimit, isLimited } = useSandboxLimit();
     const [items, setItems] = useState<Item[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -183,8 +184,15 @@ const ItemsPage = () => {
                 </div>
             </div>
 
+            {isSandboxMode && isLimited(filteredItems.length) && (
+                <div className="mb-4 px-4 py-2.5 bg-amber-500/10 border border-amber-500/30 rounded-lg text-amber-400 text-sm flex items-center gap-2">
+                    <span className="font-semibold">Sandbox mode:</span>
+                    showing {sandboxEntryLimit} of {filteredItems.length} items — full list visible in production.
+                </div>
+            )}
+
             <Table
-                data={filteredItems}
+                data={isSandboxMode ? filteredItems.slice(0, sandboxEntryLimit) : filteredItems}
                 columns={columns}
                 isLoading={isLoading}
                 onRowClick={(item) => navigate(`/inventory/items/${item.id}`)}
