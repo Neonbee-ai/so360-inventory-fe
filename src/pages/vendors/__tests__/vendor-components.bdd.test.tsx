@@ -25,7 +25,6 @@ const mockCreateVendor = vi.fn();
 const mockDeleteVendor = vi.fn();
 const mockGetContracts = vi.fn();
 const mockGetVendorDetail = vi.fn();
-const mockGetVendorDetail = vi.fn();
 const mockUpdateVendor = vi.fn();
 const mockRateVendor = vi.fn();
 const mockGetPOs = vi.fn();
