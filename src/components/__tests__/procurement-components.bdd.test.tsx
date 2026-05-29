@@ -221,7 +221,7 @@ describe('Given LifecycleStatusPanel', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Draft')).toBeInTheDocument();
+      expect(screen.getAllByText('Draft').length).toBeGreaterThan(0);
     });
     expect(screen.getByRole('button', { name: /Submit for Review/i })).toBeInTheDocument();
   });
@@ -236,7 +236,7 @@ describe('Given LifecycleStatusPanel', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Active')).toBeInTheDocument();
+      expect(screen.getAllByText('Active').length).toBeGreaterThan(0);
     });
     expect(screen.getByRole('button', { name: /Archive/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Submit for Review/i })).not.toBeInTheDocument();

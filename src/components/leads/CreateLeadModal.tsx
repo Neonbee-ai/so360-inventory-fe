@@ -68,6 +68,13 @@ export const CreateLeadModal = ({ isOpen, onClose, onSuccess, existingLeads }: C
     return (
         <Modal isOpen={isOpen} onClose={onClose} title="Create New Lead">
             <form onSubmit={handleSubmit} className="space-y-4">
+                {error && (
+                    <div className="flex items-start gap-3 p-3 bg-rose-500/10 border border-rose-500/20 rounded-lg text-rose-400 text-sm">
+                        <AlertCircle size={18} className="shrink-0" />
+                        <p>{error}</p>
+                    </div>
+                )}
+
                 {isDuplicate && (
                     <div className="flex items-start gap-3 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg text-amber-400 text-sm">
                         <AlertCircle size={18} className="shrink-0" />

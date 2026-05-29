@@ -63,6 +63,10 @@ vi.mock('../../../hooks/useAuth', () => ({
 vi.mock('@so360/shell-context', () => ({
   useShellBridge: () => ({ isFeatureEnabled: () => true, currentOrg: { id: 'org-1' } }),
   useActivity: () => ({ recordActivity: mockRecordActivity }),
+  useQuota: () => ({ getQuota: () => null }),
+  useSandboxLimit: () => ({ isSandboxMode: false, sandboxEntryLimit: 100, isLimited: () => false }),
+  useEntitlements: () => ({ can: () => true, isLoading: false }),
+  ShellContext: { Provider: ({ children }: any) => children },
 }));
 
 vi.mock('@so360/design-system', () => ({
