@@ -3,7 +3,7 @@ import { ShellContext, useEntitlements } from '@so360/shell-context';
 import { User } from '../types/inventory';
 
 export const useAuth = () => {
-    const shell = useContext(ShellContext);
+    const shell = useContext(ShellContext) as any;
     const user = shell?.user as User | undefined;
     const { can: checkPermission, isLoading: permissionsLoading } = useEntitlements();
 
