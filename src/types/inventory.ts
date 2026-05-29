@@ -93,6 +93,12 @@ export interface Warehouse {
     name: string;
     code: string;
     address?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+    contact_person?: string;
+    contact_phone?: string;
+    warehouse_type?: string;
     is_active: boolean;
     warehouse_locations?: WarehouseLocation[];
 }

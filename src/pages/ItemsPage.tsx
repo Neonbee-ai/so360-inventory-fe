@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Filter, Plus, Package, Layers, AlertCircle } from 'lucide-react';
+import { Search, Filter, Plus, Package, Layers, AlertCircle, Flame, Building2, Factory, Wrench } from 'lucide-react';
 import { inventoryService } from '../services/inventoryService';
 import { Item } from '../types/inventory';
 import { Table } from '../components/common/Table';
@@ -20,7 +20,7 @@ const ItemsPage = () => {
     const [items, setItems] = useState<Item[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
-    const [typeFilter, setTypeFilter] = useState<'All' | 'product' | 'service'>('All');
+    const [typeFilter, setTypeFilter] = useState<'All' | 'product' | 'service' | 'raw_material' | 'finished_good' | 'consumable' | 'fixed_asset'>('All');
     const [error, setError] = useState<string | null>(null);
 
     const fetchItems = async () => {
@@ -54,11 +54,13 @@ const ItemsPage = () => {
             accessor: (item: Item) => (
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center border border-slate-700">
-                        {item.type === 'product' ? (
-                            <Package size={20} className="text-blue-400" />
-                        ) : (
-                            <Layers size={20} className="text-purple-400" />
-                        )}
+                        {item.type === 'product' && <Package size={20} className="text-blue-400" />}
+                        {item.type === 'consumable' && <Flame size={20} className="text-orange-400" />}
+                        {item.type === 'fixed_asset' && <Building2 size={20} className="text-teal-400" />}
+                        {item.type === 'raw_material' && <Layers size={20} className="text-amber-400" />}
+                        {item.type === 'finished_good' && <Factory size={20} className="text-emerald-400" />}
+                        {item.type === 'service' && <Wrench size={20} className="text-purple-400" />}
+                        {!['product','consumable','fixed_asset','raw_material','finished_good','service'].includes(item.type) && <Package size={20} className="text-slate-400" />}
                     </div>
                     <div className="flex flex-col">
                         <span className="font-semibold text-white">{item.name}</span>
@@ -70,11 +72,15 @@ const ItemsPage = () => {
         {
             header: 'Type',
             accessor: (item: Item) => (
-                <span className={`px-2 py-1 rounded-md text-[10px] font-bold border capitalize ${item.type === 'product'
-                    ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
-                    : 'bg-purple-500/10 text-purple-400 border-purple-500/20'
-                    }`}>
-                    {item.type}
+                <span className={`px-2 py-1 rounded-md text-[10px] font-bold border capitalize ${
+                    item.type === 'product' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
+                    item.type === 'consumable' ? 'bg-orange-500/10 text-orange-400 border-orange-500/20' :
+                    item.type === 'fixed_asset' ? 'bg-teal-500/10 text-teal-400 border-teal-500/20' :
+                    item.type === 'raw_material' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                    item.type === 'finished_good' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                    'bg-purple-500/10 text-purple-400 border-purple-500/20'
+                }`}>
+                    {item.type === 'fixed_asset' ? 'Fixed Asset' : item.type === 'raw_material' ? 'Raw Material' : item.type === 'finished_good' ? 'Finished Good' : item.type}
                 </span>
             )
         },
@@ -178,6 +184,10 @@ const ItemsPage = () => {
                         >
                             <option value="All">All Types</option>
                             <option value="product">Products</option>
+                            <option value="consumable">Consumables</option>
+                            <option value="fixed_asset">Fixed Assets</option>
+                            <option value="raw_material">Raw Materials</option>
+                            <option value="finished_good">Finished Goods</option>
                             <option value="service">Services</option>
                         </select>
                     </div>

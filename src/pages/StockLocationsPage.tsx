@@ -30,6 +30,12 @@ const StockLocationsPage = () => {
         name: '',
         code: '',
         address: '',
+        city: '',
+        state: '',
+        country: '',
+        contact_person: '',
+        contact_phone: '',
+        warehouse_type: 'general',
         is_active: true
     });
     const [isCreating, setIsCreating] = useState(false);
@@ -40,6 +46,12 @@ const StockLocationsPage = () => {
         name: '',
         code: '',
         address: '',
+        city: '',
+        state: '',
+        country: '',
+        contact_person: '',
+        contact_phone: '',
+        warehouse_type: 'general',
         is_active: true
     });
     const [isSaving, setIsSaving] = useState(false);
@@ -99,7 +111,7 @@ const StockLocationsPage = () => {
             recordActivity({ eventType: 'inventory.location.created', eventCategory: 'data', description: `Created warehouse "${newWarehouse.name}"`, resourceType: 'location' }).catch(() => {});
             setIsCreateModalOpen(false);
             fetchWarehouses();
-            setNewWarehouse({ name: '', code: '', address: '', is_active: true });
+            setNewWarehouse({ name: '', code: '', address: '', city: '', state: '', country: '', contact_person: '', contact_phone: '', warehouse_type: 'general', is_active: true });
             setSuccessMessage('Warehouse created successfully');
             setTimeout(() => setSuccessMessage(null), 3000);
         } catch (err: any) {
@@ -115,6 +127,12 @@ const StockLocationsPage = () => {
             name: wh.name,
             code: wh.code || '',
             address: wh.address || '',
+            city: wh.city || '',
+            state: wh.state || '',
+            country: wh.country || '',
+            contact_person: wh.contact_person || '',
+            contact_phone: wh.contact_phone || '',
+            warehouse_type: wh.warehouse_type || 'general',
             is_active: wh.is_active
         });
     };
@@ -324,41 +342,114 @@ const StockLocationsPage = () => {
             <Modal
                 isOpen={isCreateModalOpen}
                 onClose={() => setIsCreateModalOpen(false)}
-                title="Establish New Warehouse"
+                title="Register New Warehouse"
             >
                 <form onSubmit={handleCreateWarehouse} className="space-y-4 text-slate-200">
-                    <div>
-                        <label className="block text-sm font-medium text-slate-400 mb-1.5">Warehouse Name *</label>
-                        <input
-                            required
-                            type="text"
-                            value={newWarehouse.name}
-                            onChange={(e) => setNewWarehouse({ ...newWarehouse, name: e.target.value })}
-                            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                            placeholder="e.g. Dubai South Hub"
-                        />
-                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="col-span-2">
+                            <label className="block text-sm font-medium text-slate-400 mb-1.5">Warehouse Name *</label>
+                            <input
+                                required
+                                type="text"
+                                value={newWarehouse.name}
+                                onChange={(e) => setNewWarehouse({ ...newWarehouse, name: e.target.value })}
+                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                placeholder="e.g. Dubai South Hub"
+                            />
+                        </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-slate-400 mb-1.5">Short Code *</label>
-                        <input
-                            required
-                            type="text"
-                            value={newWarehouse.code}
-                            onChange={(e) => setNewWarehouse({ ...newWarehouse, code: e.target.value.toUpperCase() })}
-                            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50 font-mono"
-                            placeholder="e.g. DXB-01"
-                        />
-                    </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-400 mb-1.5">Short Code *</label>
+                            <input
+                                required
+                                type="text"
+                                value={newWarehouse.code}
+                                onChange={(e) => setNewWarehouse({ ...newWarehouse, code: e.target.value.toUpperCase() })}
+                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50 font-mono"
+                                placeholder="e.g. DXB-01"
+                            />
+                        </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-slate-400 mb-1.5">Address</label>
-                        <textarea
-                            value={newWarehouse.address}
-                            onChange={(e) => setNewWarehouse({ ...newWarehouse, address: e.target.value })}
-                            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50 h-24 resize-none"
-                            placeholder="Physical location details..."
-                        />
+                        <div>
+                            <label className="block text-sm font-medium text-slate-400 mb-1.5">Warehouse Type</label>
+                            <select
+                                value={newWarehouse.warehouse_type}
+                                onChange={(e) => setNewWarehouse({ ...newWarehouse, warehouse_type: e.target.value })}
+                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-200"
+                            >
+                                <option value="general">General</option>
+                                <option value="distribution">Distribution</option>
+                                <option value="cold_storage">Cold Storage</option>
+                                <option value="manufacturing">Manufacturing</option>
+                                <option value="transit">Transit / Cross-dock</option>
+                            </select>
+                        </div>
+
+                        <div className="col-span-2">
+                            <label className="block text-sm font-medium text-slate-400 mb-1.5">Street Address</label>
+                            <input
+                                type="text"
+                                value={newWarehouse.address}
+                                onChange={(e) => setNewWarehouse({ ...newWarehouse, address: e.target.value })}
+                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                placeholder="Street address"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-slate-400 mb-1.5">City</label>
+                            <input
+                                type="text"
+                                value={newWarehouse.city}
+                                onChange={(e) => setNewWarehouse({ ...newWarehouse, city: e.target.value })}
+                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                placeholder="City"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-slate-400 mb-1.5">State / Region</label>
+                            <input
+                                type="text"
+                                value={newWarehouse.state}
+                                onChange={(e) => setNewWarehouse({ ...newWarehouse, state: e.target.value })}
+                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                placeholder="State / Province"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-slate-400 mb-1.5">Country</label>
+                            <input
+                                type="text"
+                                value={newWarehouse.country}
+                                onChange={(e) => setNewWarehouse({ ...newWarehouse, country: e.target.value })}
+                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                placeholder="Country"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-slate-400 mb-1.5">Contact Person</label>
+                            <input
+                                type="text"
+                                value={newWarehouse.contact_person}
+                                onChange={(e) => setNewWarehouse({ ...newWarehouse, contact_person: e.target.value })}
+                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                placeholder="Manager / Supervisor name"
+                            />
+                        </div>
+
+                        <div className="col-span-2">
+                            <label className="block text-sm font-medium text-slate-400 mb-1.5">Contact Phone</label>
+                            <input
+                                type="tel"
+                                value={newWarehouse.contact_phone}
+                                onChange={(e) => setNewWarehouse({ ...newWarehouse, contact_phone: e.target.value })}
+                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                placeholder="+971 50 000 0000"
+                            />
+                        </div>
                     </div>
 
                     <div className="flex gap-3 mt-8">
@@ -375,7 +466,7 @@ const StockLocationsPage = () => {
                             disabled={isCreating}
                             className="flex-1 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-600/50 text-white font-semibold py-2.5 rounded-lg transition-all shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2"
                         >
-                            {isCreating ? <><Loader2 size={18} className="animate-spin" /> Creating...</> : 'Confirm Setup'}
+                            {isCreating ? <><Loader2 size={18} className="animate-spin" /> Creating...</> : 'Register Warehouse'}
                         </button>
                     </div>
                 </form>
@@ -388,35 +479,103 @@ const StockLocationsPage = () => {
                 title="Edit Warehouse"
             >
                 <form onSubmit={handleSaveEdit} className="space-y-4 text-slate-200">
-                    <div>
-                        <label className="block text-sm font-medium text-slate-400 mb-1.5">Warehouse Name *</label>
-                        <input
-                            required
-                            type="text"
-                            value={editForm.name}
-                            onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                        />
-                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="col-span-2">
+                            <label className="block text-sm font-medium text-slate-400 mb-1.5">Warehouse Name *</label>
+                            <input
+                                required
+                                type="text"
+                                value={editForm.name}
+                                onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                            />
+                        </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-slate-400 mb-1.5">Short Code *</label>
-                        <input
-                            required
-                            type="text"
-                            value={editForm.code}
-                            onChange={(e) => setEditForm({ ...editForm, code: e.target.value.toUpperCase() })}
-                            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50 font-mono"
-                        />
-                    </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-400 mb-1.5">Short Code *</label>
+                            <input
+                                required
+                                type="text"
+                                value={editForm.code}
+                                onChange={(e) => setEditForm({ ...editForm, code: e.target.value.toUpperCase() })}
+                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50 font-mono"
+                            />
+                        </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-slate-400 mb-1.5">Address</label>
-                        <textarea
-                            value={editForm.address}
-                            onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
-                            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50 h-24 resize-none"
-                        />
+                        <div>
+                            <label className="block text-sm font-medium text-slate-400 mb-1.5">Warehouse Type</label>
+                            <select
+                                value={editForm.warehouse_type}
+                                onChange={(e) => setEditForm({ ...editForm, warehouse_type: e.target.value })}
+                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-200"
+                            >
+                                <option value="general">General</option>
+                                <option value="distribution">Distribution</option>
+                                <option value="cold_storage">Cold Storage</option>
+                                <option value="manufacturing">Manufacturing</option>
+                                <option value="transit">Transit / Cross-dock</option>
+                            </select>
+                        </div>
+
+                        <div className="col-span-2">
+                            <label className="block text-sm font-medium text-slate-400 mb-1.5">Street Address</label>
+                            <input
+                                type="text"
+                                value={editForm.address}
+                                onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
+                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-slate-400 mb-1.5">City</label>
+                            <input
+                                type="text"
+                                value={editForm.city}
+                                onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
+                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-slate-400 mb-1.5">State / Region</label>
+                            <input
+                                type="text"
+                                value={editForm.state}
+                                onChange={(e) => setEditForm({ ...editForm, state: e.target.value })}
+                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-slate-400 mb-1.5">Country</label>
+                            <input
+                                type="text"
+                                value={editForm.country}
+                                onChange={(e) => setEditForm({ ...editForm, country: e.target.value })}
+                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-slate-400 mb-1.5">Contact Person</label>
+                            <input
+                                type="text"
+                                value={editForm.contact_person}
+                                onChange={(e) => setEditForm({ ...editForm, contact_person: e.target.value })}
+                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                            />
+                        </div>
+
+                        <div className="col-span-2">
+                            <label className="block text-sm font-medium text-slate-400 mb-1.5">Contact Phone</label>
+                            <input
+                                type="tel"
+                                value={editForm.contact_phone}
+                                onChange={(e) => setEditForm({ ...editForm, contact_phone: e.target.value })}
+                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                            />
+                        </div>
                     </div>
 
                     <label className="flex items-center gap-2 cursor-pointer group">
