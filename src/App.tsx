@@ -33,19 +33,20 @@ import { procurementService } from './services/procurementService';
 import { vendorService } from './services/vendorService';
 import { mediaService } from './services/mediaService';
 
-/** Feature-gated route wrapper: renders children only when the flag is enabled (fail-open). */
+
+/** Shown when a submodule is `disabled`/`hidden` — turned off, no upgrade path. */
+const FeatureUnavailable = () => (
+    <div className="flex flex-col items-center justify-center min-h-[40vh] gap-3 text-center px-4">
+        <h2 className="text-lg font-bold text-slate-300">Feature Not Available</h2>
+        <p className="text-slate-500 text-sm max-w-md">This feature is not available for your organization. Contact your administrator.</p>
+    </div>
+);
+
+/** Feature-gated route wrapper. Fail-open while shell context is resolving. */
 const FeatureGate = ({ flagKey, children }: { flagKey: string; children: React.ReactNode }) => {
     const shell = useShellBridge();
-    const enabled = shell?.isFeatureEnabled?.(flagKey) ?? true;
-    if (!enabled) {
-        return (
-            <div className="flex flex-col items-center justify-center min-h-[40vh] gap-3 text-center px-4">
-                <div className="text-slate-600 text-4xl">&#128274;</div>
-                <h2 className="text-lg font-bold text-slate-300">Feature Not Available</h2>
-                <p className="text-slate-500 text-sm max-w-md">This feature is not included in your current plan. Contact your administrator to upgrade.</p>
-            </div>
-        );
-    }
+    const enabled = (shell as any)?.isFeatureEnabled?.(flagKey) ?? true;
+    if (!enabled) return <FeatureUnavailable />;
     return <>{children}</>;
 };
 

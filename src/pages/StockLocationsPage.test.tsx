@@ -137,7 +137,7 @@ describe('StockLocationsPage', () => {
       fireEvent.click(screen.getByText('New Warehouse'));
       await waitFor(() => {
         expect(screen.getByTestId('modal')).toBeInTheDocument();
-        expect(screen.getByText('Establish New Warehouse')).toBeInTheDocument();
+        expect(screen.getByText('Register New Warehouse')).toBeInTheDocument();
       });
     });
 
@@ -158,7 +158,7 @@ describe('StockLocationsPage', () => {
       await waitFor(() => screen.getByPlaceholderText('e.g. Dubai South Hub'));
       fireEvent.change(screen.getByPlaceholderText('e.g. Dubai South Hub'), { target: { value: 'South Hub' } });
       fireEvent.change(screen.getByPlaceholderText('e.g. DXB-01'), { target: { value: 'SH-01' } });
-      fireEvent.click(screen.getByText('Confirm Setup'));
+      fireEvent.click(screen.getByText('Register Warehouse'));
       await waitFor(() => {
         expect(mockCreateWarehouse).toHaveBeenCalled();
       });
