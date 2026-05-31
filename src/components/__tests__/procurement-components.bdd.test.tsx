@@ -196,8 +196,8 @@ describe('Given CreateInvoiceModal', () => {
   it('Given vendor POs exist / When rendered / Then PO options appear in the select', () => {
     render(<CreateInvoiceModal {...defaultProps} />);
 
-    expect(screen.getByText('PO-2026-001 — $5,000 (approved)')).toBeInTheDocument();
-    expect(screen.getByText('PO-2026-002 — $1,200 (draft)')).toBeInTheDocument();
+    expect(screen.getByText('PO-2026-001 — $5,000.00 (approved)')).toBeInTheDocument();
+    expect(screen.getByText('PO-2026-002 — $1,200.00 (draft)')).toBeInTheDocument();
   });
 });
 

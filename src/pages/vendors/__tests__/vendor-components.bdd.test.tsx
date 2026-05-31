@@ -63,6 +63,7 @@ vi.mock('../../../hooks/useAuth', () => ({
 vi.mock('@so360/shell-context', () => ({
   useShellBridge: () => ({ isFeatureEnabled: () => true, currentOrg: { id: 'org-1' } }),
   useActivity: () => ({ recordActivity: mockRecordActivity }),
+  useBusinessSettings: () => ({ settings: { base_currency: 'USD', document_language: 'en-US', timezone: 'UTC' } }),
   useQuota: () => ({ getQuota: () => null }),
   useSandboxLimit: () => ({ isSandboxMode: false, sandboxEntryLimit: 100, isLimited: () => false }),
   useEntitlements: () => ({ can: () => true, isLoading: false }),
@@ -269,7 +270,7 @@ describe('Given ContractsPage', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Subco Inc')).toBeInTheDocument();
-      expect(screen.getByText('$15,000')).toBeInTheDocument();
+      expect(screen.getByText(/\$15,000/)).toBeInTheDocument();
     });
   });
 

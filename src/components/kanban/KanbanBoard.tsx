@@ -1,6 +1,7 @@
 import React from 'react';
 import { Deal, DealStage } from '../../types/crm';
 import { Calendar, DollarSign, TrendingUp } from 'lucide-react';
+import { useInventoryFormatters } from '../../utils/formatters';
 
 interface KanbanBoardProps {
     deals: Deal[];
@@ -10,6 +11,7 @@ interface KanbanBoardProps {
 }
 
 export const KanbanBoard = ({ deals, stages, onDealClick, onStageChange }: KanbanBoardProps) => {
+    const formatters = useInventoryFormatters();
     const [draggedDealId, setDraggedDealId] = React.useState<string | null>(null);
     const [dragOverStage, setDragOverStage] = React.useState<string | null>(null);
 
@@ -73,7 +75,7 @@ export const KanbanBoard = ({ deals, stages, onDealClick, onStageChange }: Kanba
                                 </span>
                             </h3>
                             <span className="text-[10px] text-slate-500 font-black tracking-wider">
-                                ${stageDeals.reduce((sum, d) => sum + d.value, 0).toLocaleString()}
+                                {formatters.formatCurrency(stageDeals.reduce((sum, d) => sum + d.value, 0))}
                             </span>
                         </div>
 
@@ -120,7 +122,7 @@ export const KanbanBoard = ({ deals, stages, onDealClick, onStageChange }: Kanba
                                                 )}
                                             </div>
                                             <div className="flex flex-col">
-                                                <span className="text-[10px] font-black text-slate-100">${deal.value.toLocaleString()}</span>
+                                                <span className="text-[10px] font-black text-slate-100">{formatters.formatCurrency(deal.value)}</span>
                                             </div>
                                         </div>
                                         <span className="text-[9px] text-slate-500 font-bold flex items-center gap-1 bg-slate-900/50 px-1.5 py-0.5 rounded">

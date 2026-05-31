@@ -11,6 +11,7 @@ import { TableSkeleton } from '../../components/common/Skeleton';
 import { useAuth } from '../../hooks/useAuth';
 import { CreateInvoiceModal } from '../../components/vendors/CreateInvoiceModal';
 import { useActivity } from '@so360/shell-context';
+import { useInventoryFormatters } from '../../utils/formatters';
 
 interface VendorDetail {
     id: string;
@@ -48,6 +49,7 @@ const VendorDetailPage = () => {
     const navigate = useNavigate();
     const { can } = useAuth();
     const { recordActivity } = useActivity();
+    const formatters = useInventoryFormatters();
     const [vendor, setVendor] = useState<VendorDetail | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -336,7 +338,7 @@ const VendorDetailPage = () => {
                                                     {new Date(po.created_at).toLocaleDateString()}
                                                 </td>
                                                 <td className="py-3 text-right font-bold text-white">
-                                                    ${po.total_amount?.toLocaleString() || '0'}
+                                                    {formatters.formatCurrency(po.total_amount ?? 0)}
                                                 </td>
                                             </tr>
                                         ))}
@@ -397,7 +399,7 @@ const VendorDetailPage = () => {
                                                     {inv.due_date ? new Date(inv.due_date).toLocaleDateString() : '--'}
                                                 </td>
                                                 <td className="py-3 text-right font-bold text-white">
-                                                    ${inv.total_amount?.toLocaleString() || '0'}
+                                                    {formatters.formatCurrency(inv.total_amount ?? 0)}
                                                 </td>
                                                 <td className="py-3 text-center">
                                                     {inv.attachment_url ? (

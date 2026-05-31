@@ -4,6 +4,7 @@ import { Modal } from '../common/Modal';
 import { procurementService } from '../../services/procurementService';
 import { mediaService } from '../../services/mediaService';
 import { inventoryService } from '../../services/inventoryService';
+import { useInventoryFormatters } from '../../utils/formatters';
 
 interface CreateInvoiceModalProps {
     isOpen: boolean;
@@ -20,6 +21,7 @@ export const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
     vendorPOs,
     onSuccess,
 }) => {
+    const formatters = useInventoryFormatters();
     const [invoiceNumber, setInvoiceNumber] = useState('');
     const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split('T')[0]);
     const [dueDate, setDueDate] = useState('');
@@ -193,7 +195,7 @@ export const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
                         <option value="">No PO (standalone invoice)</option>
                         {vendorPOs.map((po) => (
                             <option key={po.id} value={po.id}>
-                                {po.po_number} — ${po.total_amount?.toLocaleString()} ({po.status})
+                                {po.po_number} — {formatters.formatCurrency(po.total_amount ?? 0)} ({po.status})
                             </option>
                         ))}
                     </select>

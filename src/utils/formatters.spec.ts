@@ -30,7 +30,7 @@ describe('useInventoryFormatters', () => {
 
     it('When formatCurrency called / Then formats value', () => {
       const { result } = renderHook(() => useInventoryFormatters());
-      expect(result.current.formatCurrency(100)).toBe('$100');
+      expect(result.current.formatCurrency(100)).toBe('$100.00');
     });
 
     it('When formatNumber called / Then returns string', () => {

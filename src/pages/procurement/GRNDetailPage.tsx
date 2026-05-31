@@ -5,6 +5,7 @@ import {
     FileText, CheckCircle, Truck
 } from 'lucide-react';
 import { procurementService } from '../../services/procurementService';
+import { useInventoryFormatters } from '../../utils/formatters';
 
 interface GRNLine {
     id: string;
@@ -36,6 +37,7 @@ interface GRN {
 const GRNDetailPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const formatters = useInventoryFormatters();
     const [grn, setGrn] = useState<GRN | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -189,7 +191,7 @@ const GRNDetailPage = () => {
                             {totalQuantityReceived} units
                         </div>
                         <p className="mt-2 text-sm text-violet-200">
-                            Value: ${totalValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                            Value: {formatters.formatCurrency(totalValue)}
                         </p>
                     </div>
                 </div>
@@ -230,10 +232,10 @@ const GRNDetailPage = () => {
                                                 <span className="text-emerald-400 font-bold">{line.quantity_received}</span>
                                             </td>
                                             <td className="py-3 text-right text-slate-300">
-                                                ${(line.po_line?.unit_price || 0).toFixed(2)}
+                                                {formatters.formatCurrency(line.po_line?.unit_price || 0)}
                                             </td>
                                             <td className="py-3 text-right font-bold text-white">
-                                                ${(line.quantity_received * (line.po_line?.unit_price || 0)).toFixed(2)}
+                                                {formatters.formatCurrency(line.quantity_received * (line.po_line?.unit_price || 0))}
                                             </td>
                                         </tr>
                                     ))}
@@ -248,7 +250,7 @@ const GRNDetailPage = () => {
                                         </td>
                                         <td></td>
                                         <td className="py-4 text-right font-black text-xl text-white">
-                                            ${totalValue.toFixed(2)}
+                                            {formatters.formatCurrency(totalValue)}
                                         </td>
                                     </tr>
                                 </tfoot>

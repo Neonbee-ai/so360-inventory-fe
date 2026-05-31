@@ -112,8 +112,9 @@ describe('KanbanBoard', () => {
           onStageChange={vi.fn()}
         />
       );
-      // Value appears both in stage header total and deal card
-      const values = screen.getAllByText('$10,000');
+      // Value appears both in stage header total and deal card,
+      // formatted via the org currency formatter (default USD).
+      const values = screen.getAllByText(/\$10,000/);
       expect(values.length).toBeGreaterThan(0);
     });
   });

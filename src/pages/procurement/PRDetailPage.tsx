@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { procurementService } from '../../services/procurementService';
 import { useActivity } from '@so360/shell-context';
+import { useInventoryFormatters } from '../../utils/formatters';
 
 interface PRLine {
     id: string;
@@ -65,6 +66,7 @@ const PRDetailPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const { recordActivity } = useActivity();
+    const formatters = useInventoryFormatters();
     const [pr, setPr] = useState<PR | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -289,7 +291,7 @@ const PRDetailPage = () => {
                     <div className="bg-blue-600 rounded-2xl p-6 text-white">
                         <span className="text-blue-100 text-[10px] font-bold uppercase tracking-wider">Estimated Total</span>
                         <div className="text-4xl font-black mt-2">
-                            ${totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                            {formatters.formatCurrency(totalAmount)}
                         </div>
                         <p className="mt-2 text-sm text-blue-200">
                             {pr.pr_lines?.length || 0} line items
@@ -367,10 +369,10 @@ const PRDetailPage = () => {
                                                     </span>
                                                 </td>
                                                 <td className="py-3 text-right text-slate-300">
-                                                    ${line.estimated_unit_price.toFixed(2)}
+                                                    {formatters.formatCurrency(line.estimated_unit_price)}
                                                 </td>
                                                 <td className="py-3 text-right font-bold text-white">
-                                                    ${(line.quantity * line.estimated_unit_price).toFixed(2)}
+                                                    {formatters.formatCurrency(line.quantity * line.estimated_unit_price)}
                                                 </td>
                                             </tr>
                                         );
@@ -574,7 +576,7 @@ const PRDetailPage = () => {
                                                 {po.status}
                                             </span>
                                             <span className="text-white font-bold font-mono">
-                                                ${parseFloat(String(po.total_amount || 0)).toLocaleString()}
+                                                {formatters.formatCurrency(parseFloat(String(po.total_amount || 0)))}
                                             </span>
                                             <ExternalLink size={14} className="text-slate-600 group-hover:text-indigo-400 transition-colors" />
                                         </div>

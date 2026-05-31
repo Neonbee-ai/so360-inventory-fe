@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { vendorService } from '../../services/vendorService';
+import { useInventoryFormatters } from '../../utils/formatters';
 
 const ContractsPage = () => {
+    const formatters = useInventoryFormatters();
     const [contracts, setContracts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -48,7 +50,7 @@ const ContractsPage = () => {
                                 <td className="px-6 py-4">
                                     <span className="px-2 py-0.5 rounded-full text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold uppercase">{c.status}</span>
                                 </td>
-                                <td className="px-6 py-4 font-mono font-bold text-slate-100">${parseFloat(c.contract_value).toLocaleString()}</td>
+                                <td className="px-6 py-4 font-mono font-bold text-slate-100">{formatters.formatCurrency(parseFloat(c.contract_value))}</td>
                                 <td className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase">
                                     {new Date(c.start_date).toLocaleDateString()} - {new Date(c.end_date).toLocaleDateString()}
                                 </td>
