@@ -73,6 +73,8 @@ vi.mock('@so360/shell-context', () => ({
 vi.mock('@so360/design-system', () => ({
   QuotaBar: () => <div data-testid="quota-bar" />,
   QuotaGate: ({ children }: any) => <>{children}</>,
+  FeatureGate: ({ state, children }: any) => (state === 'hidden' ? null : <>{children}</>),
+  FeatureRoute: ({ children }: any) => <>{children}</>,
 }));
 
 vi.mock('lucide-react', () => ({
