@@ -31,7 +31,7 @@ const ImageThumbnail: React.FC<ImageThumbnailProps> = ({ url, isLoading, error, 
             <button
                 type="button"
                 onClick={onRemove}
-                className="absolute top-1 right-1 w-5 h-5 rounded-full bg-slate-900/80 text-slate-300 hover:bg-rose-600 hover:text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
+                className="absolute top-1 right-1 w-5 h-5 rounded-full bg-slate-900/80 text-slate-300 hover:bg-rose-600 hover:text-slate-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
             >
                 <X size={12} />
             </button>

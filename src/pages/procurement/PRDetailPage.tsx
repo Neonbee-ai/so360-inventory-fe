@@ -317,7 +317,7 @@ const PRDetailPage = () => {
                         <button
                             onClick={handleClosePR}
                             disabled={isLoading}
-                            className="w-full px-6 py-3 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-2xl font-bold transition-all"
+                            className="w-full px-6 py-3 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed text-slate-50 rounded-2xl font-bold transition-all"
                         >
                             Close PR
                         </button>

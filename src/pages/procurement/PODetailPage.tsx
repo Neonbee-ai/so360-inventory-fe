@@ -551,7 +551,7 @@ const PODetailPage = () => {
                                         <button
                                             onClick={() => handleStatusChange('closed')}
                                             disabled={!!statusAction}
-                                            className="px-4 py-2 bg-slate-600 hover:bg-slate-500 disabled:opacity-60 text-white rounded-lg font-medium transition-all flex items-center gap-2"
+                                            className="px-4 py-2 bg-slate-600 hover:bg-slate-500 disabled:opacity-60 text-slate-50 rounded-lg font-medium transition-all flex items-center gap-2"
                                         >
                                             {statusAction === 'closed' ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}
                                             Close PO
@@ -563,7 +563,7 @@ const PODetailPage = () => {
                                 <button
                                     onClick={() => handleStatusChange('closed')}
                                     disabled={!!statusAction}
-                                    className="px-4 py-2 bg-slate-600 hover:bg-slate-500 disabled:opacity-60 text-white rounded-lg font-medium transition-all flex items-center gap-2"
+                                    className="px-4 py-2 bg-slate-600 hover:bg-slate-500 disabled:opacity-60 text-slate-50 rounded-lg font-medium transition-all flex items-center gap-2"
                                 >
                                     {statusAction === 'closed' ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}
                                     Close PO
@@ -573,7 +573,7 @@ const PODetailPage = () => {
                                 <button
                                     onClick={() => handleStatusChange('closed')}
                                     disabled={!!statusAction}
-                                    className="px-4 py-2 bg-slate-600 hover:bg-slate-500 disabled:opacity-60 text-white rounded-lg font-medium transition-all flex items-center gap-2"
+                                    className="px-4 py-2 bg-slate-600 hover:bg-slate-500 disabled:opacity-60 text-slate-50 rounded-lg font-medium transition-all flex items-center gap-2"
                                 >
                                     {statusAction === 'closed' ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}
                                     Close PO
@@ -590,7 +590,7 @@ const PODetailPage = () => {
                             )}
                             <button
                                 onClick={handlePrint}
-                                className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-medium transition-all flex items-center gap-2"
+                                className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-50 rounded-lg font-medium transition-all flex items-center gap-2"
                             >
                                 <FileText size={16} />
                                 Print PO

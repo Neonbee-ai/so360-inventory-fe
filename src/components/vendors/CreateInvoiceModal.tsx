@@ -117,7 +117,7 @@ export const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
         }
     };
 
-    const inputClass = 'w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50';
+    const inputClass = 'w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-slate-50 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50';
 
     return (
         <Modal isOpen={isOpen} onClose={handleClose} title="Create Vendor Invoice" size="lg">
@@ -212,7 +212,7 @@ export const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
                             <button
                                 type="button"
                                 onClick={() => setFile(null)}
-                                className="p-1 hover:bg-slate-700 rounded text-slate-400 hover:text-white transition-colors"
+                                className="p-1 hover:bg-slate-700 rounded text-slate-400 hover:text-slate-50 transition-colors"
                             >
                                 <X size={16} />
                             </button>
@@ -254,7 +254,7 @@ export const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
                         type="button"
                         onClick={handleClose}
                         disabled={isSubmitting}
-                        className="flex-1 bg-slate-800 hover:bg-slate-700 text-white font-semibold py-2.5 rounded-lg transition-all"
+                        className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-50 font-semibold py-2.5 rounded-lg transition-all"
                     >
                         Cancel
                     </button>

@@ -196,7 +196,7 @@ const StockLocationsPage = () => {
                             onClick={() => !atWarehouseLimit && setIsCreateModalOpen(true)}
                             disabled={atWarehouseLimit}
                             title={atWarehouseLimit ? `${warehouses.length}/${maxWarehouses} warehouses used — upgrade your plan to add more` : undefined}
-                            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold transition-all shadow-lg active:scale-95 ${atWarehouseLimit ? 'bg-slate-700 text-slate-400 cursor-not-allowed shadow-none' : 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-900/20'}`}
+                            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold transition-all shadow-lg active:scale-95 ${atWarehouseLimit ? 'bg-slate-700 text-slate-400 cursor-not-allowed shadow-none' : 'bg-blue-600 hover:bg-blue-500 text-slate-50 shadow-blue-900/20'}`}
                         >
                             <Plus size={20} />
                             New Warehouse
@@ -457,7 +457,7 @@ const StockLocationsPage = () => {
                             type="button"
                             onClick={() => setIsCreateModalOpen(false)}
                             disabled={isCreating}
-                            className="flex-1 bg-slate-800 hover:bg-slate-700 text-white font-semibold py-2.5 rounded-lg transition-all"
+                            className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-50 font-semibold py-2.5 rounded-lg transition-all"
                         >
                             Cancel
                         </button>
@@ -593,7 +593,7 @@ const StockLocationsPage = () => {
                             type="button"
                             onClick={() => setEditingWarehouse(null)}
                             disabled={isSaving}
-                            className="flex-1 bg-slate-800 hover:bg-slate-700 text-white font-semibold py-2.5 rounded-lg transition-all"
+                            className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-50 font-semibold py-2.5 rounded-lg transition-all"
                         >
                             Cancel
                         </button>
@@ -631,7 +631,7 @@ const StockLocationsPage = () => {
                             <button
                                 onClick={() => setDeletingWarehouse(null)}
                                 disabled={isDeleting}
-                                className="flex-1 bg-slate-800 hover:bg-slate-700 text-white font-semibold py-2.5 rounded-lg transition-all"
+                                className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-50 font-semibold py-2.5 rounded-lg transition-all"
                             >
                                 Cancel
                             </button>

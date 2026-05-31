@@ -423,7 +423,7 @@ const WarehouseDetailPage = () => {
                             type="button"
                             onClick={() => setIsEditModalOpen(false)}
                             disabled={isSaving}
-                            className="flex-1 bg-slate-800 hover:bg-slate-700 text-white font-semibold py-2.5 rounded-lg transition-all"
+                            className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-50 font-semibold py-2.5 rounded-lg transition-all"
                         >
                             Cancel
                         </button>
@@ -474,7 +474,7 @@ const WarehouseDetailPage = () => {
                             type="button"
                             onClick={() => { setIsLocationModalOpen(false); setEditingLocation(null); }}
                             disabled={isSavingLocation}
-                            className="flex-1 bg-slate-800 hover:bg-slate-700 text-white font-semibold py-2.5 rounded-lg transition-all"
+                            className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-50 font-semibold py-2.5 rounded-lg transition-all"
                         >
                             Cancel
                         </button>
@@ -512,7 +512,7 @@ const WarehouseDetailPage = () => {
                             <button
                                 onClick={() => setShowDeleteConfirm(false)}
                                 disabled={isDeleting}
-                                className="flex-1 bg-slate-800 hover:bg-slate-700 text-white font-semibold py-2.5 rounded-lg transition-all"
+                                className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-50 font-semibold py-2.5 rounded-lg transition-all"
                             >
                                 Cancel
                             </button>
@@ -551,7 +551,7 @@ const WarehouseDetailPage = () => {
                             <button
                                 onClick={() => setDeletingLocationId(null)}
                                 disabled={isDeletingLocation}
-                                className="flex-1 bg-slate-800 hover:bg-slate-700 text-white font-semibold py-2.5 rounded-lg transition-all"
+                                className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-50 font-semibold py-2.5 rounded-lg transition-all"
                             >
                                 Cancel
                             </button>

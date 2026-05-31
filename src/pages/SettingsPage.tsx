@@ -181,14 +181,14 @@ const SettingsPage = () => {
                                     placeholder="Name"
                                     value={newUomName}
                                     onChange={(e) => setNewUomName(e.target.value)}
-                                    className="bg-slate-800 border border-slate-600 px-2 py-1 rounded text-sm text-white w-24"
+                                    className="bg-slate-800 border border-slate-600 px-2 py-1 rounded text-sm text-slate-50 w-24"
                                 />
                                 <input
                                     type="text"
                                     placeholder="Abbr"
                                     value={newUomAbbr}
                                     onChange={(e) => setNewUomAbbr(e.target.value)}
-                                    className="bg-slate-800 border border-slate-600 px-2 py-1 rounded text-sm text-white w-16"
+                                    className="bg-slate-800 border border-slate-600 px-2 py-1 rounded text-sm text-slate-50 w-16"
                                 />
                                 <button
                                     onClick={handleAddUom}

@@ -132,7 +132,7 @@ const CategoryCardsView: React.FC<{
                         style={{
                             background: cat.color
                                 ? `linear-gradient(135deg, ${cat.color}cc, ${cat.color}66)`
-                                : 'linear-gradient(135deg, #1e293b, #334155)',
+                                : 'linear-gradient(135deg, rgb(var(--s-800)), rgb(var(--s-700)))',
                         }}
                     />
                 )}
@@ -356,11 +356,11 @@ const CategoriesPage = () => {
                         <div className="flex items-center gap-1">
                             <button
                                 onClick={() => setViewMode('tree')}
-                                className={`px-2 py-0.5 rounded text-xs transition-colors ${viewMode === 'tree' ? 'bg-slate-700 text-white' : 'text-slate-500 hover:text-slate-300'}`}
+                                className={`px-2 py-0.5 rounded text-xs transition-colors ${viewMode === 'tree' ? 'bg-slate-700 text-slate-50' : 'text-slate-500 hover:text-slate-300'}`}
                             >Tree</button>
                             <button
                                 onClick={() => setViewMode('cards')}
-                                className={`px-2 py-0.5 rounded text-xs transition-colors ${viewMode === 'cards' ? 'bg-slate-700 text-white' : 'text-slate-500 hover:text-slate-300'}`}
+                                className={`px-2 py-0.5 rounded text-xs transition-colors ${viewMode === 'cards' ? 'bg-slate-700 text-slate-50' : 'text-slate-500 hover:text-slate-300'}`}
                             >Cards</button>
                         </div>
                     </div>
@@ -434,7 +434,7 @@ const CategoriesPage = () => {
                                         <label className="text-xs font-medium text-slate-400 mb-1 block">Icon</label>
                                         <div
                                             className="w-20 h-20 rounded-xl flex items-center justify-center relative group"
-                                            style={{ background: editColor || '#334155' }}
+                                            style={{ background: editColor || 'rgb(var(--s-700))' }}
                                         >
                                             {renderCategoryIcon({ iconUrl: editIconUrl, name: editName, color: editColor, size: 48 })}
                                             <button
@@ -468,7 +468,7 @@ const CategoriesPage = () => {
                                             type="text"
                                             value={editName}
                                             onChange={e => setEditName(e.target.value)}
-                                            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 placeholder:text-slate-600"
+                                            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-50 focus:outline-none focus:border-blue-500 placeholder:text-slate-600"
                                             placeholder="Category name"
                                         />
                                     </div>
@@ -478,7 +478,7 @@ const CategoriesPage = () => {
                                             value={editDesc}
                                             onChange={e => setEditDesc(e.target.value)}
                                             rows={2}
-                                            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 placeholder:text-slate-600 resize-none"
+                                            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-50 focus:outline-none focus:border-blue-500 placeholder:text-slate-600 resize-none"
                                             placeholder="Brief description..."
                                         />
                                     </div>
@@ -526,7 +526,7 @@ const CategoriesPage = () => {
                                         type="number"
                                         value={editSortOrder}
                                         onChange={e => setEditSortOrder(parseInt(e.target.value) || 0)}
-                                        className="w-24 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"
+                                        className="w-24 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-50 focus:outline-none focus:border-blue-500"
                                         min={0}
                                     />
                                     <p className="text-xs text-slate-600 mt-1">Lower = appears first</p>

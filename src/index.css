@@ -1,17 +1,17 @@
+@import '../../../so360-shell-fe/packages/theme/src/theme.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  color-scheme: dark;
-}
+/* color-scheme is governed by @so360/theme (:root dark, .light light) */
 
 body {
   margin: 0;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #020617; /* slate-950 */
+  background-color: rgb(var(--s-950));
 }
 
 /* Custom Scrollbar */
@@ -20,17 +20,17 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #020617;
+  background: rgb(var(--s-950));
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
+  background: rgb(var(--s-800));
   border-radius: 5px;
-  border: 2px solid #020617;
+  border: 2px solid rgb(var(--s-950));
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: rgb(var(--s-700));
 }
 
 /* Modal and Backdrop animations */

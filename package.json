@@ -17,6 +17,7 @@
         "@so360/event-bus": "file:../../so360-shell-fe/packages/event-bus",
         "@so360/formatters": "file:../../so360-shell-fe/packages/formatters",
         "@so360/shell-context": "file:../../so360-shell-fe/packages/shell-context",
+        "@so360/theme": "file:../../so360-shell-fe/packages/theme",
         "browser-image-compression": "^2.0.2",
         "framer-motion": "^12.6.2",
         "lucide-react": "^0.562.0",

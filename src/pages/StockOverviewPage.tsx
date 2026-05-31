@@ -159,7 +159,7 @@ const StockOverviewPage = () => {
                 </div>
                 <button
                     onClick={() => { setError(null); fetchStock(); }}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-800 bg-slate-900/50 text-slate-300 hover:border-slate-700 hover:text-white transition-all text-sm font-medium"
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-800 bg-slate-900/50 text-slate-300 hover:border-slate-700 hover:text-slate-50 transition-all text-sm font-medium"
                 >
                     <RefreshCcw size={16} className={isLoading ? 'animate-spin' : ''} />
                     Refresh
@@ -275,7 +275,7 @@ const StockOverviewPage = () => {
                         <button
                             disabled={currentPage === 1}
                             onClick={() => setCurrentPage(p => p - 1)}
-                            className="px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900/50 hover:border-slate-700 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                            className="px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900/50 hover:border-slate-700 hover:text-slate-50 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                             Previous
                         </button>
@@ -283,7 +283,7 @@ const StockOverviewPage = () => {
                         <button
                             disabled={currentPage === totalPages}
                             onClick={() => setCurrentPage(p => p + 1)}
-                            className="px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900/50 hover:border-slate-700 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                            className="px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900/50 hover:border-slate-700 hover:text-slate-50 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                             Next
                         </button>

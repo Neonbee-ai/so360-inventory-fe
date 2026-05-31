@@ -451,7 +451,7 @@ const ItemDetailPage = () => {
                             <div className="flex items-center gap-3">
                                 <button
                                     onClick={handleCancelEdit}
-                                    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-sm font-semibold rounded-lg transition-all"
+                                    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-50 text-sm font-semibold rounded-lg transition-all"
                                 >
                                     Cancel
                                 </button>
@@ -477,7 +477,7 @@ const ItemDetailPage = () => {
                                 {can('update_item') && (
                                     <button
                                         onClick={handleEditClick}
-                                        className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-sm font-semibold rounded-lg transition-all flex items-center gap-2"
+                                        className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-50 text-sm font-semibold rounded-lg transition-all flex items-center gap-2"
                                     >
                                         <Edit2 size={16} /> Edit
                                     </button>
@@ -1025,7 +1025,7 @@ const ItemDetailPage = () => {
                             Items with stock movements or balances cannot be deleted.
                         </p>
                         <div className="flex gap-3">
-                            <button onClick={() => setShowDeleteConfirm(false)} disabled={isDeleting} className="flex-1 bg-slate-800 hover:bg-slate-700 text-white font-semibold py-2.5 rounded-lg transition-all">Cancel</button>
+                            <button onClick={() => setShowDeleteConfirm(false)} disabled={isDeleting} className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-50 font-semibold py-2.5 rounded-lg transition-all">Cancel</button>
                             <button onClick={handleDeleteItem} disabled={isDeleting} className="flex-1 bg-rose-600 hover:bg-rose-500 disabled:bg-rose-600/50 text-white font-semibold py-2.5 rounded-lg transition-all flex items-center justify-center gap-2">
                                 {isDeleting ? <><Loader2 size={18} className="animate-spin" /> Deleting...</> : <><Trash2 size={18} /> Delete</>}
                             </button>

@@ -160,7 +160,7 @@ const TreeItem: React.FC<TreeItemProps> = ({ node, onAdd, onUpdate, onDelete, ca
                                 type="text"
                                 value={editName}
                                 onChange={e => setEditName(e.target.value)}
-                                className="bg-slate-800 border border-slate-600 px-2 py-0.5 rounded text-sm text-white flex-1"
+                                className="bg-slate-800 border border-slate-600 px-2 py-0.5 rounded text-sm text-slate-50 flex-1"
                                 autoFocus
                                 onKeyDown={e => { if (e.key === 'Enter') handleSaveEdit(); if (e.key === 'Escape') { setIsEditing(false); setEditName(node.name); setEditColor(node.color || ''); } }}
                             />
@@ -223,7 +223,7 @@ const TreeItem: React.FC<TreeItemProps> = ({ node, onAdd, onUpdate, onDelete, ca
                         value={childName}
                         onChange={e => setChildName(e.target.value)}
                         placeholder="Subcategory name..."
-                        className="bg-slate-800 border border-slate-600 px-2 py-1 rounded text-sm text-white flex-1"
+                        className="bg-slate-800 border border-slate-600 px-2 py-1 rounded text-sm text-slate-50 flex-1"
                         autoFocus
                         onKeyDown={e => { if (e.key === 'Enter') handleAddChild(); if (e.key === 'Escape') setShowAddChild(false); }}
                     />
@@ -283,7 +283,7 @@ const CategoryTreeView: React.FC<CategoryTreeViewProps> = ({ tree, onAdd, onUpda
                                 value={rootName}
                                 onChange={e => setRootName(e.target.value)}
                                 placeholder="Category name..."
-                                className="bg-slate-800 border border-slate-600 px-2 py-1 rounded text-sm text-white flex-1"
+                                className="bg-slate-800 border border-slate-600 px-2 py-1 rounded text-sm text-slate-50 flex-1"
                                 autoFocus
                                 onKeyDown={e => { if (e.key === 'Enter') handleAddRoot(); if (e.key === 'Escape') setShowAddRoot(false); }}
                             />

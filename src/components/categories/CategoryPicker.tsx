@@ -129,7 +129,7 @@ const CategoryPicker: React.FC<CategoryPickerProps> = ({ categories, value, onCh
                                         type="text"
                                         value={quickAddName}
                                         onChange={e => setQuickAddName(e.target.value)}
-                                        className="flex-1 bg-slate-900 border border-slate-600 rounded px-2 py-1 text-sm text-white placeholder:text-slate-600"
+                                        className="flex-1 bg-slate-900 border border-slate-600 rounded px-2 py-1 text-sm text-slate-50 placeholder:text-slate-600"
                                         placeholder="Category name..."
                                         onKeyDown={e => { if (e.key === 'Enter') handleQuickAdd(); if (e.key === 'Escape') setShowQuickAdd(false); }}
                                         autoFocus
