@@ -5,7 +5,7 @@ import { Plus, Search, Trash2, Loader2, X, AlertCircle } from 'lucide-react';
 import { Modal } from '../../components/common/Modal';
 import { useAuth } from '../../hooks/useAuth';
 import { useShellBridge, useQuota, useSandboxLimit } from '@so360/shell-context';
-import { QuotaBar, QuotaGate } from '@so360/design-system';
+import { QuotaBar, QuotaGate, FeatureGate } from '@so360/design-system';
 
 interface Vendor {
     id: string;
@@ -25,7 +25,8 @@ const VendorListPage = () => {
     const navigate = useNavigate();
     const { can } = useAuth();
     const shell = useShellBridge();
-    const canCreateVendor = (shell?.isFeatureEnabled?.('action:inventory:vendors:create') ?? true);
+    const createVendorState = (shell as any)?.getFeatureState ? (shell as any).getFeatureState('action:inventory:vendors:create') : 'enabled';
+    const canCreateVendor = createVendorState === 'enabled';
     const quotaChecks = useMemo(() => [{ module_code: 'inventory', quota_key: 'max_vendors' }], []);
     const { getQuota } = useQuota({ checks: quotaChecks, orgId: shell?.currentOrg?.id || '' });
     const quotaData = getQuota('max_vendors');
@@ -133,7 +134,8 @@ const VendorListPage = () => {
                     </h1>
                     <p className="text-slate-400 mt-2 font-medium">Manage supply chain partners and commercial contracts.</p>
                 </div>
-                {can('manage_vendors') && canCreateVendor && (
+                {can('manage_vendors') && (
+                    <FeatureGate state={createVendorState} onUpgradeClick={() => navigate('/org/billing')}>
                     <QuotaGate
                         quotaKey="max_vendors"
                         moduleCode="inventory"
@@ -149,6 +151,7 @@ const VendorListPage = () => {
                             <Plus size={20} /> Add Vendor
                         </button>
                     </QuotaGate>
+                    </FeatureGate>
                 )}
             </div>
 

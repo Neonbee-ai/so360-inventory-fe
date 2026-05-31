@@ -10,6 +10,7 @@ import { Modal } from '../components/common/Modal';
 import { TableSkeleton } from '../components/common/Skeleton';
 import { useAuth } from '../hooks/useAuth';
 import { useActivity, useShellBridge } from '@so360/shell-context';
+import { FeatureGate } from '@so360/design-system';
 
 const WarehouseDetailPage = () => {
     const { id } = useParams();
@@ -17,7 +18,8 @@ const WarehouseDetailPage = () => {
     const { can } = useAuth();
     const { recordActivity } = useActivity();
     const shell = useShellBridge();
-    const canManageWarehouse = (shell?.isFeatureEnabled?.('action:inventory:warehouses:create') ?? true);
+    const warehouseState = (shell as any)?.getFeatureState ? (shell as any).getFeatureState('action:inventory:warehouses:create') : 'enabled';
+    const canManageWarehouse = warehouseState === 'enabled';
     const [warehouse, setWarehouse] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -206,7 +208,8 @@ const WarehouseDetailPage = () => {
                             <span className={`px-2 py-1 rounded text-[10px] uppercase font-bold border ${warehouse.is_active ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-slate-500/10 text-slate-400'}`}>
                                 {warehouse.is_active ? 'Operational' : 'Inactive'}
                             </span>
-                            {can('manage_locations') && canManageWarehouse && (
+                            {can('manage_locations') && (
+                                <FeatureGate state={warehouseState} onUpgradeClick={() => navigate('/org/billing')}>
                                 <>
                                     <button
                                         onClick={handleEditClick}
@@ -223,6 +226,7 @@ const WarehouseDetailPage = () => {
                                         <Trash2 size={16} />
                                     </button>
                                 </>
+                                </FeatureGate>
                             )}
                         </div>
 

@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import React from 'react';
 
+vi.mock('react-router-dom', () => ({ useNavigate: () => vi.fn() }));
+
 const mockGetItems = vi.fn();
 const mockGetLocations = vi.fn();
 const mockGetTransferHistory = vi.fn();

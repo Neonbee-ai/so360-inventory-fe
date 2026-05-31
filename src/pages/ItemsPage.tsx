@@ -6,13 +6,13 @@ import { Item } from '../types/inventory';
 import { Table } from '../components/common/Table';
 import { useAuth } from '../hooks/useAuth';
 import { useShellBridge, useQuota, useSandboxLimit } from '@so360/shell-context';
-import { QuotaBar, QuotaGate } from '@so360/design-system';
+import { QuotaBar, QuotaGate, FeatureGate } from '@so360/design-system';
 
 const ItemsPage = () => {
     const navigate = useNavigate();
     const { can } = useAuth();
     const shell = useShellBridge();
-    const canCreateItem = (shell?.isFeatureEnabled?.('action:inventory:items:create') ?? true);
+    const createItemState = (shell as any)?.getFeatureState ? (shell as any).getFeatureState('action:inventory:items:create') : 'enabled';
     const quotaChecks = useMemo(() => [{ module_code: 'inventory', quota_key: 'max_skus' }], []);
     const { getQuota } = useQuota({ checks: quotaChecks, orgId: shell?.currentOrg?.id || '' });
     const quotaData = getQuota('max_skus');
@@ -126,7 +126,8 @@ const ItemsPage = () => {
                     <h1 className="text-3xl font-bold text-slate-50 tracking-tight">Items</h1>
                     <p className="text-slate-400 mt-1">Manage physical products and trackable assets</p>
                 </div>
-                {can('create_item') && canCreateItem && (
+                {can('create_item') && (
+                    <FeatureGate state={createItemState} onUpgradeClick={() => navigate('/org/billing')}>
                     <QuotaGate
                         quotaKey="max_skus"
                         moduleCode="inventory"
@@ -143,6 +144,7 @@ const ItemsPage = () => {
                             Register Item
                         </button>
                     </QuotaGate>
+                    </FeatureGate>
                 )}
             </header>
 

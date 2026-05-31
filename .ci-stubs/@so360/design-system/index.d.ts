@@ -13,6 +13,8 @@ export const SandboxBanner: any;
 export const SortableHeader: any;
 export const UpgradePrompt: any;
 export const UserSelector: any;
+export const FeatureRoute: any;
+export const FeatureGate: any;
 export const eventBus: any;
 declare const _: any;
 export default _;

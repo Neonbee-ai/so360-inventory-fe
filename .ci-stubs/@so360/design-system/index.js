@@ -22,5 +22,7 @@ export const SortableHeader = ({ children }) => children || null;
 export const Table = ({ children }) => children || null;
 export const UpgradePrompt = Empty;
 export const UserSelector = Empty;
+export const FeatureRoute = ({ children }) => children || null;
+export const FeatureGate = ({ children }) => children || null;
 export const eventBus = { publish: noop, subscribe: () => noop };
 export default {};

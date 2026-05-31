@@ -1,17 +1,20 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Search, MapPin, Clock, AlertTriangle, Box, X, RefreshCcw, BookOpen } from 'lucide-react';
 import { inventoryService } from '../services/inventoryService';
 import { StockBalance } from '../types/inventory';
 import { Table } from '../components/common/Table';
 import { useInventoryFormatters } from '../utils/formatters';
 import { useShellBridge } from '@so360/shell-context';
+import { FeatureGate } from '@so360/design-system';
 
 const PAGE_SIZE = 25;
 
 const StockOverviewPage = () => {
+    const navigate = useNavigate();
     const formatters = useInventoryFormatters();
     const shell = useShellBridge();
-    const canViewGlValuation = (shell?.isFeatureEnabled?.('action:inventory:stock:gl_valuation') ?? true);
+    const viewGlValuationState = (shell as any)?.getFeatureState ? (shell as any).getFeatureState('action:inventory:stock:gl_valuation') : 'enabled';
     const [stockLevels, setStockLevels] = useState<StockBalance[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -177,7 +180,7 @@ const StockOverviewPage = () => {
                         {formatters.formatCurrency(stockLevels.reduce((sum, sl) => sum + (sl.valuation || 0), 0))}
                     </div>
                 </div>
-                {canViewGlValuation && (
+                <FeatureGate state={viewGlValuationState} onUpgradeClick={() => navigate('/org/billing')}>
                 <div className="bg-slate-900/40 border border-slate-800/50 p-4 rounded-xl">
                     <span className="text-slate-500 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
                         <BookOpen size={10} /> GL Balance
@@ -203,7 +206,7 @@ const StockOverviewPage = () => {
                         <div className="text-sm text-slate-500 mt-0.5">Unavailable</div>
                     )}
                 </div>
-                )}
+                </FeatureGate>
                 <div className="bg-slate-900/40 border border-slate-800/50 p-4 rounded-xl">
                     <span className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Low Stock</span>
                     <div className="text-xl font-bold text-amber-400 mt-0.5">

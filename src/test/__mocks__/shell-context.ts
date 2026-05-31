@@ -10,6 +10,7 @@ export const useActivity = () => ({ recordActivity: async () => {} });
 export const useShellBridge = () => ({
   isFeatureEnabled: () => true,
   isFeatureHidden: () => false,
+  getFeatureState: () => 'enabled',
 });
 export const usePeople = () => ({ people: [] });
 export const useEntitlements = () => ({ can: () => true, isLoading: false });

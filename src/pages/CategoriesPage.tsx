@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Tag, Plus, Upload, X, Loader2, AlertCircle, ImageIcon, Save } from 'lucide-react';
 import { inventoryService } from '../services/inventoryService';
 import { mediaService } from '../services/mediaService';
@@ -9,6 +10,7 @@ import { buildCategoryTree } from '../utils/categoryTree';
 import { ItemCategory } from '../types/inventory';
 import { renderCategoryIcon, isPresetUrl } from '../constants/categoryIcons';
 import { useActivity, useShellBridge } from '@so360/shell-context';
+import { FeatureGate } from '@so360/design-system';
 
 const PRESET_COLORS = ['#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#EC4899', '#06B6D4', '#64748B'];
 
@@ -191,12 +193,15 @@ const CategoryCardsView: React.FC<{
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 const CategoriesPage = () => {
+    const navigate = useNavigate();
     const { can } = useAuth();
     const canManage = can('manage_locations');
     const { recordActivity } = useActivity();
     const shell = useShellBridge();
-    const canCreate = (shell?.isFeatureEnabled?.('action:inventory:items:create') ?? true);
-    const canDelete = (shell?.isFeatureEnabled?.('action:inventory:items:delete') ?? true);
+    const createState = (shell as any)?.getFeatureState ? (shell as any).getFeatureState('action:inventory:items:create') : 'enabled';
+    const canCreate = createState === 'enabled';
+    const deleteState = (shell as any)?.getFeatureState ? (shell as any).getFeatureState('action:inventory:items:delete') : 'enabled';
+    const canDelete = deleteState === 'enabled';
 
     const [categories, setCategories] = useState<ItemCategory[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -328,7 +333,8 @@ const CategoriesPage = () => {
                     </h1>
                     <p className="text-slate-400 mt-1 text-sm">Organize your products with a hierarchical category system</p>
                 </div>
-                {canManage && canCreate && (
+                {canManage && (
+                    <FeatureGate state={createState} onUpgradeClick={() => navigate('/org/billing')}>
                     <button
                         onClick={() => {
                             setSelectedId(null);
@@ -337,6 +343,7 @@ const CategoriesPage = () => {
                     >
                         <Plus size={16} /> New Category
                     </button>
+                    </FeatureGate>
                 )}
             </header>
 

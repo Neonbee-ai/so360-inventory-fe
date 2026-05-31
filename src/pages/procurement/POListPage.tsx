@@ -5,11 +5,11 @@ import { vendorService } from '../../services/vendorService';
 import { useBusinessSettings, useActivity, useShellBridge, useQuota } from '@so360/shell-context';
 import { useInventoryFormatters } from '../../utils/formatters';
 import ItemSearchSelector from '../../components/ItemSearchSelector';
-import { QuotaBar, QuotaGate } from '@so360/design-system';
+import { QuotaBar, QuotaGate, FeatureGate } from '@so360/design-system';
 
 const POListPage = () => {
     const shell = useShellBridge();
-    const canCreatePO = (shell?.isFeatureEnabled?.('action:inventory:procurement:create_po') ?? true);
+    const createPoState = (shell as any)?.getFeatureState ? (shell as any).getFeatureState('action:inventory:procurement:create_po') : 'enabled';
     const quotaChecks = useMemo(() => [{ module_code: 'inventory', quota_key: 'max_po_per_month' }], []);
     const { getQuota } = useQuota({ checks: quotaChecks, orgId: shell?.currentOrg?.id || '' });
     const quotaData = getQuota('max_po_per_month');
@@ -265,7 +265,7 @@ const POListPage = () => {
                     >
                         <span className="text-base leading-none">⚖</span> Opening Balance
                     </button>
-                    {canCreatePO && (
+                    <FeatureGate state={createPoState} onUpgradeClick={() => navigate('/org/billing')}>
                     <QuotaGate
                         quotaKey="max_po_per_month"
                         moduleCode="inventory"
@@ -281,7 +281,7 @@ const POListPage = () => {
                             <span className="text-xl leading-none">+</span> New PO
                         </button>
                     </QuotaGate>
-                    )}
+                    </FeatureGate>
                 </div>
             </div>
 

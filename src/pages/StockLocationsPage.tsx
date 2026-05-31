@@ -7,14 +7,15 @@ import { Modal } from '../components/common/Modal';
 import { TableSkeleton } from '../components/common/Skeleton';
 import { useAuth } from '../hooks/useAuth';
 import { useActivity, useShellBridge, useQuota } from '@so360/shell-context';
-import { QuotaBar, QuotaGate } from '@so360/design-system';
+import { QuotaBar, QuotaGate, FeatureGate } from '@so360/design-system';
 
 const StockLocationsPage = () => {
     const navigate = useNavigate();
     const { can } = useAuth();
     const { recordActivity } = useActivity();
     const shell = useShellBridge();
-    const canCreateWarehouse = (shell?.isFeatureEnabled?.('action:inventory:warehouses:create') ?? true);
+    const createWarehouseState = (shell as any)?.getFeatureState ? (shell as any).getFeatureState('action:inventory:warehouses:create') : 'enabled';
+    const canCreateWarehouse = createWarehouseState === 'enabled';
     const quotaChecks = useMemo(() => [{ module_code: 'inventory', quota_key: 'max_warehouses' }], []);
     const { getQuota } = useQuota({ checks: quotaChecks, orgId: shell?.currentOrg?.id || '' });
     const quotaData = getQuota('max_warehouses');
@@ -183,7 +184,8 @@ const StockLocationsPage = () => {
                     <h1 className="text-3xl font-bold text-slate-50 tracking-tight">Warehouses</h1>
                     <p className="text-slate-400 mt-1">Manage physical storage facilities and fulfillment centers</p>
                 </div>
-                {can('manage_locations') && canCreateWarehouse && (
+                {can('manage_locations') && (
+                    <FeatureGate state={createWarehouseState} onUpgradeClick={() => navigate('/org/billing')}>
                     <QuotaGate
                         quotaKey="max_warehouses"
                         moduleCode="inventory"
@@ -203,6 +205,7 @@ const StockLocationsPage = () => {
                             {atWarehouseLimit && <span className="text-xs font-normal ml-1">({warehouses.length}/{maxWarehouses})</span>}
                         </button>
                     </QuotaGate>
+                    </FeatureGate>
                 )}
             </header>
 

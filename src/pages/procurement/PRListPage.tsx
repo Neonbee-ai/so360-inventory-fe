@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { procurementService } from '../../services/procurementService';
 import ItemSearchSelector from '../../components/ItemSearchSelector';
 import { useActivity, useShellBridge } from '@so360/shell-context';
+import { FeatureGate } from '@so360/design-system';
 
 interface PRLine {
     id: string;
@@ -25,7 +26,8 @@ const PRListPage = () => {
     const navigate = useNavigate();
     const { recordActivity } = useActivity();
     const shell = useShellBridge();
-    const canCreatePR = (shell?.isFeatureEnabled?.('action:inventory:procurement:create_pr') ?? true);
+    const createPrState = (shell as any)?.getFeatureState ? (shell as any).getFeatureState('action:inventory:procurement:create_pr') : 'enabled';
+    const canCreatePR = createPrState === 'enabled';
     const [prs, setPrs] = useState<PR[]>([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
@@ -118,14 +120,14 @@ const PRListPage = () => {
                     </h1>
                     <p className="text-slate-400 mt-2 font-medium">Manage and track spending requests across the organization.</p>
                 </div>
-                {canCreatePR && (
+                <FeatureGate state={createPrState} onUpgradeClick={() => navigate('/org/billing')}>
                     <button
                         onClick={() => setShowForm(true)}
                         className="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-semibold transition-all shadow-lg shadow-blue-900/20 active:scale-95 flex items-center gap-2"
                     >
                         <span className="text-xl leading-none">+</span> New Requisition
                     </button>
-                )}
+                </FeatureGate>
             </div>
 
             {/* Stats Overview */}

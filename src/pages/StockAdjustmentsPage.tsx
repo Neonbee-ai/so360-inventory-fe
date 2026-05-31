@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Plus, History, TrendingUp, TrendingDown, MapPin, AlertCircle, Package } from 'lucide-react';
 import { inventoryService } from '../services/inventoryService';
 import { StockMovement, Item, Warehouse } from '../types/inventory';
@@ -6,12 +7,14 @@ import { Table } from '../components/common/Table';
 import { Modal } from '../components/common/Modal';
 import { useAuth } from '../hooks/useAuth';
 import { useActivity, useShellBridge } from '@so360/shell-context';
+import { FeatureGate } from '@so360/design-system';
 
 const StockAdjustmentsPage = () => {
+    const navigate = useNavigate();
     const { can } = useAuth();
     const { recordActivity } = useActivity();
     const shell = useShellBridge();
-    const canAdjustStock = (shell?.isFeatureEnabled?.('action:inventory:stock:adjust') ?? true);
+    const adjustStockState = (shell as any)?.getFeatureState ? (shell as any).getFeatureState('action:inventory:stock:adjust') : 'enabled';
     const [movements, setMovements] = useState<StockMovement[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -137,7 +140,8 @@ const StockAdjustmentsPage = () => {
                     </h1>
                     <p className="text-slate-400 mt-1">Manual corrections for physical stock truth</p>
                 </div>
-                {can('create_adjustment') && canAdjustStock && (
+                {can('create_adjustment') && (
+                    <FeatureGate state={adjustStockState} onUpgradeClick={() => navigate('/org/billing')}>
                     <button
                         onClick={() => setIsModalOpen(true)}
                         className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-lg font-semibold transition-all shadow-lg shadow-blue-900/20 active:scale-95"
@@ -145,6 +149,7 @@ const StockAdjustmentsPage = () => {
                         <Plus size={20} />
                         New Adjustment
                     </button>
+                    </FeatureGate>
                 )}
             </header>
 

@@ -1,5 +1,5 @@
 import React, { Suspense, lazy } from 'react';
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 
 // Lazy load pages for performance
 const ItemsPage = lazy(() => import('./pages/ItemsPage'));
@@ -28,13 +28,32 @@ const CategoriesPage = lazy(() => import('./pages/CategoriesPage'));
 
 
 import { useShellBridge } from '@so360/shell-context';
+import { FeatureRoute } from '@so360/design-system';
 import { inventoryService } from './services/inventoryService';
 import { procurementService } from './services/procurementService';
 import { vendorService } from './services/vendorService';
 import { mediaService } from './services/mediaService';
 
 
-/** Shown when a submodule is `disabled`/`hidden` — turned off, no upgrade path. */
+/** Shown when a submodule is `locked` — a higher plan unlocks it. */
+const UpgradeLocked = () => {
+    const navigate = useNavigate();
+    return (
+        <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4 text-center px-4">
+            <h2 className="text-lg font-bold text-slate-300">This feature is part of a higher plan</h2>
+            <p className="text-slate-500 text-sm max-w-md">Upgrade your plan to unlock it.</p>
+            <button
+                type="button"
+                onClick={() => navigate('/org/billing')}
+                className="px-4 py-2 rounded bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-colors"
+            >
+                Upgrade plan
+            </button>
+        </div>
+    );
+};
+
+/** Shown when a submodule is `disabled` — turned off, no upgrade path. */
 const FeatureUnavailable = () => (
     <div className="flex flex-col items-center justify-center min-h-[40vh] gap-3 text-center px-4">
         <h2 className="text-lg font-bold text-slate-300">Feature Not Available</h2>
@@ -42,12 +61,24 @@ const FeatureUnavailable = () => (
     </div>
 );
 
-/** Feature-gated route wrapper. Fail-open while shell context is resolving. */
+/**
+ * Feature-gated route wrapper on the resolved 5-state model via the shared FeatureRoute:
+ * enabled→render · read_only→inert · locked→upgrade prompt · disabled→unavailable panel · hidden→redirect.
+ * Fail-open (enabled) while shell context is resolving.
+ */
 const FeatureGate = ({ flagKey, children }: { flagKey: string; children: React.ReactNode }) => {
     const shell = useShellBridge();
-    const enabled = (shell as any)?.isFeatureEnabled?.(flagKey) ?? true;
-    if (!enabled) return <FeatureUnavailable />;
-    return <>{children}</>;
+    const state = (shell as any)?.getFeatureState ? (shell as any).getFeatureState(flagKey) : 'enabled';
+    return (
+        <FeatureRoute
+            state={state}
+            hiddenFallback={<Navigate to="/" replace />}
+            lockedFallback={<UpgradeLocked />}
+            disabledFallback={<FeatureUnavailable />}
+        >
+            {children}
+        </FeatureRoute>
+    );
 };
 
 const MfeShellInitializer = ({ children }: { children: React.ReactNode }) => {
