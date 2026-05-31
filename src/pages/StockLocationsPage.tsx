@@ -180,7 +180,7 @@ const StockLocationsPage = () => {
         <div className="p-8">
             <header className="mb-8 flex items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-white tracking-tight">Warehouses</h1>
+                    <h1 className="text-3xl font-bold text-slate-50 tracking-tight">Warehouses</h1>
                     <p className="text-slate-400 mt-1">Manage physical storage facilities and fulfillment centers</p>
                 </div>
                 {can('manage_locations') && canCreateWarehouse && (
@@ -258,7 +258,7 @@ const StockLocationsPage = () => {
                                     {wh.code}
                                 </span>
                             </div>
-                            <h3 className="text-xl font-bold text-white mb-1 uppercase tracking-tight">{wh.name}</h3>
+                            <h3 className="text-xl font-bold text-slate-50 mb-1 uppercase tracking-tight">{wh.name}</h3>
                             <p className="text-slate-500 text-xs mb-6 flex-grow uppercase font-bold tracking-widest">{wh.address || 'Address not set'}</p>
 
                             {/* Locations & Bins Mini View */}
@@ -304,7 +304,7 @@ const StockLocationsPage = () => {
                                         <>
                                             <button
                                                 onClick={() => handleEditClick(wh)}
-                                                className="text-slate-400 hover:text-white text-[10px] font-bold uppercase tracking-widest transition-colors"
+                                                className="text-slate-400 hover:text-slate-50 text-[10px] font-bold uppercase tracking-widest transition-colors"
                                             >
                                                 Edit
                                             </button>
@@ -585,7 +585,7 @@ const StockLocationsPage = () => {
                             onChange={(e) => setEditForm({ ...editForm, is_active: e.target.checked })}
                             className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-blue-600 focus:ring-blue-500/50"
                         />
-                        <span className="text-sm text-slate-300 group-hover:text-white transition-colors">Active / Operational</span>
+                        <span className="text-sm text-slate-300 group-hover:text-slate-50 transition-colors">Active / Operational</span>
                     </label>
 
                     <div className="flex gap-3 mt-8">
@@ -617,13 +617,13 @@ const StockLocationsPage = () => {
                                 <Trash2 size={24} className="text-rose-500" />
                             </div>
                             <div>
-                                <h3 className="text-lg font-bold text-white">Delete Warehouse</h3>
+                                <h3 className="text-lg font-bold text-slate-50">Delete Warehouse</h3>
                                 <p className="text-slate-400 text-sm">This action cannot be undone</p>
                             </div>
                         </div>
 
                         <p className="text-slate-300 mb-6">
-                            Are you sure you want to delete <strong className="text-white">{deletingWarehouse.name}</strong>?
+                            Are you sure you want to delete <strong className="text-slate-50">{deletingWarehouse.name}</strong>?
                             Warehouses with stock cannot be deleted.
                         </p>
 

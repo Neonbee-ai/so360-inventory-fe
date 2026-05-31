@@ -57,7 +57,7 @@ const CategoryIconLibrary: React.FC<CategoryIconLibraryProps> = ({ currentUrl, c
                         className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
                         style={{ background: bg }}
                       >
-                        <IconComp size={16} className="text-white" />
+                        <IconComp size={16} className="text-slate-50" />
                       </div>
                       <span className="text-[10px] text-slate-500 leading-tight text-center truncate w-full">{icon.label}</span>
                     </button>

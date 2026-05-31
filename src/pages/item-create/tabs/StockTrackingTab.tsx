@@ -66,7 +66,7 @@ const StockTrackingTab: React.FC<StockTrackingTabProps> = ({
                             className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-blue-600 focus:ring-blue-500/50"
                         />
                         <div>
-                            <span className="text-sm text-slate-300 group-hover:text-white transition-colors">Batch Tracked</span>
+                            <span className="text-sm text-slate-300 group-hover:text-slate-50 transition-colors">Batch Tracked</span>
                             <p className="text-xs text-slate-600">Track items by batch/lot numbers for expiry and recalls</p>
                         </div>
                     </label>
@@ -78,7 +78,7 @@ const StockTrackingTab: React.FC<StockTrackingTabProps> = ({
                             className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-blue-600 focus:ring-blue-500/50"
                         />
                         <div>
-                            <span className="text-sm text-slate-300 group-hover:text-white transition-colors">Serial Tracked</span>
+                            <span className="text-sm text-slate-300 group-hover:text-slate-50 transition-colors">Serial Tracked</span>
                             <p className="text-xs text-slate-600">Track each individual item by unique serial number</p>
                         </div>
                     </label>
@@ -111,7 +111,7 @@ const StockTrackingTab: React.FC<StockTrackingTabProps> = ({
                             className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-blue-600 focus:ring-blue-500/50"
                         />
                         <div>
-                            <span className="text-sm text-slate-300 group-hover:text-white transition-colors">Active</span>
+                            <span className="text-sm text-slate-300 group-hover:text-slate-50 transition-colors">Active</span>
                             <p className="text-xs text-slate-600">Inactive items are hidden from selection lists and ordering</p>
                         </div>
                     </label>
@@ -123,7 +123,7 @@ const StockTrackingTab: React.FC<StockTrackingTabProps> = ({
                             className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-blue-600 focus:ring-blue-500/50"
                         />
                         <div>
-                            <span className="text-sm text-slate-300 group-hover:text-white transition-colors">Online Visible</span>
+                            <span className="text-sm text-slate-300 group-hover:text-slate-50 transition-colors">Online Visible</span>
                             <p className="text-xs text-slate-600">Show this product in the Daily Store online catalog (requires Active status)</p>
                         </div>
                     </label>

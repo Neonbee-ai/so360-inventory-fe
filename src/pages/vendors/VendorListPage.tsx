@@ -367,7 +367,7 @@ const VendorListPage = () => {
                             })}
                             className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-emerald-600 focus:ring-emerald-500/50"
                         />
-                        <span className="text-sm text-slate-300 group-hover:text-white transition-colors">Mark as Preferred Vendor</span>
+                        <span className="text-sm text-slate-300 group-hover:text-slate-50 transition-colors">Mark as Preferred Vendor</span>
                     </label>
 
                     <div className="flex gap-3 mt-8">
@@ -399,13 +399,13 @@ const VendorListPage = () => {
                                 <Trash2 size={24} className="text-rose-500" />
                             </div>
                             <div>
-                                <h3 className="text-lg font-bold text-white">Delete Vendor</h3>
+                                <h3 className="text-lg font-bold text-slate-50">Delete Vendor</h3>
                                 <p className="text-slate-400 text-sm">This action cannot be undone</p>
                             </div>
                         </div>
 
                         <p className="text-slate-300 mb-6">
-                            Are you sure you want to delete <strong className="text-white">{deletingVendor.name}</strong>?
+                            Are you sure you want to delete <strong className="text-slate-50">{deletingVendor.name}</strong>?
                             Vendors with purchase orders or invoices cannot be deleted.
                         </p>
 

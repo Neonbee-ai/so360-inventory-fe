@@ -161,7 +161,7 @@ const WarehouseDetailPage = () => {
     if (error && !warehouse) return (
         <div className="p-8 text-center">
             <AlertCircle size={48} className="mx-auto text-rose-500 mb-4" />
-            <h2 className="text-2xl font-bold text-white mb-2">{error || 'Warehouse not found'}</h2>
+            <h2 className="text-2xl font-bold text-slate-50 mb-2">{error || 'Warehouse not found'}</h2>
             <button onClick={() => navigate('/inventory/locations')} className="text-blue-400 hover:underline">Back to Warehouses</button>
         </div>
     );
@@ -169,7 +169,7 @@ const WarehouseDetailPage = () => {
     if (!warehouse) return (
         <div className="p-8 text-center">
             <AlertCircle size={48} className="mx-auto text-rose-500 mb-4" />
-            <h2 className="text-2xl font-bold text-white mb-2">Warehouse not found</h2>
+            <h2 className="text-2xl font-bold text-slate-50 mb-2">Warehouse not found</h2>
             <button onClick={() => navigate('/inventory/locations')} className="text-blue-400 hover:underline">Back to Warehouses</button>
         </div>
     );
@@ -192,7 +192,7 @@ const WarehouseDetailPage = () => {
 
             <button
                 onClick={() => navigate('/inventory/locations')}
-                className="flex items-center gap-2 text-slate-400 hover:text-white mb-6 transition-colors group"
+                className="flex items-center gap-2 text-slate-400 hover:text-slate-50 mb-6 transition-colors group"
             >
                 <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
                 Back to Warehouses
@@ -231,7 +231,7 @@ const WarehouseDetailPage = () => {
                                 <Home size={32} className="text-blue-400" />
                             </div>
                             <div className="pt-1">
-                                <h1 className="text-2xl font-bold text-white mb-1 leading-tight">{warehouse.name}</h1>
+                                <h1 className="text-2xl font-bold text-slate-50 mb-1 leading-tight">{warehouse.name}</h1>
                                 <span className="text-xs font-mono text-slate-500 tracking-widest">{warehouse.code || 'NO-CODE'}</span>
                             </div>
                         </div>
@@ -239,7 +239,7 @@ const WarehouseDetailPage = () => {
                         <div className="space-y-3">
                             <div className="flex items-center gap-2 p-3 bg-slate-800/30 rounded-xl border border-slate-700/30">
                                 <MapPin size={16} className="text-slate-400" />
-                                <span className="text-sm text-white">{warehouse.address || 'No address set'}</span>
+                                <span className="text-sm text-slate-50">{warehouse.address || 'No address set'}</span>
                             </div>
                         </div>
                     </div>
@@ -261,7 +261,7 @@ const WarehouseDetailPage = () => {
                     {/* Locations */}
                     <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
                         <div className="flex items-center justify-between mb-6">
-                            <h2 className="text-xl font-bold text-white">Storage Locations</h2>
+                            <h2 className="text-xl font-bold text-slate-50">Storage Locations</h2>
                             {can('manage_locations') && canManageWarehouse && (
                                 <button
                                     onClick={() => openLocationModal()}
@@ -280,7 +280,7 @@ const WarehouseDetailPage = () => {
                                         <div className="flex items-center justify-between mb-3">
                                             <div className="flex items-center gap-2">
                                                 <MapPin size={16} className="text-blue-400" />
-                                                <span className="font-semibold text-white">{loc.name}</span>
+                                                <span className="font-semibold text-slate-50">{loc.name}</span>
                                             </div>
                                             <div className="flex items-center gap-1">
                                                 <span className="text-xs font-mono text-slate-500 mr-2">{loc.code}</span>
@@ -334,7 +334,7 @@ const WarehouseDetailPage = () => {
 
                     {/* Stock in Warehouse */}
                     <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
-                        <h2 className="text-xl font-bold text-white mb-6">Current Stock</h2>
+                        <h2 className="text-xl font-bold text-slate-50 mb-6">Current Stock</h2>
                         {warehouse.stock_balances?.length > 0 ? (
                             <div className="overflow-x-auto">
                                 <table className="w-full">
@@ -351,11 +351,11 @@ const WarehouseDetailPage = () => {
                                                 <td className="py-3">
                                                     <div className="flex items-center gap-2">
                                                         <Package size={16} className="text-slate-500" />
-                                                        <span className="text-white font-medium">{balance.items?.name || 'Unknown'}</span>
+                                                        <span className="text-slate-50 font-medium">{balance.items?.name || 'Unknown'}</span>
                                                     </div>
                                                 </td>
                                                 <td className="py-3 text-slate-500 font-mono text-sm">{balance.items?.sku || '-'}</td>
-                                                <td className="py-3 text-right font-bold text-white">{balance.quantity}</td>
+                                                <td className="py-3 text-right font-bold text-slate-50">{balance.quantity}</td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -415,7 +415,7 @@ const WarehouseDetailPage = () => {
                             onChange={(e) => setEditForm({ ...editForm, is_active: e.target.checked })}
                             className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-blue-600 focus:ring-blue-500/50"
                         />
-                        <span className="text-sm text-slate-300 group-hover:text-white transition-colors">Active / Operational</span>
+                        <span className="text-sm text-slate-300 group-hover:text-slate-50 transition-colors">Active / Operational</span>
                     </label>
 
                     <div className="flex gap-3 mt-8">
@@ -498,13 +498,13 @@ const WarehouseDetailPage = () => {
                                 <Trash2 size={24} className="text-rose-500" />
                             </div>
                             <div>
-                                <h3 className="text-lg font-bold text-white">Delete Warehouse</h3>
+                                <h3 className="text-lg font-bold text-slate-50">Delete Warehouse</h3>
                                 <p className="text-slate-400 text-sm">This action cannot be undone</p>
                             </div>
                         </div>
 
                         <p className="text-slate-300 mb-6">
-                            Are you sure you want to delete <strong className="text-white">{warehouse.name}</strong>?
+                            Are you sure you want to delete <strong className="text-slate-50">{warehouse.name}</strong>?
                             Warehouses with stock cannot be deleted.
                         </p>
 
@@ -537,13 +537,13 @@ const WarehouseDetailPage = () => {
                                 <Trash2 size={24} className="text-rose-500" />
                             </div>
                             <div>
-                                <h3 className="text-lg font-bold text-white">Delete Storage Location</h3>
+                                <h3 className="text-lg font-bold text-slate-50">Delete Storage Location</h3>
                                 <p className="text-slate-400 text-sm">This action cannot be undone</p>
                             </div>
                         </div>
 
                         <p className="text-slate-300 mb-6">
-                            Are you sure you want to delete <strong className="text-white">{deletingLocation?.name || 'this location'}</strong>?
+                            Are you sure you want to delete <strong className="text-slate-50">{deletingLocation?.name || 'this location'}</strong>?
                             Locations with stock cannot be deleted. All bins in this location will also be removed.
                         </p>
 

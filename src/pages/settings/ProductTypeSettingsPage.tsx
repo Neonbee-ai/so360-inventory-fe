@@ -122,10 +122,10 @@ const ProductTypeSettingsPage = () => {
     return (
         <div className="p-8">
             <header className="mb-8">
-                <button onClick={() => navigate('/inventory/settings')} className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-4">
+                <button onClick={() => navigate('/inventory/settings')} className="flex items-center gap-2 text-slate-400 hover:text-slate-50 transition-colors mb-4">
                     <ArrowLeft size={18} /> <span className="text-sm">Back to Settings</span>
                 </button>
-                <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-3">
+                <h1 className="text-2xl font-bold text-slate-50 tracking-tight flex items-center gap-3">
                     <Sliders className="text-blue-500" size={24} /> Product Types
                 </h1>
                 <p className="text-slate-400 mt-1">Manage product type templates and their attribute schemas</p>
@@ -197,7 +197,7 @@ const ProductTypeSettingsPage = () => {
                         <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
                             <div className="flex items-center justify-between mb-6">
                                 <div>
-                                    <h2 className="text-lg font-bold text-white">{selectedType.name}</h2>
+                                    <h2 className="text-lg font-bold text-slate-50">{selectedType.name}</h2>
                                     <p className="text-sm text-slate-500">{selectedType.description || selectedType.code}</p>
                                     {selectedType.is_system && (
                                         <span className="inline-block mt-1 text-xs text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded">System template — attributes are read-only</span>

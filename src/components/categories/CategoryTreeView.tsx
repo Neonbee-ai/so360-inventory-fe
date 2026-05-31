@@ -59,7 +59,7 @@ const CategoryAvatar: React.FC<{
                 <div className="relative w-full h-full">
                     {uploading ? (
                         <div className="w-full h-full flex items-center justify-center" style={{ background: bg }}>
-                            <Loader2 size={12} className="text-white animate-spin" />
+                            <Loader2 size={12} className="text-slate-50 animate-spin" />
                         </div>
                     ) : renderCategoryIcon({
                         iconUrl: node.icon_url,
@@ -70,7 +70,7 @@ const CategoryAvatar: React.FC<{
                     })}
                     {canManage && !uploading && (
                         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover/avatar:opacity-100 transition-opacity flex items-center justify-center rounded-lg">
-                            <Camera size={10} className="text-white" />
+                            <Camera size={10} className="text-slate-50" />
                         </div>
                     )}
                 </div>
@@ -165,7 +165,7 @@ const TreeItem: React.FC<TreeItemProps> = ({ node, onAdd, onUpdate, onDelete, ca
                                 onKeyDown={e => { if (e.key === 'Enter') handleSaveEdit(); if (e.key === 'Escape') { setIsEditing(false); setEditName(node.name); setEditColor(node.color || ''); } }}
                             />
                             <button onClick={handleSaveEdit} disabled={isSaving} className="text-emerald-400 hover:text-emerald-300"><Check size={14} /></button>
-                            <button onClick={() => { setIsEditing(false); setEditName(node.name); setEditColor(node.color || ''); }} className="text-slate-400 hover:text-white"><X size={14} /></button>
+                            <button onClick={() => { setIsEditing(false); setEditName(node.name); setEditColor(node.color || ''); }} className="text-slate-400 hover:text-slate-50"><X size={14} /></button>
                         </div>
                         <div className="flex items-center gap-1.5">
                             {PRESET_COLORS.map(c => (
@@ -192,7 +192,7 @@ const TreeItem: React.FC<TreeItemProps> = ({ node, onAdd, onUpdate, onDelete, ca
                     <>
                         <div className="flex-1 min-w-0 mt-0.5">
                             <span
-                                className="text-sm text-slate-300 block truncate cursor-pointer hover:text-white"
+                                className="text-sm text-slate-300 block truncate cursor-pointer hover:text-slate-50"
                                 onClick={() => onSelect(node.id)}
                             >{node.name}</span>
                             {node.description && (
@@ -230,7 +230,7 @@ const TreeItem: React.FC<TreeItemProps> = ({ node, onAdd, onUpdate, onDelete, ca
                     <button onClick={handleAddChild} disabled={isAdding} className="bg-blue-600 hover:bg-blue-500 text-white px-2 py-1 rounded text-xs disabled:opacity-50">
                         {isAdding ? '...' : 'Add'}
                     </button>
-                    <button onClick={() => setShowAddChild(false)} className="text-slate-400 hover:text-white"><X size={14} /></button>
+                    <button onClick={() => setShowAddChild(false)} className="text-slate-400 hover:text-slate-50"><X size={14} /></button>
                 </div>
             )}
 
@@ -290,7 +290,7 @@ const CategoryTreeView: React.FC<CategoryTreeViewProps> = ({ tree, onAdd, onUpda
                             <button onClick={handleAddRoot} disabled={isAddingRoot} className="bg-blue-600 hover:bg-blue-500 text-white px-2 py-1 rounded text-sm disabled:opacity-50">
                                 {isAddingRoot ? '...' : 'Add'}
                             </button>
-                            <button onClick={() => setShowAddRoot(false)} className="text-slate-400 hover:text-white"><X size={14} /></button>
+                            <button onClick={() => setShowAddRoot(false)} className="text-slate-400 hover:text-slate-50"><X size={14} /></button>
                         </div>
                     ) : (
                         <button

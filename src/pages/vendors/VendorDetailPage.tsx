@@ -181,7 +181,7 @@ const VendorDetailPage = () => {
     if (error || !vendor) return (
         <div className="p-8 text-center">
             <AlertCircle size={48} className="mx-auto text-rose-500 mb-4" />
-            <h2 className="text-2xl font-bold text-white mb-2">{error || 'Vendor not found'}</h2>
+            <h2 className="text-2xl font-bold text-slate-50 mb-2">{error || 'Vendor not found'}</h2>
             <button onClick={() => navigate('/vendors')} className="text-blue-400 hover:underline">Back to Vendors</button>
         </div>
     );
@@ -192,7 +192,7 @@ const VendorDetailPage = () => {
         <div className="p-8">
             <button
                 onClick={() => navigate('/vendors')}
-                className="flex items-center gap-2 text-slate-400 hover:text-white mb-6 transition-colors group"
+                className="flex items-center gap-2 text-slate-400 hover:text-slate-50 mb-6 transition-colors group"
             >
                 <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
                 Back to Vendors
@@ -233,7 +233,7 @@ const VendorDetailPage = () => {
                                 <Building2 size={32} className="text-emerald-400" />
                             </div>
                             <div className="pt-1">
-                                <h1 className="text-2xl font-bold text-white mb-1 leading-tight">{vendor.name}</h1>
+                                <h1 className="text-2xl font-bold text-slate-50 mb-1 leading-tight">{vendor.name}</h1>
                                 <span className="text-xs font-bold uppercase tracking-widest text-slate-500">
                                     {profile?.classification || 'Supplier'}
                                 </span>
@@ -243,15 +243,15 @@ const VendorDetailPage = () => {
                         <div className="space-y-3">
                             <div className="flex items-center gap-3 p-3 bg-slate-800/30 rounded-xl border border-slate-700/30">
                                 <Mail size={16} className="text-slate-400" />
-                                <span className="text-sm text-white">{vendor.email || 'No email'}</span>
+                                <span className="text-sm text-slate-50">{vendor.email || 'No email'}</span>
                             </div>
                             <div className="flex items-center gap-3 p-3 bg-slate-800/30 rounded-xl border border-slate-700/30">
                                 <Phone size={16} className="text-slate-400" />
-                                <span className="text-sm text-white">{vendor.phone || 'No phone'}</span>
+                                <span className="text-sm text-slate-50">{vendor.phone || 'No phone'}</span>
                             </div>
                             <div className="flex items-center gap-3 p-3 bg-slate-800/30 rounded-xl border border-slate-700/30">
                                 <MapPin size={16} className="text-slate-400" />
-                                <span className="text-sm text-white">{vendor.address || 'No address'}</span>
+                                <span className="text-sm text-slate-50">{vendor.address || 'No address'}</span>
                             </div>
                         </div>
                     </div>
@@ -308,7 +308,7 @@ const VendorDetailPage = () => {
                     <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
                         <div className="flex items-center gap-2 mb-6">
                             <Package size={20} className="text-blue-400" />
-                            <h2 className="text-xl font-bold text-white">Purchase Orders</h2>
+                            <h2 className="text-xl font-bold text-slate-50">Purchase Orders</h2>
                         </div>
                         {vendor.purchase_orders && vendor.purchase_orders.length > 0 ? (
                             <div className="overflow-x-auto">
@@ -337,7 +337,7 @@ const VendorDetailPage = () => {
                                                 <td className="py-3 text-slate-400 text-sm">
                                                     {new Date(po.created_at).toLocaleDateString()}
                                                 </td>
-                                                <td className="py-3 text-right font-bold text-white">
+                                                <td className="py-3 text-right font-bold text-slate-50">
                                                     {formatters.formatCurrency(po.total_amount ?? 0)}
                                                 </td>
                                             </tr>
@@ -358,7 +358,7 @@ const VendorDetailPage = () => {
                         <div className="flex items-center justify-between mb-6">
                             <div className="flex items-center gap-2">
                                 <FileText size={20} className="text-purple-400" />
-                                <h2 className="text-xl font-bold text-white">Vendor Invoices</h2>
+                                <h2 className="text-xl font-bold text-slate-50">Vendor Invoices</h2>
                             </div>
                             {can('manage_vendors') && (
                                 <button
@@ -398,7 +398,7 @@ const VendorDetailPage = () => {
                                                 <td className="py-3 text-slate-400 text-sm">
                                                     {inv.due_date ? new Date(inv.due_date).toLocaleDateString() : '--'}
                                                 </td>
-                                                <td className="py-3 text-right font-bold text-white">
+                                                <td className="py-3 text-right font-bold text-slate-50">
                                                     {formatters.formatCurrency(inv.total_amount ?? 0)}
                                                 </td>
                                                 <td className="py-3 text-center">
@@ -534,7 +534,7 @@ const VendorDetailPage = () => {
                             })}
                             className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-emerald-600 focus:ring-emerald-500/50"
                         />
-                        <span className="text-sm text-slate-300 group-hover:text-white transition-colors">Mark as Preferred Vendor</span>
+                        <span className="text-sm text-slate-300 group-hover:text-slate-50 transition-colors">Mark as Preferred Vendor</span>
                     </label>
 
                     <div className="flex gap-3 mt-8">
@@ -566,13 +566,13 @@ const VendorDetailPage = () => {
                                 <Trash2 size={24} className="text-rose-500" />
                             </div>
                             <div>
-                                <h3 className="text-lg font-bold text-white">Delete Vendor</h3>
+                                <h3 className="text-lg font-bold text-slate-50">Delete Vendor</h3>
                                 <p className="text-slate-400 text-sm">This action cannot be undone</p>
                             </div>
                         </div>
 
                         <p className="text-slate-300 mb-6">
-                            Are you sure you want to delete <strong className="text-white">{vendor.name}</strong>?
+                            Are you sure you want to delete <strong className="text-slate-50">{vendor.name}</strong>?
                             Vendors with purchase orders or invoices cannot be deleted.
                         </p>
 

@@ -268,7 +268,7 @@ const PODetailPage = () => {
         return (
             <div className="p-8 text-center">
                 <AlertCircle size={48} className="mx-auto text-rose-500 mb-4" />
-                <h2 className="text-2xl font-bold text-white mb-2">{error || 'PO not found'}</h2>
+                <h2 className="text-2xl font-bold text-slate-50 mb-2">{error || 'PO not found'}</h2>
                 <button onClick={() => navigate('/procurement/po')} className="text-blue-400 hover:underline">
                     Back to Purchase Orders
                 </button>
@@ -280,7 +280,7 @@ const PODetailPage = () => {
         <div className="p-8">
             <button
                 onClick={() => navigate('/procurement/po')}
-                className="flex items-center gap-2 text-slate-400 hover:text-white mb-6 transition-colors group"
+                className="flex items-center gap-2 text-slate-400 hover:text-slate-50 mb-6 transition-colors group"
             >
                 <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
                 Back to Purchase Orders
@@ -295,7 +295,7 @@ const PODetailPage = () => {
                                 <FileText size={28} className="text-indigo-400" />
                             </div>
                             <div>
-                                <h1 className="text-xl font-bold text-white">
+                                <h1 className="text-xl font-bold text-slate-50">
                                     #{po.po_number}
                                 </h1>
                                 <span className={`inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${getStatusColor(po.status)}`}>
@@ -310,7 +310,7 @@ const PODetailPage = () => {
                                     <Building2 size={16} className="text-slate-500" />
                                     <div>
                                         <span className="text-xs text-slate-500 block">Vendor</span>
-                                        <span className="text-sm text-white">{po.vendor.name}</span>
+                                        <span className="text-sm text-slate-50">{po.vendor.name}</span>
                                         {po.vendor.contact_email && (
                                             <span className="block text-xs text-slate-500">{po.vendor.contact_email}</span>
                                         )}
@@ -336,7 +336,7 @@ const PODetailPage = () => {
                                     <Truck size={16} className="text-slate-500" />
                                     <div>
                                         <span className="text-xs text-slate-500 block">Expected Delivery</span>
-                                        <span className="text-sm text-white">
+                                        <span className="text-sm text-slate-50">
                                             {new Date(po.expected_delivery_date).toLocaleDateString()}
                                         </span>
                                     </div>
@@ -346,7 +346,7 @@ const PODetailPage = () => {
                                 <Clock size={16} className="text-slate-500" />
                                 <div>
                                     <span className="text-xs text-slate-500 block">Created</span>
-                                    <span className="text-sm text-white">
+                                    <span className="text-sm text-slate-50">
                                         {new Date(po.created_at).toLocaleString()}
                                     </span>
                                 </div>
@@ -387,7 +387,7 @@ const PODetailPage = () => {
                         <div className="space-y-3">
                             <div className="flex justify-between text-sm">
                                 <span className="text-slate-500">Total Ordered</span>
-                                <span className="text-white font-bold">{totalOrdered} units</span>
+                                <span className="text-slate-50 font-bold">{totalOrdered} units</span>
                             </div>
                             <div className="flex justify-between text-sm">
                                 <span className="text-slate-500">Received</span>
@@ -410,7 +410,7 @@ const PODetailPage = () => {
                 <div className="lg:col-span-2 space-y-6">
                     {/* Line Items */}
                     <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
-                        <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                        <h2 className="text-lg font-bold text-slate-50 mb-4 flex items-center gap-2">
                             <Package size={20} className="text-indigo-400" />
                             Order Lines
                         </h2>
@@ -435,7 +435,7 @@ const PODetailPage = () => {
                                         return (
                                             <tr key={line.id} className="border-b border-slate-800/50">
                                                 <td className="py-3">
-                                                    <span className="text-white font-medium">{line.items?.name || line.description}</span>
+                                                    <span className="text-slate-50 font-medium">{line.items?.name || line.description}</span>
                                                     {line.items?.sku && (
                                                         <span className="block text-xs text-slate-500 font-mono">{line.items.sku}</span>
                                                     )}
@@ -462,7 +462,7 @@ const PODetailPage = () => {
                                                         <span className="text-slate-600 text-xs">—</span>
                                                     )}
                                                 </td>
-                                                <td className="py-3 text-right font-bold text-white">
+                                                <td className="py-3 text-right font-bold text-slate-50">
                                                     {formatters.formatCurrency(lineTotal)}
                                                 </td>
                                             </tr>
@@ -492,7 +492,7 @@ const PODetailPage = () => {
                                                 <td colSpan={5} className="py-4 text-right font-bold text-slate-400">
                                                     Grand Total:
                                                 </td>
-                                                <td className="py-4 text-right font-black text-xl text-white">
+                                                <td className="py-4 text-right font-black text-xl text-slate-50">
                                                     {formatters.formatCurrency(totalAmount)}
                                                 </td>
                                             </tr>
@@ -502,7 +502,7 @@ const PODetailPage = () => {
                                             <td colSpan={5} className="py-4 text-right font-bold text-slate-400">
                                                 Grand Total:
                                             </td>
-                                            <td className="py-4 text-right font-black text-xl text-white">
+                                            <td className="py-4 text-right font-black text-xl text-slate-50">
                                                 {formatters.formatCurrency(totalAmount)}
                                             </td>
                                         </tr>
@@ -514,7 +514,7 @@ const PODetailPage = () => {
 
                     {/* Actions */}
                     <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
-                        <h2 className="text-lg font-bold text-white mb-4">Actions</h2>
+                        <h2 className="text-lg font-bold text-slate-50 mb-4">Actions</h2>
                         <div className="flex flex-wrap gap-3">
                             {po.status === 'draft' && (
                                 <>

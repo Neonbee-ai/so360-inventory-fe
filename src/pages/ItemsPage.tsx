@@ -63,7 +63,7 @@ const ItemsPage = () => {
                         {!['product','consumable','fixed_asset','raw_material','finished_good','service'].includes(item.type) && <Package size={20} className="text-slate-400" />}
                     </div>
                     <div className="flex flex-col">
-                        <span className="font-semibold text-white">{item.name}</span>
+                        <span className="font-semibold text-slate-50">{item.name}</span>
                         <span className="text-xs text-slate-500 font-mono tracking-wider">{item.sku || 'NO-SKU'}</span>
                     </div>
                 </div>
@@ -123,7 +123,7 @@ const ItemsPage = () => {
         <div className="p-8">
             <header className="mb-8 flex items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-white tracking-tight">Items</h1>
+                    <h1 className="text-3xl font-bold text-slate-50 tracking-tight">Items</h1>
                     <p className="text-slate-400 mt-1">Manage physical products and trackable assets</p>
                 </div>
                 {can('create_item') && canCreateItem && (

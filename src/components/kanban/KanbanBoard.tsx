@@ -102,7 +102,7 @@ export const KanbanBoard = ({ deals, stages, onDealClick, onStageChange }: Kanba
                                         }`}
                                 >
                                     <div className="flex justify-between items-start mb-2">
-                                        <h4 className="font-bold text-sm text-white group-hover:text-blue-400 transition-colors truncate">
+                                        <h4 className="font-bold text-sm text-slate-50 group-hover:text-blue-400 transition-colors truncate">
                                             {deal.name}
                                         </h4>
                                     </div>

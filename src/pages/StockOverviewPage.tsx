@@ -79,7 +79,7 @@ const StockOverviewPage = () => {
                         <Box size={16} className="text-blue-400" />
                     </div>
                     <div className="flex flex-col">
-                        <span className="font-semibold text-white text-sm">{sl.items?.name || 'Unknown Item'}</span>
+                        <span className="font-semibold text-slate-50 text-sm">{sl.items?.name || 'Unknown Item'}</span>
                         <span className="text-[11px] text-slate-500 font-mono">{sl.items?.sku || '-'}</span>
                     </div>
                 </div>
@@ -154,7 +154,7 @@ const StockOverviewPage = () => {
 
             <header className="mb-8 flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold text-white tracking-tight">Stock Overview</h1>
+                    <h1 className="text-3xl font-bold text-slate-50 tracking-tight">Stock Overview</h1>
                     <p className="text-slate-400 mt-1">Real-time physical stock levels and valuation</p>
                 </div>
                 <button
@@ -169,7 +169,7 @@ const StockOverviewPage = () => {
             <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
                 <div className="bg-slate-900/40 border border-slate-800/50 p-4 rounded-xl">
                     <span className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Total Positions</span>
-                    <div className="text-xl font-bold text-white mt-0.5">{stockLevels.length}</div>
+                    <div className="text-xl font-bold text-slate-50 mt-0.5">{stockLevels.length}</div>
                 </div>
                 <div className="bg-slate-900/40 border border-slate-800/50 p-4 rounded-xl">
                     <span className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Stock Value</span>

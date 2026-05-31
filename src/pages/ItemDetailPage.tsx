@@ -344,7 +344,7 @@ const ItemDetailPage = () => {
     if (error && !item) return (
         <div className="p-8 text-center">
             <AlertCircle size={48} className="mx-auto text-rose-500 mb-4" />
-            <h2 className="text-2xl font-bold text-white mb-2">{error}</h2>
+            <h2 className="text-2xl font-bold text-slate-50 mb-2">{error}</h2>
             <button onClick={() => navigate('/inventory/items')} className="text-blue-400 hover:underline">Back to Items</button>
         </div>
     );
@@ -443,7 +443,7 @@ const ItemDetailPage = () => {
                         <>
                             <button
                                 onClick={handleCancelEdit}
-                                className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors group"
+                                className="flex items-center gap-2 text-slate-400 hover:text-slate-50 transition-colors group"
                             >
                                 <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
                                 Cancel Editing
@@ -468,7 +468,7 @@ const ItemDetailPage = () => {
                         <>
                             <button
                                 onClick={() => navigate('/inventory/items')}
-                                className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors group"
+                                className="flex items-center gap-2 text-slate-400 hover:text-slate-50 transition-colors group"
                             >
                                 <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
                                 Back to Catalog
@@ -549,7 +549,7 @@ const ItemDetailPage = () => {
                             )}
 
                             {/* Item Identity */}
-                            <h1 className="text-2xl font-bold text-white mb-1 leading-tight">{item.name}</h1>
+                            <h1 className="text-2xl font-bold text-slate-50 mb-1 leading-tight">{item.name}</h1>
                             <div className="flex items-center gap-2 mb-4">
                                 <span className="text-xs font-mono text-slate-500 tracking-widest">{item.sku || 'NO-SKU'}</span>
                                 {item.barcode && (
@@ -612,7 +612,7 @@ const ItemDetailPage = () => {
                                                         <AlertTriangle size={13} />
                                                         <span className="text-xs font-semibold">Min Stock</span>
                                                     </div>
-                                                    <span className="text-sm text-white font-medium">{item.min_stock_threshold}</span>
+                                                    <span className="text-sm text-slate-50 font-medium">{item.min_stock_threshold}</span>
                                                 </div>
                                             )}
                                             {item.reorder_level != null && (
@@ -621,7 +621,7 @@ const ItemDetailPage = () => {
                                                         <RefreshCcw size={13} />
                                                         <span className="text-xs font-semibold">Reorder Level</span>
                                                     </div>
-                                                    <span className="text-sm text-white font-medium">{item.reorder_level}</span>
+                                                    <span className="text-sm text-slate-50 font-medium">{item.reorder_level}</span>
                                                 </div>
                                             )}
                                             {item.min_stock_threshold != null && totalStock < item.min_stock_threshold && (
@@ -684,7 +684,7 @@ const ItemDetailPage = () => {
                                                         <AlertTriangle size={13} />
                                                         <span className="text-xs font-semibold">Min Stock</span>
                                                     </div>
-                                                    <span className="text-sm text-white font-medium">{item.min_stock_threshold}</span>
+                                                    <span className="text-sm text-slate-50 font-medium">{item.min_stock_threshold}</span>
                                                 </div>
                                             )}
                                             {item.reorder_level != null && (
@@ -693,7 +693,7 @@ const ItemDetailPage = () => {
                                                         <RefreshCcw size={13} />
                                                         <span className="text-xs font-semibold">Reorder Level</span>
                                                     </div>
-                                                    <span className="text-sm text-white font-medium">{item.reorder_level}</span>
+                                                    <span className="text-sm text-slate-50 font-medium">{item.reorder_level}</span>
                                                 </div>
                                             )}
                                             {item.min_stock_threshold != null && totalStock < item.min_stock_threshold && (
@@ -985,7 +985,7 @@ const ItemDetailPage = () => {
                                             <div className="flex items-center justify-between mb-6">
                                                 <div className="flex items-center gap-2">
                                                     <History size={20} className="text-blue-500" />
-                                                    <h2 className="text-xl font-bold text-white tracking-tight">Movement Ledger</h2>
+                                                    <h2 className="text-xl font-bold text-slate-50 tracking-tight">Movement Ledger</h2>
                                                 </div>
                                                 <span className="text-[10px] text-slate-500 border border-slate-800 px-3 py-1 rounded-full uppercase font-bold tracking-widest">
                                                     Audit Trail
@@ -1016,12 +1016,12 @@ const ItemDetailPage = () => {
                                 <Trash2 size={24} className="text-rose-500" />
                             </div>
                             <div>
-                                <h3 className="text-lg font-bold text-white">Delete Item</h3>
+                                <h3 className="text-lg font-bold text-slate-50">Delete Item</h3>
                                 <p className="text-slate-400 text-sm">This action cannot be undone</p>
                             </div>
                         </div>
                         <p className="text-slate-300 mb-6">
-                            Are you sure you want to delete <strong className="text-white">{item.name}</strong>?
+                            Are you sure you want to delete <strong className="text-slate-50">{item.name}</strong>?
                             Items with stock movements or balances cannot be deleted.
                         </p>
                         <div className="flex gap-3">
@@ -1040,7 +1040,7 @@ const ItemDetailPage = () => {
                     <div className="relative max-w-4xl max-h-[90vh] w-full mx-4">
                         <button
                             onClick={() => setPreviewImage(null)}
-                            className="absolute -top-10 right-0 text-white/70 hover:text-white transition-colors"
+                            className="absolute -top-10 right-0 text-slate-50/70 hover:text-slate-50 transition-colors"
                         >
                             <X size={24} />
                         </button>

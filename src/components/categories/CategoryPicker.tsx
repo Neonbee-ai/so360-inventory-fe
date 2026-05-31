@@ -137,7 +137,7 @@ const CategoryPicker: React.FC<CategoryPickerProps> = ({ categories, value, onCh
                                     <button onClick={handleQuickAdd} disabled={isAdding} className="bg-blue-600 hover:bg-blue-500 text-white px-2 py-1 rounded text-xs disabled:opacity-50">
                                         {isAdding ? '...' : 'Add'}
                                     </button>
-                                    <button onClick={() => setShowQuickAdd(false)} className="text-slate-400 hover:text-white"><X size={14} /></button>
+                                    <button onClick={() => setShowQuickAdd(false)} className="text-slate-400 hover:text-slate-50"><X size={14} /></button>
                                 </div>
                             ) : (
                                 <button

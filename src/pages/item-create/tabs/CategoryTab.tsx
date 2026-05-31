@@ -59,7 +59,7 @@ const CategoryTab: React.FC<CategoryTabProps> = ({
                             onChange={e => handleMetadataChange(def.attribute_key, e.target.checked)}
                             className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-blue-600 focus:ring-blue-500/50"
                         />
-                        <span className="text-sm text-slate-300 group-hover:text-white transition-colors">
+                        <span className="text-sm text-slate-300 group-hover:text-slate-50 transition-colors">
                             {def.attribute_label}
                         </span>
                     </label>

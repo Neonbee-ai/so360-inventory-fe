@@ -228,7 +228,7 @@ const PRListPage = () => {
                     <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl shadow-black/50">
                         <div className="p-8 border-b border-slate-800 flex justify-between items-center">
                             <h2 className="text-2xl font-bold text-slate-100">Create New Requisition</h2>
-                            <button onClick={() => setShowForm(false)} className="text-slate-500 hover:text-white transition-colors text-2xl">×</button>
+                            <button onClick={() => setShowForm(false)} className="text-slate-500 hover:text-slate-50 transition-colors text-2xl">×</button>
                         </div>
                         <form onSubmit={handleSubmit} className="p-8 space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
                             <div className="grid grid-cols-2 gap-6">

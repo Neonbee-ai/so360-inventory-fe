@@ -92,7 +92,7 @@ const StockAdjustmentsPage = () => {
             accessor: (m: StockMovement) => (
                 <div className="flex items-center gap-3">
                     <Package size={16} className="text-slate-500" />
-                    <span className="font-semibold text-white">{m.items?.name}</span>
+                    <span className="font-semibold text-slate-50">{m.items?.name}</span>
                 </div>
             )
         },
@@ -132,7 +132,7 @@ const StockAdjustmentsPage = () => {
         <div className="p-8">
             <header className="mb-8 flex items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-white tracking-tight flex items-center gap-3">
+                    <h1 className="text-3xl font-bold text-slate-50 tracking-tight flex items-center gap-3">
                         <History className="text-blue-500" /> Stock Adjustments
                     </h1>
                     <p className="text-slate-400 mt-1">Manual corrections for physical stock truth</p>

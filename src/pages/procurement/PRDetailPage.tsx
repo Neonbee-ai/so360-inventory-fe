@@ -215,7 +215,7 @@ const PRDetailPage = () => {
         return (
             <div className="p-8 text-center">
                 <AlertCircle size={48} className="mx-auto text-rose-500 mb-4" />
-                <h2 className="text-2xl font-bold text-white mb-2">{error || 'PR not found'}</h2>
+                <h2 className="text-2xl font-bold text-slate-50 mb-2">{error || 'PR not found'}</h2>
                 <button onClick={() => navigate('/procurement/pr')} className="text-blue-400 hover:underline">
                     Back to PRs
                 </button>
@@ -227,7 +227,7 @@ const PRDetailPage = () => {
         <div className="p-8">
             <button
                 onClick={() => navigate('/procurement/pr')}
-                className="flex items-center gap-2 text-slate-400 hover:text-white mb-6 transition-colors group"
+                className="flex items-center gap-2 text-slate-400 hover:text-slate-50 mb-6 transition-colors group"
             >
                 <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
                 Back to Purchase Requisitions
@@ -242,7 +242,7 @@ const PRDetailPage = () => {
                                 <FileText size={28} className="text-blue-400" />
                             </div>
                             <div>
-                                <h1 className="text-xl font-bold text-white">
+                                <h1 className="text-xl font-bold text-slate-50">
                                     #PR-{pr.id.slice(0, 8).toUpperCase()}
                                 </h1>
                                 <span className={`inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${getStatusColor(pr.status)}`}>
@@ -256,14 +256,14 @@ const PRDetailPage = () => {
                                 <User size={16} className="text-slate-500" />
                                 <div>
                                     <span className="text-xs text-slate-500 block">Requester</span>
-                                    <span className="text-sm text-white">{pr.requester?.full_name || 'System'}</span>
+                                    <span className="text-sm text-slate-50">{pr.requester?.full_name || 'System'}</span>
                                 </div>
                             </div>
                             <div className="flex items-center gap-3 p-3 bg-slate-800/30 rounded-xl">
                                 <Calendar size={16} className="text-slate-500" />
                                 <div>
                                     <span className="text-xs text-slate-500 block">Required Date</span>
-                                    <span className="text-sm text-white">
+                                    <span className="text-sm text-slate-50">
                                         {pr.required_date ? new Date(pr.required_date).toLocaleDateString() : 'Not set'}
                                     </span>
                                 </div>
@@ -272,7 +272,7 @@ const PRDetailPage = () => {
                                 <Clock size={16} className="text-slate-500" />
                                 <div>
                                     <span className="text-xs text-slate-500 block">Created</span>
-                                    <span className="text-sm text-white">
+                                    <span className="text-sm text-slate-50">
                                         {new Date(pr.created_at).toLocaleString()}
                                     </span>
                                 </div>
@@ -330,7 +330,7 @@ const PRDetailPage = () => {
                 <div className="lg:col-span-2 space-y-6">
                     {/* Line Items */}
                     <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
-                        <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                        <h2 className="text-lg font-bold text-slate-50 mb-4 flex items-center gap-2">
                             <Package size={20} className="text-blue-400" />
                             Requested Items
                         </h2>
@@ -357,7 +357,7 @@ const PRDetailPage = () => {
                                         return (
                                             <tr key={line.id} className="border-b border-slate-800/50">
                                                 <td className="py-3">
-                                                    <span className="text-white font-medium">{line.items?.name || line.description}</span>
+                                                    <span className="text-slate-50 font-medium">{line.items?.name || line.description}</span>
                                                     {line.items?.sku && (
                                                         <span className="block text-xs text-slate-500 font-mono">{line.items.sku}</span>
                                                     )}
@@ -371,7 +371,7 @@ const PRDetailPage = () => {
                                                 <td className="py-3 text-right text-slate-300">
                                                     {formatters.formatCurrency(line.estimated_unit_price)}
                                                 </td>
-                                                <td className="py-3 text-right font-bold text-white">
+                                                <td className="py-3 text-right font-bold text-slate-50">
                                                     {formatters.formatCurrency(line.quantity * line.estimated_unit_price)}
                                                 </td>
                                             </tr>
@@ -386,7 +386,7 @@ const PRDetailPage = () => {
                     <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
                         {/* Header with policy name and mode */}
                         <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                            <h2 className="text-lg font-bold text-slate-50 flex items-center gap-2">
                                 <CheckCircle size={20} className="text-blue-400" />
                                 Approval Workflow
                                 {pr.approval_gates?.[0]?.metadata?.policy_name && (
@@ -440,7 +440,7 @@ const PRDetailPage = () => {
 
                                                 <div className="flex-1">
                                                     <div className="flex items-center gap-2">
-                                                        <span className="text-white font-medium">
+                                                        <span className="text-slate-50 font-medium">
                                                             {gate.metadata?.description || `Level ${gate.gate_level}`}
                                                         </span>
                                                         {gate.metadata?.fallback && (
@@ -545,7 +545,7 @@ const PRDetailPage = () => {
                     {/* Linked Purchase Orders */}
                     {pr.linked_pos && pr.linked_pos.length > 0 && (
                         <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
-                            <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                            <h2 className="text-lg font-bold text-slate-50 mb-4 flex items-center gap-2">
                                 <ShoppingCart size={20} className="text-indigo-400" />
                                 Linked Purchase Orders
                             </h2>
@@ -561,7 +561,7 @@ const PRDetailPage = () => {
                                                 <FileText size={18} className="text-indigo-400" />
                                             </div>
                                             <div>
-                                                <span className="text-white font-bold">#{po.po_number}</span>
+                                                <span className="text-slate-50 font-bold">#{po.po_number}</span>
                                                 <span className="block text-xs text-slate-500">
                                                     Created {new Date(po.created_at).toLocaleDateString()}
                                                 </span>
@@ -575,7 +575,7 @@ const PRDetailPage = () => {
                                             >
                                                 {po.status}
                                             </span>
-                                            <span className="text-white font-bold font-mono">
+                                            <span className="text-slate-50 font-bold font-mono">
                                                 {formatters.formatCurrency(parseFloat(String(po.total_amount || 0)))}
                                             </span>
                                             <ExternalLink size={14} className="text-slate-600 group-hover:text-indigo-400 transition-colors" />

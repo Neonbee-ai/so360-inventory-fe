@@ -57,7 +57,7 @@ const ImageUploadZone: React.FC<{
                         <button
                             type="button"
                             onClick={() => fileRef.current?.click()}
-                            className="bg-white/10 backdrop-blur-sm border border-white/20 text-white px-3 py-1.5 rounded-lg text-xs hover:bg-white/20 transition-colors flex items-center gap-1.5"
+                            className="bg-white/10 backdrop-blur-sm border border-white/20 text-slate-50 px-3 py-1.5 rounded-lg text-xs hover:bg-white/20 transition-colors flex items-center gap-1.5"
                         >
                             <Upload size={12} /> Replace
                         </button>
@@ -154,9 +154,9 @@ const CategoryCardsView: React.FC<{
                 {/* Name bottom */}
                 <div className="absolute bottom-2 left-2 right-2">
                     {!isRoot && getParentName(cat.parent_id) && (
-                        <p className="text-[10px] text-white/60 leading-none mb-0.5 truncate">{getParentName(cat.parent_id)}</p>
+                        <p className="text-[10px] text-slate-50/60 leading-none mb-0.5 truncate">{getParentName(cat.parent_id)}</p>
                     )}
-                    <p className={`text-white font-semibold truncate ${isRoot ? 'text-base' : 'text-sm'}`}>{cat.name}</p>
+                    <p className={`text-slate-50 font-semibold truncate ${isRoot ? 'text-base' : 'text-sm'}`}>{cat.name}</p>
                 </div>
 
                 {/* Banner indicator */}
@@ -323,7 +323,7 @@ const CategoriesPage = () => {
         <div className="p-8">
             <header className="mb-6 flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold text-white tracking-tight flex items-center gap-3">
+                    <h1 className="text-3xl font-bold text-slate-50 tracking-tight flex items-center gap-3">
                         <Tag className="text-purple-400" /> Product Categories
                     </h1>
                     <p className="text-slate-400 mt-1 text-sm">Organize your products with a hierarchical category system</p>
@@ -399,7 +399,7 @@ const CategoriesPage = () => {
                     ) : (
                         <div className="space-y-6">
                             <div className="flex items-center justify-between">
-                                <h2 className="text-lg font-bold text-white">
+                                <h2 className="text-lg font-bold text-slate-50">
                                     {selectedCategory.parent_id ? 'Edit Subcategory' : 'Edit Category'}
                                 </h2>
                                 <div className="flex items-center gap-2">

@@ -77,7 +77,7 @@ const GRNDetailPage = () => {
         return (
             <div className="p-8 text-center">
                 <AlertCircle size={48} className="mx-auto text-rose-500 mb-4" />
-                <h2 className="text-2xl font-bold text-white mb-2">{error || 'GRN not found'}</h2>
+                <h2 className="text-2xl font-bold text-slate-50 mb-2">{error || 'GRN not found'}</h2>
                 <button onClick={() => navigate('/procurement/grn')} className="text-violet-400 hover:underline">
                     Back to GRNs
                 </button>
@@ -89,7 +89,7 @@ const GRNDetailPage = () => {
         <div className="p-8">
             <button
                 onClick={() => navigate('/procurement/grn')}
-                className="flex items-center gap-2 text-slate-400 hover:text-white mb-6 transition-colors group"
+                className="flex items-center gap-2 text-slate-400 hover:text-slate-50 mb-6 transition-colors group"
             >
                 <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
                 Back to Goods Receipt Notes
@@ -104,7 +104,7 @@ const GRNDetailPage = () => {
                                 <Package size={28} className="text-violet-400" />
                             </div>
                             <div>
-                                <h1 className="text-xl font-bold text-white">
+                                <h1 className="text-xl font-bold text-slate-50">
                                     {grn.grn_number}
                                 </h1>
                                 <span className="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
@@ -160,7 +160,7 @@ const GRNDetailPage = () => {
                                 <Clock size={16} className="text-slate-500" />
                                 <div>
                                     <span className="text-xs text-slate-500 block">Received Date</span>
-                                    <span className="text-sm text-white">
+                                    <span className="text-sm text-slate-50">
                                         {new Date(grn.created_at).toLocaleString()}
                                     </span>
                                 </div>
@@ -170,7 +170,7 @@ const GRNDetailPage = () => {
                                     <CheckCircle size={16} className="text-slate-500" />
                                     <div>
                                         <span className="text-xs text-slate-500 block">Received By</span>
-                                        <span className="text-sm text-white">{grn.received_by.full_name}</span>
+                                        <span className="text-sm text-slate-50">{grn.received_by.full_name}</span>
                                     </div>
                                 </div>
                             )}
@@ -199,7 +199,7 @@ const GRNDetailPage = () => {
                 {/* Right Column - Line Items */}
                 <div className="lg:col-span-2 space-y-6">
                     <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
-                        <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                        <h2 className="text-lg font-bold text-slate-50 mb-4 flex items-center gap-2">
                             <Package size={20} className="text-violet-400" />
                             Received Items
                         </h2>
@@ -218,7 +218,7 @@ const GRNDetailPage = () => {
                                     {grn.grn_lines?.map((line) => (
                                         <tr key={line.id} className="border-b border-slate-800/50">
                                             <td className="py-3">
-                                                <span className="text-white font-medium">
+                                                <span className="text-slate-50 font-medium">
                                                     {line.po_line?.items?.name || line.po_line?.description || 'Unknown Item'}
                                                 </span>
                                                 {line.po_line?.items?.sku && (
@@ -234,7 +234,7 @@ const GRNDetailPage = () => {
                                             <td className="py-3 text-right text-slate-300">
                                                 {formatters.formatCurrency(line.po_line?.unit_price || 0)}
                                             </td>
-                                            <td className="py-3 text-right font-bold text-white">
+                                            <td className="py-3 text-right font-bold text-slate-50">
                                                 {formatters.formatCurrency(line.quantity_received * (line.po_line?.unit_price || 0))}
                                             </td>
                                         </tr>
@@ -249,7 +249,7 @@ const GRNDetailPage = () => {
                                             {totalQuantityReceived}
                                         </td>
                                         <td></td>
-                                        <td className="py-4 text-right font-black text-xl text-white">
+                                        <td className="py-4 text-right font-black text-xl text-slate-50">
                                             {formatters.formatCurrency(totalValue)}
                                         </td>
                                     </tr>
@@ -260,7 +260,7 @@ const GRNDetailPage = () => {
 
                     {/* Stock Impact */}
                     <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
-                        <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                        <h2 className="text-lg font-bold text-slate-50 mb-4 flex items-center gap-2">
                             <CheckCircle size={20} className="text-emerald-400" />
                             Stock Impact
                         </h2>

@@ -134,7 +134,7 @@ const SettingsPage = () => {
     return (
         <div className="p-8">
             <header className="mb-8">
-                <h1 className="text-3xl font-bold text-white tracking-tight flex items-center gap-3">
+                <h1 className="text-3xl font-bold text-slate-50 tracking-tight flex items-center gap-3">
                     <Settings className="text-slate-400" /> Inventory Settings
                 </h1>
                 <p className="text-slate-400 mt-1">Configure units, categories, and module defaults</p>
@@ -157,7 +157,7 @@ const SettingsPage = () => {
             <div className="space-y-6">
                 {/* Units of Measure */}
                 <section className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
-                    <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                    <h2 className="text-lg font-bold text-slate-50 mb-4 flex items-center gap-2">
                         <Box size={20} className="text-blue-500" /> Units of Measure (UoM)
                     </h2>
                     <div className="flex flex-wrap gap-2">
@@ -199,7 +199,7 @@ const SettingsPage = () => {
                                 </button>
                                 <button
                                     onClick={() => setShowAddUom(false)}
-                                    className="text-slate-400 hover:text-white"
+                                    className="text-slate-400 hover:text-slate-50"
                                 >
                                     <X size={16} />
                                 </button>
@@ -218,7 +218,7 @@ const SettingsPage = () => {
 
                 {/* Categories */}
                 <section className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
-                    <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                    <h2 className="text-lg font-bold text-slate-50 mb-4 flex items-center gap-2">
                         <Tag size={20} className="text-purple-500" /> Item Categories
                     </h2>
                     <CategoryTreeView
@@ -263,7 +263,7 @@ const SettingsPage = () => {
 
                 {/* Item Attributes */}
                 <section className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
-                    <h2 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
+                    <h2 className="text-lg font-bold text-slate-50 mb-2 flex items-center gap-2">
                         <ListFilter size={20} className="text-emerald-500" /> Item Attributes
                     </h2>
                     <p className="text-sm text-slate-500 mb-4">Define custom attributes per category (e.g. Material, Finish, Shelf Life). Values are stored as flexible metadata on each item.</p>
@@ -275,7 +275,7 @@ const SettingsPage = () => {
 
                 {/* Product Types */}
                 <section className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
-                    <h2 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
+                    <h2 className="text-lg font-bold text-slate-50 mb-2 flex items-center gap-2">
                         <Sliders size={20} className="text-blue-500" /> Product Types
                     </h2>
                     <p className="text-sm text-slate-500 mb-4">Define product type templates with custom attribute fields (e.g. Electronics, Clothing)</p>
@@ -293,7 +293,7 @@ const SettingsPage = () => {
 
                 {/* Integration Rules */}
                 <section className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
-                    <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                    <h2 className="text-lg font-bold text-slate-50 mb-4 flex items-center gap-2">
                         <MapPin size={20} className="text-amber-500" /> Default Logic
                     </h2>
                     <div className="space-y-4">

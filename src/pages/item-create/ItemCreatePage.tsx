@@ -392,7 +392,7 @@ const ItemCreatePage = () => {
                 <div className="px-8 py-4 flex items-center justify-between">
                     <button
                         onClick={() => navigate('/inventory/items')}
-                        className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
+                        className="flex items-center gap-2 text-slate-400 hover:text-slate-50 transition-colors"
                     >
                         <ArrowLeft size={20} />
                         <span className="font-medium">Back to Items</span>
@@ -418,7 +418,7 @@ const ItemCreatePage = () => {
             </div>
 
             <div className="px-8 pt-6">
-                <h1 className="text-2xl font-bold text-white mb-6">Register New Item</h1>
+                <h1 className="text-2xl font-bold text-slate-50 mb-6">Register New Item</h1>
 
                 {error && (
                     <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 px-4 py-3 rounded-lg text-sm mb-6">

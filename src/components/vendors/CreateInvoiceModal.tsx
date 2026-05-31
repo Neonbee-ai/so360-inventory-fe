@@ -208,7 +208,7 @@ export const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
                         <div className="flex items-center gap-3 bg-slate-800 border border-slate-700 rounded-lg px-4 py-3">
                             <FileText size={20} className="text-purple-400 shrink-0" />
                             <div className="flex-1 min-w-0">
-                                <p className="text-sm text-white truncate">{file.name}</p>
+                                <p className="text-sm text-slate-50 truncate">{file.name}</p>
                                 <p className="text-xs text-slate-500">{(file.size / 1024).toFixed(1)} KB</p>
                             </div>
                             <button

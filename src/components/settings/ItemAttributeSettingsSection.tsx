@@ -245,7 +245,7 @@ const ItemAttributeSettingsSection: React.FC<Props> = ({ categories, canManage }
                                 <span className="text-sm font-semibold text-slate-200">
                                     {editingId ? 'Edit Attribute' : 'New Attribute'}
                                 </span>
-                                <button onClick={closeForm} className="text-slate-500 hover:text-white transition-colors">
+                                <button onClick={closeForm} className="text-slate-500 hover:text-slate-50 transition-colors">
                                     <X size={16} />
                                 </button>
                             </div>
@@ -353,7 +353,7 @@ const ItemAttributeSettingsSection: React.FC<Props> = ({ categories, canManage }
                                 </button>
                                 <button
                                     onClick={closeForm}
-                                    className="px-4 py-2 rounded-lg border border-slate-700 text-slate-400 hover:text-white hover:border-slate-500 text-sm transition-all"
+                                    className="px-4 py-2 rounded-lg border border-slate-700 text-slate-400 hover:text-slate-50 hover:border-slate-500 text-sm transition-all"
                                 >
                                     Cancel
                                 </button>

@@ -33,7 +33,7 @@ export const StageTransitionModal = ({ isOpen, onClose, onConfirm, deal, newStag
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="p-3 bg-slate-950 border border-slate-800 rounded-lg">
                     <p className="text-sm text-slate-400">
-                        Moving <span className="text-white font-bold">{deal.name}</span> to the <span className="text-blue-400 font-bold">{newStage}</span> stage.
+                        Moving <span className="text-slate-50 font-bold">{deal.name}</span> to the <span className="text-blue-400 font-bold">{newStage}</span> stage.
                     </p>
                 </div>
 

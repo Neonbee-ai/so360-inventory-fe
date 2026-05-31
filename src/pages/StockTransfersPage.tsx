@@ -107,12 +107,12 @@ const StockTransfersPage = () => {
                 <div className="flex items-center gap-4">
                     <div className="flex flex-col">
                         <span className="text-[10px] text-slate-500 uppercase font-bold tracking-tight">From</span>
-                        <span className="text-white font-medium text-sm">{tr.from_warehouse_name || 'Warehouse A'}</span>
+                        <span className="text-slate-50 font-medium text-sm">{tr.from_warehouse_name || 'Warehouse A'}</span>
                     </div>
                     <ArrowRight size={16} className="text-slate-600" />
                     <div className="flex flex-col">
                         <span className="text-[10px] text-slate-500 uppercase font-bold tracking-tight">To</span>
-                        <span className="text-white font-medium text-sm">{tr.to_warehouse_name || 'Warehouse B'}</span>
+                        <span className="text-slate-50 font-medium text-sm">{tr.to_warehouse_name || 'Warehouse B'}</span>
                     </div>
                 </div>
             )
@@ -138,7 +138,7 @@ const StockTransfersPage = () => {
         <div className="p-8">
             <header className="mb-8 flex items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-white tracking-tight flex items-center gap-3">
+                    <h1 className="text-3xl font-bold text-slate-50 tracking-tight flex items-center gap-3">
                         <ArrowRightLeft className="text-blue-500" /> Stock Transfers
                     </h1>
                     <p className="text-slate-400 mt-1">Inter-warehouse stock movements</p>
