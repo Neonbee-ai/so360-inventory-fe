@@ -198,6 +198,12 @@ const StockLocationsPage = () => {
                 />
             )}
 
+            {whLimit !== null && (
+                <p data-testid="warehouse-limit-banner" className="text-xs text-slate-500 mb-4">
+                    {whUsed} of {whLimit} used
+                </p>
+            )}
+
             {error && (
                 <div className="mb-6 bg-rose-500/10 border border-rose-500/20 text-rose-400 px-4 py-3 rounded-lg flex items-center gap-3">
                     <AlertCircle size={18} />
