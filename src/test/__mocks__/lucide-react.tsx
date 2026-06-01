@@ -17,6 +17,7 @@ export const ArrowUpRight = createIcon('ArrowUpRight');
 export const BarChart3 = createIcon('BarChart3');
 export const BookOpen = createIcon('BookOpen');
 export const Box = createIcon('Box');
+export const Boxes = createIcon('Boxes');
 export const Building2 = createIcon('Building2');
 export const Calendar = createIcon('Calendar');
 export const Camera = createIcon('Camera');

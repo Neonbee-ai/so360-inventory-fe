@@ -137,7 +137,7 @@ export interface ItemAttributeDefinition {
     category_id?: string | null;
     attribute_key: string;
     attribute_label: string;
-    attribute_type: 'text' | 'number' | 'select' | 'multi_select' | 'boolean';
+    attribute_type: 'text' | 'number' | 'currency' | 'select' | 'multi_select' | 'date' | 'boolean' | 'radio' | 'textarea' | 'file';
     options?: { value: string; label: string }[] | null;
     unit?: string | null;
     is_required: boolean;

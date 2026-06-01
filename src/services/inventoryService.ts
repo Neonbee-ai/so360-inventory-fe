@@ -400,7 +400,7 @@ class InventoryService {
         category_id?: string;
         attribute_key: string;
         attribute_label: string;
-        attribute_type: 'text' | 'number' | 'select' | 'multi_select' | 'boolean';
+        attribute_type: 'text' | 'number' | 'currency' | 'select' | 'multi_select' | 'date' | 'boolean' | 'radio' | 'textarea' | 'file';
         options?: { value: string; label: string }[];
         unit?: string;
         is_required?: boolean;
@@ -415,7 +415,7 @@ class InventoryService {
     async updateAttributeDefinition(id: string, dto: Partial<{
         category_id?: string;
         attribute_label: string;
-        attribute_type: 'text' | 'number' | 'select' | 'multi_select' | 'boolean';
+        attribute_type: 'text' | 'number' | 'currency' | 'select' | 'multi_select' | 'date' | 'boolean' | 'radio' | 'textarea' | 'file';
         options?: { value: string; label: string }[];
         unit?: string;
         is_required?: boolean;

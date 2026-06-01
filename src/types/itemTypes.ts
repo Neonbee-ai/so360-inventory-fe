@@ -1,6 +1,6 @@
-import { Package, Wrench, Layers, Factory, Flame, Building2, LucideIcon } from 'lucide-react';
+import { Package, Wrench, Layers, Factory, Flame, Building2, Boxes, LucideIcon } from 'lucide-react';
 
-export type ItemClassification = 'product' | 'service' | 'raw_material' | 'finished_good' | 'consumable' | 'fixed_asset';
+export type ItemClassification = 'product' | 'service' | 'raw_material' | 'finished_good' | 'consumable' | 'fixed_asset' | 'bundle';
 
 export interface ClassificationOption {
     value: ItemClassification;
@@ -16,6 +16,7 @@ export const ITEM_CLASSIFICATIONS: ClassificationOption[] = [
     { value: 'finished_good', label: 'Finished Good', description: 'Manufactured output ready for sale', icon: Factory },
     { value: 'consumable', label: 'Consumable', description: 'Supplies consumed during operations', icon: Flame },
     { value: 'fixed_asset', label: 'Fixed Asset', description: 'Long-term tangible asset', icon: Building2 },
+    { value: 'bundle', label: 'Bundle', description: 'Kit of multiple component items sold together', icon: Boxes },
 ];
 
 export type TabId = 'basic' | 'media' | 'pricing' | 'category' | 'stock' | 'shipping' | 'attributes';

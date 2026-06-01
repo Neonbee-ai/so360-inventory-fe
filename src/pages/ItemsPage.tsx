@@ -149,12 +149,14 @@ const ItemsPage = () => {
             </header>
 
             {quotaData && (
-                <QuotaBar
-                    label="SKUs"
-                    used={quotaData.current_usage}
-                    limit={quotaData.limit}
-                    isUnlimited={quotaData.is_unlimited}
-                />
+                <div className="mb-6">
+                    <QuotaBar
+                        label="SKUs"
+                        used={quotaData.current_usage}
+                        limit={quotaData.limit}
+                        isUnlimited={quotaData.is_unlimited}
+                    />
+                </div>
             )}
 
             {error && (
@@ -190,6 +192,7 @@ const ItemsPage = () => {
                             <option value="fixed_asset">Fixed Assets</option>
                             <option value="raw_material">Raw Materials</option>
                             <option value="finished_good">Finished Goods</option>
+                            <option value="bundle">Bundles</option>
                             <option value="service">Services</option>
                         </select>
                     </div>

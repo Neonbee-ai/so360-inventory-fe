@@ -11,12 +11,20 @@ interface Props {
 const ATTRIBUTE_TYPES = [
     { value: 'text', label: 'Text' },
     { value: 'number', label: 'Number' },
-    { value: 'select', label: 'Select' },
+    { value: 'currency', label: 'Currency' },
+    { value: 'select', label: 'Select (Dropdown)' },
     { value: 'multi_select', label: 'Multi-select' },
-    { value: 'boolean', label: 'Boolean (Yes/No)' },
+    { value: 'date', label: 'Date' },
+    { value: 'boolean', label: 'Checkbox (Yes/No)' },
+    { value: 'radio', label: 'Radio' },
+    { value: 'textarea', label: 'Text Area' },
+    { value: 'file', label: 'File Upload' },
 ] as const;
 
-type AttributeType = 'text' | 'number' | 'select' | 'multi_select' | 'boolean';
+// Field types that require a configurable list of options
+const OPTION_TYPES = ['select', 'multi_select', 'radio'];
+
+type AttributeType = 'text' | 'number' | 'currency' | 'select' | 'multi_select' | 'date' | 'boolean' | 'radio' | 'textarea' | 'file';
 
 interface FormState {
     category_id: string;
@@ -121,7 +129,7 @@ const ItemAttributeSettingsSection: React.FC<Props> = ({ categories, canManage }
                 attribute_key: form.attribute_key.trim(),
                 attribute_label: form.attribute_label.trim(),
                 attribute_type: form.attribute_type,
-                options: ['select', 'multi_select'].includes(form.attribute_type) ? parseOptions(form.options_raw) : undefined,
+                options: OPTION_TYPES.includes(form.attribute_type) ? parseOptions(form.options_raw) : undefined,
                 unit: form.unit.trim() || undefined,
                 is_required: form.is_required,
                 sort_order: parseInt(form.sort_order) || 0,
@@ -319,7 +327,7 @@ const ItemAttributeSettingsSection: React.FC<Props> = ({ categories, canManage }
                                 </div>
                             </div>
 
-                            {['select', 'multi_select'].includes(form.attribute_type) && (
+                            {OPTION_TYPES.includes(form.attribute_type) && (
                                 <div>
                                     <label className={labelClass}>Options (one per line, format: value:Label)</label>
                                     <textarea

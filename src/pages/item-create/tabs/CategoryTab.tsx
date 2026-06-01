@@ -64,6 +64,66 @@ const CategoryTab: React.FC<CategoryTabProps> = ({
                         </span>
                     </label>
                 );
+            case 'currency':
+                return (
+                    <div className="flex items-center gap-2">
+                        {def.unit && <span className="text-sm text-slate-500 whitespace-nowrap">{def.unit}</span>}
+                        <input
+                            type="number"
+                            step="0.01"
+                            value={value ?? ''}
+                            onChange={e => handleMetadataChange(def.attribute_key, e.target.value ? parseFloat(e.target.value) : '')}
+                            className={inputClass}
+                            placeholder={def.attribute_label}
+                        />
+                    </div>
+                );
+            case 'date':
+                return (
+                    <input
+                        type="date"
+                        value={value || ''}
+                        onChange={e => handleMetadataChange(def.attribute_key, e.target.value)}
+                        className={inputClass}
+                    />
+                );
+            case 'textarea':
+                return (
+                    <textarea
+                        rows={3}
+                        value={value || ''}
+                        onChange={e => handleMetadataChange(def.attribute_key, e.target.value)}
+                        className={inputClass + ' resize-none'}
+                        placeholder={def.attribute_label}
+                    />
+                );
+            case 'file':
+                return (
+                    <input
+                        type="text"
+                        value={value || ''}
+                        onChange={e => handleMetadataChange(def.attribute_key, e.target.value)}
+                        className={inputClass}
+                        placeholder="File URL"
+                    />
+                );
+            case 'radio':
+                return (
+                    <div className="flex flex-wrap gap-3">
+                        {(def.options || []).map(opt => (
+                            <label key={opt.value} className="flex items-center gap-1.5 cursor-pointer">
+                                <input
+                                    type="radio"
+                                    name={def.attribute_key}
+                                    checked={value === opt.value}
+                                    onChange={() => handleMetadataChange(def.attribute_key, opt.value)}
+                                    className="w-4 h-4 border-slate-600 bg-slate-800 text-blue-600 focus:ring-blue-500/50"
+                                />
+                                <span className="text-sm text-slate-300">{opt.label}</span>
+                            </label>
+                        ))}
+                    </div>
+                );
             case 'select':
                 return (
                     <select
