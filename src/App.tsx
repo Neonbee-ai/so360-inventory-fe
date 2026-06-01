@@ -157,7 +157,7 @@ const App = () => {
                 <Route path="items" element={<ItemsPage />} />
                 <Route path="items/new" element={<ItemCreatePage />} />
                 <Route path="items/:id" element={<ItemDetailPage />} />
-                <Route path="locations" element={<StockLocationsPage />} />
+                <Route path="locations" element={<FeatureGate flagKey="submodule:inventory:warehouses"><StockLocationsPage /></FeatureGate>} />
                 <Route path="warehouses/:id" element={<WarehouseDetailPage />} />
                 <Route path="overview" element={<StockOverviewPage />} />
                 <Route path="adjustments" element={<StockAdjustmentsPage />} />
