@@ -13,6 +13,7 @@
         "test:cov": "vitest run --coverage"
     },
     "dependencies": {
+        "@so360/cross-link": "file:../../so360-shell-fe/packages/cross-link",
         "@so360/design-system": "file:../../so360-shell-fe/packages/design-system",
         "@so360/event-bus": "file:../../so360-shell-fe/packages/event-bus",
         "@so360/formatters": "file:../../so360-shell-fe/packages/formatters",
