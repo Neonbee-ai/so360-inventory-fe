@@ -180,7 +180,7 @@ const StockOverviewPage = () => {
                         {formatters.formatCurrency(stockLevels.reduce((sum, sl) => sum + (sl.valuation || 0), 0))}
                     </div>
                 </div>
-                <FeatureGate state={viewGlValuationState} loading={!(shell?.effectiveFlagsLoaded ?? false)} onUpgradeClick={() => navigate('/org/billing')}>
+                <FeatureGate state={viewGlValuationState} loading={(shell?.effectiveFlagsLoaded === false)} onUpgradeClick={() => navigate('/org/billing')}>
                 <div className="bg-slate-900/40 border border-slate-800/50 p-4 rounded-xl">
                     <span className="text-slate-500 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
                         <BookOpen size={10} /> GL Balance

@@ -14,7 +14,7 @@ const ProductTypeSettingsPage = () => {
     const { recordActivity } = useActivity();
     const shell = useShellBridge();
     const manageProductTypesState = (shell as any)?.getFeatureState ? (shell as any).getFeatureState('action:inventory:product_types:create') : 'enabled';
-    const canManageProductTypes = (shell?.effectiveFlagsLoaded ?? false) && manageProductTypesState === 'enabled';
+    const canManageProductTypes = (shell?.effectiveFlagsLoaded !== false) && manageProductTypesState === 'enabled';
     const [types, setTypes] = useState<ProductType[]>([]);
     const [selectedType, setSelectedType] = useState<ProductType | null>(null);
     const [loading, setLoading] = useState(true);
@@ -149,7 +149,7 @@ const ProductTypeSettingsPage = () => {
                 <div className="space-y-3">
                     <div className="flex items-center justify-between mb-2">
                         <h2 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">Types</h2>
-                        <FeatureGate state={manageProductTypesState} loading={!(shell?.effectiveFlagsLoaded ?? false)} onUpgradeClick={() => navigate('/org/billing')}>
+                        <FeatureGate state={manageProductTypesState} loading={(shell?.effectiveFlagsLoaded === false)} onUpgradeClick={() => navigate('/org/billing')}>
                             <button
                                 onClick={() => setShowCreateForm(true)}
                                 className="text-blue-400 hover:text-blue-300 text-xs flex items-center gap-1"

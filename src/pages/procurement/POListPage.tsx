@@ -265,7 +265,7 @@ const POListPage = () => {
                     >
                         <span className="text-base leading-none">⚖</span> Opening Balance
                     </button>
-                    <FeatureGate state={createPoState} loading={!(shell?.effectiveFlagsLoaded ?? false)} onUpgradeClick={() => navigate('/org/billing')}>
+                    <FeatureGate state={createPoState} loading={(shell?.effectiveFlagsLoaded === false)} onUpgradeClick={() => navigate('/org/billing')}>
                     <QuotaGate
                         quotaKey="max_po_per_month"
                         moduleCode="inventory"
