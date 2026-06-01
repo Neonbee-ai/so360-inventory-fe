@@ -28,8 +28,9 @@ vi.mock('../../components/common/Modal', () => ({
     isOpen ? <div data-testid="modal"><h3>{title}</h3>{children}</div> : null,
 }));
 
+const mockUseShellBridgeV = vi.fn();
 vi.mock('@so360/shell-context', () => ({
-  useShellBridge: () => ({ isFeatureEnabled: () => true, currentOrg: { id: 'org-1', name: 'Test Org' } }),
+  useShellBridge: (...args: any[]) => mockUseShellBridgeV(...args),
   useQuota: () => ({ getQuota: () => null, isExceeded: () => false }),
   useSandboxLimit: () => ({ isSandboxMode: false, sandboxEntryLimit: null, limitItems: (items: any[]) => items, isLimited: false }),
 }));
@@ -56,6 +57,12 @@ beforeEach(() => {
   mockGetVendors.mockResolvedValue([]);
   mockCreateVendor.mockResolvedValue({ id: 'vendor-new' });
   mockDeleteVendor.mockResolvedValue({});
+  mockUseShellBridgeV.mockReturnValue({
+    isFeatureEnabled: () => true,
+    currentOrg: { id: 'org-1', name: 'Test Org' },
+    effectiveFlagsLoaded: true,
+    getFeatureState: () => 'enabled',
+  });
 });
 
 describe('VendorListPage', () => {
@@ -183,6 +190,31 @@ describe('VendorListPage', () => {
       await waitFor(() => {
         expect(screen.getByText('No vendors found')).toBeInTheDocument();
       });
+    });
+  });
+
+  describe('Given effectiveFlagsLoaded is false (matrix still resolving)', () => {
+    it('When page renders / Then Add Vendor button is not shown', async () => {
+      mockUseShellBridgeV.mockReturnValue({
+        isFeatureEnabled: () => true,
+        currentOrg: { id: 'org-1', name: 'Test Org' },
+        effectiveFlagsLoaded: false,
+        getFeatureState: () => 'enabled',
+      });
+      render(<VendorListPage />);
+      await waitFor(() => expect(screen.getByText('Vendors & Subcontractors')).toBeInTheDocument());
+      expect(screen.queryByText('Add Vendor')).not.toBeInTheDocument();
+    });
+
+    it('When effectiveFlagsLoaded becomes true with enabled flag / Then Add Vendor button appears', async () => {
+      mockUseShellBridgeV.mockReturnValue({
+        isFeatureEnabled: () => true,
+        currentOrg: { id: 'org-1', name: 'Test Org' },
+        effectiveFlagsLoaded: true,
+        getFeatureState: () => 'enabled',
+      });
+      render(<VendorListPage />);
+      await waitFor(() => expect(screen.getByText('Add Vendor')).toBeInTheDocument());
     });
   });
 });

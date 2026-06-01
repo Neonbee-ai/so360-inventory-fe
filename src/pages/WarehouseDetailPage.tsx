@@ -19,7 +19,7 @@ const WarehouseDetailPage = () => {
     const { recordActivity } = useActivity();
     const shell = useShellBridge();
     const warehouseState = (shell as any)?.getFeatureState ? (shell as any).getFeatureState('action:inventory:warehouses:create') : 'enabled';
-    const canManageWarehouse = warehouseState === 'enabled';
+    const canManageWarehouse = (shell?.effectiveFlagsLoaded ?? false) && warehouseState === 'enabled';
     const [warehouse, setWarehouse] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -209,7 +209,7 @@ const WarehouseDetailPage = () => {
                                 {warehouse.is_active ? 'Operational' : 'Inactive'}
                             </span>
                             {can('manage_locations') && (
-                                <FeatureGate state={warehouseState} onUpgradeClick={() => navigate('/org/billing')}>
+                                <FeatureGate state={warehouseState} loading={!(shell?.effectiveFlagsLoaded ?? false)} onUpgradeClick={() => navigate('/org/billing')}>
                                 <>
                                     <button
                                         onClick={handleEditClick}

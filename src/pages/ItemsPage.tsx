@@ -127,7 +127,7 @@ const ItemsPage = () => {
                     <p className="text-slate-400 mt-1">Manage physical products and trackable assets</p>
                 </div>
                 {can('create_item') && (
-                    <FeatureGate state={createItemState} onUpgradeClick={() => navigate('/org/billing')}>
+                    <FeatureGate state={createItemState} loading={!(shell?.effectiveFlagsLoaded ?? false)} onUpgradeClick={() => navigate('/org/billing')}>
                     <QuotaGate
                         quotaKey="max_skus"
                         moduleCode="inventory"

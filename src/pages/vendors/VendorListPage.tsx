@@ -26,7 +26,7 @@ const VendorListPage = () => {
     const { can } = useAuth();
     const shell = useShellBridge();
     const createVendorState = (shell as any)?.getFeatureState ? (shell as any).getFeatureState('action:inventory:vendors:create') : 'enabled';
-    const canCreateVendor = createVendorState === 'enabled';
+    const canCreateVendor = (shell?.effectiveFlagsLoaded ?? false) && createVendorState === 'enabled';
     const quotaChecks = useMemo(() => [{ module_code: 'inventory', quota_key: 'max_vendors' }], []);
     const { getQuota } = useQuota({ checks: quotaChecks, orgId: shell?.currentOrg?.id || '' });
     const quotaData = getQuota('max_vendors');
@@ -135,7 +135,7 @@ const VendorListPage = () => {
                     <p className="text-slate-400 mt-2 font-medium">Manage supply chain partners and commercial contracts.</p>
                 </div>
                 {can('manage_vendors') && (
-                    <FeatureGate state={createVendorState} onUpgradeClick={() => navigate('/org/billing')}>
+                    <FeatureGate state={createVendorState} loading={!(shell?.effectiveFlagsLoaded ?? false)} onUpgradeClick={() => navigate('/org/billing')}>
                     <QuotaGate
                         quotaKey="max_vendors"
                         moduleCode="inventory"

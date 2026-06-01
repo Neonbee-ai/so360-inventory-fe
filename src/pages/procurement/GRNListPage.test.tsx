@@ -5,6 +5,11 @@ import React from 'react';
 const mockGetGRNs = vi.fn();
 const mockNavigate = vi.fn();
 
+const mockUseShellBridgeGRN = vi.fn();
+vi.mock('@so360/shell-context', () => ({
+  useShellBridge: (...args: any[]) => mockUseShellBridgeGRN(...args),
+}));
+
 vi.mock('../../services/procurementService', () => ({
   procurementService: {
     getGRNs: (...args: any[]) => mockGetGRNs(...args),
@@ -30,6 +35,10 @@ const makeGRN = (overrides: any = {}) => ({
 beforeEach(() => {
   vi.clearAllMocks();
   mockGetGRNs.mockResolvedValue([]);
+  mockUseShellBridgeGRN.mockReturnValue({
+    effectiveFlagsLoaded: true,
+    getFeatureState: () => 'enabled',
+  });
 });
 
 describe('GRNListPage', () => {
@@ -156,6 +165,27 @@ describe('GRNListPage', () => {
       await waitFor(() => {
         expect(screen.getByText('No goods receipt notes found.')).toBeInTheDocument();
       });
+    });
+  });
+
+  describe('Given effectiveFlagsLoaded is false (matrix still resolving)', () => {
+    it('When page renders / Then New GRN button is not shown', async () => {
+      mockUseShellBridgeGRN.mockReturnValue({
+        effectiveFlagsLoaded: false,
+        getFeatureState: () => 'enabled',
+      });
+      render(<GRNListPage />);
+      await waitFor(() => expect(screen.getByText('Goods Receipt Notes')).toBeInTheDocument());
+      expect(screen.queryByText('New GRN')).not.toBeInTheDocument();
+    });
+
+    it('When effectiveFlagsLoaded becomes true with enabled flag / Then New GRN button appears', async () => {
+      mockUseShellBridgeGRN.mockReturnValue({
+        effectiveFlagsLoaded: true,
+        getFeatureState: () => 'enabled',
+      });
+      render(<GRNListPage />);
+      await waitFor(() => expect(screen.getByText('New GRN')).toBeInTheDocument());
     });
   });
 });

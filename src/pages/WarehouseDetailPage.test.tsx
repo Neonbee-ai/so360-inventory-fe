@@ -2,6 +2,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import React from 'react';
 
+const mockUseShellBridgeWD = vi.fn();
+vi.mock('@so360/shell-context', () => ({
+  useActivity: () => ({ recordActivity: vi.fn().mockResolvedValue(undefined) }),
+  useShellBridge: (...args: any[]) => mockUseShellBridgeWD(...args),
+}));
+
 const mockGetWarehouse = vi.fn();
 const mockUpdateWarehouse = vi.fn();
 const mockDeleteWarehouse = vi.fn();
@@ -73,6 +79,10 @@ beforeEach(() => {
   mockCreateLocation.mockResolvedValue({ id: 'loc-new' });
   mockUpdateLocation.mockResolvedValue({});
   mockDeleteLocation.mockResolvedValue({});
+  mockUseShellBridgeWD.mockReturnValue({
+    effectiveFlagsLoaded: true,
+    getFeatureState: () => 'enabled',
+  });
 });
 
 describe('WarehouseDetailPage', () => {
@@ -193,6 +203,31 @@ describe('WarehouseDetailPage', () => {
       render(<WarehouseDetailPage />);
       await waitFor(() => {
         expect(mockGetWarehouse).toHaveBeenCalledWith('wh-1');
+      });
+    });
+  });
+
+  describe('Given effectiveFlagsLoaded is false (matrix still resolving)', () => {
+    it('When page renders / Then Edit and Delete warehouse buttons are not shown', async () => {
+      mockUseShellBridgeWD.mockReturnValue({
+        effectiveFlagsLoaded: false,
+        getFeatureState: () => 'enabled',
+      });
+      render(<WarehouseDetailPage />);
+      await waitFor(() => expect(screen.getByText('Main Warehouse')).toBeInTheDocument());
+      expect(screen.queryByTitle('Edit Warehouse')).not.toBeInTheDocument();
+      expect(screen.queryByTitle('Delete Warehouse')).not.toBeInTheDocument();
+    });
+
+    it('When effectiveFlagsLoaded becomes true with enabled flag / Then Edit and Delete buttons appear', async () => {
+      mockUseShellBridgeWD.mockReturnValue({
+        effectiveFlagsLoaded: true,
+        getFeatureState: () => 'enabled',
+      });
+      render(<WarehouseDetailPage />);
+      await waitFor(() => {
+        expect(screen.getByTitle('Edit Warehouse')).toBeInTheDocument();
+        expect(screen.getByTitle('Delete Warehouse')).toBeInTheDocument();
       });
     });
   });

@@ -22,9 +22,10 @@ vi.mock('../hooks/useAuth', () => ({
   useAuth: () => ({ can: () => true }),
 }));
 
+const mockUseShellBridgeAdj = vi.fn();
 vi.mock('@so360/shell-context', () => ({
   useActivity: () => ({ recordActivity: vi.fn().mockResolvedValue(undefined) }),
-  useShellBridge: () => ({ isFeatureEnabled: () => true, currentOrg: { id: 'org-1', name: 'Test Org' } }),
+  useShellBridge: (...args: any[]) => mockUseShellBridgeAdj(...args),
   useQuota: () => ({ getQuota: () => null, isExceeded: () => false }),
   useSandboxLimit: () => ({ isSandboxMode: false, sandboxEntryLimit: null, limitItems: (items: any[]) => items, isLimited: false }),
 }));
@@ -49,6 +50,12 @@ beforeEach(() => {
   mockGetItems.mockResolvedValue({ data: [{ id: 'item-1', name: 'Widget', sku: 'W-001' }] });
   mockGetLocations.mockResolvedValue([{ id: 'wh-1', name: 'Main WH' }]);
   mockGetAdjustmentHistory.mockResolvedValue([]);
+  mockUseShellBridgeAdj.mockReturnValue({
+    isFeatureEnabled: () => true,
+    currentOrg: { id: 'org-1', name: 'Test Org' },
+    effectiveFlagsLoaded: true,
+    getFeatureState: () => 'enabled',
+  });
 });
 
 describe('StockAdjustmentsPage', () => {
@@ -124,6 +131,31 @@ describe('StockAdjustmentsPage', () => {
       await waitFor(() => {
         expect(screen.getByText('Failed to fetch data')).toBeInTheDocument();
       });
+    });
+  });
+
+  describe('Given effectiveFlagsLoaded is false (matrix still resolving)', () => {
+    it('When page renders / Then New Adjustment button is not shown', async () => {
+      mockUseShellBridgeAdj.mockReturnValue({
+        isFeatureEnabled: () => true,
+        currentOrg: { id: 'org-1', name: 'Test Org' },
+        effectiveFlagsLoaded: false,
+        getFeatureState: () => 'enabled',
+      });
+      render(<StockAdjustmentsPage />);
+      await waitFor(() => expect(screen.getByText('Stock Adjustments')).toBeInTheDocument());
+      expect(screen.queryByText('New Adjustment')).not.toBeInTheDocument();
+    });
+
+    it('When effectiveFlagsLoaded becomes true with enabled flag / Then New Adjustment button appears', async () => {
+      mockUseShellBridgeAdj.mockReturnValue({
+        isFeatureEnabled: () => true,
+        currentOrg: { id: 'org-1', name: 'Test Org' },
+        effectiveFlagsLoaded: true,
+        getFeatureState: () => 'enabled',
+      });
+      render(<StockAdjustmentsPage />);
+      await waitFor(() => expect(screen.getByText('New Adjustment')).toBeInTheDocument());
     });
   });
 });

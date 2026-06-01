@@ -4,6 +4,12 @@ import React from 'react';
 
 vi.mock('react-router-dom', () => ({ useNavigate: () => vi.fn() }));
 
+const mockUseShellBridge = vi.fn();
+vi.mock('@so360/shell-context', () => ({
+  useActivity: () => ({ recordActivity: vi.fn().mockResolvedValue(undefined) }),
+  useShellBridge: (...args: any[]) => mockUseShellBridge(...args),
+}));
+
 const mockGetSettings = vi.fn();
 const mockCreateCategory = vi.fn();
 const mockUpdateCategory = vi.fn();
@@ -83,6 +89,10 @@ beforeEach(() => {
   mockCreateCategory.mockResolvedValue({ id: 'cat-new', name: 'New Cat' });
   mockUpdateCategory.mockResolvedValue({});
   mockDeleteCategory.mockResolvedValue({});
+  mockUseShellBridge.mockReturnValue({
+    effectiveFlagsLoaded: true,
+    getFeatureState: () => 'enabled',
+  });
 });
 
 describe('CategoriesPage', () => {
@@ -201,6 +211,27 @@ describe('CategoriesPage', () => {
       await waitFor(() => {
         expect(screen.getByTestId('category-tree')).toBeInTheDocument();
       });
+    });
+  });
+
+  describe('Given effectiveFlagsLoaded is false (matrix still resolving)', () => {
+    it('When page renders / Then New Category button is not shown', async () => {
+      mockUseShellBridge.mockReturnValue({
+        effectiveFlagsLoaded: false,
+        getFeatureState: () => 'enabled',
+      });
+      render(<CategoriesPage />);
+      await waitFor(() => expect(screen.getByText('Product Categories')).toBeInTheDocument());
+      expect(screen.queryByText('New Category')).not.toBeInTheDocument();
+    });
+
+    it('When effectiveFlagsLoaded becomes true with enabled flag / Then New Category button appears', async () => {
+      mockUseShellBridge.mockReturnValue({
+        effectiveFlagsLoaded: true,
+        getFeatureState: () => 'enabled',
+      });
+      render(<CategoriesPage />);
+      await waitFor(() => expect(screen.getByText('New Category')).toBeInTheDocument());
     });
   });
 });

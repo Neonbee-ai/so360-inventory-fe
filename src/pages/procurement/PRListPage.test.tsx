@@ -2,6 +2,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import React from 'react';
 
+const mockUseShellBridgePR = vi.fn();
+vi.mock('@so360/shell-context', () => ({
+  useActivity: () => ({ recordActivity: vi.fn().mockResolvedValue(undefined) }),
+  useShellBridge: (...args: any[]) => mockUseShellBridgePR(...args),
+}));
+
 const mockGetPRs = vi.fn();
 const mockCreatePR = vi.fn();
 const mockDeletePR = vi.fn();
@@ -50,6 +56,10 @@ beforeEach(() => {
   mockDeletePR.mockResolvedValue({});
   vi.spyOn(window, 'confirm').mockReturnValue(true);
   vi.spyOn(window, 'alert').mockImplementation(() => undefined);
+  mockUseShellBridgePR.mockReturnValue({
+    effectiveFlagsLoaded: true,
+    getFeatureState: () => 'enabled',
+  });
 });
 
 afterEach(() => {
@@ -158,6 +168,27 @@ describe('PRListPage', () => {
       await waitFor(() => screen.getByText('approved'));
       // Approved PRs have no Delete button — only draft/rejected do
       expect(screen.queryByText('Delete')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Given effectiveFlagsLoaded is false (matrix still resolving)', () => {
+    it('When page renders / Then New Requisition button is not shown', async () => {
+      mockUseShellBridgePR.mockReturnValue({
+        effectiveFlagsLoaded: false,
+        getFeatureState: () => 'enabled',
+      });
+      render(<PRListPage />);
+      await waitFor(() => expect(screen.getByText('Purchase Requisitions')).toBeInTheDocument());
+      expect(screen.queryByText('New Requisition')).not.toBeInTheDocument();
+    });
+
+    it('When effectiveFlagsLoaded becomes true with enabled flag / Then New Requisition button appears', async () => {
+      mockUseShellBridgePR.mockReturnValue({
+        effectiveFlagsLoaded: true,
+        getFeatureState: () => 'enabled',
+      });
+      render(<PRListPage />);
+      await waitFor(() => expect(screen.getByText('New Requisition')).toBeInTheDocument());
     });
   });
 });

@@ -141,7 +141,7 @@ const StockAdjustmentsPage = () => {
                     <p className="text-slate-400 mt-1">Manual corrections for physical stock truth</p>
                 </div>
                 {can('create_adjustment') && (
-                    <FeatureGate state={adjustStockState} onUpgradeClick={() => navigate('/org/billing')}>
+                    <FeatureGate state={adjustStockState} loading={!(shell?.effectiveFlagsLoaded ?? false)} onUpgradeClick={() => navigate('/org/billing')}>
                     <button
                         onClick={() => setIsModalOpen(true)}
                         className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-lg font-semibold transition-all shadow-lg shadow-blue-900/20 active:scale-95"

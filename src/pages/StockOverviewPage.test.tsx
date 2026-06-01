@@ -4,6 +4,11 @@ import React from 'react';
 
 vi.mock('react-router-dom', () => ({ useNavigate: () => vi.fn() }));
 
+const mockUseShellBridgeOv = vi.fn();
+vi.mock('@so360/shell-context', () => ({
+  useShellBridge: (...args: any[]) => mockUseShellBridgeOv(...args),
+}));
+
 const mockGetStockOverview = vi.fn();
 const mockGetGLInventoryValuation = vi.fn();
 
@@ -47,6 +52,10 @@ beforeEach(() => {
   vi.useFakeTimers({ shouldAdvanceTime: true });
   mockGetStockOverview.mockResolvedValue([]);
   mockGetGLInventoryValuation.mockResolvedValue({ gl_balance: 0, source: 'none' });
+  mockUseShellBridgeOv.mockReturnValue({
+    effectiveFlagsLoaded: true,
+    getFeatureState: () => 'enabled',
+  });
 });
 
 afterEach(() => {
@@ -143,6 +152,27 @@ describe('StockOverviewPage', () => {
       await waitFor(() => {
         expect(screen.getByText('Failed to load stock data. Please try again.')).toBeInTheDocument();
       });
+    });
+  });
+
+  describe('Given effectiveFlagsLoaded is false (matrix still resolving)', () => {
+    it('When page renders / Then GL Balance card is not shown', async () => {
+      mockUseShellBridgeOv.mockReturnValue({
+        effectiveFlagsLoaded: false,
+        getFeatureState: () => 'enabled',
+      });
+      render(<StockOverviewPage />);
+      await waitFor(() => expect(screen.getByText('Stock Overview')).toBeInTheDocument());
+      expect(screen.queryByText('GL Balance')).not.toBeInTheDocument();
+    });
+
+    it('When effectiveFlagsLoaded becomes true with enabled flag / Then GL Balance card appears', async () => {
+      mockUseShellBridgeOv.mockReturnValue({
+        effectiveFlagsLoaded: true,
+        getFeatureState: () => 'enabled',
+      });
+      render(<StockOverviewPage />);
+      await waitFor(() => expect(screen.getByText('GL Balance')).toBeInTheDocument());
     });
   });
 });

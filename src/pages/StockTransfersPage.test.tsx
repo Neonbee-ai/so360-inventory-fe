@@ -22,9 +22,10 @@ vi.mock('../hooks/useAuth', () => ({
   useAuth: () => ({ can: () => true }),
 }));
 
+const mockUseShellBridgeTr = vi.fn();
 vi.mock('@so360/shell-context', () => ({
   useActivity: () => ({ recordActivity: vi.fn().mockResolvedValue(undefined) }),
-  useShellBridge: () => ({ isFeatureEnabled: () => true, currentOrg: { id: 'org-1', name: 'Test Org' } }),
+  useShellBridge: (...args: any[]) => mockUseShellBridgeTr(...args),
   useQuota: () => ({ getQuota: () => null, isExceeded: () => false }),
   useSandboxLimit: () => ({ isSandboxMode: false, sandboxEntryLimit: null, limitItems: (items: any[]) => items, isLimited: false }),
 }));
@@ -52,6 +53,12 @@ beforeEach(() => {
     { id: 'wh-2', name: 'Warehouse B' },
   ]);
   mockGetTransferHistory.mockResolvedValue([]);
+  mockUseShellBridgeTr.mockReturnValue({
+    isFeatureEnabled: () => true,
+    currentOrg: { id: 'org-1', name: 'Test Org' },
+    effectiveFlagsLoaded: true,
+    getFeatureState: () => 'enabled',
+  });
 });
 
 describe('StockTransfersPage', () => {
@@ -131,6 +138,31 @@ describe('StockTransfersPage', () => {
       await waitFor(() => {
         expect(screen.getByText('Failed to fetch transfers data')).toBeInTheDocument();
       });
+    });
+  });
+
+  describe('Given effectiveFlagsLoaded is false (matrix still resolving)', () => {
+    it('When page renders / Then Plan Transfer button is not shown', async () => {
+      mockUseShellBridgeTr.mockReturnValue({
+        isFeatureEnabled: () => true,
+        currentOrg: { id: 'org-1', name: 'Test Org' },
+        effectiveFlagsLoaded: false,
+        getFeatureState: () => 'enabled',
+      });
+      render(<StockTransfersPage />);
+      await waitFor(() => expect(screen.getByText('Stock Transfers')).toBeInTheDocument());
+      expect(screen.queryByText('Plan Transfer')).not.toBeInTheDocument();
+    });
+
+    it('When effectiveFlagsLoaded becomes true with enabled flag / Then Plan Transfer button appears', async () => {
+      mockUseShellBridgeTr.mockReturnValue({
+        isFeatureEnabled: () => true,
+        currentOrg: { id: 'org-1', name: 'Test Org' },
+        effectiveFlagsLoaded: true,
+        getFeatureState: () => 'enabled',
+      });
+      render(<StockTransfersPage />);
+      await waitFor(() => expect(screen.getByText('Plan Transfer')).toBeInTheDocument());
     });
   });
 });

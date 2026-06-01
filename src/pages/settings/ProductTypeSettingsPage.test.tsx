@@ -2,6 +2,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import React from 'react';
 
+const mockUseShellBridgePT = vi.fn();
+vi.mock('@so360/shell-context', () => ({
+  useActivity: () => ({ recordActivity: vi.fn().mockResolvedValue(undefined) }),
+  useShellBridge: (...args: any[]) => mockUseShellBridgePT(...args),
+}));
+
 const mockGetAll = vi.fn();
 const mockGetOne = vi.fn();
 const mockCreate = vi.fn();
@@ -55,6 +61,10 @@ beforeEach(() => {
   mockDelete.mockResolvedValue({});
   mockAddAttribute.mockResolvedValue({});
   mockDeleteAttribute.mockResolvedValue({});
+  mockUseShellBridgePT.mockReturnValue({
+    effectiveFlagsLoaded: true,
+    getFeatureState: () => 'enabled',
+  });
 });
 
 describe('ProductTypeSettingsPage', () => {
@@ -174,6 +184,27 @@ describe('ProductTypeSettingsPage', () => {
       await waitFor(() => {
         expect(mockGetAll).toHaveBeenCalledTimes(1);
       });
+    });
+  });
+
+  describe('Given effectiveFlagsLoaded is false (matrix still resolving)', () => {
+    it('When page renders / Then New button is not shown', async () => {
+      mockUseShellBridgePT.mockReturnValue({
+        effectiveFlagsLoaded: false,
+        getFeatureState: () => 'enabled',
+      });
+      render(<ProductTypeSettingsPage />);
+      await waitFor(() => expect(screen.getByText('Product Types')).toBeInTheDocument());
+      expect(screen.queryByText('New')).not.toBeInTheDocument();
+    });
+
+    it('When effectiveFlagsLoaded becomes true with enabled flag / Then New button appears', async () => {
+      mockUseShellBridgePT.mockReturnValue({
+        effectiveFlagsLoaded: true,
+        getFeatureState: () => 'enabled',
+      });
+      render(<ProductTypeSettingsPage />);
+      await waitFor(() => expect(screen.getByText('New')).toBeInTheDocument());
     });
   });
 });

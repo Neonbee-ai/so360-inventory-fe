@@ -31,10 +31,12 @@ vi.mock('../components/common/Table', () => ({
   ),
 }));
 
+const mockUseShellBridge = vi.fn();
+
 vi.mock('@so360/shell-context', () => ({
   useModules: () => ({ isModuleEnabled: () => true }),
   useActivity: () => ({ recordActivity: vi.fn() }),
-  useShellBridge: () => ({ isFeatureEnabled: () => true, currentOrg: { id: 'org-1', name: 'Test Org' } }),
+  useShellBridge: (...args: any[]) => mockUseShellBridge(...args),
   useShell: () => ({ currentOrg: { id: 'org-1', name: 'Test Org' } }),
   useQuota: () => ({ getQuota: () => null, isExceeded: () => false }),
   useSandboxLimit: () => ({ isSandboxMode: false, sandboxEntryLimit: null, limitItems: (items: any[]) => items, isLimited: false }),
@@ -59,6 +61,12 @@ const makeItem = (overrides: any = {}) => ({
 beforeEach(() => {
   vi.clearAllMocks();
   mockGetItems.mockResolvedValue({ data: [] });
+  mockUseShellBridge.mockReturnValue({
+    isFeatureEnabled: () => true,
+    currentOrg: { id: 'org-1', name: 'Test Org' },
+    effectiveFlagsLoaded: true,
+    getFeatureState: () => 'enabled',
+  });
 });
 
 describe('ItemsPage', () => {
@@ -154,6 +162,31 @@ describe('ItemsPage', () => {
       fireEvent.change(screen.getByDisplayValue('All Types'), { target: { value: 'product' } });
       expect(screen.getByTestId('row-item-1')).toBeInTheDocument();
       expect(screen.queryByTestId('row-item-2')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Given effectiveFlagsLoaded is false (matrix still resolving)', () => {
+    it('When page renders / Then Register Item button is not shown', async () => {
+      mockUseShellBridge.mockReturnValue({
+        isFeatureEnabled: () => true,
+        currentOrg: { id: 'org-1', name: 'Test Org' },
+        effectiveFlagsLoaded: false,
+        getFeatureState: () => 'enabled',
+      });
+      render(<ItemsPage />);
+      await waitFor(() => expect(screen.getByText('Items')).toBeInTheDocument());
+      expect(screen.queryByText('Register Item')).not.toBeInTheDocument();
+    });
+
+    it('When effectiveFlagsLoaded becomes true with enabled flag / Then Register Item button appears', async () => {
+      mockUseShellBridge.mockReturnValue({
+        isFeatureEnabled: () => true,
+        currentOrg: { id: 'org-1', name: 'Test Org' },
+        effectiveFlagsLoaded: true,
+        getFeatureState: () => 'enabled',
+      });
+      render(<ItemsPage />);
+      await waitFor(() => expect(screen.getByText('Register Item')).toBeInTheDocument());
     });
   });
 });

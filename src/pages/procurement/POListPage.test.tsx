@@ -26,10 +26,11 @@ vi.mock('react-router-dom', () => ({
   useLocation: () => ({ pathname: '/procurement/po', state: null }),
 }));
 
+const mockUseShellBridgePO = vi.fn();
 vi.mock('@so360/shell-context', () => ({
   useBusinessSettings: () => ({ settings: { base_currency: 'USD', is_tax_inclusive_pricing: false } }),
   useActivity: () => ({ recordActivity: async () => {} }),
-  useShellBridge: () => ({ isFeatureEnabled: () => true, currentOrg: { id: 'org-1', name: 'Test Org' } }),
+  useShellBridge: (...args: any[]) => mockUseShellBridgePO(...args),
   useQuota: () => ({ getQuota: () => null, isExceeded: () => false }),
   useSandboxLimit: () => ({ isSandboxMode: false, sandboxEntryLimit: null, limitItems: (items: any[]) => items, isLimited: false }),
 }));
@@ -63,6 +64,12 @@ beforeEach(() => {
   mockGetPOs.mockResolvedValue([]);
   mockGetVendors.mockResolvedValue([]);
   mockGetPRs.mockResolvedValue([]);
+  mockUseShellBridgePO.mockReturnValue({
+    isFeatureEnabled: () => true,
+    currentOrg: { id: 'org-1', name: 'Test Org' },
+    effectiveFlagsLoaded: true,
+    getFeatureState: () => 'enabled',
+  });
 });
 
 describe('POListPage', () => {
@@ -165,6 +172,31 @@ describe('POListPage', () => {
       await waitFor(() => {
         expect(screen.getByTestId('item-search')).toBeInTheDocument();
       });
+    });
+  });
+
+  describe('Given effectiveFlagsLoaded is false (matrix still resolving)', () => {
+    it('When page renders / Then New PO button is not shown', async () => {
+      mockUseShellBridgePO.mockReturnValue({
+        isFeatureEnabled: () => true,
+        currentOrg: { id: 'org-1', name: 'Test Org' },
+        effectiveFlagsLoaded: false,
+        getFeatureState: () => 'enabled',
+      });
+      render(<POListPage />);
+      await waitFor(() => expect(screen.getByText('Purchase Orders')).toBeInTheDocument());
+      expect(screen.queryByText('New PO')).not.toBeInTheDocument();
+    });
+
+    it('When effectiveFlagsLoaded becomes true with enabled flag / Then New PO button appears', async () => {
+      mockUseShellBridgePO.mockReturnValue({
+        isFeatureEnabled: () => true,
+        currentOrg: { id: 'org-1', name: 'Test Org' },
+        effectiveFlagsLoaded: true,
+        getFeatureState: () => 'enabled',
+      });
+      render(<POListPage />);
+      await waitFor(() => expect(screen.getByText('New PO')).toBeInTheDocument());
     });
   });
 });

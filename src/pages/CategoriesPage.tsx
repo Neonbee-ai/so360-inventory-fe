@@ -199,9 +199,9 @@ const CategoriesPage = () => {
     const { recordActivity } = useActivity();
     const shell = useShellBridge();
     const createState = (shell as any)?.getFeatureState ? (shell as any).getFeatureState('action:inventory:items:create') : 'enabled';
-    const canCreate = createState === 'enabled';
+    const canCreate = (shell?.effectiveFlagsLoaded ?? false) && createState === 'enabled';
     const deleteState = (shell as any)?.getFeatureState ? (shell as any).getFeatureState('action:inventory:items:delete') : 'enabled';
-    const canDelete = deleteState === 'enabled';
+    const canDelete = (shell?.effectiveFlagsLoaded ?? false) && deleteState === 'enabled';
 
     const [categories, setCategories] = useState<ItemCategory[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -334,7 +334,7 @@ const CategoriesPage = () => {
                     <p className="text-slate-400 mt-1 text-sm">Organize your products with a hierarchical category system</p>
                 </div>
                 {canManage && (
-                    <FeatureGate state={createState} onUpgradeClick={() => navigate('/org/billing')}>
+                    <FeatureGate state={createState} loading={!(shell?.effectiveFlagsLoaded ?? false)} onUpgradeClick={() => navigate('/org/billing')}>
                     <button
                         onClick={() => {
                             setSelectedId(null);
