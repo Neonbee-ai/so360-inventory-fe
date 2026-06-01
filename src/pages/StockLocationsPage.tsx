@@ -24,7 +24,6 @@ const StockLocationsPage = () => {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
-    const [maxWarehouses, setMaxWarehouses] = useState<number | null>(null);
 
     // Create form state
     const [newWarehouse, setNewWarehouse] = useState({
@@ -74,33 +73,8 @@ const StockLocationsPage = () => {
         }
     };
 
-    const fetchWarehouseLimit = async () => {
-        try {
-            const data = await inventoryService.request('/warehouses/entitlement-limits', { method: 'GET' }).catch(() => null);
-            if (data?.max_warehouses !== undefined) {
-                setMaxWarehouses(data.max_warehouses);
-                return;
-            }
-        } catch {}
-        // Fallback: fetch directly from subscription service
-        try {
-            const subOrigin = (import.meta as any)?.env?.VITE_SO360_SUBSCRIPTION_API || 'http://localhost:3026';
-            const resp = await fetch(`${subOrigin}/v1/entitlements/effective-matrix`, {
-                headers: {
-                    'X-Tenant-Id': inventoryService['tenantId'] || '',
-                    'X-Org-Id': inventoryService['orgId'] || '',
-                },
-            });
-            if (resp.ok) {
-                const matrix = await resp.json();
-                setMaxWarehouses(matrix?.limits?.max_warehouses ?? null);
-            }
-        } catch {}
-    };
-
     useEffect(() => {
         fetchWarehouses();
-        fetchWarehouseLimit();
     }, []);
 
     const handleCreateWarehouse = async (e: React.FormEvent) => {
@@ -175,7 +149,13 @@ const StockLocationsPage = () => {
         }
     };
 
-    const atWarehouseLimit = !quotaData?.is_unlimited && maxWarehouses !== null && warehouses.length >= maxWarehouses;
+    // Single source of truth: the warehouse limit comes from the same resolver
+    // (resolve_quota_limit, via useQuota) that the backend uses to enforce creation.
+    // "Used" is the live warehouse count — the ground truth for a count quota.
+    const whUnlimited = quotaData?.is_unlimited ?? false;
+    const whLimit = whUnlimited || quotaData == null || (quotaData.limit ?? -1) < 0 ? null : quotaData.limit;
+    const whUsed = warehouses.length;
+    const atWarehouseLimit = whLimit !== null && whUsed >= whLimit;
 
     return (
         <div className="p-8">
@@ -189,20 +169,20 @@ const StockLocationsPage = () => {
                     <QuotaGate
                         quotaKey="max_warehouses"
                         moduleCode="inventory"
-                        used={quotaData?.current_usage ?? 0}
+                        used={whUsed}
                         limit={quotaData?.limit ?? 0}
-                        isUnlimited={quotaData?.is_unlimited}
+                        isUnlimited={whUnlimited}
                         disableOnExceeded
                     >
                         <button
                             onClick={() => !atWarehouseLimit && setIsCreateModalOpen(true)}
                             disabled={atWarehouseLimit}
-                            title={atWarehouseLimit ? `${warehouses.length}/${maxWarehouses} warehouses used — upgrade your plan to add more` : undefined}
+                            title={atWarehouseLimit ? `Used ${whUsed} of ${whLimit} warehouses — upgrade your plan to add more` : undefined}
                             className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold transition-all shadow-lg active:scale-95 ${atWarehouseLimit ? 'bg-slate-700 text-slate-400 cursor-not-allowed shadow-none' : 'bg-blue-600 hover:bg-blue-500 text-slate-50 shadow-blue-900/20'}`}
                         >
                             <Plus size={20} />
                             New Warehouse
-                            {atWarehouseLimit && <span className="text-xs font-normal ml-1">({warehouses.length}/{maxWarehouses})</span>}
+                            {atWarehouseLimit && <span className="text-xs font-normal ml-1">({whUsed}/{whLimit})</span>}
                         </button>
                     </QuotaGate>
                     </FeatureGate>
@@ -212,23 +192,10 @@ const StockLocationsPage = () => {
             {quotaData && (
                 <QuotaBar
                     label="Warehouses"
-                    used={quotaData.current_usage}
+                    used={whUsed}
                     limit={quotaData.limit}
-                    isUnlimited={quotaData.is_unlimited}
+                    isUnlimited={whUnlimited}
                 />
-            )}
-
-            {maxWarehouses !== null && (
-                <div className="mb-6 flex items-center justify-between bg-slate-900/50 border border-slate-800 rounded-lg px-4 py-2.5">
-                    <span className="text-sm text-slate-400">
-                        Warehouse usage: <span className={`font-semibold ${atWarehouseLimit ? 'text-amber-400' : 'text-slate-200'}`}>{warehouses.length} of {maxWarehouses} used</span>
-                    </span>
-                    {atWarehouseLimit && (
-                        <a href="/settings/subscription" className="text-xs font-semibold text-blue-400 hover:text-blue-300 transition-colors">
-                            Upgrade Plan →
-                        </a>
-                    )}
-                </div>
             )}
 
             {error && (
@@ -329,7 +296,7 @@ const StockLocationsPage = () => {
                         <button
                             onClick={() => !atWarehouseLimit && setIsCreateModalOpen(true)}
                             disabled={atWarehouseLimit}
-                            title={atWarehouseLimit ? `${warehouses.length}/${maxWarehouses} warehouses used — upgrade your plan to add more` : undefined}
+                            title={atWarehouseLimit ? `Used ${whUsed} of ${whLimit} warehouses — upgrade your plan to add more` : undefined}
                             className={`border-2 border-dashed rounded-2xl p-6 flex flex-col items-center justify-center transition-all gap-3 h-full min-h-[200px] ${atWarehouseLimit ? 'border-slate-800 text-slate-600 cursor-not-allowed' : 'border-slate-800 text-slate-500 hover:border-slate-400 hover:bg-slate-900/30'}`}
                         >
                             <div className="p-3 rounded-full bg-slate-800/50">
