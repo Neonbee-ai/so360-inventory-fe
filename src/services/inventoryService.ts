@@ -433,6 +433,19 @@ class InventoryService {
         });
     }
 
+    // ==================== Default Logic Settings ====================
+
+    async getOrgDefaultLogic(): Promise<{ allow_negative_stock: boolean; auto_approve_transfers: boolean }> {
+        return this.request(`/settings/${this.orgId}/org-defaults`);
+    }
+
+    async updateOrgDefaultLogic(dto: { allow_negative_stock?: boolean; auto_approve_transfers?: boolean }) {
+        return this.request(`/settings/${this.orgId}/org-defaults`, {
+            method: 'PATCH',
+            body: JSON.stringify(dto),
+        });
+    }
+
     // ==================== Movement History ====================
 
     async getAdjustmentHistory(itemId?: string) {

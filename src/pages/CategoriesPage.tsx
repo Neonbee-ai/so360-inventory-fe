@@ -208,6 +208,7 @@ const CategoriesPage = () => {
     const [error, setError] = useState<string | null>(null);
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [viewMode, setViewMode] = useState<'tree' | 'cards'>('tree');
+    const [showAddRoot, setShowAddRoot] = useState(false);
 
     // Detail panel state
     const [editName, setEditName] = useState('');
@@ -338,6 +339,8 @@ const CategoriesPage = () => {
                     <button
                         onClick={() => {
                             setSelectedId(null);
+                            setViewMode('tree');
+                            setShowAddRoot(true);
                         }}
                         className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                     >
@@ -383,6 +386,8 @@ const CategoriesPage = () => {
                                 onDelete={canDelete ? handleDelete : undefined}
                                 canManage={canManage}
                                 onSelect={setSelectedId}
+                                showAddRoot={showAddRoot}
+                                onShowAddRootChange={setShowAddRoot}
                             />
                         ) : (
                             <CategoryCardsView

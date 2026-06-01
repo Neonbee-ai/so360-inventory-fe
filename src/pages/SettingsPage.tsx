@@ -48,16 +48,42 @@ const SettingsPage = () => {
     const [newCategoryDesc, setNewCategoryDesc] = useState('');
     const [addingCategory, setAddingCategory] = useState(false);
 
+    // Default Logic state
+    const [allowNegativeStock, setAllowNegativeStock] = useState(false);
+    const [autoApproveTransfers, setAutoApproveTransfers] = useState(false);
+    const [togglingLogic, setTogglingLogic] = useState(false);
+
     const fetchSettings = async () => {
         try {
             setIsLoading(true);
-            const data = await inventoryService.getSettings();
+            const [data, defaults] = await Promise.all([
+                inventoryService.getSettings(),
+                inventoryService.getOrgDefaultLogic().catch(() => ({ allow_negative_stock: false, auto_approve_transfers: false })),
+            ]);
             setSettings(data);
+            setAllowNegativeStock(defaults.allow_negative_stock);
+            setAutoApproveTransfers(defaults.auto_approve_transfers);
             setError(null);
         } catch (err: any) {
             setError(err.message || 'Failed to load settings');
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const handleToggleLogic = async (field: 'allow_negative_stock' | 'auto_approve_transfers', value: boolean) => {
+        setTogglingLogic(true);
+        setError(null);
+        try {
+            await inventoryService.updateOrgDefaultLogic({ [field]: value });
+            if (field === 'allow_negative_stock') setAllowNegativeStock(value);
+            else setAutoApproveTransfers(value);
+            setSuccess(true);
+            setTimeout(() => setSuccess(false), 3000);
+        } catch (err: any) {
+            setError(err.message || 'Failed to update setting');
+        } finally {
+            setTogglingLogic(false);
         }
     };
 
@@ -302,18 +328,28 @@ const SettingsPage = () => {
                                 <p className="text-sm font-semibold text-slate-200">Enforce Negative Stock Prevention</p>
                                 <p className="text-xs text-slate-500">Block transactions if available quantity would drop below zero</p>
                             </div>
-                            <div className="w-12 h-6 bg-blue-600 rounded-full relative cursor-pointer">
-                                <div className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full"></div>
-                            </div>
+                            <button
+                                type="button"
+                                disabled={togglingLogic}
+                                onClick={() => handleToggleLogic('allow_negative_stock', !allowNegativeStock)}
+                                className={`w-12 h-6 rounded-full relative transition-colors disabled:opacity-50 ${allowNegativeStock ? 'bg-blue-600' : 'bg-slate-700'}`}
+                            >
+                                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${allowNegativeStock ? 'right-1' : 'left-1'}`} />
+                            </button>
                         </div>
                         <div className="flex items-center justify-between p-4 bg-slate-800/30 rounded-xl border border-slate-700/50">
                             <div>
                                 <p className="text-sm font-semibold text-slate-200">Auto-approve Transfers</p>
                                 <p className="text-xs text-slate-500">Mark transfers as Completed immediately after submission</p>
                             </div>
-                            <div className="w-12 h-6 bg-blue-600 rounded-full relative cursor-pointer">
-                                <div className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full"></div>
-                            </div>
+                            <button
+                                type="button"
+                                disabled={togglingLogic}
+                                onClick={() => handleToggleLogic('auto_approve_transfers', !autoApproveTransfers)}
+                                className={`w-12 h-6 rounded-full relative transition-colors disabled:opacity-50 ${autoApproveTransfers ? 'bg-blue-600' : 'bg-slate-700'}`}
+                            >
+                                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${autoApproveTransfers ? 'right-1' : 'left-1'}`} />
+                            </button>
                         </div>
                     </div>
                 </section>

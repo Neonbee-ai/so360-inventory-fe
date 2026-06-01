@@ -13,6 +13,8 @@ interface CategoryTreeViewProps {
     onDelete?: (id: string) => Promise<void>;
     canManage: boolean;
     onSelect: (id: string) => void;
+    showAddRoot?: boolean;
+    onShowAddRootChange?: (v: boolean) => void;
 }
 
 interface TreeItemProps {
@@ -245,8 +247,16 @@ const TreeItem: React.FC<TreeItemProps> = ({ node, onAdd, onUpdate, onDelete, ca
     );
 };
 
-const CategoryTreeView: React.FC<CategoryTreeViewProps> = ({ tree, onAdd, onUpdate, onDelete, canManage, onSelect }) => {
-    const [showAddRoot, setShowAddRoot] = useState(false);
+const CategoryTreeView: React.FC<CategoryTreeViewProps> = ({ tree, onAdd, onUpdate, onDelete, canManage, onSelect, showAddRoot: controlledShowAdd, onShowAddRootChange }) => {
+    const [internalShowAdd, setInternalShowAdd] = useState(false);
+    const showAddRoot = controlledShowAdd !== undefined ? controlledShowAdd : internalShowAdd;
+    const setShowAddRoot = (v: boolean) => {
+        if (controlledShowAdd !== undefined) {
+            onShowAddRootChange?.(v);
+        } else {
+            setInternalShowAdd(v);
+        }
+    };
     const [rootName, setRootName] = useState('');
     const [isAddingRoot, setIsAddingRoot] = useState(false);
 

@@ -18,6 +18,7 @@ const ItemsPage = () => {
     const quotaData = getQuota('max_skus');
     const { isSandboxMode, sandboxEntryLimit, isLimited } = useSandboxLimit();
     const [items, setItems] = useState<Item[]>([]);
+    const [totalItemCount, setTotalItemCount] = useState<number | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [typeFilter, setTypeFilter] = useState<'All' | 'product' | 'service' | 'raw_material' | 'finished_good' | 'consumable' | 'fixed_asset'>('All');
@@ -29,6 +30,7 @@ const ItemsPage = () => {
         try {
             const response = await inventoryService.getItems();
             setItems(response.data || []);
+            setTotalItemCount(response.pagination?.total ?? (response.data?.length ?? 0));
         } catch (err) {
             setError('Failed to load items. Please try again.');
         } finally {
@@ -131,7 +133,7 @@ const ItemsPage = () => {
                     <QuotaGate
                         quotaKey="max_skus"
                         moduleCode="inventory"
-                        used={quotaData?.current_usage ?? 0}
+                        used={totalItemCount ?? quotaData?.current_usage ?? 0}
                         limit={quotaData?.limit ?? 0}
                         isUnlimited={quotaData?.is_unlimited}
                         disableOnExceeded
@@ -148,11 +150,11 @@ const ItemsPage = () => {
                 )}
             </header>
 
-            {quotaData && (
+            {quotaData && totalItemCount !== null && (
                 <div className="mb-6">
                     <QuotaBar
                         label="SKUs"
-                        used={quotaData.current_usage}
+                        used={totalItemCount}
                         limit={quotaData.limit}
                         isUnlimited={quotaData.is_unlimited}
                     />
