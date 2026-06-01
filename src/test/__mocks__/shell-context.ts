@@ -3,6 +3,9 @@ export const useShell = () => ({
   isModuleEnabled: () => false,
   isFeatureHidden: () => false,
   isFeatureEnabled: () => true,
+  currentOrg: { id: 'mock-org-id', name: 'Test Org' },
+  printDocument: async () => {},
+  getDocumentTemplate: async () => ({}),
 });
 export const useBusinessSettings = () => ({ settings: { base_currency: 'USD', document_language: 'en-US', timezone: 'UTC' } });
 export const useNotify = () => ({ emitNotification: async () => {} });

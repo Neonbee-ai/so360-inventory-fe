@@ -6,7 +6,8 @@ import {
 } from 'lucide-react';
 import { procurementService } from '../../services/procurementService';
 import { useInventoryFormatters } from '../../utils/formatters';
-import { useActivity } from '@so360/shell-context';
+import { useActivity, useShell, useBusinessSettings } from '@so360/shell-context';
+import { poToDocumentData } from '../../utils/poToDocumentData';
 
 interface POLine {
     id: string;
@@ -40,6 +41,8 @@ const PODetailPage = () => {
     const navigate = useNavigate();
     const formatters = useInventoryFormatters();
     const { recordActivity } = useActivity();
+    const shell = useShell();
+    const { settings: businessSettings } = useBusinessSettings();
     const [po, setPo] = useState<PO | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -93,143 +96,12 @@ const PODetailPage = () => {
 
     const receiveProgress = totalOrdered > 0 ? Math.round((totalReceived / totalOrdered) * 100) : 0;
 
-    const handlePrint = () => {
+    const handlePrint = async () => {
         if (!po) return;
-        const printWindow = window.open('', '_blank', 'width=900,height=700');
-        if (!printWindow) return;
-
-        const statusLabel = po.status.replace(/_/g, ' ').toUpperCase();
-        const createdDate = new Date(po.created_at).toLocaleDateString('en-US', {
-            year: 'numeric', month: 'long', day: 'numeric'
-        });
-        const deliveryDate = po.expected_delivery_date
-            ? new Date(po.expected_delivery_date).toLocaleDateString('en-US', {
-                year: 'numeric', month: 'long', day: 'numeric'
-            })
-            : 'Not specified';
-
-        const linesHtml = (po.po_lines || []).map((line, idx) => `
-            <tr>
-                <td>${idx + 1}</td>
-                <td>
-                    <strong>${line.items?.name || line.description || '—'}</strong>
-                    ${line.items?.sku ? `<br/><small style="color:#888">${line.items.sku}</small>` : ''}
-                </td>
-                <td style="text-align:center">${line.quantity}</td>
-                <td style="text-align:right">${formatters.formatCurrency(line.unit_price)}</td>
-                <td style="text-align:right">${line.tax_rate ? `${line.tax_rate}%` : '—'}</td>
-                <td style="text-align:right">${line.tax_amount ? formatters.formatCurrency(line.tax_amount) : '—'}</td>
-                <td style="text-align:right"><strong>${formatters.formatCurrency(line.quantity * line.unit_price)}</strong></td>
-            </tr>
-        `).join('');
-
-        const taxFooterRows = hasTax ? `
-            <tr>
-                <td colspan="6" style="text-align:right;font-weight:600;color:#555">Subtotal:</td>
-                <td style="text-align:right;font-weight:700">${formatters.formatCurrency(subtotalAmount)}</td>
-            </tr>
-            <tr>
-                <td colspan="6" style="text-align:right;font-weight:600;color:#555">Tax:</td>
-                <td style="text-align:right;font-weight:700;color:#b45309">${formatters.formatCurrency(taxAmount)}</td>
-            </tr>
-        ` : '';
-
-        printWindow.document.write(`<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8"/>
-    <title>Purchase Order ${po.po_number}</title>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: Arial, sans-serif; font-size: 13px; color: #111; padding: 40px; }
-        h1 { font-size: 22px; font-weight: 700; }
-        h2 { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
-        .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; border-bottom: 2px solid #111; padding-bottom: 20px; }
-        .header-left h1 { margin-bottom: 6px; }
-        .badge { display: inline-block; padding: 3px 10px; border: 1px solid #555; border-radius: 4px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; }
-        .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 28px; }
-        .meta-box { background: #f7f7f7; border: 1px solid #e0e0e0; border-radius: 6px; padding: 14px; }
-        .meta-box label { display: block; font-size: 10px; font-weight: 700; text-transform: uppercase; color: #888; margin-bottom: 4px; }
-        .meta-box span { font-size: 14px; font-weight: 600; }
-        .meta-box small { display: block; color: #666; font-size: 12px; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
-        thead tr { background: #f0f0f0; }
-        th { padding: 10px 12px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #555; border-bottom: 2px solid #ddd; }
-        td { padding: 10px 12px; border-bottom: 1px solid #eee; vertical-align: top; }
-        tfoot td { border-top: 2px solid #111; font-size: 15px; }
-        .total-row td { padding-top: 14px; }
-        .footer { margin-top: 48px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 11px; color: #888; text-align: center; }
-        @media print {
-            body { padding: 20px; }
-            button { display: none; }
-        }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <div class="header-left">
-            <h1>Purchase Order</h1>
-            <p style="font-size:20px;font-weight:800;margin:6px 0">#${po.po_number}</p>
-            <span class="badge">${statusLabel}</span>
-        </div>
-        <div style="text-align:right">
-            <div style="font-size:11px;color:#888;margin-bottom:4px">ORDER DATE</div>
-            <div style="font-size:14px;font-weight:600">${createdDate}</div>
-        </div>
-    </div>
-
-    <div class="meta-grid">
-        <div class="meta-box">
-            <label>Vendor</label>
-            <span>${po.vendor?.name || '—'}</span>
-            ${po.vendor?.contact_email ? `<small>${po.vendor.contact_email}</small>` : ''}
-        </div>
-        <div class="meta-box">
-            <label>Expected Delivery</label>
-            <span>${deliveryDate}</span>
-        </div>
-        ${po.pr_id ? `
-        <div class="meta-box">
-            <label>Source Purchase Request</label>
-            <span>#PR-${po.pr_id.slice(0, 8).toUpperCase()}</span>
-        </div>` : ''}
-        <div class="meta-box">
-            <label>Total Items</label>
-            <span>${po.po_lines?.length || 0} line items · ${totalOrdered} units</span>
-        </div>
-    </div>
-
-    <h2>Order Lines</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>Item</th>
-                <th style="text-align:center">Qty</th>
-                <th style="text-align:right">Unit Price</th>
-                <th style="text-align:right">Tax Rate</th>
-                <th style="text-align:right">Tax Amount</th>
-                <th style="text-align:right">Line Total</th>
-            </tr>
-        </thead>
-        <tbody>${linesHtml}</tbody>
-        <tfoot>
-            ${taxFooterRows}
-            <tr class="total-row">
-                <td colspan="6" style="text-align:right;font-weight:700">Grand Total:</td>
-                <td style="text-align:right;font-weight:800;font-size:16px">${formatters.formatCurrency(totalAmount)}</td>
-            </tr>
-        </tfoot>
-    </table>
-
-    <div class="footer">
-        This is an official Purchase Order document. Generated on ${new Date().toLocaleString()}.
-    </div>
-
-    <script>window.onload = function() { window.print(); }</script>
-</body>
-</html>`);
-        printWindow.document.close();
+        await shell?.printDocument('purchase_order', poToDocumentData(po, {
+            currency: businessSettings?.base_currency || 'USD',
+            seller: { name: shell?.currentOrg?.name || '' },
+        }));
     };
 
     const handleStatusChange = async (status: 'sent' | 'closed' | 'cancelled') => {
