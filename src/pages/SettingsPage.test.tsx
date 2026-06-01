@@ -7,6 +7,8 @@ const mockCreateUom = vi.fn();
 const mockDeleteUom = vi.fn();
 const mockCreateCategory = vi.fn();
 const mockDeleteCategory = vi.fn();
+const mockGetOrgDefaultLogic = vi.fn();
+const mockUpdateOrgDefaultLogic = vi.fn();
 const mockNavigate = vi.fn();
 
 vi.mock('../services/inventoryService', () => ({
@@ -16,6 +18,8 @@ vi.mock('../services/inventoryService', () => ({
     deleteUom: (...args: any[]) => mockDeleteUom(...args),
     createCategory: (...args: any[]) => mockCreateCategory(...args),
     deleteCategory: (...args: any[]) => mockDeleteCategory(...args),
+    getOrgDefaultLogic: (...args: any[]) => mockGetOrgDefaultLogic(...args),
+    updateOrgDefaultLogic: (...args: any[]) => mockUpdateOrgDefaultLogic(...args),
   },
 }));
 
@@ -57,6 +61,8 @@ beforeEach(() => {
   mockDeleteUom.mockResolvedValue({});
   mockCreateCategory.mockResolvedValue({ id: 'cat-new' });
   mockDeleteCategory.mockResolvedValue({});
+  mockGetOrgDefaultLogic.mockResolvedValue({ allow_negative_stock: false, auto_approve_transfers: false });
+  mockUpdateOrgDefaultLogic.mockResolvedValue({ allow_negative_stock: true, auto_approve_transfers: false });
 });
 
 describe('SettingsPage', () => {
