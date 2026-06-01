@@ -98,7 +98,7 @@ const PODetailPage = () => {
 
     const handlePrint = async () => {
         if (!po) return;
-        await shell?.printDocument('purchase_order', poToDocumentData(po, {
+        await shell?.printDocument?.('purchase_order', poToDocumentData(po, {
             currency: businessSettings?.base_currency || 'USD',
             seller: { name: shell?.currentOrg?.name || '' },
         }));
