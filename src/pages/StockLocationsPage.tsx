@@ -153,7 +153,7 @@ const StockLocationsPage = () => {
     // (resolve_quota_limit, via useQuota) that the backend uses to enforce creation.
     // "Used" is the live warehouse count — the ground truth for a count quota.
     const whUnlimited = quotaData?.is_unlimited ?? false;
-    const whLimit = whUnlimited || quotaData == null || (quotaData.limit ?? -1) < 0 ? null : quotaData.limit;
+    const whLimit = whUnlimited || quotaData == null || (quotaData.limit ?? -1) <= 0 ? null : quotaData.limit;
     const whUsed = warehouses.length;
     const atWarehouseLimit = whLimit !== null && whUsed >= whLimit;
 
