@@ -16,7 +16,8 @@ export const UpgradePrompt = () => React.createElement('div', { 'data-testid': '
 const inert = (children: any) =>
   React.createElement('div', { className: 'pointer-events-none select-none opacity-60', 'aria-disabled': true, tabIndex: -1 }, children);
 
-export const FeatureRoute = ({ state, children, hiddenFallback = null, lockedFallback, disabledFallback }: any) => {
+export const FeatureRoute = ({ state, loading, children, hiddenFallback = null, lockedFallback, disabledFallback }: any) => {
+  if (loading) return null;
   if (state === 'hidden') return React.createElement(React.Fragment, null, hiddenFallback);
   if (state === 'locked') return React.createElement(React.Fragment, null, lockedFallback != null ? lockedFallback : children);
   if (state === 'disabled') return disabledFallback !== undefined ? React.createElement(React.Fragment, null, disabledFallback) : inert(children);
@@ -24,7 +25,8 @@ export const FeatureRoute = ({ state, children, hiddenFallback = null, lockedFal
   return React.createElement(React.Fragment, null, children);
 };
 
-export const FeatureGate = ({ state, children, fallback = null, onUpgradeClick, lockedLabel = 'Upgrade to unlock' }: any) => {
+export const FeatureGate = ({ state, loading, children, fallback = null, onUpgradeClick, lockedLabel = 'Upgrade to unlock' }: any) => {
+  if (loading) return null;
   if (state === 'hidden') return React.createElement(React.Fragment, null, fallback);
   if (state === 'enabled') return React.createElement(React.Fragment, null, children);
   if (state === 'read_only' || state === 'disabled') return inert(children);
