@@ -175,7 +175,7 @@ const StockLocationsPage = () => {
         }
     };
 
-    const atWarehouseLimit = maxWarehouses !== null && warehouses.length >= maxWarehouses;
+    const atWarehouseLimit = !quotaData?.is_unlimited && maxWarehouses !== null && warehouses.length >= maxWarehouses;
 
     return (
         <div className="p-8">
@@ -221,7 +221,7 @@ const StockLocationsPage = () => {
             {maxWarehouses !== null && (
                 <div className="mb-6 flex items-center justify-between bg-slate-900/50 border border-slate-800 rounded-lg px-4 py-2.5">
                     <span className="text-sm text-slate-400">
-                        Warehouse limit: <span className={`font-semibold ${atWarehouseLimit ? 'text-amber-400' : 'text-slate-200'}`}>{warehouses.length} / {maxWarehouses} used</span>
+                        Warehouse usage: <span className={`font-semibold ${atWarehouseLimit ? 'text-amber-400' : 'text-slate-200'}`}>{warehouses.length} of {maxWarehouses} used</span>
                     </span>
                     {atWarehouseLimit && (
                         <a href="/settings/subscription" className="text-xs font-semibold text-blue-400 hover:text-blue-300 transition-colors">
