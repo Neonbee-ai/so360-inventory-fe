@@ -195,6 +195,7 @@ const StockLocationsPage = () => {
                     used={whUsed}
                     limit={quotaData.limit}
                     isUnlimited={whUnlimited}
+                    className="mb-6"
                 />
             )}
 

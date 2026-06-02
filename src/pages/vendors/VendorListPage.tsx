@@ -161,6 +161,7 @@ const VendorListPage = () => {
                     used={quotaData.current_usage}
                     limit={quotaData.limit}
                     isUnlimited={quotaData.is_unlimited}
+                    className="mb-6"
                 />
             )}
 
