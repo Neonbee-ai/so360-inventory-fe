@@ -357,7 +357,7 @@ const SettingsPage = () => {
 
             <div className="mt-10 p-4 bg-slate-900/40 border border-slate-800/50 rounded-2xl">
                 <p className="text-xs text-slate-500 leading-relaxed text-center">
-                    Note: These settings apply globally to the <b>{inventoryService ? 'SO360' : ''} Inventory Module</b>.
+                    Note: These settings apply globally to the <b>{inventoryService ? 'Neonbee' : ''} Inventory</b>.
                     Changes may affect ledger calculations and historical reporting.
                 </p>
             </div>

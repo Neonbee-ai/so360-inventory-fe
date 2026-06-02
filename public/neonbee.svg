@@ -1,0 +1,18 @@
+<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M50 5L89.4 27.5V72.5L50 95L10.6 72.5V27.5L50 5Z" stroke="rgba(255,255,255,0.1)" stroke-width="2" />
+    <path d="M50 15L80.3 32.5V67.5L50 85L19.7 67.5V32.5L50 15Z" stroke="#00F5FF" stroke-width="4" stroke-linecap="round" />
+    <g>
+        <path d="M50 45L70 35L65 55L50 45Z" fill="url(#bee-gradient)" opacity="0.8" />
+        <path d="M50 45L30 35L35 55L50 45Z" fill="url(#bee-gradient)" opacity="0.8" />
+        <circle cx="50" cy="50" r="8" fill="url(#bee-gradient)" />
+        <path d="M45 38L42 30" stroke="#00F5FF" stroke-width="2" stroke-linecap="round" />
+        <path d="M55 38L58 30" stroke="#00F5FF" stroke-width="2" stroke-linecap="round" />
+        <path d="M50 58V68" stroke="#9D4EDD" stroke-width="3" stroke-linecap="round" />
+    </g>
+    <defs>
+        <linearGradient id="bee-gradient" x1="50" y1="35" x2="50" y2="65" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#00F5FF" />
+            <stop offset="1" stop-color="#9D4EDD" />
+        </linearGradient>
+    </defs>
+</svg>
