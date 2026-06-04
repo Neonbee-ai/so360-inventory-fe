@@ -37,7 +37,11 @@ vi.mock('@so360/shell-context', () => ({
 
 vi.mock('../../utils/formatters', () => ({
   useInventoryFormatters: () => ({
+    formatDate: (d: string, _opts?: any) => d ?? '',
+    formatDateTime: (d: string) => d ?? '',
     formatCurrency: (v: number) => `$${v}`,
+    formatNumber: (n: number) => String(n),
+    currency: 'USD', locale: 'en-US', timezone: 'UTC',
   }),
 }));
 
