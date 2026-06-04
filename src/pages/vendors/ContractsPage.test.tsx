@@ -14,7 +14,7 @@ vi.mock('../../utils/formatters', () => ({
   useInventoryFormatters: () => ({
     formatDate: (d: string, _opts?: any) => d ?? '',
     formatDateTime: (d: string) => d ?? '',
-    formatCurrency: (v: number) => `$${v}`,
+    formatCurrency: (v: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', currencyDisplay: 'symbol' }).format(Number(v) || 0),
     formatNumber: (n: number) => String(n),
     currency: 'USD',
     locale: 'en-US',
