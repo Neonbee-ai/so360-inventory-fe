@@ -264,7 +264,7 @@ const PRDetailPage = () => {
                                 <div>
                                     <span className="text-xs text-slate-500 block">Required Date</span>
                                     <span className="text-sm text-slate-50">
-                                        {pr.required_date ? new Date(pr.required_date).toLocaleDateString() : 'Not set'}
+                                        {pr.required_date ? formatters.formatDate(pr.required_date) : 'Not set'}
                                     </span>
                                 </div>
                             </div>
@@ -273,7 +273,7 @@ const PRDetailPage = () => {
                                 <div>
                                     <span className="text-xs text-slate-500 block">Created</span>
                                     <span className="text-sm text-slate-50">
-                                        {new Date(pr.created_at).toLocaleString()}
+                                        {formatters.formatDateTime(pr.created_at)}
                                     </span>
                                 </div>
                             </div>
@@ -453,7 +453,7 @@ const PRDetailPage = () => {
                                                     {gate.approver && (
                                                         <span className="block text-xs text-slate-500">
                                                             {gate.approver.full_name}
-                                                            {gate.approved_at && ` - ${new Date(gate.approved_at).toLocaleDateString()}`}
+                                                            {gate.approved_at && ` - ${formatters.formatDate(gate.approved_at)}`}
                                                         </span>
                                                     )}
 
@@ -563,7 +563,7 @@ const PRDetailPage = () => {
                                             <div>
                                                 <span className="text-slate-50 font-bold">#{po.po_number}</span>
                                                 <span className="block text-xs text-slate-500">
-                                                    Created {new Date(po.created_at).toLocaleDateString()}
+                                                    Created {formatters.formatDate(po.created_at)}
                                                 </span>
                                             </div>
                                         </div>

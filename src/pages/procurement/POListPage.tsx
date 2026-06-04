@@ -356,7 +356,7 @@ const POListPage = () => {
                                         </div>
                                     </td>
                                     <td className="px-6 py-5 text-[10px] text-slate-500 font-bold">
-                                        {new Date(po.created_at).toLocaleDateString().toUpperCase()}
+                                        {formatters.formatDate(po.created_at).toUpperCase()}
                                     </td>
                                 </tr>
                             );

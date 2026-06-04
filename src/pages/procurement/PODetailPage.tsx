@@ -209,7 +209,7 @@ const PODetailPage = () => {
                                     <div>
                                         <span className="text-xs text-slate-500 block">Expected Delivery</span>
                                         <span className="text-sm text-slate-50">
-                                            {new Date(po.expected_delivery_date).toLocaleDateString()}
+                                            {formatters.formatDate(po.expected_delivery_date)}
                                         </span>
                                     </div>
                                 </div>
@@ -219,7 +219,7 @@ const PODetailPage = () => {
                                 <div>
                                     <span className="text-xs text-slate-500 block">Created</span>
                                     <span className="text-sm text-slate-50">
-                                        {new Date(po.created_at).toLocaleString()}
+                                        {formatters.formatDateTime(po.created_at)}
                                     </span>
                                 </div>
                             </div>

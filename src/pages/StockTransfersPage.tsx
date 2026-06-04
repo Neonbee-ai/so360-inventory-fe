@@ -7,6 +7,7 @@ import { Table } from '../components/common/Table';
 import { Modal } from '../components/common/Modal';
 import { useAuth } from '../hooks/useAuth';
 import { useActivity, useShellBridge } from '@so360/shell-context';
+import { useInventoryFormatters } from '../utils/formatters';
 import { FeatureGate } from '@so360/design-system';
 
 const StockTransfersPage = () => {
@@ -14,6 +15,7 @@ const StockTransfersPage = () => {
     const { can } = useAuth();
     const { recordActivity } = useActivity();
     const shell = useShellBridge();
+    const formatters = useInventoryFormatters();
     const transferStockState = (shell as any)?.getFeatureState ? (shell as any).getFeatureState('action:inventory:stock:transfer') : 'enabled';
     const [transfers, setTransfers] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -99,7 +101,7 @@ const StockTransfersPage = () => {
                 <div className="flex flex-col gap-1">
                     <div className="flex items-center gap-1.5 text-slate-400 text-xs text-right">
                         <Calendar size={12} />
-                        <span>{new Date(tr.created_at || Date.now()).toLocaleDateString()}</span>
+                        <span>{formatters.formatDate(tr.created_at || new Date().toISOString())}</span>
                     </div>
                 </div>
             )

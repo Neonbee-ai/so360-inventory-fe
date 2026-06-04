@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { procurementService } from '../../services/procurementService';
 import ItemSearchSelector from '../../components/ItemSearchSelector';
 import { useActivity, useShellBridge } from '@so360/shell-context';
+import { useInventoryFormatters } from '../../utils/formatters';
 import { FeatureGate } from '@so360/design-system';
 
 interface PRLine {
@@ -26,6 +27,7 @@ const PRListPage = () => {
     const navigate = useNavigate();
     const { recordActivity } = useActivity();
     const shell = useShellBridge();
+    const formatters = useInventoryFormatters();
     const createPrState = (shell as any)?.getFeatureState ? (shell as any).getFeatureState('action:inventory:procurement:create_pr') : 'enabled';
     const canCreatePR = (shell?.effectiveFlagsLoaded !== false) && createPrState === 'enabled';
     const [prs, setPrs] = useState<PR[]>([]);
@@ -192,10 +194,10 @@ const PRListPage = () => {
                                 </td>
                                 <td className="px-6 py-4">
                                     <div className="text-sm font-medium text-slate-300">{pr.requester?.full_name || 'System'}</div>
-                                    <div className="text-[10px] text-slate-500">Requested {new Date(pr.created_at).toLocaleDateString()}</div>
+                                    <div className="text-[10px] text-slate-500">Requested {formatters.formatDate(pr.created_at)}</div>
                                 </td>
                                 <td className="px-6 py-4 text-sm text-slate-300">
-                                    {pr.required_date ? new Date(pr.required_date).toLocaleDateString() : 'N/A'}
+                                    {pr.required_date ? formatters.formatDate(pr.required_date) : 'N/A'}
                                 </td>
                                 <td className="px-6 py-4 text-sm text-slate-300 font-mono">
                                     {pr.pr_lines?.length || 0} items

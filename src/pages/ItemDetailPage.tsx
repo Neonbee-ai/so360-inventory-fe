@@ -372,7 +372,7 @@ const ItemDetailPage = () => {
         {
             header: 'Date',
             accessor: (entry: StockMovement) => (
-                <span className="text-slate-400 text-xs">{new Date(entry.created_at).toLocaleString()}</span>
+                <span className="text-slate-400 text-xs">{formatters.formatDateTime(entry.created_at)}</span>
             )
         },
         {
@@ -804,8 +804,8 @@ const ItemDetailPage = () => {
 
                                             {/* Metadata Footer */}
                                             <div className="flex flex-wrap gap-4 text-xs text-slate-600 pt-2">
-                                                {item.created_at && <span>Created: {new Date(item.created_at).toLocaleDateString()}</span>}
-                                                {item.updated_at && <span>Updated: {new Date(item.updated_at).toLocaleDateString()}</span>}
+                                                {item.created_at && <span>Created: {formatters.formatDate(item.created_at)}</span>}
+                                                {item.updated_at && <span>Updated: {formatters.formatDate(item.updated_at)}</span>}
                                                 <span>ID: <span className="font-mono">{item.id}</span></span>
                                             </div>
                                         </div>

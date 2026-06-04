@@ -161,7 +161,7 @@ const GRNDetailPage = () => {
                                 <div>
                                     <span className="text-xs text-slate-500 block">Received Date</span>
                                     <span className="text-sm text-slate-50">
-                                        {new Date(grn.created_at).toLocaleString()}
+                                        {formatters.formatDateTime(grn.created_at)}
                                     </span>
                                 </div>
                             </div>
@@ -271,7 +271,7 @@ const GRNDetailPage = () => {
                                     <p className="text-emerald-400 font-medium">Stock Updated Successfully</p>
                                     <p className="text-sm text-slate-400 mt-1">
                                         {totalQuantityReceived} units were added to {grn.warehouse?.name || 'warehouse'} inventory
-                                        on {new Date(grn.created_at).toLocaleDateString()}.
+                                        on {formatters.formatDate(grn.created_at)}.
                                     </p>
                                 </div>
                             </div>

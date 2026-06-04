@@ -52,7 +52,7 @@ const ContractsPage = () => {
                                 </td>
                                 <td className="px-6 py-4 font-mono font-bold text-slate-100">{formatters.formatCurrency(parseFloat(c.contract_value))}</td>
                                 <td className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase">
-                                    {new Date(c.start_date).toLocaleDateString()} - {new Date(c.end_date).toLocaleDateString()}
+                                    {formatters.formatDate(c.start_date)} - {formatters.formatDate(c.end_date)}
                                 </td>
                             </tr>
                         ))}

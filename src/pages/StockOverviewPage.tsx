@@ -135,7 +135,7 @@ const StockOverviewPage = () => {
             accessor: (sl: StockBalance) => (
                 <div className="flex items-center gap-1.5 text-slate-400 text-xs text-right">
                     <Clock size={12} />
-                    <span>{new Date(sl.last_updated_at).toLocaleDateString()}</span>
+                    <span>{formatters.formatDate(sl.last_updated_at)}</span>
                 </div>
             )
         }

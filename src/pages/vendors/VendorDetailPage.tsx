@@ -335,7 +335,7 @@ const VendorDetailPage = () => {
                                                     </span>
                                                 </td>
                                                 <td className="py-3 text-slate-400 text-sm">
-                                                    {new Date(po.created_at).toLocaleDateString()}
+                                                    {formatters.formatDate(po.created_at)}
                                                 </td>
                                                 <td className="py-3 text-right font-bold text-slate-50">
                                                     {formatters.formatCurrency(po.total_amount ?? 0)}
@@ -396,7 +396,7 @@ const VendorDetailPage = () => {
                                                     </span>
                                                 </td>
                                                 <td className="py-3 text-slate-400 text-sm">
-                                                    {inv.due_date ? new Date(inv.due_date).toLocaleDateString() : '--'}
+                                                    {inv.due_date ? formatters.formatDate(inv.due_date) : '--'}
                                                 </td>
                                                 <td className="py-3 text-right font-bold text-slate-50">
                                                     {formatters.formatCurrency(inv.total_amount ?? 0)}

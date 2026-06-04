@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Package, Plus, Search } from 'lucide-react';
 import { procurementService } from '../../services/procurementService';
 import { useShellBridge } from '@so360/shell-context';
+import { useInventoryFormatters } from '../../utils/formatters';
 import { FeatureGate } from '@so360/design-system';
 
 interface GRN {
@@ -17,6 +18,7 @@ interface GRN {
 const GRNListPage = () => {
     const navigate = useNavigate();
     const shell = useShellBridge();
+    const formatters = useInventoryFormatters();
     const createGrnState = (shell as any)?.getFeatureState ? (shell as any).getFeatureState('action:inventory:procurement:create_pr') : 'enabled';
     const [grns, setGrns] = useState<GRN[]>([]);
     const [loading, setLoading] = useState(true);
@@ -148,7 +150,7 @@ const GRNListPage = () => {
                                     {grn.grn_lines?.length || 0} lines
                                 </td>
                                 <td className="px-6 py-4 text-sm text-slate-400">
-                                    {new Date(grn.created_at).toLocaleDateString()}
+                                    {formatters.formatDate(grn.created_at)}
                                 </td>
                             </tr>
                         ))}

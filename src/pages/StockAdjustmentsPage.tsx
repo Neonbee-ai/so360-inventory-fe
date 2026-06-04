@@ -7,6 +7,7 @@ import { Table } from '../components/common/Table';
 import { Modal } from '../components/common/Modal';
 import { useAuth } from '../hooks/useAuth';
 import { useActivity, useShellBridge } from '@so360/shell-context';
+import { useInventoryFormatters } from '../utils/formatters';
 import { FeatureGate } from '@so360/design-system';
 
 const StockAdjustmentsPage = () => {
@@ -14,6 +15,7 @@ const StockAdjustmentsPage = () => {
     const { can } = useAuth();
     const { recordActivity } = useActivity();
     const shell = useShellBridge();
+    const formatters = useInventoryFormatters();
     const adjustStockState = (shell as any)?.getFeatureState ? (shell as any).getFeatureState('action:inventory:stock:adjust') : 'enabled';
     const [movements, setMovements] = useState<StockMovement[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -127,7 +129,7 @@ const StockAdjustmentsPage = () => {
         },
         {
             header: 'Date',
-            accessor: (m: StockMovement) => new Date(m.created_at).toLocaleString()
+            accessor: (m: StockMovement) => formatters.formatDateTime(m.created_at)
         }
     ];
 
