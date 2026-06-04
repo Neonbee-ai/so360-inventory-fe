@@ -161,19 +161,18 @@ describe('Given ItemAttributeSettingsSection', () => {
       expect(mockInventoryService.createAttributeDefinition).not.toHaveBeenCalled();
     });
 
-    test('Given key with invalid characters / When Save clicked / Then format error appears', async () => {
+    test('Given key input / When typing invalid chars / Then keystroke filter strips them to valid chars only', async () => {
       mockInventoryService.getAttributeDefinitions.mockResolvedValue([]);
       render(<ItemAttributeSettingsSection categories={mockCategories} canManage />);
       await waitFor(() => screen.getByText(/add attribute/i));
       fireEvent.click(screen.getByText(/add attribute/i));
-      fireEvent.change(screen.getByPlaceholderText(/e\.g\. Material/), { target: { value: 'Weight' } });
-      // Bypass the keystroke filter by setting value directly via fireEvent
       const keyInput = screen.getByPlaceholderText('e.g. material') as HTMLInputElement;
-      Object.defineProperty(keyInput, 'value', { writable: true, value: 'Invalid Key!' });
-      fireEvent.change(keyInput, { target: { value: 'Invalid Key!' } });
-      fireEvent.click(screen.getByText('Save'));
-      await waitFor(() => expect(screen.getByText(/lowercase letters, numbers, and underscores/i)).toBeInTheDocument());
-      expect(mockInventoryService.createAttributeDefinition).not.toHaveBeenCalled();
+      // Keystroke handler strips chars outside [a-z0-9_]
+      fireEvent.change(keyInput, { target: { value: 'shelf-life 2' } });
+      // After strip: 'shelflife2' — uppercase removed, hyphen removed, space removed
+      expect(keyInput.value).toBe('shelflife2');
+      // No uppercase letters, hyphens, or spaces in the field
+      expect(keyInput.value).toMatch(/^[a-z0-9_]*$/);
     });
   });
 
