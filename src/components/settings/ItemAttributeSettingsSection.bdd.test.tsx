@@ -138,13 +138,41 @@ describe('Given ItemAttributeSettingsSection', () => {
   });
 
   describe('Given form / When submitted with missing fields / Then validation error shown', () => {
-    test('Given empty label and key / When Save clicked / Then error message appears', async () => {
+    test('Given empty label / When Save clicked / Then "Label is required" error appears', async () => {
       mockInventoryService.getAttributeDefinitions.mockResolvedValue([]);
       render(<ItemAttributeSettingsSection categories={mockCategories} canManage />);
       await waitFor(() => screen.getByText(/add attribute/i));
       fireEvent.click(screen.getByText(/add attribute/i));
       fireEvent.click(screen.getByText('Save'));
-      await waitFor(() => expect(screen.getByText(/key and label are required/i)).toBeInTheDocument());
+      await waitFor(() => expect(screen.getByText(/label is required/i)).toBeInTheDocument());
+      expect(mockInventoryService.createAttributeDefinition).not.toHaveBeenCalled();
+    });
+
+    test('Given label filled but key cleared / When Save clicked / Then "Attribute key is required" error appears', async () => {
+      mockInventoryService.getAttributeDefinitions.mockResolvedValue([]);
+      render(<ItemAttributeSettingsSection categories={mockCategories} canManage />);
+      await waitFor(() => screen.getByText(/add attribute/i));
+      fireEvent.click(screen.getByText(/add attribute/i));
+      fireEvent.change(screen.getByPlaceholderText(/e\.g\. Material/), { target: { value: 'Weight' } });
+      // Clear the auto-generated key
+      fireEvent.change(screen.getByPlaceholderText('e.g. material'), { target: { value: '' } });
+      fireEvent.click(screen.getByText('Save'));
+      await waitFor(() => expect(screen.getByText(/attribute key is required/i)).toBeInTheDocument());
+      expect(mockInventoryService.createAttributeDefinition).not.toHaveBeenCalled();
+    });
+
+    test('Given key with invalid characters / When Save clicked / Then format error appears', async () => {
+      mockInventoryService.getAttributeDefinitions.mockResolvedValue([]);
+      render(<ItemAttributeSettingsSection categories={mockCategories} canManage />);
+      await waitFor(() => screen.getByText(/add attribute/i));
+      fireEvent.click(screen.getByText(/add attribute/i));
+      fireEvent.change(screen.getByPlaceholderText(/e\.g\. Material/), { target: { value: 'Weight' } });
+      // Bypass the keystroke filter by setting value directly via fireEvent
+      const keyInput = screen.getByPlaceholderText('e.g. material') as HTMLInputElement;
+      Object.defineProperty(keyInput, 'value', { writable: true, value: 'Invalid Key!' });
+      fireEvent.change(keyInput, { target: { value: 'Invalid Key!' } });
+      fireEvent.click(screen.getByText('Save'));
+      await waitFor(() => expect(screen.getByText(/lowercase letters, numbers, and underscores/i)).toBeInTheDocument());
       expect(mockInventoryService.createAttributeDefinition).not.toHaveBeenCalled();
     });
   });
