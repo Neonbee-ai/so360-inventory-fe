@@ -116,9 +116,19 @@ const ItemAttributeSettingsSection: React.FC<Props> = ({ categories, canManage }
             });
     };
 
+    const KEY_PATTERN = /^[a-z0-9_]+$/;
+
     const handleSave = async () => {
-        if (!form.attribute_key.trim() || !form.attribute_label.trim()) {
-            setError('Key and label are required');
+        if (!form.attribute_label.trim()) {
+            setError('Label is required');
+            return;
+        }
+        if (!form.attribute_key.trim()) {
+            setError('Attribute key is required');
+            return;
+        }
+        if (!KEY_PATTERN.test(form.attribute_key.trim())) {
+            setError('Attribute key must contain only lowercase letters, numbers, and underscores (e.g. material, shelf_life)');
             return;
         }
         setSaving(true);
@@ -264,21 +274,33 @@ const ItemAttributeSettingsSection: React.FC<Props> = ({ categories, canManage }
                                     <input
                                         type="text"
                                         value={form.attribute_label}
-                                        onChange={e => setForm(f => ({ ...f, attribute_label: e.target.value }))}
+                                        onChange={e => {
+                                            const label = e.target.value;
+                                            const derivedKey = label.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+                                            setForm(f => ({
+                                                ...f,
+                                                attribute_label: label,
+                                                // Auto-fill key from label when creating and key is empty
+                                                ...(!editingId && !f.attribute_key ? { attribute_key: derivedKey } : {}),
+                                            }));
+                                        }}
                                         className={inputClass}
                                         placeholder="e.g. Material"
                                     />
                                 </div>
                                 <div>
-                                    <label className={labelClass}>Key *</label>
+                                    <label className={labelClass}>Key * <span className="text-slate-600 font-normal">(lowercase, numbers, underscore only)</span></label>
                                     <input
                                         type="text"
                                         value={form.attribute_key}
-                                        onChange={e => setForm(f => ({ ...f, attribute_key: e.target.value.toLowerCase().replace(/\s+/g, '_') }))}
+                                        onChange={e => setForm(f => ({ ...f, attribute_key: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '') }))}
                                         className={inputClass}
                                         placeholder="e.g. material"
                                         disabled={!!editingId}
                                     />
+                                    {!editingId && (
+                                        <p className="mt-1 text-xs text-slate-600">Auto-generated from label. Edit if needed.</p>
+                                    )}
                                 </div>
                                 <div>
                                     <label className={labelClass}>Type</label>
