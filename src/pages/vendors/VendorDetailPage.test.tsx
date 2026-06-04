@@ -40,6 +40,19 @@ vi.mock('../../components/vendors/CreateInvoiceModal', () => ({
     isOpen ? <div data-testid="invoice-modal">Invoice Modal</div> : null,
 }));
 
+vi.mock('../../utils/formatters', () => ({
+  useInventoryFormatters: () => ({
+    formatDate: (d: string, _opts?: any) => d ?? '',
+    formatDateTime: (d: string) => d ?? '',
+    formatCurrency: (v: number) => `$${v}`,
+    formatNumber: (n: number) => String(n),
+    currency: 'USD',
+    locale: 'en-US',
+    timezone: 'UTC',
+  }),
+  useInventoryCurrencySymbol: () => '$',
+}));
+
 import VendorDetailPage from './VendorDetailPage';
 
 const makeVendor = (overrides: any = {}) => ({

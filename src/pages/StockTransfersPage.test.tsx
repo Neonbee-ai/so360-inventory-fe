@@ -43,6 +43,19 @@ vi.mock('../components/common/Modal', () => ({
     isOpen ? <div data-testid="modal"><h3>{title}</h3>{children}</div> : null,
 }));
 
+vi.mock('../utils/formatters', () => ({
+  useInventoryFormatters: () => ({
+    formatDate: (d: string, _opts?: any) => d ?? '',
+    formatDateTime: (d: string) => d ?? '',
+    formatCurrency: (v: number) => `$${v}`,
+    formatNumber: (n: number) => String(n),
+    currency: 'USD',
+    locale: 'en-US',
+    timezone: 'UTC',
+  }),
+  useInventoryCurrencySymbol: () => '$',
+}));
+
 import StockTransfersPage from './StockTransfersPage';
 
 beforeEach(() => {

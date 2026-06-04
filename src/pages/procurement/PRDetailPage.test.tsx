@@ -22,6 +22,19 @@ vi.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
 }));
 
+vi.mock('../../utils/formatters', () => ({
+  useInventoryFormatters: () => ({
+    formatDate: (d: string, _opts?: any) => d ?? '',
+    formatDateTime: (d: string) => d ?? '',
+    formatCurrency: (v: number) => `$${v}`,
+    formatNumber: (n: number) => String(n),
+    currency: 'USD',
+    locale: 'en-US',
+    timezone: 'UTC',
+  }),
+  useInventoryCurrencySymbol: () => '$',
+}));
+
 import PRDetailPage from './PRDetailPage';
 
 const makePR = (overrides: any = {}) => ({
