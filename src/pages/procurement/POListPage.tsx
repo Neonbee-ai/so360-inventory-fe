@@ -368,12 +368,12 @@ const POListPage = () => {
             {/* New PO Modal Form */}
             {showForm && (
                 <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-in fade-in zoom-in duration-300">
-                    <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-3xl overflow-hidden shadow-2xl shadow-black/50">
+                    <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl shadow-black/50">
                         <div className="p-8 border-b border-slate-800 flex justify-between items-center">
                             <h2 className="text-2xl font-bold text-slate-100">Create Purchase Order</h2>
                             <button onClick={() => setShowForm(false)} className="text-slate-500 hover:text-slate-50 transition-colors text-2xl">×</button>
                         </div>
-                        <form onSubmit={handleSubmit} className="p-8 space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                        <form onSubmit={handleSubmit} className="p-8 space-y-6 overflow-y-auto custom-scrollbar flex-1">
                             {/* Conversion context banner */}
                             {formData.pr_id && (
                                 <div className="flex items-center gap-3 p-4 bg-indigo-500/10 border border-indigo-500/20 rounded-xl">

@@ -496,7 +496,7 @@ const WarehouseDetailPage = () => {
             {/* Delete Warehouse Confirmation */}
             {showDeleteConfirm && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
-                    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl">
+                    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto shadow-2xl">
                         <div className="flex items-center gap-4 mb-4">
                             <div className="w-12 h-12 rounded-full bg-rose-500/10 flex items-center justify-center">
                                 <Trash2 size={24} className="text-rose-500" />
@@ -535,7 +535,7 @@ const WarehouseDetailPage = () => {
             {/* Delete Location Confirmation */}
             {deletingLocationId && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
-                    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl">
+                    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto shadow-2xl">
                         <div className="flex items-center gap-4 mb-4">
                             <div className="w-12 h-12 rounded-full bg-rose-500/10 flex items-center justify-center">
                                 <Trash2 size={24} className="text-rose-500" />
