@@ -9,6 +9,7 @@ const mockGetLocations = vi.fn();
 const mockGetTaxCodes = vi.fn();
 const mockUpdateItem = vi.fn();
 const mockDeleteItem = vi.fn();
+const mockGetItemSalesHistory = vi.fn();
 const mockNavigate = vi.fn();
 
 vi.mock('../services/inventoryService', () => ({
@@ -20,6 +21,7 @@ vi.mock('../services/inventoryService', () => ({
     getTaxCodes: (...args: any[]) => mockGetTaxCodes(...args),
     updateItem: (...args: any[]) => mockUpdateItem(...args),
     deleteItem: (...args: any[]) => mockDeleteItem(...args),
+    getItemSalesHistory: (...args: any[]) => mockGetItemSalesHistory(...args),
     createUom: vi.fn().mockResolvedValue({ id: 'uom-new' }),
     transitionLifecycle: vi.fn().mockResolvedValue({}),
     getLifecycleGates: vi.fn().mockResolvedValue({ gates: [] }),
@@ -149,6 +151,12 @@ beforeEach(() => {
   mockGetTaxCodes.mockResolvedValue([]);
   mockUpdateItem.mockResolvedValue({ id: 'item-1' });
   mockDeleteItem.mockResolvedValue({});
+  mockGetItemSalesHistory.mockResolvedValue({
+    item_id: 'item-1',
+    total_quantity_sold: 0,
+    invoice_count: 0,
+    recent_movements: [],
+  });
 });
 
 describe('ItemDetailPage', () => {
@@ -292,6 +300,61 @@ describe('ItemDetailPage', () => {
       render(<ItemDetailPage />);
       await waitFor(() => {
         expect(mockGetLedger).toHaveBeenCalledWith('item-1');
+      });
+    });
+
+    it('When component mounts / Then loads sales history for the item', async () => {
+      render(<ItemDetailPage />);
+      await waitFor(() => {
+        expect(mockGetItemSalesHistory).toHaveBeenCalledWith('item-1');
+      });
+    });
+  });
+
+  describe('Given the Sales History tab', () => {
+    it('When the tab is opened / Then shows total quantity sold and invoice count', async () => {
+      mockGetItemSalesHistory.mockResolvedValue({
+        item_id: 'item-1',
+        total_quantity_sold: 42,
+        invoice_count: 7,
+        recent_movements: [
+          {
+            id: 'out-1',
+            quantity: 5,
+            reference_id: 'inv-A',
+            metadata: { note: 'Order fulfillment: INV-0001' },
+            created_at: '2026-01-03T00:00:00Z',
+          },
+        ],
+      });
+      render(<ItemDetailPage />);
+      await waitFor(() => expect(screen.getAllByText('Premium Widget').length).toBeGreaterThan(0));
+      fireEvent.click(screen.getByText('Sales History'));
+      await waitFor(() => {
+        expect(screen.getByText('Total Quantity Sold')).toBeInTheDocument();
+        expect(screen.getByText('42')).toBeInTheDocument();
+        expect(screen.getByText('Invoices Used In')).toBeInTheDocument();
+        expect(screen.getByText('7')).toBeInTheDocument();
+        expect(screen.getByText('Order fulfillment: INV-0001')).toBeInTheDocument();
+      });
+    });
+
+    it('When there are no sales / Then shows the empty state', async () => {
+      render(<ItemDetailPage />);
+      await waitFor(() => expect(screen.getAllByText('Premium Widget').length).toBeGreaterThan(0));
+      fireEvent.click(screen.getByText('Sales History'));
+      await waitFor(() => {
+        expect(screen.getByText('No sales recorded for this item yet.')).toBeInTheDocument();
+      });
+    });
+
+    it('When sales history fails to load / Then the page still renders without crashing', async () => {
+      mockGetItemSalesHistory.mockRejectedValue(new Error('inventory down'));
+      render(<ItemDetailPage />);
+      await waitFor(() => expect(screen.getAllByText('Premium Widget').length).toBeGreaterThan(0));
+      fireEvent.click(screen.getByText('Sales History'));
+      await waitFor(() => {
+        expect(screen.getByText('No sales recorded for this item yet.')).toBeInTheDocument();
       });
     });
   });

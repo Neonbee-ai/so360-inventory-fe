@@ -6,7 +6,7 @@ import {
     History, MapPin, DollarSign,
     Edit2, Trash2, Save, Loader2, ScanLine,
     AlertTriangle, RefreshCcw, Truck, Sliders,
-    Image as ImageIcon, Tag, X, BarChart3
+    Image as ImageIcon, Tag, X, BarChart3, TrendingUp, FileText
 } from 'lucide-react';
 import { inventoryService } from '../services/inventoryService';
 import { Item, StockMovement, Unit, ItemCategory, Warehouse } from '../types/inventory';
@@ -28,7 +28,14 @@ import { useInventoryFormatters, useInventoryCurrencySymbol } from '../utils/for
 import { useActivity } from '@so360/shell-context';
 
 // ── Types ─────────────────────────────────────────────
-type ViewTabId = TabId | 'ledger';
+type ViewTabId = TabId | 'ledger' | 'sales';
+
+interface ItemSalesHistory {
+    item_id: string;
+    total_quantity_sold: number;
+    invoice_count: number;
+    recent_movements: any[];
+}
 
 interface EditFormData {
     name: string;
@@ -73,6 +80,7 @@ const ItemDetailPage = () => {
     const { recordActivity } = useActivity();
     const [item, setItem] = useState<Item | null>(null);
     const [ledger, setLedger] = useState<StockMovement[]>([]);
+    const [salesHistory, setSalesHistory] = useState<ItemSalesHistory | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [viewTab, setViewTab] = useState<ViewTabId>('basic');
@@ -130,6 +138,11 @@ const ItemDetailPage = () => {
             if (itemData) {
                 setItem(itemData);
                 setLedger(ledgerData);
+                // Sales history is supplementary — never block the page on it.
+                inventoryService
+                    .getItemSalesHistory(id)
+                    .then((sh) => setSalesHistory(sh))
+                    .catch(() => setSalesHistory(null));
             } else {
                 setError('Item not found');
             }
@@ -146,7 +159,7 @@ const ItemDetailPage = () => {
     const handleEditClick = async () => {
         if (!item) return;
         setEditForm(initEditForm(item));
-        setEditTab(viewTab !== 'ledger' ? viewTab : 'basic');
+        setEditTab(viewTab !== 'ledger' && viewTab !== 'sales' ? viewTab : 'basic');
         setTabErrors({});
         setIsEditing(true);
 
@@ -731,6 +744,7 @@ const ItemDetailPage = () => {
                                         { id: 'shipping' as ViewTabId, label: 'Shipping', icon: <Truck size={14} /> },
                                         { id: 'attributes' as ViewTabId, label: 'Attributes', icon: <Sliders size={14} /> },
                                         { id: 'ledger' as ViewTabId, label: 'Ledger', icon: <History size={14} /> },
+                                        { id: 'sales' as ViewTabId, label: 'Sales History', icon: <TrendingUp size={14} /> },
                                     ]).map(tab => (
                                         <button
                                             key={tab.id}
@@ -998,6 +1012,65 @@ const ItemDetailPage = () => {
                                                     This ledger is the immutable source of truth for all stock mutations. Each entry corresponds to a verified event. Manual changes to historical data are forbidden by system architectural constraints.
                                                 </p>
                                             </div>
+                                        </div>
+                                    )}
+
+                                    {/* ── Sales History ── */}
+                                    {viewTab === 'sales' && (
+                                        <div>
+                                            <div className="flex items-center gap-2 mb-6">
+                                                <TrendingUp size={20} className="text-blue-500" />
+                                                <h2 className="text-xl font-bold text-slate-50 tracking-tight">Sales History</h2>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+                                                <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-5">
+                                                    <div className="flex items-center gap-2 text-slate-500 mb-2">
+                                                        <BarChart3 size={14} />
+                                                        <span className="text-[10px] font-black uppercase tracking-widest">Total Quantity Sold</span>
+                                                    </div>
+                                                    <div className="text-2xl font-bold text-slate-50">
+                                                        {salesHistory?.total_quantity_sold ?? 0}
+                                                    </div>
+                                                </div>
+                                                <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-5">
+                                                    <div className="flex items-center gap-2 text-slate-500 mb-2">
+                                                        <FileText size={14} />
+                                                        <span className="text-[10px] font-black uppercase tracking-widest">Invoices Used In</span>
+                                                    </div>
+                                                    <div className="text-2xl font-bold text-slate-50">
+                                                        {salesHistory?.invoice_count ?? 0}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3">Recent Outbound Movements</h3>
+                                            {salesHistory && salesHistory.recent_movements.length > 0 ? (
+                                                <div className="border border-slate-800 rounded-xl divide-y divide-slate-800 overflow-hidden">
+                                                    {salesHistory.recent_movements.map((m: any, idx: number) => (
+                                                        <div key={m.id || idx} className="flex items-center justify-between px-4 py-3 bg-slate-900/30">
+                                                            <div className="flex items-center gap-3 min-w-0">
+                                                                <ArrowUpRight size={16} className="text-rose-400 flex-shrink-0" />
+                                                                <div className="min-w-0">
+                                                                    <div className="text-xs text-slate-200 truncate">
+                                                                        {m.metadata?.note || (m.reference_id ? `Order ${m.reference_id}` : 'Outbound movement')}
+                                                                    </div>
+                                                                    <div className="text-[11px] text-slate-500">
+                                                                        {m.created_at ? new Date(m.created_at).toLocaleString() : ''}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <span className="text-sm font-semibold text-slate-100 whitespace-nowrap">
+                                                                {Number(m.quantity)}
+                                                            </span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <div className="text-center py-12 text-slate-500 text-sm border border-slate-800 rounded-xl">
+                                                    No sales recorded for this item yet.
+                                                </div>
+                                            )}
                                         </div>
                                     )}
                                 </div>

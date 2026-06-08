@@ -271,6 +271,15 @@ class InventoryService {
         return this.request(`/movements/${this.orgId}/${itemId}`);
     }
 
+    async getItemSalesHistory(itemId: string): Promise<{
+        item_id: string;
+        total_quantity_sold: number;
+        invoice_count: number;
+        recent_movements: any[];
+    }> {
+        return this.request(`/items/${this.orgId}/${itemId}/sales-history`);
+    }
+
     // Simple getItems for Master Catalog (if separate)
     async getCatalogItems() {
         const response = await fetch(`${this.coreOrigin}/v1/products/${this.orgId}`, {

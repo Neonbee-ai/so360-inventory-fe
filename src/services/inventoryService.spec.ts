@@ -203,6 +203,15 @@ describe('inventoryService', () => {
       const [url] = mockFetch.mock.calls[0];
       expect(url).toContain('/movements/org-1/i1');
     });
+
+    it('When getItemSalesHistory called / Then fetches the sales-history endpoint for the item', async () => {
+      const summary = { item_id: 'i1', total_quantity_sold: 7, invoice_count: 2, recent_movements: [] };
+      mockFetch.mockReturnValue(jsonOk(summary));
+      const result = await inventoryService.getItemSalesHistory('i1');
+      const [url] = mockFetch.mock.calls[0];
+      expect(url).toContain('/items/org-1/i1/sales-history');
+      expect(result).toEqual(summary);
+    });
   });
 
   describe('Given tax codes', () => {
