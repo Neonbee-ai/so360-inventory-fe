@@ -1,10 +1,9 @@
 /**
- * BDD spec — Shared Modal panel never exceeds 90% of viewport height.
+ * BDD spec — Shared Modal panel is capped at 88vh with 24px vertical gap.
  *
- * The shared Modal wrapper is the panel container for every federated modal in
- * this MFE (CreateLeadModal, CreateInvoiceModal, StageTransitionModal,
- * StockTransfersPage, StockAdjustmentsPage, StockLocationsPage create/edit).
- * Fixing the panel here guarantees all of them are capped at max-h-[90vh].
+ * Updated 2026-06-08: max-h reduced from 90vh → 88vh to prevent header
+ * clipping on ≤1280px desktops. The outer wrapper now uses py-6 (24px) for
+ * guaranteed breathing room above and below the panel.
  *
  * Naming convention:
  *   describe : 'Given <Component>'
@@ -19,16 +18,28 @@ import { Modal } from './Modal';
 
 describe('Given the shared Modal', () => {
   describe('Given isOpen is true', () => {
-    it('When the modal renders / Then its panel container is capped at max-h-[90vh]', () => {
+    it('When the modal renders / Then its panel container is capped at max-h-[88vh]', () => {
       render(
         <Modal isOpen={true} onClose={vi.fn()} title="Tall Modal">
           <p>body</p>
         </Modal>,
       );
       const panels = Array.from(document.querySelectorAll('div')).filter((el) =>
-        el.className.includes('max-h-[90vh]'),
+        el.className.includes('max-h-[88vh]'),
       );
       expect(panels.length).toBeGreaterThan(0);
+    });
+
+    it('When the modal renders / Then no panel uses the old max-h-[90vh] cap', () => {
+      render(
+        <Modal isOpen={true} onClose={vi.fn()} title="Tall Modal">
+          <p>body</p>
+        </Modal>,
+      );
+      const stale = Array.from(document.querySelectorAll('div')).filter((el) =>
+        el.className.includes('max-h-[90vh]'),
+      );
+      expect(stale.length).toBe(0);
     });
 
     it('When the modal renders / Then no panel uses the old max-h-[85vh] cap', () => {
