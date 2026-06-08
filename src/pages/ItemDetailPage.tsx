@@ -25,6 +25,7 @@ import ShippingTab from './item-create/tabs/ShippingTab';
 import AttributesTab from './item-create/tabs/AttributesTab';
 import LifecycleStatusPanel from '../components/lifecycle/LifecycleStatusPanel';
 import { useInventoryFormatters, useInventoryCurrencySymbol } from '../utils/formatters';
+import { parseUtcDate } from '../utils/datetime';
 import { useActivity } from '@so360/shell-context';
 
 // ── Types ─────────────────────────────────────────────
@@ -1056,7 +1057,7 @@ const ItemDetailPage = () => {
                                                                         {m.metadata?.note || (m.reference_id ? `Order ${m.reference_id}` : 'Outbound movement')}
                                                                     </div>
                                                                     <div className="text-[11px] text-slate-500">
-                                                                        {m.created_at ? new Date(m.created_at).toLocaleString() : ''}
+                                                                        {m.created_at ? parseUtcDate(m.created_at).toLocaleString() : ''}
                                                                     </div>
                                                                 </div>
                                                             </div>
