@@ -75,3 +75,15 @@ describe('Given Modal backdrop and size variants', () => {
     expect(screen.getByRole('button')).toBeInTheDocument();
   });
 });
+
+// Regression: overlay must paint above the shell NavBar (.glass-nav, z-500),
+// otherwise the global header clips the modal top. Overlay carries z-[600].
+describe('Modal — overlay stacks above the shell NavBar', () => {
+  it('When open / Then an overlay carries z-[600]', () => {
+    render(<Modal isOpen={true} onClose={vi.fn()} title="Z">C</Modal>);
+    const overlays = Array.from(document.querySelectorAll('div')).filter(
+      (el) => el.className.includes('fixed') && el.className.includes('inset-0'),
+    );
+    expect(overlays.some((el) => el.className.includes('z-[600]'))).toBe(true);
+  });
+});
