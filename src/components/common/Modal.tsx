@@ -20,13 +20,13 @@ export const Modal = ({ isOpen, onClose, title, children, size = 'md' }: ModalPr
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6">
             <div
                 className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"
                 onClick={onClose}
             />
-            <div className={`relative bg-slate-900 border border-slate-800 rounded-2xl w-full ${sizeClasses[size]} max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200`}>
-                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800">
+            <div className={`relative bg-slate-900 border border-slate-800 rounded-2xl w-full ${sizeClasses[size]} max-h-[88vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200`}>
+                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 flex-shrink-0">
                     <h3 className="text-xl font-bold text-slate-50">{title}</h3>
                     <button
                         onClick={onClose}
