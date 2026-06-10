@@ -8,6 +8,9 @@ beforeEach(() => {
   inventoryService.setOrgId('org-1');
   inventoryService.setTenantId('t-1');
   inventoryService.setAccessToken('tok');
+  // Locations/tax-codes/settings are now TTL-cached on the singleton; reset so
+  // each test starts from a clean miss.
+  inventoryService.clearOrgStaticCache();
 });
 
 afterEach(() => {

@@ -1,3 +1,5 @@
+import { createRequestCache } from './requestCache';
+
 class InventoryService {
     private orgId: string | null = null;
     private tenantId: string | null = null;
@@ -5,6 +7,10 @@ class InventoryService {
     private inventoryOrigin: string;
     private coreOrigin: string;
     private baseUrl: string;
+    // Locations, tax codes and settings are org-static and read on most item/stock
+    // pages. Coalesce concurrent reads and serve a short TTL keyed by org; a fresh
+    // org via setOrgId clears it so we never serve another org's data.
+    private orgStaticCache = createRequestCache({ defaultTtlMs: 30_000, maxEntries: 50 });
 
     constructor() {
         const win = typeof window !== 'undefined' ? (window as any) : undefined;
@@ -28,6 +34,7 @@ class InventoryService {
     }
 
     setOrgId(id: string) {
+        if (this.orgId !== id) this.orgStaticCache.invalidate();
         this.orgId = id;
     }
 
@@ -41,6 +48,11 @@ class InventoryService {
 
     getOrgId() {
         return this.orgId;
+    }
+
+    /** Drop the org-static (locations/tax-codes/settings) cache. */
+    clearOrgStaticCache() {
+        this.orgStaticCache.invalidate();
     }
 
     public async request(endpoint: string, options: RequestInit = {}) {
@@ -62,6 +74,13 @@ class InventoryService {
         if (!response.ok) {
             const error = await response.json().catch(() => ({ message: 'API Request failed' }));
             throw new Error(error.message || 'API Request failed');
+        }
+
+        // A successful settings write (UoMs, categories, …) makes the cached
+        // settings stale — drop it so the next getSettings reads fresh.
+        const method = (options.method || 'GET').toUpperCase();
+        if (method !== 'GET' && endpoint.startsWith('/settings/')) {
+            this.orgStaticCache.invalidate(`settings|${this.orgId}`);
         }
 
         return response.json();
@@ -119,7 +138,9 @@ class InventoryService {
 
     // Warehouses/Locations
     async getLocations() {
-        return this.request(`/warehouses/${this.orgId}`);
+        return this.orgStaticCache.run(`locations|${this.orgId}`, () =>
+            this.request(`/warehouses/${this.orgId}`),
+        );
     }
 
     async getWarehouse(id: string) {
@@ -301,6 +322,10 @@ class InventoryService {
      */
     async getTaxCodes(): Promise<{ id: string; name: string; code?: string; rate: number; jurisdiction?: string }[]> {
         if (!this.orgId) throw new Error('OrgId not set');
+        return this.orgStaticCache.run(`tax-codes|${this.orgId}`, () => this.fetchTaxCodes());
+    }
+
+    private async fetchTaxCodes(): Promise<{ id: string; name: string; code?: string; rate: number; jurisdiction?: string }[]> {
         const endpoint = `${this.coreOrigin}/v1/financials/tax-codes/${this.orgId}`;
         const response = await fetch(endpoint, {
             headers: {
@@ -357,7 +382,9 @@ class InventoryService {
     // ==================== Settings ====================
 
     async getSettings() {
-        return this.request(`/settings/${this.orgId}`);
+        return this.orgStaticCache.run(`settings|${this.orgId}`, () =>
+            this.request(`/settings/${this.orgId}`),
+        );
     }
 
     async createUom(name: string, abbreviation: string) {

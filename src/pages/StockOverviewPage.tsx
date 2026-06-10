@@ -44,7 +44,11 @@ const StockOverviewPage = () => {
 
     useEffect(() => {
         fetchStock();
-        const pollInterval = setInterval(fetchStock, 60 * 1000);
+        // Skip the 60s refresh while the tab is hidden so backgrounded tabs stop
+        // polling the stock endpoint.
+        const pollInterval = setInterval(() => {
+            if (!document.hidden) fetchStock();
+        }, 60 * 1000);
         return () => clearInterval(pollInterval);
     }, []);
 

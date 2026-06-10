@@ -131,11 +131,13 @@ const ItemDetailPage = () => {
         if (!id) return;
         setIsLoading(true);
         try {
+            // Tax codes are independent of the item/ledger fetch — load them in
+            // the same parallel batch instead of waiting for item+ledger first.
             const [itemData, ledgerData] = await Promise.all([
                 inventoryService.getItem(id),
-                inventoryService.getLedger(id)
+                inventoryService.getLedger(id),
+                loadTaxCodes(),
             ]);
-            await loadTaxCodes();
             if (itemData) {
                 setItem(itemData);
                 setLedger(ledgerData);
