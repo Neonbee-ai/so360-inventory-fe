@@ -13,6 +13,18 @@ const captured = vi.hoisted(() => ({
   federation: undefined as { shared?: Record<string, { singleton?: boolean }> } | undefined,
 }));
 
+// Importing the real `vite` package loads esbuild's JS API, whose
+// TextEncoder invariant check fails under jsdom (cross-realm Uint8Array)
+// and crashes this spec at load time — so vite + plugin-react are stubbed.
+vi.mock('vite', () => ({
+  defineConfig: (config: any) => config,
+  loadEnv: () => ({}),
+}));
+
+vi.mock('@vitejs/plugin-react', () => ({
+  default: () => ({ name: 'react-plugin-stub' }),
+}));
+
 vi.mock('@originjs/vite-plugin-federation', () => ({
   default: (options: any) => {
     captured.federation = options;
