@@ -88,6 +88,51 @@ describe('inventoryService org-static cache', () => {
     });
   });
 
+  describe('Given the reference item catalog is requested', () => {
+    it('When getItems() (no params) is called twice within the TTL / Then only one request is made', async () => {
+      mockFetch.mockReturnValue(jsonOk({ data: [{ id: 'i1' }] }));
+      const first = await inventoryService.getItems();
+      const second = await inventoryService.getItems();
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(first).toEqual({ data: [{ id: 'i1' }] });
+      expect(second).toEqual({ data: [{ id: 'i1' }] });
+    });
+
+    it('When getItems() (no params) is called concurrently / Then the in-flight request is coalesced', async () => {
+      const d = deferred<any>();
+      mockFetch.mockReturnValue(d.promise);
+      const all = Promise.all([inventoryService.getItems(), inventoryService.getItems()]);
+      d.resolve({ ok: true, json: () => Promise.resolve({ data: [{ id: 'i1' }] }) });
+      await all;
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+
+    it('When getItems is called WITH params / Then the cache is bypassed and the network is hit', async () => {
+      mockFetch.mockReturnValue(jsonOk({ data: [{ id: 'i1' }] }));
+      await inventoryService.getItems();          // cached (param-less)
+      await inventoryService.getItems({ search: 'widget' }); // param-bearing → bypass
+      await inventoryService.getItems({ search: 'widget' }); // bypass again
+      // 1 cached read + 2 search reads = 3 distinct requests
+      expect(mockFetch).toHaveBeenCalledTimes(3);
+      const lastUrl = mockFetch.mock.calls.at(-1)?.[0] as string;
+      expect(lastUrl).toContain('search=widget');
+    });
+
+    it('When an item write occurs / Then the next getItems() re-fetches', async () => {
+      mockFetch.mockReturnValue(jsonOk({ data: [{ id: 'i1' }] }));
+      await inventoryService.getItems();
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+
+      mockFetch.mockReturnValue(jsonOk({ id: 'i2' }));
+      await inventoryService.createItem({ name: 'New' });
+
+      mockFetch.mockReturnValue(jsonOk({ data: [{ id: 'i1' }, { id: 'i2' }] }));
+      await inventoryService.getItems();
+      // 1 initial GET + 1 create POST + 1 re-fetch = 3
+      expect(mockFetch).toHaveBeenCalledTimes(3);
+    });
+  });
+
   describe('Given the org changes', () => {
     it('When setOrgId switches org / Then the cache is dropped and the new org re-fetches', async () => {
       mockFetch.mockReturnValue(jsonOk([{ id: 'w1' }]));

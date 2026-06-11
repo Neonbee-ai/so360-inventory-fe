@@ -24,8 +24,12 @@ const StockOverviewPage = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [glValuation, setGlValuation] = useState<{ gl_balance: number; source: string } | null>(null);
 
-    const fetchStock = async () => {
-        setIsLoading(true);
+    // `showSkeleton` toggles the table-replacing skeleton. It stays true for the
+    // first load and manual refresh, but background poll ticks pass false so the
+    // table is refreshed in place instead of flashing back to a skeleton every
+    // minute. Same data, no flash.
+    const fetchStock = async (showSkeleton = true) => {
+        if (showSkeleton) setIsLoading(true);
         setError(null);
         try {
             const [stockLevelsData, glData] = await Promise.all([
@@ -47,7 +51,7 @@ const StockOverviewPage = () => {
         // Skip the 60s refresh while the tab is hidden so backgrounded tabs stop
         // polling the stock endpoint.
         const pollInterval = setInterval(() => {
-            if (!document.hidden) fetchStock();
+            if (!document.hidden) fetchStock(false);
         }, 60 * 1000);
         return () => clearInterval(pollInterval);
     }, []);

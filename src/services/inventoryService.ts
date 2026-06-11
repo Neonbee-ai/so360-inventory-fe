@@ -82,6 +82,11 @@ class InventoryService {
         if (method !== 'GET' && endpoint.startsWith('/settings/')) {
             this.orgStaticCache.invalidate(`settings|${this.orgId}`);
         }
+        // A successful item write (create/update/delete) makes the cached
+        // reference catalog stale — drop it so the next getItems() reads fresh.
+        if (method !== 'GET' && endpoint.startsWith('/items')) {
+            this.orgStaticCache.invalidate(`items|${this.orgId}`);
+        }
 
         return response.json();
     }
@@ -103,7 +108,17 @@ class InventoryService {
         if (params?.page) query.append('page', params.page.toString());
         if (params?.limit) query.append('limit', params.limit.toString());
         const queryStr = query.toString();
-        return this.request(`/items/${this.orgId}${queryStr ? `?${queryStr}` : ''}`);
+        // The param-less call is the org reference catalog read that the
+        // Adjustments/Transfers tabs re-run on every toggle. Serve it from the
+        // short-TTL cache so toggling does not re-fetch the whole catalog; any
+        // search/sort/paginated call (queryStr present) bypasses the cache and
+        // hits the network exactly as before.
+        if (!queryStr) {
+            return this.orgStaticCache.run(`items|${this.orgId}`, () =>
+                this.request(`/items/${this.orgId}`),
+            );
+        }
+        return this.request(`/items/${this.orgId}?${queryStr}`);
     }
 
     async getItemsLegacy() {

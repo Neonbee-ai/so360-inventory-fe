@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, waitFor, fireEvent, act } from '@testing-library/react';
 import React from 'react';
 
 vi.mock('react-router-dom', () => ({ useNavigate: () => vi.fn() }));
@@ -156,6 +156,80 @@ describe('StockOverviewPage', () => {
       await waitFor(() => {
         expect(screen.getByText('Failed to load stock data. Please try again.')).toBeInTheDocument();
       });
+    });
+  });
+
+  describe('Given the 60s background poll', () => {
+    it('When a poll tick fires / Then the table refreshes WITHOUT flashing the loading skeleton', async () => {
+      mockGetStockOverview.mockResolvedValue([makeBalance()]);
+      render(<StockOverviewPage />);
+      // First load resolves and renders rows (not the skeleton).
+      await waitFor(() => expect(screen.getByTestId('table')).toHaveTextContent('1 rows'));
+
+      // Second tick returns more data; the poll passes showSkeleton=false.
+      mockGetStockOverview.mockResolvedValue([makeBalance(), makeBalance({ id: 'sb-2' })]);
+      await act(async () => {
+        vi.advanceTimersByTime(60 * 1000);
+      });
+
+      // Table never shows 'Loading...' on a poll tick — it updates in place.
+      await waitFor(() => expect(screen.getByTestId('table')).toHaveTextContent('2 rows'));
+      expect(screen.getByTestId('table')).not.toHaveTextContent('Loading...');
+    });
+
+    it('When the tab is hidden / Then the poll tick is skipped (no refetch)', async () => {
+      mockGetStockOverview.mockResolvedValue([makeBalance()]);
+      const hiddenSpy = vi.spyOn(document, 'hidden', 'get').mockReturnValue(true);
+      render(<StockOverviewPage />);
+      await waitFor(() => expect(screen.getByTestId('table')).toHaveTextContent('1 rows'));
+      mockGetStockOverview.mockClear();
+
+      await act(async () => {
+        vi.advanceTimersByTime(60 * 1000);
+      });
+
+      expect(mockGetStockOverview).not.toHaveBeenCalled();
+      hiddenSpy.mockRestore();
+    });
+
+    it('When the tab is visible / Then the poll tick refetches', async () => {
+      mockGetStockOverview.mockResolvedValue([makeBalance()]);
+      const hiddenSpy = vi.spyOn(document, 'hidden', 'get').mockReturnValue(false);
+      render(<StockOverviewPage />);
+      await waitFor(() => expect(screen.getByTestId('table')).toHaveTextContent('1 rows'));
+      mockGetStockOverview.mockClear();
+
+      await act(async () => {
+        vi.advanceTimersByTime(60 * 1000);
+      });
+
+      await waitFor(() => expect(mockGetStockOverview).toHaveBeenCalledTimes(1));
+      hiddenSpy.mockRestore();
+    });
+  });
+
+  describe('Given the manual Refresh button', () => {
+    it('When clicked / Then it DOES show the loading skeleton (showSkeleton defaults true)', async () => {
+      mockGetStockOverview.mockResolvedValue([makeBalance()]);
+      render(<StockOverviewPage />);
+      await waitFor(() => expect(screen.getByTestId('table')).toHaveTextContent('1 rows'));
+
+      // Make the next fetch hang so we can observe the in-flight loading state.
+      let resolveFetch: (v: any) => void = () => {};
+      mockGetStockOverview.mockImplementation(
+        () => new Promise((res) => { resolveFetch = res; }),
+      );
+
+      await act(async () => {
+        fireEvent.click(screen.getByText('Refresh'));
+      });
+      // Manual refresh flips the table to the skeleton while in flight.
+      expect(screen.getByTestId('table')).toHaveTextContent('Loading...');
+
+      await act(async () => {
+        resolveFetch([makeBalance(), makeBalance({ id: 'sb-2' })]);
+      });
+      await waitFor(() => expect(screen.getByTestId('table')).toHaveTextContent('2 rows'));
     });
   });
 
