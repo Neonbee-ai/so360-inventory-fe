@@ -54,7 +54,7 @@ describe('vendorService', () => {
       const dto = { name: 'New Vendor', email: 'new@vendor.com' };
       const result = await vendorService.createVendor(dto);
       const [url, opts] = mockFetch.mock.calls[0];
-      expect(url).toBe('/v1/vendors');
+      expect(url).toContain('/v1/vendors');
       expect(opts.method).toBe('POST');
       expect(JSON.parse(opts.body)).toEqual(dto);
       expect(result.id).toBe('v2');
@@ -120,7 +120,7 @@ describe('vendorService', () => {
       const dto = { vendor_id: 'v1', title: 'Contract A', start_date: '2024-01-01' };
       await vendorService.createContract(dto);
       const [url, opts] = mockFetch.mock.calls[0];
-      expect(url).toBe('/v1/vendors/contracts');
+      expect(url).toContain('/v1/vendors/contracts');
       expect(opts.method).toBe('POST');
       expect(JSON.parse(opts.body)).toEqual(dto);
     });
@@ -156,6 +156,49 @@ describe('vendorService', () => {
       expect(opts.headers['X-Tenant-Id']).toBe('t-1');
       expect(opts.headers['X-Org-Id']).toBe('org-1');
       expect(opts.headers['Content-Type']).toBe('application/json');
+    });
+  });
+
+  describe('Given baseUrl resolution', () => {
+    it('When constructed / Then baseUrl is absolute (not a relative path)', async () => {
+      mockFetch.mockReturnValue(jsonOk([]));
+      await vendorService.getVendors();
+      const [url] = mockFetch.mock.calls[0];
+      expect(url).toMatch(/^https?:\/\//);
+    });
+
+    it('When constructed / Then baseUrl includes /v1/vendors', async () => {
+      mockFetch.mockReturnValue(jsonOk([]));
+      await vendorService.getVendors();
+      const [url] = mockFetch.mock.calls[0];
+      expect(url).toContain('/v1/vendors/');
+    });
+  });
+
+  describe('Given API returns HTML instead of JSON (regression: <!doctype html> parse error)', () => {
+    it('When response is not ok and body is HTML / Then throws generic error not a SyntaxError', async () => {
+      mockFetch.mockReturnValue(
+        Promise.resolve({
+          ok: false,
+          status: 502,
+          json: () => Promise.reject(new SyntaxError("Unexpected token '<', \"<!doctype \"... is not valid JSON")),
+        } as any)
+      );
+      const err = await vendorService.getVendors().catch((e) => e);
+      expect(err).toBeInstanceOf(Error);
+      expect(err.message).toBe('API Request failed');
+      expect(err.message).not.toContain('<!doctype');
+    });
+
+    it('When response ok=false with HTML body / Then error message is user-friendly', async () => {
+      mockFetch.mockReturnValue(
+        Promise.resolve({
+          ok: false,
+          status: 200,
+          json: () => Promise.reject(new SyntaxError("Unexpected token '<'")),
+        } as any)
+      );
+      await expect(vendorService.getVendors()).rejects.toThrow('API Request failed');
     });
   });
 });

@@ -1,8 +1,21 @@
 import { inventoryService } from './inventoryService';
 
 class VendorService {
-    private baseUrl = '/v1/vendors';
+    private readonly origin: string;
+    private readonly baseUrl: string;
     private userId: string | null = null;
+
+    constructor() {
+        const win = typeof window !== 'undefined' ? (window as any) : undefined;
+        const env = (import.meta as any)?.env || {};
+        const resolved =
+            (win && win.VITE_SO360_INVENTORY_API) ||
+            env.VITE_SO360_INVENTORY_API ||
+            env.VITE_API_BASE_URL ||
+            'http://localhost:3006';
+        this.origin = String(resolved).replace(/\/$/, '');
+        this.baseUrl = `${this.origin}/v1/vendors`;
+    }
 
     setUserId(id: string) {
         this.userId = id;
