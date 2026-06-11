@@ -16,17 +16,20 @@ class InventoryService {
         const win = typeof window !== 'undefined' ? (window as any) : undefined;
         const env = (import.meta as any)?.env || {};
 
+        const isNeonbeeHost =
+            typeof window !== 'undefined' &&
+            (window.location.hostname === 'neonbee.app' ||
+                window.location.hostname.endsWith('.neonbee.app'));
+
         const invOrigin =
             (win && win.VITE_SO360_INVENTORY_API) ||
             env.VITE_SO360_INVENTORY_API ||
-            env.VITE_API_BASE_URL ||
-            'http://localhost:3006';
+            (isNeonbeeHost ? 'https://api.neonbee.app/inventory' : 'http://localhost:3006');
 
         const coreOrigin =
             (win && win.VITE_SO360_CORE_API) ||
             env.VITE_SO360_CORE_API ||
-            env.VITE_API_BASE_URL ||
-            'http://localhost:3000';
+            (isNeonbeeHost ? 'https://api.neonbee.app/core' : 'http://localhost:3000');
 
         this.inventoryOrigin = String(invOrigin).replace(/\/$/, '');
         this.coreOrigin = String(coreOrigin).replace(/\/$/, '');

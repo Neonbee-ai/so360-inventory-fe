@@ -8,11 +8,21 @@ class VendorService {
     constructor() {
         const win = typeof window !== 'undefined' ? (window as any) : undefined;
         const env = (import.meta as any)?.env || {};
+        // Hostname-aware smart default: on any *.neonbee.app deployment the
+        // correct gateway is always api.neonbee.app/inventory, regardless of
+        // whether the shell's window-global injection fired correctly.
+        const getDefault = (): string => {
+            if (!win?.location) return 'http://localhost:3006';
+            const { hostname } = win.location;
+            if (hostname === 'neonbee.app' || hostname.endsWith('.neonbee.app')) {
+                return 'https://api.neonbee.app/inventory';
+            }
+            return 'http://localhost:3006';
+        };
         const resolved =
             (win && win.VITE_SO360_INVENTORY_API) ||
             env.VITE_SO360_INVENTORY_API ||
-            env.VITE_API_BASE_URL ||
-            'http://localhost:3006';
+            getDefault();
         this.origin = String(resolved).replace(/\/$/, '');
         this.baseUrl = `${this.origin}/v1/vendors`;
     }
@@ -37,8 +47,16 @@ class VendorService {
         });
 
         if (!response.ok) {
-            const error = await response.json().catch(() => ({ message: 'API Request failed' }));
-            throw new Error(error.message || 'API Request failed');
+            let message: string;
+            try {
+                const body = await response.json();
+                message = body.message || body.error || `Request failed (${response.status})`;
+            } catch {
+                message = response.status === 405
+                    ? 'Vendor API endpoint not reachable — please contact support.'
+                    : `Request failed (${response.status} ${response.statusText})`;
+            }
+            throw new Error(message);
         }
 
         return response.json();
