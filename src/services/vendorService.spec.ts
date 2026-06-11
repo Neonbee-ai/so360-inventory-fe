@@ -96,11 +96,11 @@ describe('vendorService', () => {
       expect(opts.method).toBe('DELETE');
     });
 
-    it('When API fails with no message / Then throws generic error', async () => {
+    it('When API fails with no message / Then throws generic error with status code', async () => {
       mockFetch.mockReturnValue(
         Promise.resolve({ ok: false, status: 500, json: () => Promise.reject(new Error('parse fail')) } as any)
       );
-      await expect(vendorService.deleteVendor('v1')).rejects.toThrow('API Request failed');
+      await expect(vendorService.deleteVendor('v1')).rejects.toThrow('Request failed (500');
     });
   });
 
@@ -176,7 +176,7 @@ describe('vendorService', () => {
   });
 
   describe('Given API returns HTML instead of JSON (regression: <!doctype html> parse error)', () => {
-    it('When response is not ok and body is HTML / Then throws generic error not a SyntaxError', async () => {
+    it('When response is not ok and body is HTML / Then throws error with status code, not raw HTML', async () => {
       mockFetch.mockReturnValue(
         Promise.resolve({
           ok: false,
@@ -186,11 +186,11 @@ describe('vendorService', () => {
       );
       const err = await vendorService.getVendors().catch((e) => e);
       expect(err).toBeInstanceOf(Error);
-      expect(err.message).toBe('API Request failed');
+      expect(err.message).toContain('Request failed (502');
       expect(err.message).not.toContain('<!doctype');
     });
 
-    it('When response ok=false with HTML body / Then error message is user-friendly', async () => {
+    it('When response ok=false with HTML body / Then error message contains status code not raw parse error', async () => {
       mockFetch.mockReturnValue(
         Promise.resolve({
           ok: false,
@@ -198,7 +198,7 @@ describe('vendorService', () => {
           json: () => Promise.reject(new SyntaxError("Unexpected token '<'")),
         } as any)
       );
-      await expect(vendorService.getVendors()).rejects.toThrow('API Request failed');
+      await expect(vendorService.getVendors()).rejects.toThrow('Request failed (200');
     });
   });
 });
