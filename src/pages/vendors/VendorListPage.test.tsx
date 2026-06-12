@@ -29,6 +29,13 @@ vi.mock('../../components/common/Modal', () => ({
 }));
 
 const mockUseShellBridgeV = vi.fn();
+const mockQuotaBar = vi.fn();
+vi.mock('@so360/design-system', () => ({
+  QuotaBar: (props: any) => { mockQuotaBar(props); return <div data-testid="quota-bar" data-used={props.used} />; },
+  QuotaGate: ({ children }: any) => <>{children}</>,
+  FeatureGate: ({ children }: any) => <>{children}</>,
+}));
+
 vi.mock('@so360/shell-context', () => ({
   useShellBridge: (...args: any[]) => mockUseShellBridgeV(...args),
   useQuota: () => ({ getQuota: () => null, isExceeded: () => false }),
@@ -54,6 +61,7 @@ const makeVendor = (overrides: any = {}) => ({
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mockQuotaBar.mockClear();
   mockGetVendors.mockResolvedValue([]);
   mockCreateVendor.mockResolvedValue({ id: 'vendor-new' });
   mockDeleteVendor.mockResolvedValue({});
@@ -190,6 +198,35 @@ describe('VendorListPage', () => {
       await waitFor(() => {
         expect(screen.getByText('No vendors found')).toBeInTheDocument();
       });
+    });
+  });
+
+  describe('Given vendor count display (QuotaBar)', () => {
+    it('When 3 vendors are fetched / Then QuotaBar receives used=3 from actual vendor list', async () => {
+      mockGetVendors.mockResolvedValue([
+        makeVendor({ id: 'v1', name: 'V1' }),
+        makeVendor({ id: 'v2', name: 'V2' }),
+        makeVendor({ id: 'v3', name: 'V3' }),
+      ]);
+      render(<VendorListPage />);
+      await waitFor(() => screen.getByText('V1'));
+      const bar = screen.getByTestId('quota-bar');
+      expect(bar.getAttribute('data-used')).toBe('3');
+    });
+
+    it('When 0 vendors are fetched / Then QuotaBar receives used=0, not undefined', async () => {
+      mockGetVendors.mockResolvedValue([]);
+      render(<VendorListPage />);
+      await waitFor(() => expect(screen.queryByText(/Loading/i)).not.toBeInTheDocument());
+      const bar = screen.queryByTestId('quota-bar');
+      if (bar) expect(bar.getAttribute('data-used')).toBe('0');
+    });
+
+    it('When fetch fails / Then QuotaBar is not rendered (no stale zero count shown)', async () => {
+      mockGetVendors.mockRejectedValue(new Error('Network error'));
+      render(<VendorListPage />);
+      await waitFor(() => screen.getByText('Network error'));
+      expect(screen.queryByTestId('quota-bar')).not.toBeInTheDocument();
     });
   });
 

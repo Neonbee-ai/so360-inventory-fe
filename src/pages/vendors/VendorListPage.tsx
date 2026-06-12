@@ -32,6 +32,7 @@ const VendorListPage = () => {
     const quotaData = getQuota('max_vendors');
     const { isSandboxMode, sandboxEntryLimit, isLimited } = useSandboxLimit();
     const [vendors, setVendors] = useState<Vendor[]>([]);
+    const [totalVendorCount, setTotalVendorCount] = useState<number | null>(null);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [error, setError] = useState<string | null>(null);
@@ -66,6 +67,7 @@ const VendorListPage = () => {
         try {
             const data = await vendorService.getVendors();
             setVendors(data);
+            setTotalVendorCount(data.length);
         } catch (error: any) {
             setError(error.message || 'Failed to fetch vendors');
         } finally {
@@ -139,7 +141,7 @@ const VendorListPage = () => {
                     <QuotaGate
                         quotaKey="max_vendors"
                         moduleCode="inventory"
-                        used={quotaData?.current_usage ?? 0}
+                        used={totalVendorCount ?? quotaData?.current_usage ?? 0}
                         limit={quotaData?.limit ?? 0}
                         isUnlimited={quotaData?.is_unlimited}
                         disableOnExceeded
@@ -155,12 +157,12 @@ const VendorListPage = () => {
                 )}
             </div>
 
-            {quotaData && (
+            {(quotaData || totalVendorCount !== null) && (
                 <QuotaBar
                     label="Vendors"
-                    used={quotaData.current_usage}
-                    limit={quotaData.limit}
-                    isUnlimited={quotaData.is_unlimited}
+                    used={totalVendorCount ?? quotaData?.current_usage ?? 0}
+                    limit={quotaData?.limit ?? 0}
+                    isUnlimited={quotaData?.is_unlimited}
                     className="mb-6"
                 />
             )}
