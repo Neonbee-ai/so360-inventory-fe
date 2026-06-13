@@ -33,7 +33,7 @@ const mockQuotaBar = vi.fn();
 vi.mock('@so360/design-system', () => ({
   QuotaBar: (props: any) => { mockQuotaBar(props); return <div data-testid="quota-bar" data-used={props.used} />; },
   QuotaGate: ({ children }: any) => <>{children}</>,
-  FeatureGate: ({ children }: any) => <>{children}</>,
+  FeatureGate: ({ children, loading }: any) => loading ? null : <>{children}</>,
 }));
 
 vi.mock('@so360/shell-context', () => ({
