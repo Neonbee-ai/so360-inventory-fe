@@ -276,6 +276,64 @@ describe('PRListPage', () => {
     });
   });
 
+  describe('Given required-date validation (stale-closure bug fix)', () => {
+    it('When submitted without required_date / Then blocks with date alert and does not call createPR', async () => {
+      render(<PRListPage />);
+      await waitFor(() => screen.getByText('New Requisition'));
+      fireEvent.click(screen.getByText('New Requisition'));
+      await waitFor(() => screen.getByText('Create New Requisition'));
+      fireEvent.click(screen.getByText('+ Add Item'));
+      fireEvent.click(screen.getByText('Select Item'));
+      // Do NOT fill in the date — formData.required_date stays ''
+      const form = document.querySelector('form');
+      if (form) fireEvent.submit(form);
+      expect(window.alert).toHaveBeenCalledWith('Required Date is mandatory. Please select a date before submitting.');
+      expect(mockCreatePR).not.toHaveBeenCalled();
+    });
+
+    it('When description changed after date filled / Then date is preserved (no stale closure)', async () => {
+      render(<PRListPage />);
+      await waitFor(() => screen.getByText('New Requisition'));
+      fireEvent.click(screen.getByText('New Requisition'));
+      await waitFor(() => screen.getByText('Create New Requisition'));
+      // Fill date first
+      const dateInput = document.querySelector('input[type="date"]') as HTMLInputElement;
+      if (dateInput) fireEvent.change(dateInput, { target: { value: '2025-12-31' } });
+      // Then change description — would overwrite date if closure is stale
+      const textarea = screen.getByPlaceholderText('Explain why these items are needed...');
+      fireEvent.change(textarea, { target: { value: 'Test justification' } });
+      fireEvent.click(screen.getByText('+ Add Item'));
+      fireEvent.click(screen.getByText('Select Item'));
+      const form = document.querySelector('form');
+      if (form) fireEvent.submit(form);
+      await waitFor(() => expect(mockCreatePR).toHaveBeenCalled());
+      const payload = mockCreatePR.mock.calls[0][0];
+      expect(payload.required_date).toBe('2025-12-31');
+      expect(payload.description).toBe('Test justification');
+    });
+
+    it('When date filled after description / Then description is preserved (reverse order)', async () => {
+      render(<PRListPage />);
+      await waitFor(() => screen.getByText('New Requisition'));
+      fireEvent.click(screen.getByText('New Requisition'));
+      await waitFor(() => screen.getByText('Create New Requisition'));
+      // Fill description first
+      const textarea = screen.getByPlaceholderText('Explain why these items are needed...');
+      fireEvent.change(textarea, { target: { value: 'Office supplies' } });
+      // Then fill date
+      const dateInput = document.querySelector('input[type="date"]') as HTMLInputElement;
+      if (dateInput) fireEvent.change(dateInput, { target: { value: '2025-06-15' } });
+      fireEvent.click(screen.getByText('+ Add Item'));
+      fireEvent.click(screen.getByText('Select Item'));
+      const form = document.querySelector('form');
+      if (form) fireEvent.submit(form);
+      await waitFor(() => expect(mockCreatePR).toHaveBeenCalled());
+      const payload = mockCreatePR.mock.calls[0][0];
+      expect(payload.description).toBe('Office supplies');
+      expect(payload.required_date).toBe('2025-06-15');
+    });
+  });
+
   describe('Given effectiveFlagsLoaded is false (matrix still resolving)', () => {
     it('When page renders / Then New Requisition button is not shown', async () => {
       mockUseShellBridgePR.mockReturnValue({

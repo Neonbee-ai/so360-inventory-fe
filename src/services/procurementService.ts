@@ -30,8 +30,10 @@ class ProcurementService {
         });
 
         if (!response.ok) {
-            const error = await response.json().catch(() => ({ message: 'API Request failed' }));
-            throw new Error(error.message || 'API Request failed');
+            const errorBody = await response.json().catch(() => ({ message: 'API Request failed' }));
+            const rawMsg = errorBody.message;
+            const msg = Array.isArray(rawMsg) ? rawMsg.join(', ') : (rawMsg || 'API Request failed');
+            throw new Error(msg);
         }
 
         return response.json();

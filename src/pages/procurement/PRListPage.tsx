@@ -53,6 +53,10 @@ const PRListPage = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!formData.required_date) {
+            alert('Required Date is mandatory. Please select a date before submitting.');
+            return;
+        }
         if (items.length === 0) {
             alert('Please add at least one item before submitting.');
             return;
@@ -62,7 +66,7 @@ const PRListPage = () => {
             alert('Please select a product for all item rows before submitting.');
             return;
         }
-        const invalidQty = items.find(it => !(parseFloat(it.quantity) > 0));
+        const invalidQty = items.find(it => !(parseFloat(String(it.quantity)) > 0));
         if (invalidQty) {
             alert('All items must have a quantity greater than 0.');
             return;
@@ -72,16 +76,19 @@ const PRListPage = () => {
                 ...formData,
                 items: items.map(it => ({
                     item_id: it.item_id || undefined,
-                    quantity: parseFloat(it.quantity),
-                    estimated_unit_price: parseFloat(it.price),
+                    quantity: parseFloat(String(it.quantity)),
+                    estimated_unit_price: parseFloat(String(it.price)) || undefined,
                     description: it.description || undefined,
                 }))
             });
             recordActivity({ eventType: 'inventory.pr.created', eventCategory: 'financials', description: `Created Purchase Requisition`, resourceType: 'pr', resourceId: createdPR?.id }).catch(() => {});
             setShowForm(false);
+            setFormData({ description: '', required_date: '' });
+            setItems([]);
             fetchData();
         } catch (error) {
-            alert((error instanceof Error ? error.message : null) || 'Failed to create PR');
+            const msg = error instanceof Error ? error.message : '';
+            alert(msg || 'Failed to create PR');
         }
     };
 
@@ -256,7 +263,7 @@ const PRListPage = () => {
                                         type="date"
                                         required
                                         className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-slate-200"
-                                        onChange={(e) => setFormData({ ...formData, required_date: e.target.value })}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, required_date: e.target.value }))}
                                     />
                                 </div>
                             </div>
@@ -265,7 +272,7 @@ const PRListPage = () => {
                                 <textarea
                                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 h-24 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-slate-200 resize-none"
                                     placeholder="Explain why these items are needed..."
-                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                                 />
                             </div>
 
