@@ -155,6 +155,8 @@ describe('PRListPage', () => {
       await waitFor(() => screen.getByText('New Requisition'));
       fireEvent.click(screen.getByText('New Requisition'));
       await waitFor(() => screen.getByPlaceholderText('Explain why these items are needed...'));
+      const dateInput = document.querySelector('input[type="date"]') as HTMLInputElement;
+      if (dateInput) fireEvent.change(dateInput, { target: { value: '2025-12-31' } });
       fireEvent.change(screen.getByPlaceholderText('Explain why these items are needed...'), { target: { value: 'Need pens' } });
       fireEvent.click(screen.getByText('+ Add Item'));
       fireEvent.click(screen.getByText('Select Item'));
@@ -196,6 +198,8 @@ describe('PRListPage', () => {
       await waitFor(() => screen.getByText('New Requisition'));
       fireEvent.click(screen.getByText('New Requisition'));
       await waitFor(() => screen.getByText('Create New Requisition'));
+      const dateInput = document.querySelector('input[type="date"]') as HTMLInputElement;
+      if (dateInput) fireEvent.change(dateInput, { target: { value: '2025-12-31' } });
       const form = document.querySelector('form');
       if (form) fireEvent.submit(form);
       expect(window.alert).toHaveBeenCalledWith('Please add at least one item before submitting.');
@@ -207,6 +211,8 @@ describe('PRListPage', () => {
       await waitFor(() => screen.getByText('New Requisition'));
       fireEvent.click(screen.getByText('New Requisition'));
       await waitFor(() => screen.getByText('Create New Requisition'));
+      const dateInput = document.querySelector('input[type="date"]') as HTMLInputElement;
+      if (dateInput) fireEvent.change(dateInput, { target: { value: '2025-12-31' } });
       fireEvent.click(screen.getByText('+ Add Item'));
       const form = document.querySelector('form');
       if (form) fireEvent.submit(form);
@@ -219,6 +225,8 @@ describe('PRListPage', () => {
       await waitFor(() => screen.getByText('New Requisition'));
       fireEvent.click(screen.getByText('New Requisition'));
       await waitFor(() => screen.getByText('Create New Requisition'));
+      const dateInput = document.querySelector('input[type="date"]') as HTMLInputElement;
+      if (dateInput) fireEvent.change(dateInput, { target: { value: '2025-12-31' } });
       fireEvent.click(screen.getByText('+ Add Item'));
       fireEvent.click(screen.getByText('Select Item'));
       const qtyInput = screen.getByPlaceholderText('Qty');
@@ -235,6 +243,8 @@ describe('PRListPage', () => {
       await waitFor(() => screen.getByText('New Requisition'));
       fireEvent.click(screen.getByText('New Requisition'));
       await waitFor(() => screen.getByText('Create New Requisition'));
+      const dateInput = document.querySelector('input[type="date"]') as HTMLInputElement;
+      if (dateInput) fireEvent.change(dateInput, { target: { value: '2025-12-31' } });
       fireEvent.click(screen.getByText('+ Add Item'));
       fireEvent.click(screen.getByText('Select Item'));
       const form = document.querySelector('form');
@@ -250,6 +260,8 @@ describe('PRListPage', () => {
       await waitFor(() => screen.getByText('New Requisition'));
       fireEvent.click(screen.getByText('New Requisition'));
       await waitFor(() => screen.getByText('Create New Requisition'));
+      const dateInput = document.querySelector('input[type="date"]') as HTMLInputElement;
+      if (dateInput) fireEvent.change(dateInput, { target: { value: '2025-12-31' } });
       fireEvent.click(screen.getByText('+ Add Item'));
       fireEvent.click(screen.getByText('Select Item'));
       const form = document.querySelector('form');
@@ -266,6 +278,8 @@ describe('PRListPage', () => {
       await waitFor(() => screen.getByText('New Requisition'));
       fireEvent.click(screen.getByText('New Requisition'));
       await waitFor(() => screen.getByText('Create New Requisition'));
+      const dateInput = document.querySelector('input[type="date"]') as HTMLInputElement;
+      if (dateInput) fireEvent.change(dateInput, { target: { value: '2025-12-31' } });
       fireEvent.click(screen.getByText('+ Add Item'));
       fireEvent.click(screen.getByText('Select Item'));
       const form = document.querySelector('form');
