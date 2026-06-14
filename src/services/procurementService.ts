@@ -108,7 +108,7 @@ class ProcurementService {
     }
 
     async getGRNDetail(id: string) {
-        return this.request(`/grn/${id}`);
+        return this.request(`/grn/detail/${id}`);
     }
 
     // Vendor Invoices

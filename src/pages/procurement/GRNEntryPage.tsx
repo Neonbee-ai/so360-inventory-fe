@@ -59,8 +59,9 @@ const GRNEntryPage = () => {
             recordActivity({ eventType: 'inventory.grn.created', eventCategory: 'financials', description: `Created GRN #${grnData.grn_number} for PO #${selectedPo.po_number}`, resourceType: 'grn', resourceId: createdGRN?.id }).catch(() => {});
             alert('GRN Created Successfully');
             window.location.reload();
-        } catch (error) {
-            alert('Failed to create GRN');
+        } catch (error: any) {
+            const msg = error?.message || 'Failed to create GRN';
+            alert(`GRN creation failed: ${msg}`);
         }
     };
 

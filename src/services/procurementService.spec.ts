@@ -184,7 +184,7 @@ describe('procurementService', () => {
       mockFetch.mockReturnValue(jsonOk({ id: 'grn1', status: 'complete' }));
       const result = await procurementService.getGRNDetail('grn1');
       const [url] = mockFetch.mock.calls[0];
-      expect(url).toContain('/v1/procurement/grn/grn1');
+      expect(url).toContain('/v1/procurement/grn/detail/grn1');
       expect(result.status).toBe('complete');
     });
   });
