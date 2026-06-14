@@ -1,4 +1,4 @@
-@import '../../../so360-shell-fe/packages/theme/src/theme.css';
+@import '@so360/theme/src/theme.css';
 
 @tailwind base;
 @tailwind components;
