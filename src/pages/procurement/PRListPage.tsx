@@ -53,11 +53,25 @@ const PRListPage = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (items.length === 0) {
+            alert('Please add at least one item before submitting.');
+            return;
+        }
+        const unselectedItem = items.find(it => !it.item_id);
+        if (unselectedItem) {
+            alert('Please select a product for all item rows before submitting.');
+            return;
+        }
+        const invalidQty = items.find(it => !(parseFloat(it.quantity) > 0));
+        if (invalidQty) {
+            alert('All items must have a quantity greater than 0.');
+            return;
+        }
         try {
             const createdPR = await procurementService.createPR({
                 ...formData,
                 items: items.map(it => ({
-                    item_id: it.item_id,
+                    item_id: it.item_id || undefined,
                     quantity: parseFloat(it.quantity),
                     estimated_unit_price: parseFloat(it.price),
                     description: it.description || undefined,
@@ -67,7 +81,7 @@ const PRListPage = () => {
             setShowForm(false);
             fetchData();
         } catch (error) {
-            alert('Failed to create PR');
+            alert((error instanceof Error ? error.message : null) || 'Failed to create PR');
         }
     };
 

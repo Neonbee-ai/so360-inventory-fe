@@ -29,7 +29,7 @@ vi.mock('../../components/ItemSearchSelector', () => ({
   __esModule: true,
   default: ({ onSelect }: any) => (
     <div data-testid="item-search">
-      <button onClick={() => onSelect({ item_id: 'item-1', name: 'Widget', price: 100 })}>
+      <button onClick={() => onSelect({ id: 'item-1', name: 'Widget', sku: 'W-001', price: 100 })}>
         Select Item
       </button>
     </div>
@@ -150,16 +150,22 @@ describe('PRListPage', () => {
       });
     });
 
-    it('When form submitted / Then calls createPR', async () => {
+    it('When form submitted with item selected / Then calls createPR with correct payload', async () => {
       render(<PRListPage />);
       await waitFor(() => screen.getByText('New Requisition'));
       fireEvent.click(screen.getByText('New Requisition'));
       await waitFor(() => screen.getByPlaceholderText('Explain why these items are needed...'));
       fireEvent.change(screen.getByPlaceholderText('Explain why these items are needed...'), { target: { value: 'Need pens' } });
+      fireEvent.click(screen.getByText('+ Add Item'));
+      fireEvent.click(screen.getByText('Select Item'));
       const form = document.querySelector('form');
       if (form) fireEvent.submit(form);
       await waitFor(() => {
-        expect(mockCreatePR).toHaveBeenCalled();
+        expect(mockCreatePR).toHaveBeenCalledWith(expect.objectContaining({
+          items: expect.arrayContaining([
+            expect.objectContaining({ item_id: 'item-1', quantity: 1 }),
+          ]),
+        }));
       });
     });
   });
@@ -181,6 +187,92 @@ describe('PRListPage', () => {
       await waitFor(() => screen.getByText('approved'));
       // Approved PRs have no Delete button — only draft/rejected do
       expect(screen.queryByText('Delete')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Given PR creation validation guards (bug fix: 400 on submit)', () => {
+    it('When no items added / Then blocks submit with alert and does not call createPR', async () => {
+      render(<PRListPage />);
+      await waitFor(() => screen.getByText('New Requisition'));
+      fireEvent.click(screen.getByText('New Requisition'));
+      await waitFor(() => screen.getByText('Create New Requisition'));
+      const form = document.querySelector('form');
+      if (form) fireEvent.submit(form);
+      expect(window.alert).toHaveBeenCalledWith('Please add at least one item before submitting.');
+      expect(mockCreatePR).not.toHaveBeenCalled();
+    });
+
+    it('When item row added but no product selected / Then blocks with unselected-product alert', async () => {
+      render(<PRListPage />);
+      await waitFor(() => screen.getByText('New Requisition'));
+      fireEvent.click(screen.getByText('New Requisition'));
+      await waitFor(() => screen.getByText('Create New Requisition'));
+      fireEvent.click(screen.getByText('+ Add Item'));
+      const form = document.querySelector('form');
+      if (form) fireEvent.submit(form);
+      expect(window.alert).toHaveBeenCalledWith('Please select a product for all item rows before submitting.');
+      expect(mockCreatePR).not.toHaveBeenCalled();
+    });
+
+    it('When item selected but quantity set to 0 / Then blocks with quantity alert', async () => {
+      render(<PRListPage />);
+      await waitFor(() => screen.getByText('New Requisition'));
+      fireEvent.click(screen.getByText('New Requisition'));
+      await waitFor(() => screen.getByText('Create New Requisition'));
+      fireEvent.click(screen.getByText('+ Add Item'));
+      fireEvent.click(screen.getByText('Select Item'));
+      const qtyInput = screen.getByPlaceholderText('Qty');
+      fireEvent.change(qtyInput, { target: { value: '0' } });
+      const form = document.querySelector('form');
+      if (form) fireEvent.submit(form);
+      expect(window.alert).toHaveBeenCalledWith('All items must have a quantity greater than 0.');
+      expect(mockCreatePR).not.toHaveBeenCalled();
+    });
+
+    it('When createPR rejects / Then shows actual backend error message (not generic)', async () => {
+      mockCreatePR.mockRejectedValue(new Error('Item ID is required'));
+      render(<PRListPage />);
+      await waitFor(() => screen.getByText('New Requisition'));
+      fireEvent.click(screen.getByText('New Requisition'));
+      await waitFor(() => screen.getByText('Create New Requisition'));
+      fireEvent.click(screen.getByText('+ Add Item'));
+      fireEvent.click(screen.getByText('Select Item'));
+      const form = document.querySelector('form');
+      if (form) fireEvent.submit(form);
+      await waitFor(() => {
+        expect(window.alert).toHaveBeenCalledWith('Item ID is required');
+      });
+      expect(window.alert).not.toHaveBeenCalledWith('Failed to create PR');
+    });
+
+    it('When item selected / Then item_id is the resolved UUID not an empty string', async () => {
+      render(<PRListPage />);
+      await waitFor(() => screen.getByText('New Requisition'));
+      fireEvent.click(screen.getByText('New Requisition'));
+      await waitFor(() => screen.getByText('Create New Requisition'));
+      fireEvent.click(screen.getByText('+ Add Item'));
+      fireEvent.click(screen.getByText('Select Item'));
+      const form = document.querySelector('form');
+      if (form) fireEvent.submit(form);
+      await waitFor(() => expect(mockCreatePR).toHaveBeenCalled());
+      const payload = mockCreatePR.mock.calls[0][0];
+      expect(payload.items[0].item_id).toBe('item-1');
+      expect(payload.items[0].item_id).not.toBe('');
+    });
+
+    it('When non-Error thrown by createPR / Then falls back to generic message', async () => {
+      mockCreatePR.mockRejectedValue('unexpected string error');
+      render(<PRListPage />);
+      await waitFor(() => screen.getByText('New Requisition'));
+      fireEvent.click(screen.getByText('New Requisition'));
+      await waitFor(() => screen.getByText('Create New Requisition'));
+      fireEvent.click(screen.getByText('+ Add Item'));
+      fireEvent.click(screen.getByText('Select Item'));
+      const form = document.querySelector('form');
+      if (form) fireEvent.submit(form);
+      await waitFor(() => {
+        expect(window.alert).toHaveBeenCalledWith('Failed to create PR');
+      });
     });
   });
 
