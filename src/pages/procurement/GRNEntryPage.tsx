@@ -40,7 +40,8 @@ const GRNEntryPage = () => {
             ordered: l.quantity,
             already_received: l.received_quantity,
             quantity_received: l.quantity - l.received_quantity,
-            description: l.description
+            description: l.description,
+            unit_cost: l.unit_price ?? null,
         })));
     };
 
@@ -53,7 +54,8 @@ const GRNEntryPage = () => {
                 items: receiptLines.filter(l => l.quantity_received > 0).map(l => ({
                     po_line_id: l.po_line_id,
                     item_id: l.item_id,
-                    quantity_received: parseFloat(l.quantity_received)
+                    quantity_received: parseFloat(l.quantity_received),
+                    unit_cost: l.unit_cost ?? null,
                 }))
             });
             recordActivity({ eventType: 'inventory.grn.created', eventCategory: 'financials', description: `Created GRN #${grnData.grn_number} for PO #${selectedPo.po_number}`, resourceType: 'grn', resourceId: createdGRN?.id }).catch(() => {});

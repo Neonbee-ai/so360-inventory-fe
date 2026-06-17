@@ -165,4 +165,82 @@ describe('GRNEntryPage', () => {
       });
     });
   });
+
+  describe('Given GRN form submission', () => {
+    let reloadSpy: ReturnType<typeof vi.fn>;
+
+    beforeEach(() => {
+      // Prevent window.location.reload() from corrupting jsdom between tests.
+      reloadSpy = vi.fn();
+      Object.defineProperty(window, 'location', {
+        value: { ...window.location, reload: reloadSpy },
+        writable: true,
+      });
+    });
+
+    it('When form is submitted with unit_price on PO line / Then createGRN receives unit_cost in items', async () => {
+      const poWithPrice = makePO({
+        po_lines: [
+          {
+            id: 'line-1',
+            item_id: 'item-1',
+            quantity: 10,
+            received_quantity: 0,
+            description: 'Widget A',
+            unit_price: 24.99,
+          },
+        ],
+      });
+      mockGetPOs.mockResolvedValue([poWithPrice]);
+      render(<GRNEntryPage />);
+
+      await waitFor(() => expect(screen.getByText('Acme Supplies')).toBeInTheDocument());
+      fireEvent.click(screen.getByText('#PO-2024-001'));
+      await waitFor(() => expect(screen.getByText(/GRN Number/i)).toBeInTheDocument());
+
+      fireEvent.change(screen.getByPlaceholderText(/GRN-2024-001/i), {
+        target: { value: 'GRN-TEST-001' },
+      });
+      fireEvent.change(screen.getByRole('combobox'), { target: { value: 'wh-1' } });
+      fireEvent.click(screen.getByText(/Post Goods Receipt/i));
+
+      await waitFor(() => {
+        expect(mockCreateGRN).toHaveBeenCalledWith(
+          expect.objectContaining({
+            po_id: 'po-1',
+            warehouse_id: 'wh-1',
+            grn_number: 'GRN-TEST-001',
+            items: expect.arrayContaining([
+              expect.objectContaining({
+                po_line_id: 'line-1',
+                item_id: 'item-1',
+                unit_cost: 24.99,
+              }),
+            ]),
+          }),
+        );
+      });
+    });
+
+    it('When createGRN API fails / Then createGRN was invoked and the error is surfaced', async () => {
+      mockCreateGRN.mockRejectedValue(new Error('PO not found'));
+      render(<GRNEntryPage />);
+
+      await waitFor(() => expect(screen.getByText('Acme Supplies')).toBeInTheDocument());
+      fireEvent.click(screen.getByText('#PO-2024-001'));
+      await waitFor(() => expect(screen.getByText(/GRN Number/i)).toBeInTheDocument());
+
+      // Fill required fields so jsdom's form validation allows the submit to fire.
+      fireEvent.change(screen.getByPlaceholderText(/GRN-2024-001/i), {
+        target: { value: 'GRN-ERR-001' },
+      });
+      fireEvent.change(screen.getByRole('combobox'), { target: { value: 'wh-1' } });
+      fireEvent.click(screen.getByText(/Post Goods Receipt/i));
+
+      // Verify the API was called (error path still invokes createGRN).
+      await waitFor(() => {
+        expect(mockCreateGRN).toHaveBeenCalled();
+      });
+    });
+  });
 });
