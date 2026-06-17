@@ -167,15 +167,15 @@ describe('GRNEntryPage', () => {
   });
 
   describe('Given GRN form submission', () => {
-    let reloadSpy: ReturnType<typeof vi.fn>;
-
     beforeEach(() => {
-      // Prevent window.location.reload() from corrupting jsdom between tests.
-      reloadSpy = vi.fn();
-      Object.defineProperty(window, 'location', {
-        value: { ...window.location, reload: reloadSpy },
-        writable: true,
-      });
+      // Silence window.location.reload() — jsdom doesn't implement navigation
+      // and some versions throw on Object.defineProperty for location.
+      // vi.stubGlobal handles the property correctly across all jsdom versions.
+      vi.stubGlobal('location', { ...window.location, reload: vi.fn() });
+    });
+
+    afterEach(() => {
+      vi.unstubAllGlobals();
     });
 
     it('When form is submitted with unit_price on PO line / Then createGRN receives unit_cost in items', async () => {
