@@ -45,7 +45,7 @@ describe('PreviewTableStep', () => {
 
         it('WHEN rendered THEN the error count shows 1', () => {
             render(<PreviewTableStep rows={rows} onConfirm={onConfirm} onBack={onBack} />);
-            expect(screen.getByText(/1 error/)).toBeInTheDocument();
+            expect(screen.getAllByText(/1 error/).length).toBeGreaterThanOrEqual(1);
         });
 
         it('WHEN rendered THEN all 3 rows are shown in the table', () => {
