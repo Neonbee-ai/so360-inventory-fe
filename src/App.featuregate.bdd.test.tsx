@@ -28,6 +28,7 @@ vi.mock('./pages/vendors/VendorDetailPage', () => ({ default: () => <div>VendorD
 vi.mock('./pages/vendors/ContractsPage', () => ({ default: () => <div>Contracts</div> }));
 vi.mock('./pages/procurement/OpeningBalancePage', () => ({ default: () => <div>OpeningBalance</div> }));
 vi.mock('./pages/CategoriesPage', () => ({ default: () => <div>Categories</div> }));
+vi.mock('./pages/bulk-import/BulkImportPage', () => ({ default: () => <div data-testid="bulk-import-page">BulkImport</div> }));
 
 vi.mock('react-router-dom', () => ({
   Routes: ({ children }: any) => <div data-testid="routes">{children}</div>,

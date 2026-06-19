@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Filter, Plus, Package, Layers, AlertCircle, Flame, Building2, Factory, Wrench } from 'lucide-react';
+import { Search, Filter, Plus, Package, Layers, AlertCircle, Flame, Building2, Factory, Wrench, Upload, Info } from 'lucide-react';
 import { inventoryService } from '../services/inventoryService';
 import { Item } from '../types/inventory';
 import { Table } from '../components/common/Table';
@@ -13,6 +13,7 @@ const ItemsPage = () => {
     const { can } = useAuth();
     const shell = useShellBridge();
     const createItemState = (shell as any)?.getFeatureState ? (shell as any).getFeatureState('action:inventory:items:create') : 'enabled';
+    const bulkImportState = (shell as any)?.getFeatureState ? (shell as any).getFeatureState('action:inventory:bulk_import') : 'enabled';
     const quotaChecks = useMemo(() => [{ module_code: 'inventory', quota_key: 'max_skus' }], []);
     const { getQuota } = useQuota({ checks: quotaChecks, orgId: shell?.currentOrg?.id || '' });
     const quotaData = getQuota('max_skus');
@@ -128,6 +129,42 @@ const ItemsPage = () => {
                     <h1 className="text-3xl font-bold text-slate-50 tracking-tight">Items</h1>
                     <p className="text-slate-400 mt-1">Manage physical products and trackable assets</p>
                 </div>
+                <div className="flex items-center gap-3">
+                {can('import_item') && (
+                    <FeatureGate state={bulkImportState} loading={(shell?.effectiveFlagsLoaded === false)} onUpgradeClick={() => navigate('/org/billing')}>
+                        <div className="relative group/tooltip">
+                            <button
+                                onClick={() => navigate('/inventory/items/bulk-import')}
+                                className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-slate-100 px-4 py-2.5 rounded-lg font-semibold text-sm transition-all active:scale-95"
+                            >
+                                <Upload size={16} />
+                                Bulk Import
+                                <Info size={13} className="text-slate-500 group-hover/tooltip:text-slate-400 ml-0.5" />
+                            </button>
+                            {/* Tooltip */}
+                            <div className="absolute right-0 top-full mt-2 w-72 z-50 hidden group-hover/tooltip:block">
+                                <div className="bg-slate-800 border border-slate-700 rounded-xl shadow-2xl p-4 text-xs text-slate-300 space-y-2.5">
+                                    <p className="font-semibold text-slate-100 text-sm">How to bulk import</p>
+                                    <div className="w-full h-px bg-slate-700" />
+                                    <ol className="space-y-2 list-none">
+                                        <li className="flex gap-2.5">
+                                            <span className="w-5 h-5 rounded-full bg-blue-600/30 text-blue-400 flex items-center justify-center font-bold text-[10px] shrink-0">1</span>
+                                            <span>Prepare a <strong className="text-slate-100">CSV file</strong> with item details — name, SKU, price, category and more.</span>
+                                        </li>
+                                        <li className="flex gap-2.5">
+                                            <span className="w-5 h-5 rounded-full bg-blue-600/30 text-blue-400 flex items-center justify-center font-bold text-[10px] shrink-0">2</span>
+                                            <span>Name your <strong className="text-slate-100">image files</strong> to match the SKU — e.g. <span className="font-mono text-blue-300 bg-slate-900 px-1 rounded">WA-001.jpg</span> for SKU <span className="font-mono text-blue-300 bg-slate-900 px-1 rounded">WA-001</span>.</span>
+                                        </li>
+                                        <li className="flex gap-2.5">
+                                            <span className="w-5 h-5 rounded-full bg-blue-600/30 text-blue-400 flex items-center justify-center font-bold text-[10px] shrink-0">3</span>
+                                            <span>Upload CSV → upload images → <strong className="text-slate-100">preview rows</strong> → confirm import.</span>
+                                        </li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+                    </FeatureGate>
+                )}
                 {can('create_item') && (
                     <FeatureGate state={createItemState} loading={(shell?.effectiveFlagsLoaded === false)} onUpgradeClick={() => navigate('/org/billing')}>
                     <QuotaGate
@@ -148,6 +185,7 @@ const ItemsPage = () => {
                     </QuotaGate>
                     </FeatureGate>
                 )}
+                </div>
             </header>
 
             {quotaData && totalItemCount !== null && (

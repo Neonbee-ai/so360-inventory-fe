@@ -24,6 +24,7 @@ const VendorDetailPage = lazy(() => import('./pages/vendors/VendorDetailPage'));
 const ContractsPage = lazy(() => import('./pages/vendors/ContractsPage'));
 const OpeningBalancePage = lazy(() => import('./pages/procurement/OpeningBalancePage'));
 const CategoriesPage = lazy(() => import('./pages/CategoriesPage'));
+const BulkImportPage = lazy(() => import('./pages/bulk-import/BulkImportPage'));
 
 
 
@@ -155,6 +156,7 @@ const App = () => {
 
                 {/* ── Inventory routes (mounted at /inventory/*) ── */}
                 <Route path="items" element={<ItemsPage />} />
+                <Route path="items/bulk-import" element={<FeatureGate flagKey="action:inventory:bulk_import"><BulkImportPage /></FeatureGate>} />
                 <Route path="items/new" element={<ItemCreatePage />} />
                 <Route path="items/:id" element={<ItemDetailPage />} />
                 <Route path="locations" element={<FeatureGate flagKey="submodule:inventory:warehouses"><StockLocationsPage /></FeatureGate>} />

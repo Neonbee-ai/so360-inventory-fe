@@ -528,6 +528,64 @@ class InventoryService {
     async getLifecycleGates(itemId: string) {
         return this.request(`/items/${itemId}/lifecycle/gates`);
     }
+
+    // ==================== Bulk Import ====================
+
+    async bulkImportParseCsv(orgId: string, file: File): Promise<any> {
+        const form = new FormData();
+        form.append('file', file);
+        const response = await fetch(`${this.inventoryOrigin}/v1/bulk-import/${orgId}/parse-csv`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${this.accessToken}`,
+                'X-Tenant-Id': this.tenantId || '',
+                'X-Org-Id': orgId,
+            },
+            body: form,
+        });
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({ message: 'Failed to parse CSV' }));
+            throw new Error(err.message || 'Failed to parse CSV');
+        }
+        return response.json();
+    }
+
+    async bulkImportUploadImages(orgId: string, files: File[]): Promise<any> {
+        const form = new FormData();
+        files.forEach(f => form.append('images', f));
+        const response = await fetch(`${this.inventoryOrigin}/v1/bulk-import/${orgId}/upload-images`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${this.accessToken}`,
+                'X-Tenant-Id': this.tenantId || '',
+                'X-Org-Id': orgId,
+            },
+            body: form,
+        });
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({ message: 'Failed to upload images' }));
+            throw new Error(err.message || 'Failed to upload images');
+        }
+        return response.json();
+    }
+
+    async bulkImportCommit(orgId: string, rows: any[]): Promise<any> {
+        const response = await fetch(`${this.inventoryOrigin}/v1/bulk-import/${orgId}/commit`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${this.accessToken}`,
+                'X-Tenant-Id': this.tenantId || '',
+                'X-Org-Id': orgId,
+            },
+            body: JSON.stringify({ rows }),
+        });
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({ message: 'Import failed' }));
+            throw new Error(err.message || 'Import failed');
+        }
+        return response.json();
+    }
 }
 
 export const inventoryService = new InventoryService();
