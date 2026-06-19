@@ -12,12 +12,12 @@ vi.mock('@so360/shell-context', () => ({
     useShellBridge: () => ({ currentOrg: { id: 'org-001' } }),
 }));
 
-const mockService = {
+const mockService = vi.hoisted(() => ({
     bulkImportParseCsv: vi.fn(),
     bulkImportUploadImages: vi.fn(),
     bulkImportCommit: vi.fn(),
     clearOrgStaticCache: vi.fn(),
-};
+}));
 
 vi.mock('../../services/inventoryService', () => ({
     inventoryService: mockService,
