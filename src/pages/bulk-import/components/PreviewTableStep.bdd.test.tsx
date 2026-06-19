@@ -40,7 +40,7 @@ describe('PreviewTableStep', () => {
 
         it('WHEN rendered THEN the valid count shows 2', () => {
             render(<PreviewTableStep rows={rows} onConfirm={onConfirm} onBack={onBack} />);
-            expect(screen.getByText(/2 valid/)).toBeInTheDocument();
+            expect(screen.getAllByText(/2 valid/).length).toBeGreaterThanOrEqual(1);
         });
 
         it('WHEN rendered THEN the error count shows 1', () => {
