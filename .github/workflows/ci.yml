@@ -15,10 +15,10 @@ jobs:
         node-version: [20.x, 22.x]
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Checkout Shell FE packages
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
       with:
         repository: Neonbee-ai/so360-shell-fe
         token: ${{ secrets.PAT_TOKEN }}
