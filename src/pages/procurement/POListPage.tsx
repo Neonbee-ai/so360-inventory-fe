@@ -20,6 +20,7 @@ const POListPage = () => {
     const { recordActivity } = useActivity();
     const [pos, setPos] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [fetchError, setFetchError] = useState<string | null>(null);
     const [showForm, setShowForm] = useState(false);
     const [vendors, setVendors] = useState<any[]>([]);
     const [approvedPrs, setApprovedPrs] = useState<any[]>([]);
@@ -76,6 +77,7 @@ const POListPage = () => {
             setVendors(Array.isArray(vendorData) ? vendorData : (vendorData?.data || []));
         } catch (error) {
             console.error('Failed to fetch POs/vendors', error);
+            setFetchError('Failed to load purchase orders. Please refresh the page.');
         } finally {
             setLoading(false);
         }
@@ -224,6 +226,11 @@ const POListPage = () => {
 
     return (
         <div className="p-8 space-y-8 animate-in fade-in duration-700">
+            {fetchError && (
+                <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl flex items-center gap-3 text-rose-400 text-sm">
+                    <span>⚠</span> {fetchError}
+                </div>
+            )}
             <div className="flex items-center justify-between gap-4">
                 <div>
                     <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">

@@ -6,14 +6,17 @@ const ContractsPage = () => {
     const formatters = useInventoryFormatters();
     const [contracts, setContracts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         const fetch = async () => {
             try {
                 const data = await vendorService.getContracts();
                 setContracts(data);
-            } catch (e) { console.error(e); }
-            finally { setLoading(false); }
+            } catch (e) {
+                console.error(e);
+                setError('Failed to load contracts. Please refresh the page.');
+            } finally { setLoading(false); }
         };
         fetch();
     }, []);
@@ -27,6 +30,11 @@ const ContractsPage = () => {
                 <p className="text-slate-400 mt-2 font-medium">Lump-sum and value-based service agreements.</p>
             </div>
 
+            {error && (
+                <div className="mb-4 p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl flex items-center gap-3 text-rose-400 text-sm">
+                    <span>⚠</span> {error}
+                </div>
+            )}
             <div className="bg-slate-900/50 border border-slate-800 rounded-3xl overflow-hidden backdrop-blur-sm">
                 <table className="w-full text-left">
                     <thead className="bg-slate-800/30 border-b border-slate-800">

@@ -77,6 +77,15 @@ body {
 .light .text-cyan-300    { color: rgb( 21 148 180); }
 .light .text-violet-400  { color: rgb(109  40 217); }
 
+/* Near-white slate shades (slate-50→400) have no built-in .light override —
+   they stay near-white in light mode, making headings and labels invisible.
+   Map them to readable dark equivalents so both themes stay legible. */
+.light .text-slate-50  { color: rgb(15  23  42); }
+.light .text-slate-100 { color: rgb(30  41  59); }
+.light .text-slate-200 { color: rgb(51  65  85); }
+.light .text-slate-300 { color: rgb(71  85 105); }
+.light .text-slate-400 { color: rgb(100 116 139); }
+
 /* Muted / secondary text */
 .light .text-slate-500 { color: rgb(71  85 105); }
 .light .text-slate-600 { color: rgb(51  65  85); }

@@ -60,6 +60,7 @@ const OpeningBalancePage = () => {
             }));
         } catch (err: any) {
             console.error('Failed to load initial data', err);
+            setError(err?.message || 'Failed to load form data. Please refresh the page.');
         } finally {
             setLoading(false);
         }

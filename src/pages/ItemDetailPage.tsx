@@ -737,7 +737,7 @@ const ItemDetailPage = () => {
                             </div>
                             <div className="bg-slate-900/50 border border-slate-800 rounded-xl">
                                 {/* View Tab Bar — 8 tabs */}
-                                <div className="flex gap-1 border-b border-slate-800 overflow-x-auto overflow-y-hidden scrollbar-hide rounded-t-xl">
+                                <div className="flex gap-1 border-b border-slate-800 overflow-x-auto overflow-y-hidden rounded-t-xl">
                                     {([
                                         { id: 'basic' as ViewTabId, label: 'Basic Info', icon: <Package size={14} /> },
                                         { id: 'media' as ViewTabId, label: 'Media', icon: <ImageIcon size={14} /> },

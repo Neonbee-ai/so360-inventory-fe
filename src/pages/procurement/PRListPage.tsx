@@ -32,6 +32,7 @@ const PRListPage = () => {
     const canCreatePR = (shell?.effectiveFlagsLoaded !== false) && createPrState === 'enabled';
     const [prs, setPrs] = useState<PR[]>([]);
     const [loading, setLoading] = useState(true);
+    const [fetchError, setFetchError] = useState<string | null>(null);
     const [showForm, setShowForm] = useState(false);
     const [formData, setFormData] = useState({ description: '', required_date: '' });
     const [items, setItems] = useState<any[]>([]);
@@ -46,6 +47,7 @@ const PRListPage = () => {
             setPrs(Array.isArray(data) ? data : (data?.data || []));
         } catch (error) {
             console.error('Failed to fetch PRs', error);
+            setFetchError('Failed to load purchase requisitions. Please refresh the page.');
         } finally {
             setLoading(false);
         }
@@ -135,6 +137,11 @@ const PRListPage = () => {
 
     return (
         <div className="p-8 space-y-8 animate-in fade-in duration-700">
+            {fetchError && (
+                <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl flex items-center gap-3 text-rose-400 text-sm">
+                    <span>⚠</span> {fetchError}
+                </div>
+            )}
             {/* Header */}
             <div className="flex items-center justify-between gap-4">
                 <div>
