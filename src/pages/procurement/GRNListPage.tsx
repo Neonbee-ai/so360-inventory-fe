@@ -19,7 +19,7 @@ const GRNListPage = () => {
     const navigate = useNavigate();
     const shell = useShellBridge();
     const formatters = useInventoryFormatters();
-    const createGrnState = (shell as any)?.getFeatureState ? (shell as any).getFeatureState('action:inventory:procurement:create_pr') : 'enabled';
+    const createGrnState = (shell as any)?.getFeatureState ? (shell as any).getFeatureState('action:inventory:procurement:create_grn') : 'enabled';
     const [grns, setGrns] = useState<GRN[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
