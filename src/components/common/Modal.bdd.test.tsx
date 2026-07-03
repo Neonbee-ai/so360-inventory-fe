@@ -6,6 +6,9 @@
  *   - p-4 → px-4 py-6               (24px top/bottom breathing room)
  *   - header gains flex-shrink-0     (header never compresses under tall content)
  *
+ * Covers the 2026-07-03 fix:
+ *   - py-6 → pt-20 pb-6             (80px top clears 56px glass-nav on short viewports)
+ *
  * Naming convention:
  *   describe : 'Given <component/state>'
  *   it       : 'Given <pre> / When <action> / Then <outcome>'
@@ -65,17 +68,22 @@ describe('Given the shared Modal component', () => {
     });
   });
 
-  describe('Given viewport-safety constraints (2026-06-08 fix)', () => {
-    it('When Modal renders / Then outer wrapper has py-6 (24px top+bottom gap)', () => {
+  describe('Given viewport-safety constraints (2026-06-08 fix + 2026-07-03 header-clearance fix)', () => {
+    it('When Modal renders / Then outer wrapper has pt-20 (80px top clears 56px glass-nav)', () => {
       render(<Modal {...defaultProps} />);
       const overlay = document.querySelector('.fixed.inset-0');
-      expect(overlay?.className).toContain('py-6');
+      expect(overlay?.className).toContain('pt-20');
+    });
+
+    it('When Modal renders / Then outer wrapper has pb-6 bottom gap', () => {
+      render(<Modal {...defaultProps} />);
+      const overlay = document.querySelector('.fixed.inset-0');
+      expect(overlay?.className).toContain('pb-6');
     });
 
     it('When Modal renders / Then outer wrapper no longer uses p-4 alone', () => {
       render(<Modal {...defaultProps} />);
       const overlay = document.querySelector('.fixed.inset-0');
-      // p-4 alone (without py-6) would mean only 16px vertical gap — insufficient
       const classes = overlay?.className ?? '';
       const hasBareP4 = classes.split(' ').includes('p-4');
       expect(hasBareP4).toBe(false);
@@ -149,11 +157,11 @@ describe('Given the shared Modal component', () => {
       expect(src).toContain('max-h-[88vh]');
     });
 
-    it('When the Modal source is read / Then py-6 is present on the outer wrapper', async () => {
+    it('When the Modal source is read / Then pt-20 is present on the outer wrapper (header clearance)', async () => {
       const { readFileSync } = await import('node:fs');
       const { resolve } = await import('node:path');
       const src = readFileSync(resolve(__dirname, 'Modal.tsx'), 'utf8');
-      expect(src).toContain('py-6');
+      expect(src).toContain('pt-20');
     });
 
     it('When the Modal source is read / Then flex-shrink-0 is present on the header', async () => {
