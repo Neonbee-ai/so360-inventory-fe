@@ -256,7 +256,7 @@ const PRListPage = () => {
 
             {/* Modal Form */}
             {showForm && (
-                <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-[600] animate-in fade-in zoom-in duration-300">
+                <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center px-4 pt-20 pb-4 z-[600] animate-in fade-in zoom-in duration-300">
                     <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl shadow-black/50">
                         <div className="p-8 border-b border-slate-800 flex justify-between items-center">
                             <h2 className="text-2xl font-bold text-slate-100">Create New Requisition</h2>

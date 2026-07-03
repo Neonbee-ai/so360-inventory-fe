@@ -87,3 +87,65 @@ describe('Modal — overlay stacks above the shell NavBar', () => {
     expect(overlays.some((el) => el.className.includes('z-[600]'))).toBe(true);
   });
 });
+
+// Regression: glass-nav is h-14 (56 px, z-500). Previously the overlay used
+// uniform p-4 which placed a max-h-[88vh] dialog at ≈ 5vh + 16 px from the
+// viewport top — merging visually with the header on short/zoomed viewports.
+// Fix: replace py-6 with pt-20 pb-6 so the centering zone starts at 80 px.
+describe('Modal — header clearance fix (pt-20 replaces py-6)', () => {
+  it('When open / Then outer overlay has pt-20 class', () => {
+    const { container } = render(
+      <Modal isOpen={true} onClose={vi.fn()} title="Spacing">body</Modal>
+    );
+    const overlay = container.querySelector('.fixed.inset-0') as HTMLElement;
+    expect(overlay).not.toBeNull();
+    expect(overlay.className).toContain('pt-20');
+  });
+
+  it('When open / Then overlay does NOT have bare py-6 (replaced by split padding)', () => {
+    const { container } = render(
+      <Modal isOpen={true} onClose={vi.fn()} title="Spacing">body</Modal>
+    );
+    const overlay = container.querySelector('.fixed.inset-0') as HTMLElement;
+    const classes = overlay.className.split(/\s+/);
+    expect(classes).not.toContain('py-6');
+  });
+
+  it('When open / Then overlay keeps pb-6 bottom padding', () => {
+    const { container } = render(
+      <Modal isOpen={true} onClose={vi.fn()} title="Spacing">body</Modal>
+    );
+    const overlay = container.querySelector('.fixed.inset-0') as HTMLElement;
+    expect(overlay.className).toContain('pb-6');
+  });
+
+  it('When open / Then overlay uses items-center for centering below safe zone', () => {
+    const { container } = render(
+      <Modal isOpen={true} onClose={vi.fn()} title="Center">body</Modal>
+    );
+    const overlay = container.querySelector('.fixed.inset-0') as HTMLElement;
+    expect(overlay.className).toContain('items-center');
+  });
+
+  it('When open / Then dialog enforces max-h-[88vh] for internal scrolling', () => {
+    const { container } = render(
+      <Modal isOpen={true} onClose={vi.fn()} title="Scroll">body</Modal>
+    );
+    const dialog = container.querySelector('.max-h-\\[88vh\\]') as HTMLElement;
+    expect(dialog).not.toBeNull();
+  });
+
+  it('When open / Then 80 px top offset clears the 56 px shell NavBar', () => {
+    const { container } = render(
+      <Modal isOpen={true} onClose={vi.fn()} title="Clearance">body</Modal>
+    );
+    const overlay = container.querySelector('.fixed.inset-0') as HTMLElement;
+    // pt-20 = 80 px > 56 px (glass-nav h-14); assert the class is present
+    expect(overlay.className).toContain('pt-20');
+    // And no tighter top shorthand that would shrink clearance below 56 px
+    const classes = overlay.className.split(/\s+/);
+    expect(classes).not.toContain('p-4');
+    expect(classes).not.toContain('py-4');
+    expect(classes).not.toContain('pt-4');
+  });
+});

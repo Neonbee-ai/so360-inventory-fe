@@ -20,7 +20,7 @@ export const Modal = ({ isOpen, onClose, title, children, size = 'md' }: ModalPr
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-[600] flex items-center justify-center px-4 py-6">
+        <div className="fixed inset-0 z-[600] flex items-center justify-center px-4 pt-20 pb-6">
             <div
                 className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"
                 onClick={onClose}

@@ -179,6 +179,66 @@ describe('POListPage', () => {
     });
   });
 
+  describe('Given PO modal positioning — header overlap fix', () => {
+    it('When New PO modal opens / Then overlay has pt-20 class for header clearance', async () => {
+      render(<POListPage />);
+      await waitFor(() => screen.getByText('New PO'));
+      fireEvent.click(screen.getByText('New PO'));
+      await waitFor(() => {
+        const headings = screen.getAllByText('Create Purchase Order');
+        expect(headings.length).toBeGreaterThan(0);
+      });
+      const overlay = document.querySelector('.fixed.inset-0') as HTMLElement;
+      expect(overlay).not.toBeNull();
+      expect(overlay.className).toContain('pt-20');
+    });
+
+    it('When PO modal open / Then overlay uses items-center for centering within safe zone', async () => {
+      render(<POListPage />);
+      await waitFor(() => screen.getByText('New PO'));
+      fireEvent.click(screen.getByText('New PO'));
+      await waitFor(() => {
+        expect(screen.getAllByText('Create Purchase Order').length).toBeGreaterThan(0);
+      });
+      const overlay = document.querySelector('.fixed.inset-0') as HTMLElement;
+      expect(overlay.className).toContain('items-center');
+    });
+
+    it('When PO modal open / Then overlay does NOT have bare p-4', async () => {
+      render(<POListPage />);
+      await waitFor(() => screen.getByText('New PO'));
+      fireEvent.click(screen.getByText('New PO'));
+      await waitFor(() => {
+        expect(screen.getAllByText('Create Purchase Order').length).toBeGreaterThan(0);
+      });
+      const overlay = document.querySelector('.fixed.inset-0') as HTMLElement;
+      const classes = overlay.className.split(/\s+/);
+      expect(classes).not.toContain('p-4');
+    });
+
+    it('When PO modal open / Then dialog has max-h-[90vh] for internal scroll on large POs', async () => {
+      render(<POListPage />);
+      await waitFor(() => screen.getByText('New PO'));
+      fireEvent.click(screen.getByText('New PO'));
+      await waitFor(() => {
+        expect(screen.getAllByText('Create Purchase Order').length).toBeGreaterThan(0);
+      });
+      const dialog = document.querySelector('.max-h-\\[90vh\\]') as HTMLElement;
+      expect(dialog).not.toBeNull();
+    });
+
+    it('When PO modal open / Then overlay stacks above shell NavBar (z-[600] > z-[500])', async () => {
+      render(<POListPage />);
+      await waitFor(() => screen.getByText('New PO'));
+      fireEvent.click(screen.getByText('New PO'));
+      await waitFor(() => {
+        expect(screen.getAllByText('Create Purchase Order').length).toBeGreaterThan(0);
+      });
+      const overlay = document.querySelector('.fixed.inset-0') as HTMLElement;
+      expect(overlay.className).toContain('z-[600]');
+    });
+  });
+
   describe('Given effectiveFlagsLoaded is false (matrix still resolving)', () => {
     it('When page renders / Then New PO button is not shown', async () => {
       mockUseShellBridgePO.mockReturnValue({
