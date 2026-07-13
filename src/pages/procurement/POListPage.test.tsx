@@ -180,7 +180,7 @@ describe('POListPage', () => {
   });
 
   describe('Given PO modal positioning — header overlap fix', () => {
-    it('When New PO modal opens / Then overlay has pt-20 class for header clearance', async () => {
+    it('When New PO modal opens / Then overlay has pt-24 class for header clearance', async () => {
       render(<POListPage />);
       await waitFor(() => screen.getByText('New PO'));
       fireEvent.click(screen.getByText('New PO'));
@@ -190,7 +190,7 @@ describe('POListPage', () => {
       });
       const overlay = document.querySelector('.fixed.inset-0') as HTMLElement;
       expect(overlay).not.toBeNull();
-      expect(overlay.className).toContain('pt-20');
+      expect(overlay.className).toContain('pt-24');
     });
 
     it('When PO modal open / Then overlay uses items-center for centering within safe zone', async () => {
@@ -216,15 +216,16 @@ describe('POListPage', () => {
       expect(classes).not.toContain('p-4');
     });
 
-    it('When PO modal open / Then dialog has max-h-[90vh] for internal scroll on large POs', async () => {
+    it('When PO modal open / Then dialog height is bounded to the safe zone (never overlaps header) with internal scroll', async () => {
       render(<POListPage />);
       await waitFor(() => screen.getByText('New PO'));
       fireEvent.click(screen.getByText('New PO'));
       await waitFor(() => {
         expect(screen.getAllByText('Create Purchase Order').length).toBeGreaterThan(0);
       });
-      const dialog = document.querySelector('.max-h-\\[90vh\\]') as HTMLElement;
+      const dialog = document.querySelector('.max-h-\\[calc\\(100vh-7\\.5rem\\)\\]') as HTMLElement;
       expect(dialog).not.toBeNull();
+      expect(document.querySelector('.max-h-\\[90vh\\]')).toBeNull();
     });
 
     it('When PO modal open / Then overlay stacks above shell NavBar (z-[600] > z-[500])', async () => {
