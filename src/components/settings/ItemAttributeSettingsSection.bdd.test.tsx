@@ -17,6 +17,7 @@ vi.mock('lucide-react', () => ({
   Trash2: () => <span data-testid="icon-trash" />,
   X: () => <span data-testid="icon-x" />,
   Check: () => <span data-testid="icon-check" />,
+  Info: (props: any) => <span data-testid="icon-info" title={props.title} aria-label={props['aria-label']} />,
 }));
 
 const mockInventoryService = {
@@ -239,6 +240,66 @@ describe('Given ItemAttributeSettingsSection', () => {
       const typeSelect = screen.getByRole('option', { name: 'Radio' }).closest('select') as HTMLSelectElement;
       fireEvent.change(typeSelect, { target: { value: 'radio' } });
       expect(screen.getByText(/options \(one per line/i)).toBeInTheDocument();
+    });
+  });
+
+  describe('Given the create form / When it is open / Then a Description / Notes textarea is offered below Unit', () => {
+    test('Given Add Attribute clicked / When rendered / Then the description placeholder textarea appears', async () => {
+      mockInventoryService.getAttributeDefinitions.mockResolvedValue([]);
+      render(<ItemAttributeSettingsSection categories={mockCategories} canManage />);
+      await waitFor(() => screen.getByText(/add attribute/i));
+      fireEvent.click(screen.getByText(/add attribute/i));
+      expect(screen.getByText(/description \/ notes/i)).toBeInTheDocument();
+      expect(screen.getByPlaceholderText(/upholstery material/i)).toBeInTheDocument();
+    });
+  });
+
+  describe('Given a description entered / When saved / Then the description is passed to the service', () => {
+    test('Given filled form with description / When Save clicked / Then createAttributeDefinition receives the description', async () => {
+      mockInventoryService.getAttributeDefinitions.mockResolvedValueOnce([]).mockResolvedValue([]);
+      mockInventoryService.createAttributeDefinition.mockResolvedValue({ id: 'def-new' });
+      render(<ItemAttributeSettingsSection categories={mockCategories} canManage />);
+      await waitFor(() => screen.getByText(/add attribute/i));
+      fireEvent.click(screen.getByText(/add attribute/i));
+      fireEvent.change(screen.getByPlaceholderText(/e\.g\. Material/), { target: { value: 'Fabric' } });
+      fireEvent.change(screen.getByPlaceholderText('e.g. material'), { target: { value: 'fabric' } });
+      fireEvent.change(screen.getByPlaceholderText(/upholstery material/i), { target: { value: 'Notes about fabric' } });
+      fireEvent.click(screen.getByText('Save'));
+      await waitFor(() => expect(mockInventoryService.createAttributeDefinition).toHaveBeenCalledWith(
+        expect.objectContaining({ description: 'Notes about fabric' })
+      ));
+    });
+  });
+
+  describe('Given an attribute with a description / When the table renders / Then a description info indicator is shown', () => {
+    test('Given a def with description / When rendered / Then an info icon carries the description as its tooltip', async () => {
+      mockInventoryService.getAttributeDefinitions.mockResolvedValue([
+        { ...mockDefs[0], description: 'Fabric used for upholstery' },
+      ]);
+      render(<ItemAttributeSettingsSection categories={mockCategories} canManage />);
+      await waitFor(() => screen.getByText('Material'));
+      expect(screen.getByTitle('Fabric used for upholstery')).toBeInTheDocument();
+    });
+  });
+
+  describe('Given an attribute without a description / When the table renders / Then no info indicator is shown', () => {
+    test('Given a def with no description / When rendered / Then the info icon is absent', async () => {
+      mockInventoryService.getAttributeDefinitions.mockResolvedValue([mockDefs[0]]);
+      render(<ItemAttributeSettingsSection categories={mockCategories} canManage />);
+      await waitFor(() => screen.getByText('Material'));
+      expect(screen.queryByTestId('icon-info')).toBeNull();
+    });
+  });
+
+  describe('Given an existing description / When editing / Then the textarea pre-fills with it', () => {
+    test('Given a def with description / When edit clicked / Then the description textarea shows the stored value', async () => {
+      mockInventoryService.getAttributeDefinitions.mockResolvedValue([
+        { ...mockDefs[0], description: 'Stored notes' },
+      ]);
+      render(<ItemAttributeSettingsSection categories={mockCategories} canManage />);
+      await waitFor(() => screen.getByText('Material'));
+      fireEvent.click(screen.getAllByTitle('Edit')[0]);
+      expect((screen.getByPlaceholderText(/upholstery material/i) as HTMLTextAreaElement).value).toBe('Stored notes');
     });
   });
 

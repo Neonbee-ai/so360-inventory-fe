@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, Pencil, Trash2, X, Check } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, Check, Info } from 'lucide-react';
 import { inventoryService } from '../../services/inventoryService';
 import { ItemAttributeDefinition, ItemCategory } from '../../types/inventory';
 
@@ -33,6 +33,7 @@ interface FormState {
     attribute_type: AttributeType;
     options_raw: string;
     unit: string;
+    description: string;
     is_required: boolean;
     sort_order: string;
 }
@@ -44,6 +45,7 @@ const emptyForm = (): FormState => ({
     attribute_type: 'text',
     options_raw: '',
     unit: '',
+    description: '',
     is_required: false,
     sort_order: '0',
 });
@@ -91,6 +93,7 @@ const ItemAttributeSettingsSection: React.FC<Props> = ({ categories, canManage }
             attribute_type: def.attribute_type,
             options_raw: def.options ? def.options.map(o => `${o.value}:${o.label}`).join('\n') : '',
             unit: def.unit || '',
+            description: def.description || '',
             is_required: def.is_required,
             sort_order: String(def.sort_order),
         });
@@ -141,6 +144,7 @@ const ItemAttributeSettingsSection: React.FC<Props> = ({ categories, canManage }
                 attribute_type: form.attribute_type,
                 options: OPTION_TYPES.includes(form.attribute_type) ? parseOptions(form.options_raw) : undefined,
                 unit: form.unit.trim() || undefined,
+                description: form.description.trim(),
                 is_required: form.is_required,
                 sort_order: parseInt(form.sort_order) || 0,
             };
@@ -205,7 +209,20 @@ const ItemAttributeSettingsSection: React.FC<Props> = ({ categories, canManage }
                                 <tbody>
                                     {defs.map(def => (
                                         <tr key={def.id} className="border-b border-slate-800/50 hover:bg-slate-800/20 transition-colors">
-                                            <td className="py-2.5 pr-4 text-slate-200 font-medium">{def.attribute_label}</td>
+                                            <td className="py-2.5 pr-4 text-slate-200 font-medium">
+                                                <span className="inline-flex items-center gap-1.5">
+                                                    {def.attribute_label}
+                                                    {def.description && (
+                                                        <span
+                                                            className="inline-flex text-slate-500 shrink-0 cursor-help"
+                                                            title={def.description}
+                                                            aria-label={def.description}
+                                                        >
+                                                            <Info size={13} />
+                                                        </span>
+                                                    )}
+                                                </span>
+                                            </td>
                                             <td className="py-2.5 pr-4 text-slate-400 font-mono text-xs">{def.attribute_key}</td>
                                             <td className="py-2.5 pr-4 text-slate-400">
                                                 {ATTRIBUTE_TYPES.find(t => t.value === def.attribute_type)?.label || def.attribute_type}
@@ -347,6 +364,17 @@ const ItemAttributeSettingsSection: React.FC<Props> = ({ categories, canManage }
                                         min={0}
                                     />
                                 </div>
+                            </div>
+
+                            <div>
+                                <label className={labelClass}>Description / Notes (optional)</label>
+                                <textarea
+                                    rows={4}
+                                    value={form.description}
+                                    onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+                                    className={inputClass + ' resize-y'}
+                                    placeholder="e.g. Used to specify the upholstery material for furniture products."
+                                />
                             </div>
 
                             {OPTION_TYPES.includes(form.attribute_type) && (

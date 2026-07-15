@@ -457,6 +457,7 @@ class InventoryService {
         attribute_type: 'text' | 'number' | 'currency' | 'select' | 'multi_select' | 'date' | 'boolean' | 'radio' | 'textarea' | 'file';
         options?: { value: string; label: string }[];
         unit?: string;
+        description?: string;
         is_required?: boolean;
         sort_order?: number;
     }) {
@@ -472,6 +473,7 @@ class InventoryService {
         attribute_type: 'text' | 'number' | 'currency' | 'select' | 'multi_select' | 'date' | 'boolean' | 'radio' | 'textarea' | 'file';
         options?: { value: string; label: string }[];
         unit?: string;
+        description?: string;
         is_required?: boolean;
         sort_order?: number;
     }>) {

@@ -140,6 +140,7 @@ export interface ItemAttributeDefinition {
     attribute_type: 'text' | 'number' | 'currency' | 'select' | 'multi_select' | 'date' | 'boolean' | 'radio' | 'textarea' | 'file';
     options?: { value: string; label: string }[] | null;
     unit?: string | null;
+    description?: string | null;
     is_required: boolean;
     sort_order: number;
     created_at?: string;
