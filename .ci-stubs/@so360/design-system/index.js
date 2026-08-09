@@ -25,4 +25,22 @@ export const UserSelector = Empty;
 export const FeatureRoute = ({ children }) => children || null;
 export const FeatureGate = ({ children }) => children || null;
 export const eventBus = { publish: noop, subscribe: () => noop };
+const toastFn = () => 'toast-id';
+export const toast = {
+  success: toastFn,
+  error: toastFn,
+  warning: toastFn,
+  info: toastFn,
+  promise: (p) => p,
+  dismiss: noop,
+};
+export const useToast = () => toast;
+export const getErrorMessage = (_e, fallback) => fallback ?? 'error';
+export const attachToastErrorHandler = () => 0;
+export const toastBus = {
+  subscribe: () => () => {},
+  show: noop,
+  dismiss: noop,
+  getToasts: () => [],
+};
 export default {};

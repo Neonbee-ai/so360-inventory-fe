@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import React from 'react';
+import { toast } from '@so360/design-system';
 
 const mockUseShellBridgePR = vi.fn();
 vi.mock('@so360/shell-context', () => ({
@@ -68,7 +69,10 @@ beforeEach(() => {
   mockCreatePR.mockResolvedValue({ id: 'pr-new' });
   mockDeletePR.mockResolvedValue({});
   vi.spyOn(window, 'confirm').mockReturnValue(true);
-  vi.spyOn(window, 'alert').mockImplementation(() => undefined);
+  vi.spyOn(toast, 'success').mockReturnValue('toast-id');
+  vi.spyOn(toast, 'error').mockReturnValue('toast-id');
+  vi.spyOn(toast, 'warning').mockReturnValue('toast-id');
+  vi.spyOn(toast, 'info').mockReturnValue('toast-id');
   mockUseShellBridgePR.mockReturnValue({
     effectiveFlagsLoaded: true,
     getFeatureState: () => 'enabled',
@@ -202,7 +206,7 @@ describe('PRListPage', () => {
       if (dateInput) fireEvent.change(dateInput, { target: { value: '2025-12-31' } });
       const form = document.querySelector('form');
       if (form) fireEvent.submit(form);
-      expect(window.alert).toHaveBeenCalledWith('Please add at least one item before submitting.');
+      expect(toast.warning).toHaveBeenCalledWith('Please add at least one item before submitting.');
       expect(mockCreatePR).not.toHaveBeenCalled();
     });
 
@@ -216,7 +220,7 @@ describe('PRListPage', () => {
       fireEvent.click(screen.getByText('+ Add Item'));
       const form = document.querySelector('form');
       if (form) fireEvent.submit(form);
-      expect(window.alert).toHaveBeenCalledWith('Please select a product for all item rows before submitting.');
+      expect(toast.warning).toHaveBeenCalledWith('Please select a product for all item rows before submitting.');
       expect(mockCreatePR).not.toHaveBeenCalled();
     });
 
@@ -233,7 +237,7 @@ describe('PRListPage', () => {
       fireEvent.change(qtyInput, { target: { value: '0' } });
       const form = document.querySelector('form');
       if (form) fireEvent.submit(form);
-      expect(window.alert).toHaveBeenCalledWith('All items must have a quantity greater than 0.');
+      expect(toast.warning).toHaveBeenCalledWith('All items must have a quantity greater than 0.');
       expect(mockCreatePR).not.toHaveBeenCalled();
     });
 
@@ -250,9 +254,9 @@ describe('PRListPage', () => {
       const form = document.querySelector('form');
       if (form) fireEvent.submit(form);
       await waitFor(() => {
-        expect(window.alert).toHaveBeenCalledWith('Item ID is required');
+        expect(toast.error).toHaveBeenCalledWith('Item ID is required');
       });
-      expect(window.alert).not.toHaveBeenCalledWith('Failed to create PR');
+      expect(toast.error).not.toHaveBeenCalledWith('Failed to create PR');
     });
 
     it('When item selected / Then item_id is the resolved UUID not an empty string', async () => {
@@ -285,7 +289,7 @@ describe('PRListPage', () => {
       const form = document.querySelector('form');
       if (form) fireEvent.submit(form);
       await waitFor(() => {
-        expect(window.alert).toHaveBeenCalledWith('Failed to create PR');
+        expect(toast.error).toHaveBeenCalledWith('Failed to create PR');
       });
     });
   });
@@ -301,7 +305,7 @@ describe('PRListPage', () => {
       // Do NOT fill in the date — formData.required_date stays ''
       const form = document.querySelector('form');
       if (form) fireEvent.submit(form);
-      expect(window.alert).toHaveBeenCalledWith('Required Date is mandatory. Please select a date before submitting.');
+      expect(toast.warning).toHaveBeenCalledWith('Required Date is mandatory. Please select a date before submitting.');
       expect(mockCreatePR).not.toHaveBeenCalled();
     });
 

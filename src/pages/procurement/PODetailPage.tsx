@@ -7,6 +7,7 @@ import {
 import { procurementService } from '../../services/procurementService';
 import { useInventoryFormatters } from '../../utils/formatters';
 import { useActivity, useShell, useBusinessSettings } from '@so360/shell-context';
+import { toast, getErrorMessage } from '@so360/design-system';
 import { poToDocumentData } from '../../utils/poToDocumentData';
 
 interface POLine {
@@ -122,7 +123,7 @@ const PODetailPage = () => {
             }
             await fetchPO();
         } catch (err: any) {
-            alert(err.message || `Failed to update PO status to ${label}`);
+            toast.error(getErrorMessage(err, `Failed to update PO status to ${label}`));
         } finally {
             setStatusAction(null);
         }

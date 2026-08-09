@@ -5,7 +5,7 @@ import { vendorService } from '../../services/vendorService';
 import { useBusinessSettings, useActivity, useShellBridge, useQuota } from '@so360/shell-context';
 import { useInventoryFormatters } from '../../utils/formatters';
 import ItemSearchSelector from '../../components/ItemSearchSelector';
-import { QuotaBar, QuotaGate, FeatureGate } from '@so360/design-system';
+import { QuotaBar, QuotaGate, FeatureGate, toast, getErrorMessage } from '@so360/design-system';
 
 const POListPage = () => {
     const shell = useShellBridge();
@@ -154,10 +154,10 @@ const POListPage = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!formData.vendor_id) { alert('Please select a vendor.'); return; }
-        if (!formData.po_number.trim()) { alert('PO number is required.'); return; }
+        if (!formData.vendor_id) { toast.warning('Please select a vendor.'); return; }
+        if (!formData.po_number.trim()) { toast.warning('PO number is required.'); return; }
         const validItems = items.filter(i => i.item_id && i.quantity > 0 && i.unit_price > 0);
-        if (validItems.length === 0) { alert('Add at least one complete item line.'); return; }
+        if (validItems.length === 0) { toast.warning('Add at least one complete item line.'); return; }
 
         const { total } = calculateTotals();
 
@@ -183,7 +183,7 @@ const POListPage = () => {
             setShowForm(false);
             fetchData();
         } catch (error: any) {
-            alert(error.message || 'Failed to create Purchase Order');
+            toast.error(getErrorMessage(error, 'Failed to create Purchase Order'));
         } finally {
             setSubmitting(false);
         }
@@ -193,7 +193,7 @@ const POListPage = () => {
         try {
             const payload = await procurementService.getConversionPayload(pr.id);
             if (payload.is_fully_converted) {
-                alert('This PR has been fully converted. All line quantities are already covered by existing Purchase Orders.');
+                toast.warning('This PR has been fully converted. All line quantities are already covered by existing Purchase Orders.');
                 return;
             }
             setFormData(prev => ({
@@ -218,7 +218,7 @@ const POListPage = () => {
             setItems(prefillItems);
             setShowForm(true);
         } catch (error: any) {
-            alert(error.message || 'Conversion failed');
+            toast.error(getErrorMessage(error, 'Conversion failed'));
         }
     };
 

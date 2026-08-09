@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { procurementService } from '../../services/procurementService';
 import { inventoryService } from '../../services/inventoryService';
 import { useActivity } from '@so360/shell-context';
+import { toast, getErrorMessage } from '@so360/design-system';
 
 const GRNEntryPage = () => {
     const { recordActivity } = useActivity();
@@ -59,11 +60,10 @@ const GRNEntryPage = () => {
                 }))
             });
             recordActivity({ eventType: 'inventory.grn.created', eventCategory: 'financials', description: `Created GRN #${grnData.grn_number} for PO #${selectedPo.po_number}`, resourceType: 'grn', resourceId: createdGRN?.id }).catch(() => {});
-            alert('GRN Created Successfully');
+            toast.success('GRN Created Successfully');
             window.location.reload();
         } catch (error: any) {
-            const msg = error?.message || 'Failed to create GRN';
-            alert(`GRN creation failed: ${msg}`);
+            toast.error(`GRN creation failed: ${getErrorMessage(error, 'Failed to create GRN')}`);
         }
     };
 

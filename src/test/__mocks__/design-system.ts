@@ -1,5 +1,25 @@
 import React from 'react';
 
+const toastFn = (_message?: any, _opts?: any) => 'toast-id';
+export const toast = {
+  success: toastFn,
+  error: toastFn,
+  warning: toastFn,
+  info: toastFn,
+  promise: (p: any) => p,
+  dismiss: (_id?: any) => {},
+};
+export const useToast = () => toast;
+export const getErrorMessage = (e: any, fallback?: string) =>
+  (typeof e?.message === 'string' && e.message) || fallback || 'error';
+export const attachToastErrorHandler = () => 0;
+export const toastBus = {
+  subscribe: () => () => {},
+  show: (_t?: any) => {},
+  dismiss: (_id?: any) => {},
+  getToasts: () => [],
+};
+
 export const Button = (props: any) => props;
 export const Input = (props: any) => props;
 export const Select = (props: any) => props;

@@ -4,7 +4,7 @@ import { procurementService } from '../../services/procurementService';
 import ItemSearchSelector from '../../components/ItemSearchSelector';
 import { useActivity, useShellBridge } from '@so360/shell-context';
 import { useInventoryFormatters } from '../../utils/formatters';
-import { FeatureGate } from '@so360/design-system';
+import { FeatureGate, toast, getErrorMessage } from '@so360/design-system';
 
 interface PRLine {
     id: string;
@@ -56,21 +56,21 @@ const PRListPage = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!formData.required_date) {
-            alert('Required Date is mandatory. Please select a date before submitting.');
+            toast.warning('Required Date is mandatory. Please select a date before submitting.');
             return;
         }
         if (items.length === 0) {
-            alert('Please add at least one item before submitting.');
+            toast.warning('Please add at least one item before submitting.');
             return;
         }
         const unselectedItem = items.find(it => !it.item_id);
         if (unselectedItem) {
-            alert('Please select a product for all item rows before submitting.');
+            toast.warning('Please select a product for all item rows before submitting.');
             return;
         }
         const invalidQty = items.find(it => !(parseFloat(String(it.quantity)) > 0));
         if (invalidQty) {
-            alert('All items must have a quantity greater than 0.');
+            toast.warning('All items must have a quantity greater than 0.');
             return;
         }
         try {
@@ -89,14 +89,13 @@ const PRListPage = () => {
             setItems([]);
             fetchData();
         } catch (error) {
-            const msg = error instanceof Error ? error.message : '';
-            alert(msg || 'Failed to create PR');
+            toast.error(getErrorMessage(error, 'Failed to create PR'));
         }
     };
 
     const handleDelete = async (prId: string, status: string) => {
         if (!['draft', 'rejected'].includes(status)) {
-            alert('Only draft or rejected PRs can be deleted');
+            toast.warning('Only draft or rejected PRs can be deleted');
             return;
         }
 
@@ -108,9 +107,9 @@ const PRListPage = () => {
         try {
             await procurementService.deletePR(prId);
             await fetchData();
-            alert('Purchase Requisition deleted successfully');
+            toast.success('Purchase Requisition deleted successfully');
         } catch (err: any) {
-            alert(err.message || 'Failed to delete PR');
+            toast.error(getErrorMessage(err, 'Failed to delete PR'));
         }
     };
 

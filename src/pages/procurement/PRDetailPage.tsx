@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { procurementService } from '../../services/procurementService';
 import { useActivity } from '@so360/shell-context';
+import { toast, getErrorMessage } from '@so360/design-system';
 import { useInventoryFormatters } from '../../utils/formatters';
 
 interface PRLine {
@@ -133,7 +134,7 @@ const PRDetailPage = () => {
         setIsApproving(true);
         try {
             // Note: Delegation API not yet implemented, placeholder for future
-            alert('Delegation feature coming soon!');
+            toast.info('Delegation feature coming soon!');
             // await procurementService.delegatePRApproval(id, {
             //     gate_id: gateId,
             //     delegate_to_email: targetEmail,
@@ -153,12 +154,12 @@ const PRDetailPage = () => {
         try {
             const payload = await procurementService.getConversionPayload(id);
             if (payload.is_fully_converted) {
-                alert('This PR has been fully converted. All line quantities are already covered by existing Purchase Orders.');
+                toast.warning('This PR has been fully converted. All line quantities are already covered by existing Purchase Orders.');
                 return;
             }
             navigate('/procurement/po', { state: { convertFromPR: payload } });
         } catch (err: any) {
-            alert(err.message || 'Failed to prepare conversion');
+            toast.error(getErrorMessage(err, 'Failed to prepare conversion'));
         } finally {
             setIsLoadingConversion(false);
         }
@@ -176,9 +177,9 @@ const PRDetailPage = () => {
         try {
             await procurementService.closePR(id);
             await fetchPR(); // Refresh data
-            alert('Purchase Requisition closed successfully');
+            toast.success('Purchase Requisition closed successfully');
         } catch (err: any) {
-            alert(err.message || 'Failed to close PR');
+            toast.error(getErrorMessage(err, 'Failed to close PR'));
         } finally {
             setIsLoading(false);
         }
