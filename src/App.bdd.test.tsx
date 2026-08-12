@@ -10,8 +10,7 @@ vi.mock('./pages/ItemDetailPage', () => ({ default: () => <div>ItemDetail</div> 
 vi.mock('./pages/StockLocationsPage', () => ({ default: () => <div>StockLocations</div> }));
 vi.mock('./pages/WarehouseDetailPage', () => ({ default: () => <div>WarehouseDetail</div> }));
 vi.mock('./pages/StockOverviewPage', () => ({ default: () => <div>StockOverview</div> }));
-vi.mock('./pages/StockAdjustmentsPage', () => ({ default: () => <div>StockAdjustments</div> }));
-vi.mock('./pages/StockTransfersPage', () => ({ default: () => <div>StockTransfers</div> }));
+vi.mock('./pages/StockMovementRegisterPage', () => ({ default: () => <div>StockMovementRegister</div> }));
 vi.mock('./pages/SettingsPage', () => ({ default: () => <div>Settings</div> }));
 vi.mock('./pages/settings/ProductTypeSettingsPage', () => ({ default: () => <div>ProductTypeSettings</div> }));
 vi.mock('./pages/procurement/PRListPage', () => ({ default: () => <div data-testid="pr-list">PRList</div> }));

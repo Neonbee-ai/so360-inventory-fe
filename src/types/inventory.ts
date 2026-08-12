@@ -122,12 +122,28 @@ export interface StockMovement {
     item_id: string;
     warehouse_id: string;
     type: 'inbound' | 'outbound' | 'transfer' | 'adjustment';
+    movement_type?: string;
     quantity: number;
     reason_code?: string;
     reference_type?: string;
     created_at: string;
     items: Item;
     warehouses: Warehouse;
+    // Movement register fields (migration 042) — null on pre-migration rows
+    reference_number?: string | null;
+    project_id?: string | null;
+    work_order_id?: string | null;
+    project_name_snapshot?: string | null;
+    work_order_number_snapshot?: string | null;
+    source_type?: string | null;
+    source_ref_id?: string | null;
+    source_label?: string | null;
+    balance_before?: number | null;
+    balance_after?: number | null;
+    remarks?: string | null;
+    transaction_date?: string | null;
+    is_backdated?: boolean;
+    created_by?: string | null;
 }
 
 export interface ItemAttributeDefinition {

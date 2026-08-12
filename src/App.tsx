@@ -8,8 +8,7 @@ const ItemDetailPage = lazy(() => import('./pages/ItemDetailPage'));
 const StockLocationsPage = lazy(() => import('./pages/StockLocationsPage'));
 const WarehouseDetailPage = lazy(() => import('./pages/WarehouseDetailPage'));
 const StockOverviewPage = lazy(() => import('./pages/StockOverviewPage'));
-const StockAdjustmentsPage = lazy(() => import('./pages/StockAdjustmentsPage'));
-const StockTransfersPage = lazy(() => import('./pages/StockTransfersPage'));
+const StockMovementRegisterPage = lazy(() => import('./pages/StockMovementRegisterPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const ProductTypeSettingsPage = lazy(() => import('./pages/settings/ProductTypeSettingsPage'));
 const PRListPage = lazy(() => import('./pages/procurement/PRListPage'));
@@ -162,8 +161,11 @@ const App = () => {
                 <Route path="locations" element={<FeatureGate flagKey="submodule:inventory:warehouses"><StockLocationsPage /></FeatureGate>} />
                 <Route path="warehouses/:id" element={<WarehouseDetailPage />} />
                 <Route path="overview" element={<StockOverviewPage />} />
-                <Route path="adjustments" element={<StockAdjustmentsPage />} />
-                <Route path="transfers" element={<StockTransfersPage />} />
+                <Route path="movements" element={<StockMovementRegisterPage />} />
+                {/* Legacy paths kept as redirects — notification actionUrls and
+                    bookmarks still point at /adjustments and /transfers. */}
+                <Route path="adjustments" element={<Navigate to="../movements?type=adjustment" replace />} />
+                <Route path="transfers" element={<Navigate to="../movements?type=transfer" replace />} />
                 <Route path="settings" element={<SettingsPage />} />
                 <Route path="settings/product-types" element={<FeatureGate flagKey="submodule:inventory:product_types"><ProductTypeSettingsPage /></FeatureGate>} />
                 <Route path="categories" element={<CategoriesPage />} />

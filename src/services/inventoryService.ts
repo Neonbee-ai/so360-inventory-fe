@@ -491,11 +491,23 @@ class InventoryService {
 
     // ==================== Default Logic Settings ====================
 
-    async getOrgDefaultLogic(): Promise<{ allow_negative_stock: boolean; auto_approve_transfers: boolean }> {
+    async getOrgDefaultLogic(): Promise<{
+        allow_negative_stock: boolean;
+        auto_approve_transfers: boolean;
+        allow_backdated_transactions?: boolean;
+        backdate_max_days?: number;
+        allow_future_dated_transactions?: boolean;
+    }> {
         return this.request(`/settings/${this.orgId}/org-defaults`);
     }
 
-    async updateOrgDefaultLogic(dto: { allow_negative_stock?: boolean; auto_approve_transfers?: boolean }) {
+    async updateOrgDefaultLogic(dto: {
+        allow_negative_stock?: boolean;
+        auto_approve_transfers?: boolean;
+        allow_backdated_transactions?: boolean;
+        backdate_max_days?: number;
+        allow_future_dated_transactions?: boolean;
+    }) {
         return this.request(`/settings/${this.orgId}/org-defaults`, {
             method: 'PATCH',
             body: JSON.stringify(dto),
@@ -507,6 +519,93 @@ class InventoryService {
     async getAdjustmentHistory(itemId?: string) {
         const query = itemId ? `?item_id=${itemId}` : '';
         return this.request(`/adjustments/${this.orgId}${query}`);
+    }
+
+    /** Movement register list with server-side filters (migration 042 fields). */
+    async getMovements(filters?: {
+        item_id?: string;
+        warehouse_id?: string;
+        project_id?: string;
+        work_order_id?: string;
+        source_type?: string;
+        reference_number?: string;
+        movement_type?: string;
+        date_from?: string;
+        date_to?: string;
+    }) {
+        const query = new URLSearchParams();
+        for (const [k, v] of Object.entries(filters || {})) {
+            if (v) query.append(k, String(v));
+        }
+        const qs = query.toString();
+        return this.request(`/movements/${this.orgId}${qs ? `?${qs}` : ''}`);
+    }
+
+    /** Live available balance for one item in one (optional) warehouse. */
+    async getStockAvailability(itemId: string, warehouseId?: string): Promise<{
+        item_id: string;
+        available?: number;
+        total_quantity?: number;
+        [key: string]: any;
+    }> {
+        const query = warehouseId ? `?warehouse_id=${warehouseId}` : '';
+        return this.request(`/stock/availability/${this.orgId}/${itemId}${query}`);
+    }
+
+    /**
+     * Cross-service lookups for the movement register's Allocation section.
+     * Origins resolve the same way as this service's own base URL: shell-injected
+     * window var → build-time env → prod path → localhost dev port.
+     */
+    private crossServiceOrigin(winKey: string, prodPath: string, devPort: number): string {
+        const win = typeof window !== 'undefined' ? (window as any) : undefined;
+        const env = (import.meta as any)?.env || {};
+        const isNeonbeeHost =
+            typeof window !== 'undefined' &&
+            (window.location.hostname === 'neonbee.app' ||
+                window.location.hostname.endsWith('.neonbee.app'));
+        const origin =
+            (win && win[winKey]) ||
+            env[winKey] ||
+            (isNeonbeeHost ? `https://api.neonbee.app/${prodPath}` : `http://localhost:${devPort}`);
+        return String(origin).replace(/\/$/, '');
+    }
+
+    private async crossServiceGet(url: string) {
+        const response = await fetch(url, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${this.accessToken}`,
+                'X-Tenant-Id': this.tenantId || '',
+                'X-Org-Id': this.orgId || '',
+            },
+        });
+        if (!response.ok) throw new Error(`Request failed (${response.status})`);
+        return response.json();
+    }
+
+    /** Active projects from the Projects module (best-effort; [] on failure). */
+    async searchProjects(search?: string): Promise<any[]> {
+        try {
+            const origin = this.crossServiceOrigin('VITE_SO360_PROJECTS_API', 'projects', 3010);
+            const qs = new URLSearchParams({ limit: '50' });
+            if (search) qs.append('search', search);
+            const res = await this.crossServiceGet(`${origin}/v1/projects?${qs.toString()}`);
+            return res?.data || res?.projects || (Array.isArray(res) ? res : []);
+        } catch {
+            return [];
+        }
+    }
+
+    /** Manufacturing orders (work orders) from the Manufacturing module (best-effort; [] on failure). */
+    async searchWorkOrders(): Promise<any[]> {
+        try {
+            const origin = this.crossServiceOrigin('VITE_SO360_MANUFACTURING_API', 'manufacturing', 3034);
+            const res = await this.crossServiceGet(`${origin}/v1/manufacturing/orders`);
+            return res?.data || (Array.isArray(res) ? res : []);
+        } catch {
+            return [];
+        }
     }
 
     async getTransferHistory(itemId?: string) {
