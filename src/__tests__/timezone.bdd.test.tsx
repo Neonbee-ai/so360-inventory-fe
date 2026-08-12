@@ -25,6 +25,12 @@ vi.mock('../services/inventoryService', () => ({
     getItems: vi.fn(),
     getLocations: vi.fn(),
     getTransferHistory: vi.fn(),
+    getMovements: vi.fn(),
+    getOrgDefaultLogic: vi.fn(),
+    searchProjects: vi.fn(),
+    searchWorkOrders: vi.fn(),
+    getStockAvailability: vi.fn(),
+    createAdjustment: vi.fn(),
     getItem: vi.fn(),
     getLedger: vi.fn(),
     getTaxCodes: vi.fn(),
@@ -83,7 +89,7 @@ vi.mock('../components/ItemSearchSelector', () => ({
 // ---------------------------------------------------------------------------
 
 import StockOverviewPage from '../pages/StockOverviewPage';
-import StockTransfersPage from '../pages/StockTransfersPage';
+import StockMovementRegisterPage from '../pages/StockMovementRegisterPage';
 import PRListPage from '../pages/procurement/PRListPage';
 import PRDetailPage from '../pages/procurement/PRDetailPage';
 import GRNDetailPage from '../pages/procurement/GRNDetailPage';
@@ -195,69 +201,93 @@ describe('StockOverviewPage — timezone date rendering', () => {
 });
 
 // ===========================================================================
-// StockTransfersPage
+// StockMovementRegisterPage (replaced StockTransfersPage)
 // ===========================================================================
 
-describe('StockTransfersPage — timezone date rendering', () => {
-  describe('Given a transfer with UTC created_at', () => {
+describe('StockMovementRegisterPage — timezone date rendering', () => {
+  describe('Given a movement with UTC created_at', () => {
     beforeEach(() => {
-      inv.getItems.mockResolvedValue({ data: [] });
       inv.getLocations.mockResolvedValue([]);
-      inv.getTransferHistory.mockResolvedValue([
+      inv.getOrgDefaultLogic.mockResolvedValue({
+        allow_negative_stock: false,
+        auto_approve_transfers: false,
+      });
+      inv.searchProjects.mockResolvedValue([]);
+      inv.searchWorkOrders.mockResolvedValue([]);
+      inv.getMovements.mockResolvedValue([
         {
           id: 'mv1',
           quantity: -5,
-          created_at: '2025-06-01T10:00:00Z',
+          created_at: '2025-06-01T10:30:00Z',
+          transaction_date: '2025-06-01',
+          movement_type: 'transfer',
           items: { name: 'Transferred Item' },
           warehouses: { name: 'Source WH' },
-          to_warehouse_name: 'Dest WH',
         },
       ]);
     });
 
-    it('When the page renders / Then transfer date shows Jun 1, 2025', async () => {
-      renderPage(<StockTransfersPage />);
-      await waitFor(() => expect(screen.getByText('Jun 1, 2025')).toBeInTheDocument());
+    it('When the page renders / Then the movement date shows Jun 1, 2025', async () => {
+      renderPage(<StockMovementRegisterPage />);
+      await waitFor(() =>
+        expect(screen.getAllByText('Jun 1, 2025').length).toBeGreaterThan(0),
+      );
     });
 
     it('When the page renders / Then item name is shown', async () => {
-      renderPage(<StockTransfersPage />);
-      await waitFor(() => expect(screen.getByText('Transferred Item')).toBeInTheDocument());
+      renderPage(<StockMovementRegisterPage />);
+      await waitFor(() =>
+        expect(screen.getByText('Transferred Item')).toBeInTheDocument(),
+      );
     });
   });
 
-  describe('Given a transfer with a December UTC created_at', () => {
+  describe('Given a movement with a December UTC created_at', () => {
     beforeEach(() => {
-      inv.getItems.mockResolvedValue({ data: [] });
       inv.getLocations.mockResolvedValue([]);
-      inv.getTransferHistory.mockResolvedValue([
+      inv.getOrgDefaultLogic.mockResolvedValue({
+        allow_negative_stock: false,
+        auto_approve_transfers: false,
+      });
+      inv.searchProjects.mockResolvedValue([]);
+      inv.searchWorkOrders.mockResolvedValue([]);
+      inv.getMovements.mockResolvedValue([
         {
           id: 'mv2',
           quantity: -20,
           created_at: '2025-12-25T00:00:00Z',
+          transaction_date: '2025-12-25',
+          movement_type: 'transfer',
           items: { name: 'Holiday Stock' },
           warehouses: { name: 'WH-North' },
         },
       ]);
     });
 
-    it('When the page renders / Then transfer date shows Dec 25, 2025', async () => {
-      renderPage(<StockTransfersPage />);
-      await waitFor(() => expect(screen.getByText('Dec 25, 2025')).toBeInTheDocument());
+    it('When the page renders / Then the movement date shows Dec 25, 2025', async () => {
+      renderPage(<StockMovementRegisterPage />);
+      await waitFor(() =>
+        expect(screen.getAllByText('Dec 25, 2025').length).toBeGreaterThan(0),
+      );
     });
   });
 
-  describe('Given no transfers exist', () => {
+  describe('Given no movements exist', () => {
     beforeEach(() => {
-      inv.getItems.mockResolvedValue({ data: [] });
       inv.getLocations.mockResolvedValue([]);
-      inv.getTransferHistory.mockResolvedValue([]);
+      inv.getOrgDefaultLogic.mockResolvedValue({
+        allow_negative_stock: false,
+        auto_approve_transfers: false,
+      });
+      inv.searchProjects.mockResolvedValue([]);
+      inv.searchWorkOrders.mockResolvedValue([]);
+      inv.getMovements.mockResolvedValue([]);
     });
 
     it('When the page renders / Then empty state is shown', async () => {
-      renderPage(<StockTransfersPage />);
+      renderPage(<StockMovementRegisterPage />);
       await waitFor(() =>
-        expect(screen.getByText(/No stock transfers found/i)).toBeInTheDocument(),
+        expect(screen.getByText(/No stock movements found/i)).toBeInTheDocument(),
       );
     });
   });
