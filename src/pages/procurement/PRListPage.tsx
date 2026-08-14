@@ -376,7 +376,7 @@ const PRListPage = () => {
                                         orgId={inventoryService.getOrgId() || ''}
                                         placeholder="Select department"
                                         allowClear
-                                        onChange={(departmentId) => setFormData(prev => ({ ...prev, department_id: departmentId || '' }))}
+                                        onChange={(departmentId: string | null) => setFormData(prev => ({ ...prev, department_id: departmentId || '' }))}
                                     />
                                 </div>
                                 <div className="space-y-2">
