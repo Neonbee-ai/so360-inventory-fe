@@ -54,3 +54,19 @@ export const FeatureGate = ({ state, loading, children, fallback = null, onUpgra
     React.createElement('div', { className: 'pointer-events-none select-none opacity-60' }, children),
     React.createElement('button', { type: 'button', onClick: onUpgradeClick, 'aria-label': lockedLabel }, lockedLabel));
 };
+
+/**
+ * People Connect department picker. The real component fetches a department
+ * tree on open; the stub is a plain select so tests can choose a department
+ * without any network.
+ */
+export const DepartmentSelector = ({ value, onChange, placeholder = 'Select department', disabled }: any) =>
+  React.createElement('select', {
+    'aria-label': placeholder,
+    'data-testid': 'department-selector',
+    value: value || '',
+    disabled,
+    onChange: (e: any) => onChange?.(e.target.value || null),
+  },
+    React.createElement('option', { value: '' }, placeholder),
+    React.createElement('option', { value: 'dept-1' }, 'Operations'));
