@@ -24,9 +24,42 @@ interface PR {
     title?: string;
     estimated_total?: number;
     created_at: string;
+    project_id?: string;
+    manufacturing_order_id?: string;
+    work_order_id?: string;
+    source_type?: string;
+    source_ref?: string;
     requester?: { full_name: string };
     pr_lines: PRLine[];
 }
+
+/**
+ * Where a requisition came from. Manufacturing raises them off MRP shortfalls
+ * and projects off site requirements, so the origin is often more useful than
+ * the description when triaging the queue.
+ */
+const sourceChips = (pr: PR) => {
+    const chips: Array<{ label: string; className: string }> = [];
+    if (pr.manufacturing_order_id || pr.source_type === 'manufacturing_order') {
+        chips.push({
+            label: pr.source_ref ? `MO ${pr.source_ref}` : 'Manufacturing',
+            className: 'bg-purple-500/10 text-purple-300 border-purple-500/20',
+        });
+    }
+    if (pr.project_id) {
+        chips.push({ label: 'Project', className: 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20' });
+    }
+    if (pr.work_order_id) {
+        chips.push({ label: 'Work Order', className: 'bg-indigo-500/10 text-indigo-300 border-indigo-500/20' });
+    }
+    if (pr.source_type === 'sales_order') {
+        chips.push({
+            label: pr.source_ref ? `SO ${pr.source_ref}` : 'Sales Order',
+            className: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20',
+        });
+    }
+    return chips;
+};
 
 const PRIORITIES = [
     { value: 'low', label: 'Low', className: 'bg-slate-500/10 text-slate-400 border-slate-500/20' },
@@ -268,6 +301,18 @@ const PRListPage = () => {
                                         )}
                                     </div>
                                     <div className="text-xs text-slate-500 truncate max-w-[200px]">{pr.title || pr.description}</div>
+                                    {sourceChips(pr).length > 0 && (
+                                        <div className="flex flex-wrap gap-1 mt-1.5">
+                                            {sourceChips(pr).map(chip => (
+                                                <span
+                                                    key={chip.label}
+                                                    className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wide border ${chip.className}`}
+                                                >
+                                                    {chip.label}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
                                 </td>
                                 <td className="px-6 py-4">
                                     <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide

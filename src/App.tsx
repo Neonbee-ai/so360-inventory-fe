@@ -27,6 +27,9 @@ const RFQDetailPage = lazy(() => import('./pages/procurement/RFQDetailPage'));
 const RFQComparisonPage = lazy(() => import('./pages/procurement/RFQComparisonPage'));
 const QualityInspectionPage = lazy(() => import('./pages/procurement/QualityInspectionPage'));
 const VendorReturnsPage = lazy(() => import('./pages/procurement/VendorReturnsPage'));
+const ProcurementDashboardPage = lazy(() => import('./pages/procurement/ProcurementDashboardPage'));
+const ProcurementReportsPage = lazy(() => import('./pages/procurement/ProcurementReportsPage'));
+const VendorPerformancePage = lazy(() => import('./pages/procurement/VendorPerformancePage'));
 const CategoriesPage = lazy(() => import('./pages/CategoriesPage'));
 const BulkImportPage = lazy(() => import('./pages/bulk-import/BulkImportPage'));
 
@@ -189,6 +192,9 @@ const App = () => {
                 <Route path="rfq/:id/compare" element={<FeatureGate flagKey="submodule:inventory:rfq"><RFQComparisonPage /></FeatureGate>} />
                 <Route path="quality" element={<FeatureGate flagKey="submodule:inventory:quality"><QualityInspectionPage /></FeatureGate>} />
                 <Route path="returns" element={<FeatureGate flagKey="submodule:inventory:returns"><VendorReturnsPage /></FeatureGate>} />
+                <Route path="dashboard" element={<FeatureGate flagKey="submodule:inventory:procurement"><ProcurementDashboardPage /></FeatureGate>} />
+                <Route path="reports" element={<FeatureGate flagKey="submodule:inventory:procurement"><ProcurementReportsPage /></FeatureGate>} />
+                <Route path="vendor-performance" element={<FeatureGate flagKey="submodule:inventory:procurement"><VendorPerformancePage /></FeatureGate>} />
 
                 {/* ── Vendor routes (mounted at /vendors/*) ── */}
                 <Route path="contracts" element={<ContractsPage />} />
@@ -208,6 +214,9 @@ const App = () => {
                 <Route path="procurement/rfq/:id/compare" element={<FeatureGate flagKey="submodule:inventory:rfq"><RFQComparisonPage /></FeatureGate>} />
                 <Route path="procurement/quality" element={<FeatureGate flagKey="submodule:inventory:quality"><QualityInspectionPage /></FeatureGate>} />
                 <Route path="procurement/returns" element={<FeatureGate flagKey="submodule:inventory:returns"><VendorReturnsPage /></FeatureGate>} />
+                <Route path="procurement/dashboard" element={<FeatureGate flagKey="submodule:inventory:procurement"><ProcurementDashboardPage /></FeatureGate>} />
+                <Route path="procurement/reports" element={<FeatureGate flagKey="submodule:inventory:procurement"><ProcurementReportsPage /></FeatureGate>} />
+                <Route path="procurement/vendor-performance" element={<FeatureGate flagKey="submodule:inventory:procurement"><VendorPerformancePage /></FeatureGate>} />
                 <Route path="vendors" element={<VendorListPage />} />
                 <Route path="vendors/:id" element={<VendorDetailPage />} />
                 <Route path="vendors/contracts" element={<ContractsPage />} />
