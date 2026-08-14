@@ -241,6 +241,36 @@ describe('procurementService', () => {
     });
   });
 
+  describe('Given acknowledgePO', () => {
+    it('When a vendor response is recorded / Then it PATCHes the acknowledge route with the response', async () => {
+      mockFetch.mockReturnValue(jsonOk({ id: 'po-1', status: 'acknowledged' }));
+      await procurementService.acknowledgePO('po-1', {
+        acknowledgement_status: 'partially_accepted',
+        promised_delivery_date: '2026-10-05',
+        acknowledged_by: 'Ravi',
+        acknowledgement_note: 'Only 8 available',
+      });
+
+      const [url, opts] = mockFetch.mock.calls[0];
+      expect(url).toContain('/v1/procurement/po/po-1/acknowledge');
+      expect(opts.method).toBe('PATCH');
+      expect(JSON.parse(opts.body)).toEqual({
+        acknowledgement_status: 'partially_accepted',
+        promised_delivery_date: '2026-10-05',
+        acknowledged_by: 'Ravi',
+        acknowledgement_note: 'Only 8 available',
+      });
+    });
+
+    it('When only the response is given / Then no empty optional fields are sent', async () => {
+      mockFetch.mockReturnValue(jsonOk({}));
+      await procurementService.acknowledgePO('po-2', { acknowledgement_status: 'rejected' });
+
+      const [, opts] = mockFetch.mock.calls[0];
+      expect(JSON.parse(opts.body)).toEqual({ acknowledgement_status: 'rejected' });
+    });
+  });
+
   describe('Given request headers', () => {
     it('When request made / Then includes auth and tenant headers', async () => {
       mockFetch.mockReturnValue(jsonOk([]));

@@ -178,4 +178,102 @@ describe('GRNDetailPage', () => {
       });
     });
   });
+
+  describe('Given a receipt where units were rejected', () => {
+    const rejectedGRN = () => makeGRN({
+      is_partial: true,
+      inspection_status: 'failed',
+      grn_lines: [makeGRNLine({
+        quantity_received: 10,
+        accepted_quantity: 7,
+        rejected_quantity: 2,
+        damaged_quantity: 1,
+        rejection_reason: 'Torn bags',
+        batch_number: 'B-2026-08',
+        expiry_date: '2027-08-14',
+        serial_numbers: ['SN-1', 'SN-2'],
+      })],
+    });
+
+    it('When loaded / Then the accepted and rejected split is shown alongside received', async () => {
+      mockGetGRNDetail.mockResolvedValue(rejectedGRN());
+      render(<GRNDetailPage />);
+
+      // 'Accepted' labels both the summary card and the line-table column.
+      await waitFor(() => {
+        expect(screen.getAllByText('Accepted').length).toBeGreaterThan(0);
+      });
+      expect(screen.getAllByText('Rejected').length).toBeGreaterThan(0);
+      // 7 accepted, 3 rejected + damaged — each appears in the line and the footer.
+      expect(screen.getAllByText('7').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('3').length).toBeGreaterThan(0);
+    });
+
+    it('When loaded / Then value follows accepted units, not received units', async () => {
+      mockGetGRNDetail.mockResolvedValue(rejectedGRN());
+      render(<GRNDetailPage />);
+
+      // 7 accepted x $500 = $3500 — a value of $5000 would mean rejected stock
+      // was capitalised.
+      await waitFor(() => {
+        expect(screen.getAllByText('$3500').length).toBeGreaterThan(0);
+      });
+      expect(screen.queryByText('$5000')).not.toBeInTheDocument();
+    });
+
+    it('When loaded / Then batch, expiry, serials and the rejection reason are visible', async () => {
+      mockGetGRNDetail.mockResolvedValue(rejectedGRN());
+      render(<GRNDetailPage />);
+
+      await waitFor(() => {
+        expect(screen.getByText(/Batch B-2026-08/)).toBeInTheDocument();
+      });
+      expect(screen.getByText(/2 serials/)).toBeInTheDocument();
+      expect(screen.getByText(/Rejected: Torn bags/)).toBeInTheDocument();
+    });
+
+    it('When the receipt is partial and inspection failed / Then both are badged', async () => {
+      mockGetGRNDetail.mockResolvedValue(rejectedGRN());
+      render(<GRNDetailPage />);
+
+      await waitFor(() => {
+        expect(screen.getByText('Partial')).toBeInTheDocument();
+      });
+      expect(screen.getByText('Failed')).toBeInTheDocument();
+    });
+  });
+
+  describe('Given a receipt posted before the accepted/rejected split existed', () => {
+    it('When accepted_quantity is absent / Then received is treated as accepted', async () => {
+      mockGetGRNDetail.mockResolvedValue(makeGRN({
+        grn_lines: [makeGRNLine({ quantity_received: 10 })],
+      }));
+      render(<GRNDetailPage />);
+
+      // 10 x $500 = $5000 — the legacy receipt keeps its full value.
+      await waitFor(() => {
+        expect(screen.getAllByText('$5000').length).toBeGreaterThan(0);
+      });
+    });
+  });
+
+  describe('Given delivery paperwork was captured at the gate', () => {
+    it('When loaded / Then the delivery note, vehicle, transporter and gate entry are shown', async () => {
+      mockGetGRNDetail.mockResolvedValue(makeGRN({
+        supplier_delivery_note: 'DN-99812',
+        vehicle_number: 'KA-01-AB-1234',
+        transporter: 'BlueDart',
+        gate_entry_no: 'GE-771',
+      }));
+      render(<GRNDetailPage />);
+
+      await waitFor(() => {
+        expect(screen.getByText('Delivery Details')).toBeInTheDocument();
+      });
+      expect(screen.getByText('DN-99812')).toBeInTheDocument();
+      expect(screen.getByText('KA-01-AB-1234')).toBeInTheDocument();
+      expect(screen.getByText('BlueDart')).toBeInTheDocument();
+      expect(screen.getByText('GE-771')).toBeInTheDocument();
+    });
+  });
 });

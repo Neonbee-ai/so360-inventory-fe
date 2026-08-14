@@ -176,6 +176,120 @@ describe('PRListPage', () => {
     });
   });
 
+  describe('Given a requisition captures ERP sourcing context', () => {
+    const openForm = async () => {
+      render(<PRListPage />);
+      await waitFor(() => screen.getByText('New Requisition'));
+      fireEvent.click(screen.getByText('New Requisition'));
+      await waitFor(() => screen.getByPlaceholderText('What is being requested...'));
+    };
+
+    const fillMandatory = () => {
+      const dateInput = document.querySelector('input[type="date"]') as HTMLInputElement;
+      fireEvent.change(dateInput, { target: { value: '2026-09-30' } });
+      fireEvent.click(screen.getByText('+ Add Item'));
+      fireEvent.click(screen.getByText('Select Item'));
+    };
+
+    it('When the form opens / Then priority defaults to Normal', async () => {
+      await openForm();
+      expect(screen.getByRole('button', { name: 'Normal' })).toHaveAttribute('aria-pressed', 'true');
+      expect(screen.getByRole('button', { name: 'Urgent' })).toHaveAttribute('aria-pressed', 'false');
+    });
+
+    it('When a priority is chosen / Then createPR carries it', async () => {
+      await openForm();
+      fireEvent.click(screen.getByRole('button', { name: 'Urgent' }));
+      fillMandatory();
+      fireEvent.submit(document.querySelector('form')!);
+
+      await waitFor(() => {
+        expect(mockCreatePR).toHaveBeenCalledWith(expect.objectContaining({ priority: 'urgent' }));
+      });
+    });
+
+    it('When budget and justification are entered / Then both reach the API', async () => {
+      await openForm();
+      fireEvent.change(screen.getByPlaceholderText('0.00'), { target: { value: '5000' } });
+      fireEvent.change(screen.getByPlaceholderText('e.g. CC-OPS-2026'), { target: { value: 'CC-OPS-01' } });
+      fireEvent.change(
+        screen.getByPlaceholderText(/Why this spend is needed/i),
+        { target: { value: 'Line 2 stops without it' } },
+      );
+      fillMandatory();
+      fireEvent.submit(document.querySelector('form')!);
+
+      await waitFor(() => {
+        expect(mockCreatePR).toHaveBeenCalledWith(expect.objectContaining({
+          budget_amount: 5000,
+          budget_code: 'CC-OPS-01',
+          justification: 'Line 2 stops without it',
+        }));
+      });
+    });
+
+    it('When a department is selected / Then department_id is sent', async () => {
+      await openForm();
+      fireEvent.change(screen.getByTestId('department-selector'), { target: { value: 'dept-1' } });
+      fillMandatory();
+      fireEvent.submit(document.querySelector('form')!);
+
+      await waitFor(() => {
+        expect(mockCreatePR).toHaveBeenCalledWith(expect.objectContaining({ department_id: 'dept-1' }));
+      });
+    });
+
+    it('When nothing optional is filled / Then optional context is omitted rather than sent empty', async () => {
+      await openForm();
+      fillMandatory();
+      fireEvent.submit(document.querySelector('form')!);
+
+      await waitFor(() => expect(mockCreatePR).toHaveBeenCalled());
+      const payload = mockCreatePR.mock.calls[0][0];
+      expect(payload.department_id).toBeUndefined();
+      expect(payload.project_id).toBeUndefined();
+      expect(payload.budget_amount).toBeUndefined();
+      expect(payload.priority).toBe('normal');
+    });
+
+    it('When a line has UOM and a delivery date / Then they ride on the line', async () => {
+      await openForm();
+      fillMandatory();
+      fireEvent.change(screen.getByLabelText('Unit of measure'), { target: { value: 'BAG' } });
+      fireEvent.change(screen.getByLabelText('Required delivery date'), { target: { value: '2026-09-25' } });
+      fireEvent.submit(document.querySelector('form')!);
+
+      await waitFor(() => {
+        expect(mockCreatePR).toHaveBeenCalledWith(expect.objectContaining({
+          items: expect.arrayContaining([
+            expect.objectContaining({ uom: 'BAG', required_delivery_date: '2026-09-25' }),
+          ]),
+        }));
+      });
+    });
+  });
+
+  describe('Given the requisition list', () => {
+    it('When a PR has a server-assigned number / Then it is shown instead of the raw id', async () => {
+      mockGetPRs.mockResolvedValue([makePR({ pr_number: 'PR-2026-0042', priority: 'urgent', title: 'Cement top-up' })]);
+      render(<PRListPage />);
+
+      await waitFor(() => {
+        expect(screen.getByText('PR-2026-0042')).toBeInTheDocument();
+      });
+      expect(screen.getByText('urgent')).toBeInTheDocument();
+      expect(screen.getByText('Cement top-up')).toBeInTheDocument();
+    });
+
+    it('When a PR is normal priority / Then no priority chip clutters the row', async () => {
+      mockGetPRs.mockResolvedValue([makePR({ pr_number: 'PR-2026-0043', priority: 'normal' })]);
+      render(<PRListPage />);
+
+      await waitFor(() => screen.getByText('PR-2026-0043'));
+      expect(screen.queryByText('normal')).not.toBeInTheDocument();
+    });
+  });
+
   describe('Given PR deletion', () => {
     it('When delete clicked on draft PR / Then calls deletePR after confirm', async () => {
       mockGetPRs.mockResolvedValue([makePR({ status: 'draft' })]);
