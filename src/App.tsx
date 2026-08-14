@@ -22,6 +22,9 @@ const VendorListPage = lazy(() => import('./pages/vendors/VendorListPage'));
 const VendorDetailPage = lazy(() => import('./pages/vendors/VendorDetailPage'));
 const ContractsPage = lazy(() => import('./pages/vendors/ContractsPage'));
 const OpeningBalancePage = lazy(() => import('./pages/procurement/OpeningBalancePage'));
+const RFQListPage = lazy(() => import('./pages/procurement/RFQListPage'));
+const RFQDetailPage = lazy(() => import('./pages/procurement/RFQDetailPage'));
+const RFQComparisonPage = lazy(() => import('./pages/procurement/RFQComparisonPage'));
 const CategoriesPage = lazy(() => import('./pages/CategoriesPage'));
 const BulkImportPage = lazy(() => import('./pages/bulk-import/BulkImportPage'));
 
@@ -179,6 +182,9 @@ const App = () => {
                 <Route path="grn/new" element={<FeatureGate flagKey="submodule:inventory:procurement"><GRNEntryPage /></FeatureGate>} />
                 <Route path="grn/:id" element={<FeatureGate flagKey="submodule:inventory:procurement"><GRNDetailPage /></FeatureGate>} />
                 <Route path="opening-balance" element={<FeatureGate flagKey="submodule:inventory:procurement"><OpeningBalancePage /></FeatureGate>} />
+                <Route path="rfq" element={<FeatureGate flagKey="submodule:inventory:rfq"><RFQListPage /></FeatureGate>} />
+                <Route path="rfq/:id" element={<FeatureGate flagKey="submodule:inventory:rfq"><RFQDetailPage /></FeatureGate>} />
+                <Route path="rfq/:id/compare" element={<FeatureGate flagKey="submodule:inventory:rfq"><RFQComparisonPage /></FeatureGate>} />
 
                 {/* ── Vendor routes (mounted at /vendors/*) ── */}
                 <Route path="contracts" element={<ContractsPage />} />
@@ -193,6 +199,9 @@ const App = () => {
                 <Route path="procurement/grn/new" element={<FeatureGate flagKey="submodule:inventory:procurement"><GRNEntryPage /></FeatureGate>} />
                 <Route path="procurement/grn/:id" element={<FeatureGate flagKey="submodule:inventory:procurement"><GRNDetailPage /></FeatureGate>} />
                 <Route path="procurement/opening-balance" element={<FeatureGate flagKey="submodule:inventory:procurement"><OpeningBalancePage /></FeatureGate>} />
+                <Route path="procurement/rfq" element={<FeatureGate flagKey="submodule:inventory:rfq"><RFQListPage /></FeatureGate>} />
+                <Route path="procurement/rfq/:id" element={<FeatureGate flagKey="submodule:inventory:rfq"><RFQDetailPage /></FeatureGate>} />
+                <Route path="procurement/rfq/:id/compare" element={<FeatureGate flagKey="submodule:inventory:rfq"><RFQComparisonPage /></FeatureGate>} />
                 <Route path="vendors" element={<VendorListPage />} />
                 <Route path="vendors/:id" element={<VendorDetailPage />} />
                 <Route path="vendors/contracts" element={<ContractsPage />} />
