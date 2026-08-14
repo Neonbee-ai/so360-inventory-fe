@@ -150,7 +150,7 @@ describe('PRListPage', () => {
       await waitFor(() => screen.getByText('New Requisition'));
       fireEvent.click(screen.getByText('New Requisition'));
       await waitFor(() => {
-        expect(screen.getByPlaceholderText('Explain why these items are needed...')).toBeInTheDocument();
+        expect(screen.getByPlaceholderText('What is being requested...')).toBeInTheDocument();
       });
     });
 
@@ -158,10 +158,10 @@ describe('PRListPage', () => {
       render(<PRListPage />);
       await waitFor(() => screen.getByText('New Requisition'));
       fireEvent.click(screen.getByText('New Requisition'));
-      await waitFor(() => screen.getByPlaceholderText('Explain why these items are needed...'));
+      await waitFor(() => screen.getByPlaceholderText('What is being requested...'));
       const dateInput = document.querySelector('input[type="date"]') as HTMLInputElement;
       if (dateInput) fireEvent.change(dateInput, { target: { value: '2025-12-31' } });
-      fireEvent.change(screen.getByPlaceholderText('Explain why these items are needed...'), { target: { value: 'Need pens' } });
+      fireEvent.change(screen.getByPlaceholderText('What is being requested...'), { target: { value: 'Need pens' } });
       fireEvent.click(screen.getByText('+ Add Item'));
       fireEvent.click(screen.getByText('Select Item'));
       const form = document.querySelector('form');
@@ -318,7 +318,7 @@ describe('PRListPage', () => {
       const dateInput = document.querySelector('input[type="date"]') as HTMLInputElement;
       if (dateInput) fireEvent.change(dateInput, { target: { value: '2025-12-31' } });
       // Then change description — would overwrite date if closure is stale
-      const textarea = screen.getByPlaceholderText('Explain why these items are needed...');
+      const textarea = screen.getByPlaceholderText('What is being requested...');
       fireEvent.change(textarea, { target: { value: 'Test justification' } });
       fireEvent.click(screen.getByText('+ Add Item'));
       fireEvent.click(screen.getByText('Select Item'));
@@ -336,7 +336,7 @@ describe('PRListPage', () => {
       fireEvent.click(screen.getByText('New Requisition'));
       await waitFor(() => screen.getByText('Create New Requisition'));
       // Fill description first
-      const textarea = screen.getByPlaceholderText('Explain why these items are needed...');
+      const textarea = screen.getByPlaceholderText('What is being requested...');
       fireEvent.change(textarea, { target: { value: 'Office supplies' } });
       // Then fill date
       const dateInput = document.querySelector('input[type="date"]') as HTMLInputElement;

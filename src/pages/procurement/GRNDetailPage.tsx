@@ -11,6 +11,13 @@ interface GRNLine {
     id: string;
     item_id: string;
     quantity_received: number;
+    accepted_quantity?: number;
+    rejected_quantity?: number;
+    damaged_quantity?: number;
+    batch_number?: string;
+    expiry_date?: string;
+    serial_numbers?: string[];
+    rejection_reason?: string;
     po_line?: {
         quantity: number;
         unit_price: number;
@@ -24,6 +31,13 @@ interface GRN {
     grn_number: string;
     created_at: string;
     notes?: string;
+    received_date?: string;
+    supplier_delivery_note?: string;
+    vehicle_number?: string;
+    transporter?: string;
+    gate_entry_no?: string;
+    inspection_status?: string;
+    is_partial?: boolean;
     warehouse?: { id: string; name: string };
     po?: {
         id: string;
@@ -59,11 +73,31 @@ const GRNDetailPage = () => {
         }
     };
 
+    /** Accepted quantity, falling back to received for receipts posted before the split existed. */
+    const acceptedOf = (line: GRNLine) =>
+        line.accepted_quantity == null ? line.quantity_received : line.accepted_quantity;
+
     const totalQuantityReceived = grn?.grn_lines?.reduce((sum, line) =>
         sum + line.quantity_received, 0) || 0;
 
+    const totalAccepted = grn?.grn_lines?.reduce((sum, line) =>
+        sum + acceptedOf(line), 0) || 0;
+
+    const totalRejected = grn?.grn_lines?.reduce((sum, line) =>
+        sum + (line.rejected_quantity || 0) + (line.damaged_quantity || 0), 0) || 0;
+
+    // Only accepted stock is capitalised, so the GRN value follows accepted units.
     const totalValue = grn?.grn_lines?.reduce((sum, line) =>
-        sum + (line.quantity_received * (line.po_line?.unit_price || 0)), 0) || 0;
+        sum + (acceptedOf(line) * (line.po_line?.unit_price || 0)), 0) || 0;
+
+    const INSPECTION_LABELS: Record<string, { label: string; className: string }> = {
+        not_required: { label: 'Not required', className: 'bg-slate-700/50 text-slate-400 border-slate-600' },
+        pending: { label: 'Inspection pending', className: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
+        in_progress: { label: 'Inspection in progress', className: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
+        passed: { label: 'Passed', className: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
+        partial: { label: 'Partially passed', className: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' },
+        failed: { label: 'Failed', className: 'bg-rose-500/10 text-rose-400 border-rose-500/20' },
+    };
 
     if (isLoading) {
         return (
@@ -107,9 +141,21 @@ const GRNDetailPage = () => {
                                 <h1 className="text-xl font-bold text-slate-50">
                                     {grn.grn_number}
                                 </h1>
-                                <span className="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                                    Received
-                                </span>
+                                <div className="flex flex-wrap gap-1.5 mt-1">
+                                    <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                        Received
+                                    </span>
+                                    {grn.is_partial && (
+                                        <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                                            Partial
+                                        </span>
+                                    )}
+                                    {grn.inspection_status && grn.inspection_status !== 'not_required' && (
+                                        <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${INSPECTION_LABELS[grn.inspection_status]?.className || ''}`}>
+                                            {INSPECTION_LABELS[grn.inspection_status]?.label || grn.inspection_status}
+                                        </span>
+                                    )}
+                                </div>
                             </div>
                         </div>
 
@@ -161,10 +207,41 @@ const GRNDetailPage = () => {
                                 <div>
                                     <span className="text-xs text-slate-500 block">Received Date</span>
                                     <span className="text-sm text-slate-50">
-                                        {formatters.formatDateTime(grn.created_at)}
+                                        {grn.received_date
+                                            ? formatters.formatDate(grn.received_date)
+                                            : formatters.formatDateTime(grn.created_at)}
                                     </span>
                                 </div>
                             </div>
+                            {(grn.supplier_delivery_note || grn.vehicle_number || grn.transporter || grn.gate_entry_no) && (
+                                <div className="p-3 bg-slate-800/30 rounded-xl space-y-2">
+                                    <span className="text-xs text-slate-500 block">Delivery Details</span>
+                                    {grn.supplier_delivery_note && (
+                                        <div className="flex justify-between text-sm gap-3">
+                                            <span className="text-slate-500">Delivery note</span>
+                                            <span className="text-slate-50 font-mono text-right">{grn.supplier_delivery_note}</span>
+                                        </div>
+                                    )}
+                                    {grn.vehicle_number && (
+                                        <div className="flex justify-between text-sm gap-3">
+                                            <span className="text-slate-500">Vehicle</span>
+                                            <span className="text-slate-50 font-mono text-right">{grn.vehicle_number}</span>
+                                        </div>
+                                    )}
+                                    {grn.transporter && (
+                                        <div className="flex justify-between text-sm gap-3">
+                                            <span className="text-slate-500">Transporter</span>
+                                            <span className="text-slate-50 text-right">{grn.transporter}</span>
+                                        </div>
+                                    )}
+                                    {grn.gate_entry_no && (
+                                        <div className="flex justify-between text-sm gap-3">
+                                            <span className="text-slate-500">Gate entry</span>
+                                            <span className="text-slate-50 font-mono text-right">{grn.gate_entry_no}</span>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                             {grn.received_by && (
                                 <div className="flex items-center gap-3 p-3 bg-slate-800/30 rounded-xl">
                                     <CheckCircle size={16} className="text-slate-500" />
@@ -190,9 +267,22 @@ const GRNDetailPage = () => {
                         <div className="text-4xl font-black mt-2">
                             {totalQuantityReceived} units
                         </div>
-                        <p className="mt-2 text-sm text-violet-200">
-                            Value: {formatters.formatCurrency(totalValue)}
-                        </p>
+                        <div className="mt-3 space-y-1">
+                            <div className="flex justify-between text-sm text-violet-200">
+                                <span>Accepted</span>
+                                <span>{totalAccepted} units</span>
+                            </div>
+                            {totalRejected > 0 && (
+                                <div className="flex justify-between text-sm text-violet-200">
+                                    <span>Rejected / damaged</span>
+                                    <span>{totalRejected} units</span>
+                                </div>
+                            )}
+                            <div className="flex justify-between text-sm text-violet-200">
+                                <span>Accepted value</span>
+                                <span>{formatters.formatCurrency(totalValue)}</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -210,6 +300,8 @@ const GRNDetailPage = () => {
                                         <th className="pb-3">Item</th>
                                         <th className="pb-3 text-center">PO Qty</th>
                                         <th className="pb-3 text-center">Received</th>
+                                        <th className="pb-3 text-center">Accepted</th>
+                                        <th className="pb-3 text-center">Rejected</th>
                                         <th className="pb-3 text-right">Unit Price</th>
                                         <th className="pb-3 text-right">Line Value</th>
                                     </tr>
@@ -224,18 +316,36 @@ const GRNDetailPage = () => {
                                                 {line.po_line?.items?.sku && (
                                                     <span className="block text-xs text-slate-500 font-mono">{line.po_line.items.sku}</span>
                                                 )}
+                                                {(line.batch_number || line.expiry_date || (line.serial_numbers?.length)) && (
+                                                    <span className="block text-[10px] text-slate-500 mt-1">
+                                                        {line.batch_number && <>Batch {line.batch_number} </>}
+                                                        {line.expiry_date && <>· Exp {formatters.formatDate(line.expiry_date)} </>}
+                                                        {!!line.serial_numbers?.length && <>· {line.serial_numbers.length} serials</>}
+                                                    </span>
+                                                )}
+                                                {line.rejection_reason && (
+                                                    <span className="block text-[10px] text-rose-400/80 mt-1">Rejected: {line.rejection_reason}</span>
+                                                )}
                                             </td>
                                             <td className="py-3 text-center text-slate-400">
                                                 {line.po_line?.quantity || '-'}
                                             </td>
                                             <td className="py-3 text-center">
-                                                <span className="text-emerald-400 font-bold">{line.quantity_received}</span>
+                                                <span className="text-slate-300 font-bold">{line.quantity_received}</span>
+                                            </td>
+                                            <td className="py-3 text-center">
+                                                <span className="text-emerald-400 font-bold">{acceptedOf(line)}</span>
+                                            </td>
+                                            <td className="py-3 text-center">
+                                                <span className={((line.rejected_quantity || 0) + (line.damaged_quantity || 0)) > 0 ? 'text-rose-400 font-bold' : 'text-slate-600'}>
+                                                    {(line.rejected_quantity || 0) + (line.damaged_quantity || 0)}
+                                                </span>
                                             </td>
                                             <td className="py-3 text-right text-slate-300">
                                                 {formatters.formatCurrency(line.po_line?.unit_price || 0)}
                                             </td>
                                             <td className="py-3 text-right font-bold text-slate-50">
-                                                {formatters.formatCurrency(line.quantity_received * (line.po_line?.unit_price || 0))}
+                                                {formatters.formatCurrency(acceptedOf(line) * (line.po_line?.unit_price || 0))}
                                             </td>
                                         </tr>
                                     ))}
@@ -245,8 +355,14 @@ const GRNDetailPage = () => {
                                         <td colSpan={2} className="py-4 text-right font-bold text-slate-400">
                                             Totals:
                                         </td>
-                                        <td className="py-4 text-center font-bold text-emerald-400">
+                                        <td className="py-4 text-center font-bold text-slate-300">
                                             {totalQuantityReceived}
+                                        </td>
+                                        <td className="py-4 text-center font-bold text-emerald-400">
+                                            {totalAccepted}
+                                        </td>
+                                        <td className={`py-4 text-center font-bold ${totalRejected > 0 ? 'text-rose-400' : 'text-slate-600'}`}>
+                                            {totalRejected}
                                         </td>
                                         <td></td>
                                         <td className="py-4 text-right font-black text-xl text-slate-50">

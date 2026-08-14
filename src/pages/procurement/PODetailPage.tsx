@@ -33,9 +33,26 @@ interface PO {
     created_at: string;
     expected_delivery_date?: string;
     pr_id?: string;
+    payment_terms?: string;
+    delivery_terms?: string;
+    incoterms?: string;
+    shipping_address?: string;
+    billing_address?: string;
+    acknowledgement_status?: string;
+    acknowledged_at?: string;
+    acknowledged_by?: string;
+    acknowledgement_note?: string;
+    promised_delivery_date?: string;
     vendor?: { id: string; name: string; contact_email?: string };
     po_lines: POLine[];
 }
+
+const ACK_OPTIONS = [
+    { value: 'accepted', label: 'Accepted', className: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
+    { value: 'partially_accepted', label: 'Partially Accepted', className: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' },
+    { value: 'delayed', label: 'Delayed', className: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
+    { value: 'rejected', label: 'Rejected', className: 'bg-rose-500/10 text-rose-400 border-rose-500/20' },
+] as const;
 
 const PODetailPage = () => {
     const { id } = useParams();
@@ -48,6 +65,14 @@ const PODetailPage = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [statusAction, setStatusAction] = useState<string | null>(null);
+    const [showAckForm, setShowAckForm] = useState(false);
+    const [ackSaving, setAckSaving] = useState(false);
+    const [ackForm, setAckForm] = useState({
+        acknowledgement_status: 'accepted',
+        promised_delivery_date: '',
+        acknowledged_by: '',
+        acknowledgement_note: '',
+    });
 
     useEffect(() => {
         if (id) fetchPO();
@@ -69,6 +94,7 @@ const PODetailPage = () => {
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'sent': return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+            case 'acknowledged': return 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20';
             case 'received': return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
             case 'partially_received': return 'bg-amber-500/10 text-amber-400 border-amber-500/20';
             case 'cancelled': return 'bg-rose-500/10 text-rose-400 border-rose-500/20';
@@ -126,6 +152,34 @@ const PODetailPage = () => {
             toast.error(getErrorMessage(err, `Failed to update PO status to ${label}`));
         } finally {
             setStatusAction(null);
+        }
+    };
+
+    const handleAcknowledge = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!po) return;
+        setAckSaving(true);
+        try {
+            await procurementService.acknowledgePO(po.id, {
+                acknowledgement_status: ackForm.acknowledgement_status as any,
+                promised_delivery_date: ackForm.promised_delivery_date || undefined,
+                acknowledged_by: ackForm.acknowledged_by || undefined,
+                acknowledgement_note: ackForm.acknowledgement_note || undefined,
+            });
+            recordActivity({
+                eventType: 'inventory.po.acknowledged',
+                eventCategory: 'financials',
+                description: `Vendor acknowledgement recorded for PO #${po.po_number}`,
+                resourceType: 'po',
+                resourceId: po.id,
+            }).catch(() => { });
+            toast.success('Vendor acknowledgement recorded');
+            setShowAckForm(false);
+            await fetchPO();
+        } catch (err: any) {
+            toast.error(getErrorMessage(err, 'Failed to record acknowledgement'));
+        } finally {
+            setAckSaving(false);
         }
     };
 
@@ -277,6 +331,155 @@ const PODetailPage = () => {
                             </div>
                         </div>
                     </div>
+
+                    {/* Vendor Acknowledgement */}
+                    {['sent', 'acknowledged', 'partially_received', 'received', 'closed'].includes(po.status) && (
+                        <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
+                            <h3 className="text-sm font-bold text-slate-400 mb-4 flex items-center gap-2">
+                                <CheckCircle size={16} />
+                                Vendor Acknowledgement
+                            </h3>
+
+                            {po.acknowledgement_status && po.acknowledgement_status !== 'pending' ? (
+                                <div className="space-y-3">
+                                    <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border ${ACK_OPTIONS.find(o => o.value === po.acknowledgement_status)?.className || 'bg-slate-700/50 text-slate-400 border-slate-600'}`}>
+                                        {po.acknowledgement_status.replace(/_/g, ' ')}
+                                    </span>
+                                    {po.acknowledged_at && (
+                                        <div className="text-xs text-slate-500">
+                                            Acknowledged {formatters.formatDateTime(po.acknowledged_at)}
+                                            {po.acknowledged_by ? ` by ${po.acknowledged_by}` : ''}
+                                        </div>
+                                    )}
+                                    {po.promised_delivery_date && (
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-slate-500">Promised delivery</span>
+                                            <span className="text-slate-50 font-bold">{formatters.formatDate(po.promised_delivery_date)}</span>
+                                        </div>
+                                    )}
+                                    {po.acknowledgement_note && (
+                                        <p className="text-xs text-slate-400 bg-slate-800/30 rounded-xl p-3">{po.acknowledgement_note}</p>
+                                    )}
+                                </div>
+                            ) : (
+                                <p className="text-xs text-slate-500">Awaiting the vendor's response to this order.</p>
+                            )}
+
+                            {['sent', 'acknowledged'].includes(po.status) && !showAckForm && (
+                                <button
+                                    onClick={() => setShowAckForm(true)}
+                                    className="mt-4 w-full px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-sm font-semibold transition-colors"
+                                >
+                                    {po.acknowledgement_status && po.acknowledgement_status !== 'pending' ? 'Update acknowledgement' : 'Record acknowledgement'}
+                                </button>
+                            )}
+
+                            {showAckForm && (
+                                <form onSubmit={handleAcknowledge} className="mt-4 space-y-3 pt-4 border-t border-slate-800">
+                                    <div className="space-y-1">
+                                        <label htmlFor="ack-status" className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Vendor response</label>
+                                        <select
+                                            id="ack-status"
+                                            value={ackForm.acknowledgement_status}
+                                            onChange={e => setAckForm({ ...ackForm, acknowledgement_status: e.target.value })}
+                                            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
+                                        >
+                                            {ACK_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                                        </select>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label htmlFor="ack-date" className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Promised delivery date</label>
+                                        <input
+                                            id="ack-date"
+                                            type="date"
+                                            value={ackForm.promised_delivery_date}
+                                            onChange={e => setAckForm({ ...ackForm, promised_delivery_date: e.target.value })}
+                                            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label htmlFor="ack-by" className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Acknowledged by</label>
+                                        <input
+                                            id="ack-by"
+                                            type="text"
+                                            placeholder="Vendor contact name"
+                                            value={ackForm.acknowledged_by}
+                                            onChange={e => setAckForm({ ...ackForm, acknowledged_by: e.target.value })}
+                                            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label htmlFor="ack-note" className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Remarks</label>
+                                        <textarea
+                                            id="ack-note"
+                                            value={ackForm.acknowledgement_note}
+                                            onChange={e => setAckForm({ ...ackForm, acknowledgement_note: e.target.value })}
+                                            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 h-16 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 resize-none"
+                                        />
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <button
+                                            type="submit"
+                                            disabled={ackSaving}
+                                            className="flex-1 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 text-white rounded-xl text-sm font-bold transition-colors flex items-center justify-center gap-2"
+                                        >
+                                            {ackSaving && <Loader2 size={14} className="animate-spin" />}
+                                            Save
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowAckForm(false)}
+                                            className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm font-bold transition-colors"
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </form>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Commercial Terms */}
+                    {(po.payment_terms || po.delivery_terms || po.incoterms || po.shipping_address || po.billing_address) && (
+                        <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
+                            <h3 className="text-sm font-bold text-slate-400 mb-4 flex items-center gap-2">
+                                <FileText size={16} />
+                                Commercial Terms
+                            </h3>
+                            <div className="space-y-3 text-sm">
+                                {po.payment_terms && (
+                                    <div className="flex justify-between gap-4">
+                                        <span className="text-slate-500">Payment terms</span>
+                                        <span className="text-slate-50 text-right">{po.payment_terms}</span>
+                                    </div>
+                                )}
+                                {po.delivery_terms && (
+                                    <div className="flex justify-between gap-4">
+                                        <span className="text-slate-500">Delivery terms</span>
+                                        <span className="text-slate-50 text-right">{po.delivery_terms}</span>
+                                    </div>
+                                )}
+                                {po.incoterms && (
+                                    <div className="flex justify-between gap-4">
+                                        <span className="text-slate-500">Incoterms</span>
+                                        <span className="text-slate-50 text-right">{po.incoterms}</span>
+                                    </div>
+                                )}
+                                {po.shipping_address && (
+                                    <div>
+                                        <span className="text-slate-500 block mb-1">Ship to</span>
+                                        <span className="text-slate-300 text-xs whitespace-pre-line">{po.shipping_address}</span>
+                                    </div>
+                                )}
+                                {po.billing_address && (
+                                    <div>
+                                        <span className="text-slate-500 block mb-1">Bill to</span>
+                                        <span className="text-slate-300 text-xs whitespace-pre-line">{po.billing_address}</span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Right Column - Line Items */}

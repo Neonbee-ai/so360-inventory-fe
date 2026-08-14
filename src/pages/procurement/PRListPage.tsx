@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { procurementService } from '../../services/procurementService';
+import { inventoryService } from '../../services/inventoryService';
 import ItemSearchSelector from '../../components/ItemSearchSelector';
 import { useActivity, useShellBridge } from '@so360/shell-context';
 import { useInventoryFormatters } from '../../utils/formatters';
-import { FeatureGate, toast, getErrorMessage } from '@so360/design-system';
+import { FeatureGate, toast, getErrorMessage, DepartmentSelector } from '@so360/design-system';
 
 interface PRLine {
     id: string;
@@ -15,13 +16,38 @@ interface PRLine {
 
 interface PR {
     id: string;
+    pr_number?: string;
     status: string;
+    priority?: string;
     required_date: string;
     description: string;
+    title?: string;
+    estimated_total?: number;
     created_at: string;
     requester?: { full_name: string };
     pr_lines: PRLine[];
 }
+
+const PRIORITIES = [
+    { value: 'low', label: 'Low', className: 'bg-slate-500/10 text-slate-400 border-slate-500/20' },
+    { value: 'normal', label: 'Normal', className: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
+    { value: 'high', label: 'High', className: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
+    { value: 'urgent', label: 'Urgent', className: 'bg-rose-500/10 text-rose-400 border-rose-500/20' },
+];
+
+const EMPTY_FORM = {
+    title: '',
+    description: '',
+    justification: '',
+    required_date: '',
+    priority: 'normal',
+    department_id: '',
+    project_id: '',
+    warehouse_id: '',
+    manufacturing_order_id: '',
+    budget_amount: '',
+    budget_code: '',
+};
 
 const PRListPage = () => {
     const navigate = useNavigate();
@@ -34,12 +60,31 @@ const PRListPage = () => {
     const [loading, setLoading] = useState(true);
     const [fetchError, setFetchError] = useState<string | null>(null);
     const [showForm, setShowForm] = useState(false);
-    const [formData, setFormData] = useState({ description: '', required_date: '' });
+    const [formData, setFormData] = useState({ ...EMPTY_FORM });
     const [items, setItems] = useState<any[]>([]);
+    const [warehouses, setWarehouses] = useState<any[]>([]);
+    const [projects, setProjects] = useState<any[]>([]);
+    const [workOrders, setWorkOrders] = useState<any[]>([]);
 
     useEffect(() => {
         fetchData();
     }, []);
+
+    // Sourcing context (warehouses, projects, manufacturing orders) is only
+    // needed once the requisition form is opened — and every source is
+    // best-effort, so a module being down never blocks PR creation.
+    useEffect(() => {
+        if (!showForm || warehouses.length || projects.length) return;
+        Promise.all([
+            inventoryService.getLocations().catch(() => []),
+            inventoryService.searchProjects().catch(() => []),
+            inventoryService.searchWorkOrders().catch(() => []),
+        ]).then(([wh, prj, wo]) => {
+            setWarehouses(Array.isArray(wh) ? wh : []);
+            setProjects(Array.isArray(prj) ? prj : []);
+            setWorkOrders(Array.isArray(wo) ? wo : []);
+        });
+    }, [showForm]);
 
     const fetchData = async () => {
         try {
@@ -75,17 +120,29 @@ const PRListPage = () => {
         }
         try {
             const createdPR = await procurementService.createPR({
-                ...formData,
+                title: formData.title || undefined,
+                description: formData.description || undefined,
+                justification: formData.justification || undefined,
+                required_date: formData.required_date,
+                priority: formData.priority || 'normal',
+                department_id: formData.department_id || undefined,
+                project_id: formData.project_id || undefined,
+                warehouse_id: formData.warehouse_id || undefined,
+                manufacturing_order_id: formData.manufacturing_order_id || undefined,
+                budget_amount: formData.budget_amount ? parseFloat(formData.budget_amount) : undefined,
+                budget_code: formData.budget_code || undefined,
                 items: items.map(it => ({
                     item_id: it.item_id || undefined,
                     quantity: parseFloat(String(it.quantity)),
                     estimated_unit_price: parseFloat(String(it.price)) || undefined,
                     description: it.description || undefined,
+                    uom: it.uom || undefined,
+                    required_delivery_date: it.required_delivery_date || undefined,
                 }))
             });
             recordActivity({ eventType: 'inventory.pr.created', eventCategory: 'financials', description: `Created Purchase Requisition`, resourceType: 'pr', resourceId: createdPR?.id }).catch(() => {});
             setShowForm(false);
-            setFormData({ description: '', required_date: '' });
+            setFormData({ ...EMPTY_FORM });
             setItems([]);
             fetchData();
         } catch (error) {
@@ -114,7 +171,7 @@ const PRListPage = () => {
     };
 
     const addItemLine = () => {
-        setItems([...items, { item_id: '', _selectedName: '', quantity: 1, price: 0, description: '' }]);
+        setItems([...items, { item_id: '', _selectedName: '', quantity: 1, price: 0, description: '', uom: '', required_delivery_date: '' }]);
     };
 
     const updateItem = (index: number, field: string, value: any) => {
@@ -202,8 +259,15 @@ const PRListPage = () => {
                         ) : prs.map((pr) => (
                             <tr key={pr.id} className="hover:bg-slate-800/20 transition-colors group">
                                 <td className="px-6 py-4">
-                                    <div className="font-semibold text-slate-200">#PR-{pr.id.slice(0, 8).toUpperCase()}</div>
-                                    <div className="text-xs text-slate-500 truncate max-w-[200px]">{pr.description}</div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-semibold text-slate-200">{pr.pr_number || `#PR-${pr.id.slice(0, 8).toUpperCase()}`}</span>
+                                        {pr.priority && pr.priority !== 'normal' && (
+                                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wide border ${PRIORITIES.find(p => p.value === pr.priority)?.className || ''}`}>
+                                                {pr.priority}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="text-xs text-slate-500 truncate max-w-[200px]">{pr.title || pr.description}</div>
                                 </td>
                                 <td className="px-6 py-4">
                                     <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide
@@ -264,21 +328,130 @@ const PRListPage = () => {
                         <form onSubmit={handleSubmit} className="p-8 space-y-6 overflow-y-auto custom-scrollbar flex-1">
                             <div className="grid grid-cols-2 gap-6">
                                 <div className="space-y-2">
+                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Title</label>
+                                    <input
+                                        type="text"
+                                        value={formData.title}
+                                        placeholder="e.g. Site 4 cement top-up"
+                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-slate-200"
+                                        onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                                    />
+                                </div>
+                                <div className="space-y-2">
                                     <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Required Date</label>
                                     <input
                                         type="date"
                                         required
+                                        value={formData.required_date}
                                         className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-slate-200"
                                         onChange={(e) => setFormData(prev => ({ ...prev, required_date: e.target.value }))}
                                     />
                                 </div>
                             </div>
+
                             <div className="space-y-2">
-                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Justification / Description</label>
+                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Priority</label>
+                                <div className="flex gap-2">
+                                    {PRIORITIES.map(p => (
+                                        <button
+                                            key={p.value}
+                                            type="button"
+                                            aria-pressed={formData.priority === p.value}
+                                            onClick={() => setFormData(prev => ({ ...prev, priority: p.value }))}
+                                            className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider border transition-all ${formData.priority === p.value
+                                                ? p.className
+                                                : 'bg-slate-950 text-slate-500 border-slate-800 hover:border-slate-700'}`}
+                                        >
+                                            {p.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Department</label>
+                                    <DepartmentSelector
+                                        value={formData.department_id || undefined}
+                                        orgId={inventoryService.getOrgId() || ''}
+                                        placeholder="Select department"
+                                        allowClear
+                                        onChange={(departmentId) => setFormData(prev => ({ ...prev, department_id: departmentId || '' }))}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Deliver To Warehouse</label>
+                                    <select
+                                        value={formData.warehouse_id}
+                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-slate-200"
+                                        onChange={(e) => setFormData(prev => ({ ...prev, warehouse_id: e.target.value }))}
+                                    >
+                                        <option value="">Not specified</option>
+                                        {warehouses.map(wh => <option key={wh.id} value={wh.id}>{wh.name}</option>)}
+                                    </select>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Project</label>
+                                    <select
+                                        value={formData.project_id}
+                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-slate-200"
+                                        onChange={(e) => setFormData(prev => ({ ...prev, project_id: e.target.value }))}
+                                    >
+                                        <option value="">Not project-linked</option>
+                                        {projects.map(p => <option key={p.id} value={p.id}>{p.name || p.title || p.code}</option>)}
+                                    </select>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Manufacturing Order</label>
+                                    <select
+                                        value={formData.manufacturing_order_id}
+                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-slate-200"
+                                        onChange={(e) => setFormData(prev => ({ ...prev, manufacturing_order_id: e.target.value }))}
+                                    >
+                                        <option value="">Not linked to production</option>
+                                        {workOrders.map(w => <option key={w.id} value={w.id}>{w.order_number || w.mo_number || w.id.slice(0, 8)}</option>)}
+                                    </select>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Budget Amount</label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        value={formData.budget_amount}
+                                        placeholder="0.00"
+                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-slate-200"
+                                        onChange={(e) => setFormData(prev => ({ ...prev, budget_amount: e.target.value }))}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Budget / Cost Code</label>
+                                    <input
+                                        type="text"
+                                        value={formData.budget_code}
+                                        placeholder="e.g. CC-OPS-2026"
+                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-slate-200"
+                                        onChange={(e) => setFormData(prev => ({ ...prev, budget_code: e.target.value }))}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Description</label>
                                 <textarea
-                                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 h-24 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-slate-200 resize-none"
-                                    placeholder="Explain why these items are needed..."
+                                    value={formData.description}
+                                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 h-20 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-slate-200 resize-none"
+                                    placeholder="What is being requested..."
                                     onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Business Justification</label>
+                                <textarea
+                                    value={formData.justification}
+                                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 h-20 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-slate-200 resize-none"
+                                    placeholder="Why this spend is needed, and what happens if it is not approved..."
+                                    onChange={(e) => setFormData(prev => ({ ...prev, justification: e.target.value }))}
                                 />
                             </div>
 
@@ -332,13 +505,29 @@ const PRListPage = () => {
                                                 ×
                                             </button>
                                         </div>
-                                        <div>
+                                        <div className="flex gap-3">
                                             <input
                                                 type="text"
                                                 placeholder="Description (optional)"
                                                 value={item.description}
-                                                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/30 placeholder-slate-600"
+                                                className="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/30 placeholder-slate-600"
                                                 onChange={(e) => updateItem(idx, 'description', e.target.value)}
+                                            />
+                                            <input
+                                                type="text"
+                                                placeholder="UOM"
+                                                aria-label="Unit of measure"
+                                                value={item.uom || ''}
+                                                className="w-24 bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/30 placeholder-slate-600"
+                                                onChange={(e) => updateItem(idx, 'uom', e.target.value)}
+                                            />
+                                            <input
+                                                type="date"
+                                                aria-label="Required delivery date"
+                                                title="Required delivery date"
+                                                value={item.required_delivery_date || ''}
+                                                className="w-40 bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                                                onChange={(e) => updateItem(idx, 'required_delivery_date', e.target.value)}
                                             />
                                         </div>
                                     </div>

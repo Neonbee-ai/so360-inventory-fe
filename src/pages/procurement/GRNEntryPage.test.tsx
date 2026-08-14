@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import React from 'react';
+import { toast } from '@so360/design-system';
 
 const mockGetPOs = vi.fn();
 const mockGetLocations = vi.fn();
@@ -49,6 +50,9 @@ beforeEach(() => {
   mockGetPOs.mockResolvedValue([makePO()]);
   mockGetLocations.mockResolvedValue([makeWarehouse()]);
   mockCreateGRN.mockResolvedValue({ id: 'grn-new' });
+  vi.spyOn(toast, 'success').mockReturnValue('toast-id');
+  vi.spyOn(toast, 'error').mockReturnValue('toast-id');
+  vi.spyOn(toast, 'warning').mockReturnValue('toast-id');
 });
 
 describe('GRNEntryPage', () => {
@@ -201,7 +205,7 @@ describe('GRNEntryPage', () => {
       fireEvent.change(screen.getByPlaceholderText(/GRN-2024-001/i), {
         target: { value: 'GRN-TEST-001' },
       });
-      fireEvent.change(screen.getByRole('combobox'), { target: { value: 'wh-1' } });
+      fireEvent.change(screen.getByLabelText('Receiving Warehouse'), { target: { value: 'wh-1' } });
       fireEvent.click(screen.getByText(/Post Goods Receipt/i));
 
       await waitFor(() => {
@@ -222,6 +226,68 @@ describe('GRNEntryPage', () => {
       });
     });
 
+    it('When part of the delivery is rejected / Then createGRN receives the accepted split and delivery paperwork', async () => {
+      render(<GRNEntryPage />);
+
+      await waitFor(() => expect(screen.getByText('Acme Supplies')).toBeInTheDocument());
+      fireEvent.click(screen.getByText('#PO-2024-001'));
+      await waitFor(() => expect(screen.getByText(/GRN Number/i)).toBeInTheDocument());
+
+      fireEvent.change(screen.getByPlaceholderText(/GRN-2024-001/i), {
+        target: { value: 'GRN-SPLIT-001' },
+      });
+      fireEvent.change(screen.getByLabelText('Receiving Warehouse'), { target: { value: 'wh-1' } });
+      fireEvent.change(screen.getByPlaceholderText(/Challan \/ DN number/i), {
+        target: { value: 'DN-4471' },
+      });
+      fireEvent.change(screen.getByPlaceholderText(/KA-01-AB-1234/i), {
+        target: { value: 'KA-05-XY-9090' },
+      });
+      fireEvent.change(screen.getByLabelText(/Rejected quantity for/i), {
+        target: { value: '2' },
+      });
+      fireEvent.click(screen.getByText(/Post Goods Receipt/i));
+
+      await waitFor(() => {
+        expect(mockCreateGRN).toHaveBeenCalledWith(
+          expect.objectContaining({
+            supplier_delivery_note: 'DN-4471',
+            vehicle_number: 'KA-05-XY-9090',
+            items: expect.arrayContaining([
+              expect.objectContaining({
+                rejected_quantity: 2,
+                accepted_quantity: 8,
+              }),
+            ]),
+          }),
+        );
+      });
+    });
+
+    it('When more units are rejected than received / Then submission is blocked with a warning', async () => {
+      render(<GRNEntryPage />);
+
+      await waitFor(() => expect(screen.getByText('Acme Supplies')).toBeInTheDocument());
+      fireEvent.click(screen.getByText('#PO-2024-001'));
+      await waitFor(() => expect(screen.getByText(/GRN Number/i)).toBeInTheDocument());
+
+      fireEvent.change(screen.getByPlaceholderText(/GRN-2024-001/i), {
+        target: { value: 'GRN-BAD-001' },
+      });
+      fireEvent.change(screen.getByLabelText('Receiving Warehouse'), { target: { value: 'wh-1' } });
+      fireEvent.change(screen.getByLabelText(/Rejected quantity for/i), {
+        target: { value: '99' },
+      });
+      fireEvent.click(screen.getByText(/Post Goods Receipt/i));
+
+      await waitFor(() => {
+        expect(toast.warning).toHaveBeenCalledWith(
+          expect.stringContaining('exceeds the received quantity'),
+        );
+      });
+      expect(mockCreateGRN).not.toHaveBeenCalled();
+    });
+
     it('When createGRN API fails / Then createGRN was invoked and the error is surfaced', async () => {
       mockCreateGRN.mockRejectedValue(new Error('PO not found'));
       render(<GRNEntryPage />);
@@ -234,7 +300,7 @@ describe('GRNEntryPage', () => {
       fireEvent.change(screen.getByPlaceholderText(/GRN-2024-001/i), {
         target: { value: 'GRN-ERR-001' },
       });
-      fireEvent.change(screen.getByRole('combobox'), { target: { value: 'wh-1' } });
+      fireEvent.change(screen.getByLabelText('Receiving Warehouse'), { target: { value: 'wh-1' } });
       fireEvent.click(screen.getByText(/Post Goods Receipt/i));
 
       // Verify the API was called (error path still invokes createGRN).

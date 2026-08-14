@@ -1,15 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import React from 'react';
 
 const mockGetPODetail = vi.fn();
 const mockUpdatePOStatus = vi.fn();
+const mockAcknowledgePO = vi.fn();
 const mockNavigate = vi.fn();
 
 vi.mock('../../services/procurementService', () => ({
   procurementService: {
     getPODetail: (...args: any[]) => mockGetPODetail(...args),
     updatePOStatus: (...args: any[]) => mockUpdatePOStatus(...args),
+    acknowledgePO: (...args: any[]) => mockAcknowledgePO(...args),
   },
 }));
 
@@ -164,6 +166,55 @@ describe('PODetailPage', () => {
       await waitFor(() => {
         expect(mockGetPODetail).toHaveBeenCalledWith('po-1');
       });
+    });
+  });
+
+  describe('Given vendor acknowledgement', () => {
+    it('When the PO is sent and unacknowledged / Then it invites the buyer to record a response', async () => {
+      render(<PODetailPage />);
+      await waitFor(() => {
+        expect(screen.getByText('Vendor Acknowledgement')).toBeInTheDocument();
+      });
+      expect(screen.getByText('Record acknowledgement')).toBeInTheDocument();
+    });
+
+    it('When a response is submitted / Then acknowledgePO is called with the vendor answer', async () => {
+      mockAcknowledgePO.mockResolvedValue({});
+      render(<PODetailPage />);
+      await waitFor(() => screen.getByText('Record acknowledgement'));
+
+      fireEvent.click(screen.getByText('Record acknowledgement'));
+      fireEvent.change(screen.getByLabelText('Vendor response'), {
+        target: { value: 'delayed' },
+      });
+      fireEvent.change(screen.getByLabelText('Promised delivery date'), {
+        target: { value: '2026-09-20' },
+      });
+      fireEvent.click(screen.getByText('Save'));
+
+      await waitFor(() => {
+        expect(mockAcknowledgePO).toHaveBeenCalledWith('po-1', expect.objectContaining({
+          acknowledgement_status: 'delayed',
+          promised_delivery_date: '2026-09-20',
+        }));
+      });
+    });
+
+    it('When the vendor has already responded / Then the recorded response and promised date are shown', async () => {
+      mockGetPODetail.mockResolvedValue(makePO({
+        status: 'acknowledged',
+        acknowledgement_status: 'partially_accepted',
+        acknowledged_at: '2026-08-14T10:00:00Z',
+        acknowledged_by: 'Ravi',
+        promised_delivery_date: '2026-09-20',
+        acknowledgement_note: 'Only 8 of 10 available',
+      }));
+      render(<PODetailPage />);
+
+      await waitFor(() => {
+        expect(screen.getByText('partially accepted')).toBeInTheDocument();
+      });
+      expect(screen.getByText('Only 8 of 10 available')).toBeInTheDocument();
     });
   });
 });

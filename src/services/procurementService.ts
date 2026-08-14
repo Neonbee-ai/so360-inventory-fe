@@ -97,6 +97,19 @@ class ProcurementService {
         });
     }
 
+    /** Record the vendor's response to a sent purchase order. */
+    async acknowledgePO(id: string, dto: {
+        acknowledgement_status: 'accepted' | 'partially_accepted' | 'delayed' | 'rejected';
+        promised_delivery_date?: string;
+        acknowledged_by?: string;
+        acknowledgement_note?: string;
+    }) {
+        return this.request(`/po/${id}/acknowledge`, {
+            method: 'PATCH',
+            body: JSON.stringify(dto),
+        });
+    }
+
     // Goods Receipt
     async createGRN(dto: any) {
         return this.request('/grn', {
