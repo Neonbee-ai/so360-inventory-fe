@@ -29,6 +29,8 @@ vi.mock('./pages/procurement/OpeningBalancePage', () => ({ default: () => <div>O
 vi.mock('./pages/procurement/RFQListPage', () => ({ default: () => <div>RFQList</div> }));
 vi.mock('./pages/procurement/RFQDetailPage', () => ({ default: () => <div>RFQDetail</div> }));
 vi.mock('./pages/procurement/RFQComparisonPage', () => ({ default: () => <div>RFQComparison</div> }));
+vi.mock('./pages/procurement/QualityInspectionPage', () => ({ default: () => <div>QualityInspection</div> }));
+vi.mock('./pages/procurement/VendorReturnsPage', () => ({ default: () => <div>VendorReturns</div> }));
 vi.mock('./pages/CategoriesPage', () => ({ default: () => <div>Categories</div> }));
 vi.mock('./pages/bulk-import/BulkImportPage', () => ({ default: () => <div data-testid="bulk-import-page">BulkImport</div> }));
 
