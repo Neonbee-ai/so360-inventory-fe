@@ -126,6 +126,30 @@ class ProcurementService {
         return this.request(`/grn/detail/${id}`);
     }
 
+    // ── Sales demand (CRM sales orders → requisitions) ──────────────
+
+    /** Confirmed customer orders netted against stock and open POs. */
+    async getSalesDemand(filters: { only_short?: boolean; sales_order_id?: string } = {}) {
+        const qs = new URLSearchParams();
+        if (filters.only_short) qs.append('only_short', 'true');
+        if (filters.sales_order_id) qs.append('sales_order_id', filters.sales_order_id);
+        const suffix = qs.toString() ? `?${qs.toString()}` : '';
+        return this.request(`/sales-demand/${inventoryService.getOrgId()}${suffix}`);
+    }
+
+    /** Raise a requisition covering a sales order's shortfall. */
+    async raiseRequisitionForSalesOrder(salesOrderId: string, dto: Record<string, any> = {}) {
+        return this.request(`/sales-demand/${salesOrderId}/requisition`, {
+            method: 'POST',
+            body: JSON.stringify(dto),
+        });
+    }
+
+    /** The paper trail around any procurement document. */
+    async getDocumentTrace(type: 'pr' | 'rfq' | 'po' | 'grn' | 'inspection' | 'invoice' | 'return', id: string) {
+        return this.request(`/trace/${inventoryService.getOrgId()}/${type}/${id}`);
+    }
+
     // Vendor Invoices
     async createVendorInvoice(dto: {
         vendor_id: string;

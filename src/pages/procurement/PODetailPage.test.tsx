@@ -12,6 +12,8 @@ vi.mock('../../services/procurementService', () => ({
     getPODetail: (...args: any[]) => mockGetPODetail(...args),
     updatePOStatus: (...args: any[]) => mockUpdatePOStatus(...args),
     acknowledgePO: (...args: any[]) => mockAcknowledgePO(...args),
+    // The document-trail panel on this page reads the chain.
+    getDocumentTrace: () => Promise.resolve({ chain: [] }),
   },
 }));
 

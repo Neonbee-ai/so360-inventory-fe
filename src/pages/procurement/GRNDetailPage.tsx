@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { procurementService } from '../../services/procurementService';
 import { useInventoryFormatters } from '../../utils/formatters';
+import ProcurementTrace from '../../components/ProcurementTrace';
 
 interface GRNLine {
     id: string;
@@ -260,6 +261,8 @@ const GRNDetailPage = () => {
                             </div>
                         )}
                     </div>
+
+                    <ProcurementTrace type="grn" id={grn.id} />
 
                     {/* Summary Card */}
                     <div className="bg-violet-600 rounded-2xl p-6 text-white">

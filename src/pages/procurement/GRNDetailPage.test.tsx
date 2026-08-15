@@ -8,6 +8,8 @@ const mockNavigate = vi.fn();
 vi.mock('../../services/procurementService', () => ({
   procurementService: {
     getGRNDetail: (...args: any[]) => mockGetGRNDetail(...args),
+    // The document-trail panel on this page reads the chain.
+    getDocumentTrace: () => Promise.resolve({ chain: [] }),
   },
 }));
 

@@ -30,6 +30,7 @@ const VendorReturnsPage = lazy(() => import('./pages/procurement/VendorReturnsPa
 const ProcurementDashboardPage = lazy(() => import('./pages/procurement/ProcurementDashboardPage'));
 const ProcurementReportsPage = lazy(() => import('./pages/procurement/ProcurementReportsPage'));
 const VendorPerformancePage = lazy(() => import('./pages/procurement/VendorPerformancePage'));
+const SalesDemandPage = lazy(() => import('./pages/procurement/SalesDemandPage'));
 const CategoriesPage = lazy(() => import('./pages/CategoriesPage'));
 const BulkImportPage = lazy(() => import('./pages/bulk-import/BulkImportPage'));
 
@@ -195,6 +196,7 @@ const App = () => {
                 <Route path="dashboard" element={<FeatureGate flagKey="submodule:inventory:procurement"><ProcurementDashboardPage /></FeatureGate>} />
                 <Route path="reports" element={<FeatureGate flagKey="submodule:inventory:procurement"><ProcurementReportsPage /></FeatureGate>} />
                 <Route path="vendor-performance" element={<FeatureGate flagKey="submodule:inventory:procurement"><VendorPerformancePage /></FeatureGate>} />
+                <Route path="sales-demand" element={<FeatureGate flagKey="submodule:inventory:procurement"><SalesDemandPage /></FeatureGate>} />
 
                 {/* ── Vendor routes (mounted at /vendors/*) ── */}
                 <Route path="contracts" element={<ContractsPage />} />
@@ -217,6 +219,7 @@ const App = () => {
                 <Route path="procurement/dashboard" element={<FeatureGate flagKey="submodule:inventory:procurement"><ProcurementDashboardPage /></FeatureGate>} />
                 <Route path="procurement/reports" element={<FeatureGate flagKey="submodule:inventory:procurement"><ProcurementReportsPage /></FeatureGate>} />
                 <Route path="procurement/vendor-performance" element={<FeatureGate flagKey="submodule:inventory:procurement"><VendorPerformancePage /></FeatureGate>} />
+                <Route path="procurement/sales-demand" element={<FeatureGate flagKey="submodule:inventory:procurement"><SalesDemandPage /></FeatureGate>} />
                 <Route path="vendors" element={<VendorListPage />} />
                 <Route path="vendors/:id" element={<VendorDetailPage />} />
                 <Route path="vendors/contracts" element={<ContractsPage />} />

@@ -9,6 +9,7 @@ import { useInventoryFormatters } from '../../utils/formatters';
 import { useActivity, useShell, useBusinessSettings } from '@so360/shell-context';
 import { toast, getErrorMessage } from '@so360/design-system';
 import { poToDocumentData } from '../../utils/poToDocumentData';
+import ProcurementTrace from '../../components/ProcurementTrace';
 
 interface POLine {
     id: string;
@@ -438,6 +439,8 @@ const PODetailPage = () => {
                             )}
                         </div>
                     )}
+
+                    <ProcurementTrace type="po" id={po.id} />
 
                     {/* Commercial Terms */}
                     {(po.payment_terms || po.delivery_terms || po.incoterms || po.shipping_address || po.billing_address) && (

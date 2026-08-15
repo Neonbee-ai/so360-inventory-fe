@@ -34,6 +34,7 @@ vi.mock('./pages/procurement/VendorReturnsPage', () => ({ default: () => <div>Ve
 vi.mock('./pages/procurement/ProcurementDashboardPage', () => ({ default: () => <div>ProcurementDashboard</div> }));
 vi.mock('./pages/procurement/ProcurementReportsPage', () => ({ default: () => <div>ProcurementReports</div> }));
 vi.mock('./pages/procurement/VendorPerformancePage', () => ({ default: () => <div>VendorPerformance</div> }));
+vi.mock('./pages/procurement/SalesDemandPage', () => ({ default: () => <div>SalesDemand</div> }));
 vi.mock('./pages/CategoriesPage', () => ({ default: () => <div>Categories</div> }));
 vi.mock('./pages/bulk-import/BulkImportPage', () => ({ default: () => <div data-testid="bulk-import-page">BulkImport</div> }));
 
