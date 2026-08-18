@@ -49,8 +49,8 @@ beforeEach(() => {
   vi.clearAllMocks();
   mockGetGRNs.mockResolvedValue([]);
   mockUseShellBridgeGRN.mockReturnValue({
-    effectiveFlagsLoaded: true,
-    getFeatureState: () => 'enabled',
+    permissionsLoaded: true, hasPermission: () => true, hasAnyPermission: () => true, effectiveFlagsLoaded: true,
+    permissionsLoaded: true, hasPermission: () => true, hasAnyPermission: () => true, getFeatureState: () => 'enabled',
   });
 });
 
@@ -184,8 +184,8 @@ describe('GRNListPage', () => {
   describe('Given effectiveFlagsLoaded is false (matrix still resolving)', () => {
     it('When page renders / Then New GRN button is not shown', async () => {
       mockUseShellBridgeGRN.mockReturnValue({
-        effectiveFlagsLoaded: false,
-        getFeatureState: () => 'enabled',
+        permissionsLoaded: true, hasPermission: () => true, hasAnyPermission: () => true, effectiveFlagsLoaded: false,
+        permissionsLoaded: true, hasPermission: () => true, hasAnyPermission: () => true, getFeatureState: () => 'enabled',
       });
       render(<GRNListPage />);
       await waitFor(() => expect(screen.getByText('Goods Receipt Notes')).toBeInTheDocument());
@@ -194,8 +194,8 @@ describe('GRNListPage', () => {
 
     it('When effectiveFlagsLoaded becomes true with enabled flag / Then New GRN button appears', async () => {
       mockUseShellBridgeGRN.mockReturnValue({
-        effectiveFlagsLoaded: true,
-        getFeatureState: () => 'enabled',
+        permissionsLoaded: true, hasPermission: () => true, hasAnyPermission: () => true, effectiveFlagsLoaded: true,
+        permissionsLoaded: true, hasPermission: () => true, hasAnyPermission: () => true, getFeatureState: () => 'enabled',
       });
       render(<GRNListPage />);
       await waitFor(() => expect(screen.getByText('New GRN')).toBeInTheDocument());

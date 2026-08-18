@@ -15,7 +15,7 @@ const StockLocationsPage = () => {
     const { recordActivity } = useActivity();
     const shell = useShellBridge();
     const createWarehouseState = (shell as any)?.getFeatureState ? (shell as any).getFeatureState('action:inventory:warehouses:create') : 'enabled';
-    const canCreateWarehouse = (shell?.effectiveFlagsLoaded !== false) && createWarehouseState === 'enabled';
+    const canCreateWarehouse = (shell?.permissionsLoaded === true) && (shell?.hasPermission?.('warehouses.create') ?? false) && (shell?.effectiveFlagsLoaded !== false) && createWarehouseState === 'enabled';
     const quotaChecks = useMemo(() => [{ module_code: 'inventory', quota_key: 'max_warehouses' }], []);
     const { getQuota } = useQuota({ checks: quotaChecks, orgId: shell?.currentOrg?.id || '' });
     const quotaData = getQuota('max_warehouses');

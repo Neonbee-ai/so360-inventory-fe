@@ -40,8 +40,8 @@ vi.mock('@so360/shell-context', () => ({
   useActivity: () => ({ recordActivity: vi.fn() }),
   useShellBridge: () => ({
     currentOrg: { id: 'org-1', name: 'Test Org' },
-    effectiveFlagsLoaded: true,
-    getFeatureState: () => 'enabled',
+    permissionsLoaded: true, hasPermission: () => true, hasAnyPermission: () => true, effectiveFlagsLoaded: true,
+    permissionsLoaded: true, hasPermission: () => true, hasAnyPermission: () => true, getFeatureState: () => 'enabled',
   }),
   useQuota: () => ({ getQuota: (k: string) => mockGetQuota(k), isExceeded: () => false }),
   useSandboxLimit: () => ({ isSandboxMode: false, sandboxEntryLimit: null, limitItems: (i: any[]) => i, isLimited: false }),

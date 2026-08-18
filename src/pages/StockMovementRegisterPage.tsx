@@ -166,9 +166,11 @@ const StockMovementRegisterPage = () => {
     const { recordActivity } = useActivity();
     const shell = useShellBridge();
     const formatters = useInventoryFormatters();
-    const adjustStockState = (shell as any)?.getFeatureState
-        ? (shell as any).getFeatureState('action:inventory:stock:adjust')
-        : 'enabled';
+    const adjustStockState = (shell?.permissionsLoaded === true && (shell?.hasPermission?.('stock.adjust') ?? false))
+        ? ((shell as any)?.getFeatureState
+            ? (shell as any).getFeatureState('action:inventory:stock:adjust')
+            : 'enabled')
+        : 'hidden';
 
     const [movements, setMovements] = useState<StockMovement[]>([]);
     const [isLoading, setIsLoading] = useState(true);

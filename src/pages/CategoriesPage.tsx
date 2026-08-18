@@ -199,9 +199,9 @@ const CategoriesPage = () => {
     const { recordActivity } = useActivity();
     const shell = useShellBridge();
     const createState = (shell as any)?.getFeatureState ? (shell as any).getFeatureState('action:inventory:items:create') : 'enabled';
-    const canCreate = (shell?.effectiveFlagsLoaded !== false) && createState === 'enabled';
+    const canCreate = (shell?.permissionsLoaded === true) && (shell?.hasPermission?.('items.create') ?? false) && (shell?.effectiveFlagsLoaded !== false) && createState === 'enabled';
     const deleteState = (shell as any)?.getFeatureState ? (shell as any).getFeatureState('action:inventory:items:delete') : 'enabled';
-    const canDelete = (shell?.effectiveFlagsLoaded !== false) && deleteState === 'enabled';
+    const canDelete = (shell?.permissionsLoaded === true) && (shell?.hasPermission?.('items.delete') ?? false) && (shell?.effectiveFlagsLoaded !== false) && deleteState === 'enabled';
 
     const [categories, setCategories] = useState<ItemCategory[]>([]);
     const [isLoading, setIsLoading] = useState(true);

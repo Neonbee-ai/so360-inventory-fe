@@ -68,8 +68,8 @@ beforeEach(() => {
   mockUseShellBridgeV.mockReturnValue({
     isFeatureEnabled: () => true,
     currentOrg: { id: 'org-1', name: 'Test Org' },
-    effectiveFlagsLoaded: true,
-    getFeatureState: () => 'enabled',
+    permissionsLoaded: true, hasPermission: () => true, hasAnyPermission: () => true, effectiveFlagsLoaded: true,
+    permissionsLoaded: true, hasPermission: () => true, hasAnyPermission: () => true, getFeatureState: () => 'enabled',
   });
 });
 
@@ -235,8 +235,8 @@ describe('VendorListPage', () => {
       mockUseShellBridgeV.mockReturnValue({
         isFeatureEnabled: () => true,
         currentOrg: { id: 'org-1', name: 'Test Org' },
-        effectiveFlagsLoaded: false,
-        getFeatureState: () => 'enabled',
+        permissionsLoaded: true, hasPermission: () => true, hasAnyPermission: () => true, effectiveFlagsLoaded: false,
+        permissionsLoaded: true, hasPermission: () => true, hasAnyPermission: () => true, getFeatureState: () => 'enabled',
       });
       render(<VendorListPage />);
       await waitFor(() => expect(screen.getByText('Vendors & Subcontractors')).toBeInTheDocument());
@@ -247,8 +247,8 @@ describe('VendorListPage', () => {
       mockUseShellBridgeV.mockReturnValue({
         isFeatureEnabled: () => true,
         currentOrg: { id: 'org-1', name: 'Test Org' },
-        effectiveFlagsLoaded: true,
-        getFeatureState: () => 'enabled',
+        permissionsLoaded: true, hasPermission: () => true, hasAnyPermission: () => true, effectiveFlagsLoaded: true,
+        permissionsLoaded: true, hasPermission: () => true, hasAnyPermission: () => true, getFeatureState: () => 'enabled',
       });
       render(<VendorListPage />);
       await waitFor(() => expect(screen.getByText('Add Vendor')).toBeInTheDocument());

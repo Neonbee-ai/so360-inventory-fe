@@ -90,8 +90,8 @@ beforeEach(() => {
   mockUpdateCategory.mockResolvedValue({});
   mockDeleteCategory.mockResolvedValue({});
   mockUseShellBridge.mockReturnValue({
-    effectiveFlagsLoaded: true,
-    getFeatureState: () => 'enabled',
+    permissionsLoaded: true, hasPermission: () => true, hasAnyPermission: () => true, effectiveFlagsLoaded: true,
+    permissionsLoaded: true, hasPermission: () => true, hasAnyPermission: () => true, getFeatureState: () => 'enabled',
   });
 });
 
@@ -217,8 +217,8 @@ describe('CategoriesPage', () => {
   describe('Given effectiveFlagsLoaded is false (matrix still resolving)', () => {
     it('When page renders / Then New Category button is not shown', async () => {
       mockUseShellBridge.mockReturnValue({
-        effectiveFlagsLoaded: false,
-        getFeatureState: () => 'enabled',
+        permissionsLoaded: true, hasPermission: () => true, hasAnyPermission: () => true, effectiveFlagsLoaded: false,
+        permissionsLoaded: true, hasPermission: () => true, hasAnyPermission: () => true, getFeatureState: () => 'enabled',
       });
       render(<CategoriesPage />);
       await waitFor(() => expect(screen.getByText('Product Categories')).toBeInTheDocument());
@@ -227,8 +227,8 @@ describe('CategoriesPage', () => {
 
     it('When effectiveFlagsLoaded becomes true with enabled flag / Then New Category button appears', async () => {
       mockUseShellBridge.mockReturnValue({
-        effectiveFlagsLoaded: true,
-        getFeatureState: () => 'enabled',
+        permissionsLoaded: true, hasPermission: () => true, hasAnyPermission: () => true, effectiveFlagsLoaded: true,
+        permissionsLoaded: true, hasPermission: () => true, hasAnyPermission: () => true, getFeatureState: () => 'enabled',
       });
       render(<CategoriesPage />);
       await waitFor(() => expect(screen.getByText('New Category')).toBeInTheDocument());

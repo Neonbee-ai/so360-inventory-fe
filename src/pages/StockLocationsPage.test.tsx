@@ -67,8 +67,8 @@ beforeEach(() => {
   mockUseShellBridgeLoc.mockReturnValue({
     isFeatureEnabled: () => true,
     currentOrg: { id: 'org-1', name: 'Test Org' },
-    effectiveFlagsLoaded: true,
-    getFeatureState: () => 'enabled',
+    permissionsLoaded: true, hasPermission: () => true, hasAnyPermission: () => true, effectiveFlagsLoaded: true,
+    permissionsLoaded: true, hasPermission: () => true, hasAnyPermission: () => true, getFeatureState: () => 'enabled',
   });
 });
 
@@ -238,8 +238,8 @@ describe('StockLocationsPage', () => {
       mockUseShellBridgeLoc.mockReturnValue({
         isFeatureEnabled: () => true,
         currentOrg: { id: 'org-1', name: 'Test Org' },
-        effectiveFlagsLoaded: false,
-        getFeatureState: () => 'enabled',
+        permissionsLoaded: true, hasPermission: () => true, hasAnyPermission: () => true, effectiveFlagsLoaded: false,
+        permissionsLoaded: true, hasPermission: () => true, hasAnyPermission: () => true, getFeatureState: () => 'enabled',
       });
       render(<StockLocationsPage />);
       await waitFor(() => expect(screen.getByText('Warehouses')).toBeInTheDocument());
@@ -250,8 +250,8 @@ describe('StockLocationsPage', () => {
       mockUseShellBridgeLoc.mockReturnValue({
         isFeatureEnabled: () => true,
         currentOrg: { id: 'org-1', name: 'Test Org' },
-        effectiveFlagsLoaded: true,
-        getFeatureState: () => 'enabled',
+        permissionsLoaded: true, hasPermission: () => true, hasAnyPermission: () => true, effectiveFlagsLoaded: true,
+        permissionsLoaded: true, hasPermission: () => true, hasAnyPermission: () => true, getFeatureState: () => 'enabled',
       });
       render(<StockLocationsPage />);
       await waitFor(() => expect(screen.getByText('New Warehouse')).toBeInTheDocument());

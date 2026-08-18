@@ -12,8 +12,8 @@ const ItemsPage = () => {
     const navigate = useNavigate();
     const { can } = useAuth();
     const shell = useShellBridge();
-    const createItemState = (shell as any)?.getFeatureState ? (shell as any).getFeatureState('action:inventory:items:create') : 'enabled';
-    const bulkImportState = (shell as any)?.getFeatureState ? (shell as any).getFeatureState('action:inventory:bulk_import') : 'enabled';
+    const createItemState = (shell?.permissionsLoaded === true && (shell?.hasPermission?.('items.create') ?? false)) ? ((shell as any)?.getFeatureState ? (shell as any).getFeatureState('action:inventory:items:create') : 'enabled') : 'hidden';
+    const bulkImportState = (shell?.permissionsLoaded === true && (shell?.hasPermission?.('items.import') ?? false)) ? ((shell as any)?.getFeatureState ? (shell as any).getFeatureState('action:inventory:bulk_import') : 'enabled') : 'hidden';
     const quotaChecks = useMemo(() => [{ module_code: 'inventory', quota_key: 'max_skus' }], []);
     const { getQuota } = useQuota({ checks: quotaChecks, orgId: shell?.currentOrg?.id || '' });
     const quotaData = getQuota('max_skus');

@@ -40,8 +40,8 @@ vi.mock('@so360/shell-context', () => ({
   }),
   useEntitlements: () => ({ can: () => true, isLoading: false }),
   useShellBridge: () => ({
-    getFeatureState: () => 'enabled',
-    effectiveFlagsLoaded: true,
+    permissionsLoaded: true, hasPermission: () => true, hasAnyPermission: () => true, getFeatureState: () => 'enabled',
+    permissionsLoaded: true, hasPermission: () => true, hasAnyPermission: () => true, effectiveFlagsLoaded: true,
     currentOrg: { id: 'mock-org-id' },
   }),
   useQuota: () => ({ getQuota: () => quotaState.data }),

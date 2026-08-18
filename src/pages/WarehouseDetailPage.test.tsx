@@ -80,8 +80,8 @@ beforeEach(() => {
   mockUpdateLocation.mockResolvedValue({});
   mockDeleteLocation.mockResolvedValue({});
   mockUseShellBridgeWD.mockReturnValue({
-    effectiveFlagsLoaded: true,
-    getFeatureState: () => 'enabled',
+    permissionsLoaded: true, hasPermission: () => true, hasAnyPermission: () => true, effectiveFlagsLoaded: true,
+    permissionsLoaded: true, hasPermission: () => true, hasAnyPermission: () => true, getFeatureState: () => 'enabled',
   });
 });
 
@@ -210,8 +210,8 @@ describe('WarehouseDetailPage', () => {
   describe('Given effectiveFlagsLoaded is false (matrix still resolving)', () => {
     it('When page renders / Then Edit and Delete warehouse buttons are not shown', async () => {
       mockUseShellBridgeWD.mockReturnValue({
-        effectiveFlagsLoaded: false,
-        getFeatureState: () => 'enabled',
+        permissionsLoaded: true, hasPermission: () => true, hasAnyPermission: () => true, effectiveFlagsLoaded: false,
+        permissionsLoaded: true, hasPermission: () => true, hasAnyPermission: () => true, getFeatureState: () => 'enabled',
       });
       render(<WarehouseDetailPage />);
       await waitFor(() => expect(screen.getByText('Main Warehouse')).toBeInTheDocument());
@@ -221,8 +221,8 @@ describe('WarehouseDetailPage', () => {
 
     it('When effectiveFlagsLoaded becomes true with enabled flag / Then Edit and Delete buttons appear', async () => {
       mockUseShellBridgeWD.mockReturnValue({
-        effectiveFlagsLoaded: true,
-        getFeatureState: () => 'enabled',
+        permissionsLoaded: true, hasPermission: () => true, hasAnyPermission: () => true, effectiveFlagsLoaded: true,
+        permissionsLoaded: true, hasPermission: () => true, hasAnyPermission: () => true, getFeatureState: () => 'enabled',
       });
       render(<WarehouseDetailPage />);
       await waitFor(() => {

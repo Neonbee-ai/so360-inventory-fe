@@ -26,6 +26,24 @@ vi.mock('../services/inventoryService', () => ({
   },
 }));
 
+// The Stock adjustment form is now gated on the stock.adjust role permission
+// (fail-closed). This suite exercises the form itself, so grant the permission
+// and an enabled feature state — while preserving every other shell-context export.
+vi.mock('@so360/shell-context', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@so360/shell-context')>();
+  return {
+    ...actual,
+    useShellBridge: () => ({
+      effectiveFlagsLoaded: true,
+      permissionsLoaded: true,
+      hasPermission: () => true,
+      hasAnyPermission: () => true,
+      getFeatureState: () => 'enabled',
+      currentOrg: { id: 'org-1' },
+    }),
+  };
+});
+
 import StockMovementRegisterPage from './StockMovementRegisterPage';
 import { inventoryService } from '../services/inventoryService';
 

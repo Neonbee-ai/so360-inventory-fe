@@ -26,7 +26,7 @@ const VendorListPage = () => {
     const { can } = useAuth();
     const shell = useShellBridge();
     const createVendorState = (shell as any)?.getFeatureState ? (shell as any).getFeatureState('action:inventory:vendors:create') : 'enabled';
-    const canCreateVendor = (shell?.effectiveFlagsLoaded !== false) && createVendorState === 'enabled';
+    const canCreateVendor = (shell?.permissionsLoaded === true) && (shell?.hasPermission?.('suppliers.create') ?? false) && (shell?.effectiveFlagsLoaded !== false) && createVendorState === 'enabled';
     const quotaChecks = useMemo(() => [{ module_code: 'inventory', quota_key: 'max_vendors' }], []);
     const { getQuota } = useQuota({ checks: quotaChecks, orgId: shell?.currentOrg?.id || '' });
     const quotaData = getQuota('max_vendors');

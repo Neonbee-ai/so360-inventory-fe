@@ -31,8 +31,8 @@ vi.mock('../services/inventoryService', () => ({
 
 vi.mock('@so360/shell-context', () => ({
   useShellBridge: () => ({
-    effectiveFlagsLoaded: true,
-    getFeatureState: () => 'enabled',
+    permissionsLoaded: true, hasPermission: () => true, hasAnyPermission: () => true, effectiveFlagsLoaded: true,
+    permissionsLoaded: true, hasPermission: () => true, hasAnyPermission: () => true, getFeatureState: () => 'enabled',
     currentOrg: { id: 'org-1' },
   }),
   useActivity: () => ({ recordActivity: vi.fn() }),

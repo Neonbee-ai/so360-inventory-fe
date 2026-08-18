@@ -19,7 +19,7 @@ const WarehouseDetailPage = () => {
     const { recordActivity } = useActivity();
     const shell = useShellBridge();
     const warehouseState = (shell as any)?.getFeatureState ? (shell as any).getFeatureState('action:inventory:warehouses:create') : 'enabled';
-    const canManageWarehouse = (shell?.effectiveFlagsLoaded !== false) && warehouseState === 'enabled';
+    const canManageWarehouse = (shell?.permissionsLoaded === true) && (shell?.hasPermission?.('warehouses.create') ?? false) && (shell?.effectiveFlagsLoaded !== false) && warehouseState === 'enabled';
     const [warehouse, setWarehouse] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
