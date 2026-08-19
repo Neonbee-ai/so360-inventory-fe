@@ -52,6 +52,11 @@ vi.mock('@so360/shell-context', () => ({
     accessToken: 'token-123',
     currentTenant: { id: 'tenant-1' },
     user: { id: 'user-1' },
+    // Entitlement surface the route-level PermissionGuard reads. These specs
+    // exercise routing/feature-gating, not RBAC, so default to unrestricted.
+    permissionsLoaded: true,
+    hasPermission: () => true,
+    hasAnyPermission: (...codes: string[]) => codes.length > 0,
     ...(h.hasGetState ? { getFeatureState: () => h.state } : {}),
   }),
 }));

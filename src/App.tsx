@@ -91,6 +91,33 @@ const FeatureGate = ({ flagKey, children }: { flagKey: string; children: React.R
     );
 };
 
+// Guards a route on the signed-in user's ROLE PERMISSIONS — the page-level
+// counterpart to the plan-flag gate. A plan flag answers "is this feature in
+// the plan"; this answers "may this user open it". Both must pass, so the two
+// compose rather than replace one another.
+//
+// Fail-closed: while entitlements resolve (or with no bridge at all) the page is
+// withheld rather than flashed. Denial renders an explanatory notice instead of
+// a blank screen so "not allowed" is distinguishable from "broken". Codes are
+// wildcard-aware via the shell bridge, matching the backend resolver exactly.
+const PermissionGuard = ({ permission, children }: { permission: string | string[]; children: React.ReactNode }) => {
+    const shell = useShellBridge();
+    if (!shell || !shell.permissionsLoaded) return null;
+    const codes = Array.isArray(permission) ? permission : [permission];
+    const allowed = shell.hasAnyPermission
+        ? shell.hasAnyPermission(...codes)
+        : codes.some((c: string) => shell.hasPermission?.(c) ?? false);
+    if (allowed) return <>{children}</>;
+    return (
+        <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
+            <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">You don&apos;t have access to this page</h2>
+            <p className="mt-2 max-w-md text-sm text-slate-600 dark:text-slate-400">
+                Your role doesn&apos;t include permission for this page. Ask an administrator if you need it.
+            </p>
+        </div>
+    );
+};
+
 const MfeShellInitializer = ({ children }: { children: React.ReactNode }) => {
     const shell = useShellBridge();
     const [isSynced, setIsSynced] = React.useState(false);
@@ -163,66 +190,66 @@ const App = () => {
                 <Route path="/" element={<ContextAwareIndex />} />
 
                 {/* ── Inventory routes (mounted at /inventory/*) ── */}
-                <Route path="items" element={<ItemsPage />} />
-                <Route path="items/bulk-import" element={<FeatureGate flagKey="action:inventory:bulk_import"><BulkImportPage /></FeatureGate>} />
-                <Route path="items/new" element={<ItemCreatePage />} />
-                <Route path="items/:id" element={<ItemDetailPage />} />
-                <Route path="locations" element={<FeatureGate flagKey="submodule:inventory:warehouses"><StockLocationsPage /></FeatureGate>} />
-                <Route path="warehouses/:id" element={<WarehouseDetailPage />} />
-                <Route path="overview" element={<StockOverviewPage />} />
-                <Route path="movements" element={<StockMovementRegisterPage />} />
+                <Route path="items" element={<PermissionGuard permission="items.read"><ItemsPage /></PermissionGuard>} />
+                <Route path="items/bulk-import" element={<PermissionGuard permission="items.import"><FeatureGate flagKey="action:inventory:bulk_import"><BulkImportPage /></FeatureGate></PermissionGuard>} />
+                <Route path="items/new" element={<PermissionGuard permission="items.create"><ItemCreatePage /></PermissionGuard>} />
+                <Route path="items/:id" element={<PermissionGuard permission="items.read"><ItemDetailPage /></PermissionGuard>} />
+                <Route path="locations" element={<PermissionGuard permission="warehouses.read"><FeatureGate flagKey="submodule:inventory:warehouses"><StockLocationsPage /></FeatureGate></PermissionGuard>} />
+                <Route path="warehouses/:id" element={<PermissionGuard permission="warehouses.read"><WarehouseDetailPage /></PermissionGuard>} />
+                <Route path="overview" element={<PermissionGuard permission="stock.view"><StockOverviewPage /></PermissionGuard>} />
+                <Route path="movements" element={<PermissionGuard permission="stock.view"><StockMovementRegisterPage /></PermissionGuard>} />
                 {/* Legacy paths kept as redirects — notification actionUrls and
                     bookmarks still point at /adjustments and /transfers. */}
                 <Route path="adjustments" element={<Navigate to="../movements?type=adjustment" replace />} />
                 <Route path="transfers" element={<Navigate to="../movements?type=transfer" replace />} />
-                <Route path="settings" element={<SettingsPage />} />
-                <Route path="settings/product-types" element={<FeatureGate flagKey="submodule:inventory:product_types"><ProductTypeSettingsPage /></FeatureGate>} />
-                <Route path="categories" element={<CategoriesPage />} />
+                <Route path="settings" element={<PermissionGuard permission={['items.update', 'warehouses.update']}><SettingsPage /></PermissionGuard>} />
+                <Route path="settings/product-types" element={<PermissionGuard permission={['items.update', 'warehouses.update']}><FeatureGate flagKey="submodule:inventory:product_types"><ProductTypeSettingsPage /></FeatureGate></PermissionGuard>} />
+                <Route path="categories" element={<PermissionGuard permission="categories.read"><CategoriesPage /></PermissionGuard>} />
 
                 {/* ── Procurement routes (mounted at /procurement/*) ── */}
-                <Route path="pr" element={<FeatureGate flagKey="submodule:inventory:procurement"><PRListPage /></FeatureGate>} />
-                <Route path="pr/:id" element={<FeatureGate flagKey="submodule:inventory:procurement"><PRDetailPage /></FeatureGate>} />
-                <Route path="po" element={<FeatureGate flagKey="submodule:inventory:procurement"><POListPage /></FeatureGate>} />
-                <Route path="po/:id" element={<FeatureGate flagKey="submodule:inventory:procurement"><PODetailPage /></FeatureGate>} />
-                <Route path="grn" element={<FeatureGate flagKey="submodule:inventory:procurement"><GRNListPage /></FeatureGate>} />
-                <Route path="grn/new" element={<FeatureGate flagKey="submodule:inventory:procurement"><GRNEntryPage /></FeatureGate>} />
-                <Route path="grn/:id" element={<FeatureGate flagKey="submodule:inventory:procurement"><GRNDetailPage /></FeatureGate>} />
-                <Route path="opening-balance" element={<FeatureGate flagKey="submodule:inventory:procurement"><OpeningBalancePage /></FeatureGate>} />
-                <Route path="rfq" element={<FeatureGate flagKey="submodule:inventory:rfq"><RFQListPage /></FeatureGate>} />
-                <Route path="rfq/:id" element={<FeatureGate flagKey="submodule:inventory:rfq"><RFQDetailPage /></FeatureGate>} />
-                <Route path="rfq/:id/compare" element={<FeatureGate flagKey="submodule:inventory:rfq"><RFQComparisonPage /></FeatureGate>} />
-                <Route path="quality" element={<FeatureGate flagKey="submodule:inventory:quality"><QualityInspectionPage /></FeatureGate>} />
-                <Route path="returns" element={<FeatureGate flagKey="submodule:inventory:returns"><VendorReturnsPage /></FeatureGate>} />
-                <Route path="dashboard" element={<FeatureGate flagKey="submodule:inventory:procurement"><ProcurementDashboardPage /></FeatureGate>} />
-                <Route path="reports" element={<FeatureGate flagKey="submodule:inventory:procurement"><ProcurementReportsPage /></FeatureGate>} />
-                <Route path="vendor-performance" element={<FeatureGate flagKey="submodule:inventory:procurement"><VendorPerformancePage /></FeatureGate>} />
-                <Route path="sales-demand" element={<FeatureGate flagKey="submodule:inventory:procurement"><SalesDemandPage /></FeatureGate>} />
+                <Route path="pr" element={<PermissionGuard permission="purchase_orders.read"><FeatureGate flagKey="submodule:inventory:procurement"><PRListPage /></FeatureGate></PermissionGuard>} />
+                <Route path="pr/:id" element={<PermissionGuard permission="purchase_orders.read"><FeatureGate flagKey="submodule:inventory:procurement"><PRDetailPage /></FeatureGate></PermissionGuard>} />
+                <Route path="po" element={<PermissionGuard permission="purchase_orders.read"><FeatureGate flagKey="submodule:inventory:procurement"><POListPage /></FeatureGate></PermissionGuard>} />
+                <Route path="po/:id" element={<PermissionGuard permission="purchase_orders.read"><FeatureGate flagKey="submodule:inventory:procurement"><PODetailPage /></FeatureGate></PermissionGuard>} />
+                <Route path="grn" element={<PermissionGuard permission="goods_receipts.read"><FeatureGate flagKey="submodule:inventory:procurement"><GRNListPage /></FeatureGate></PermissionGuard>} />
+                <Route path="grn/new" element={<PermissionGuard permission="goods_receipts.read"><FeatureGate flagKey="submodule:inventory:procurement"><GRNEntryPage /></FeatureGate></PermissionGuard>} />
+                <Route path="grn/:id" element={<PermissionGuard permission="goods_receipts.read"><FeatureGate flagKey="submodule:inventory:procurement"><GRNDetailPage /></FeatureGate></PermissionGuard>} />
+                <Route path="opening-balance" element={<PermissionGuard permission={['stock.receive', 'goods_receipts.read']}><FeatureGate flagKey="submodule:inventory:procurement"><OpeningBalancePage /></FeatureGate></PermissionGuard>} />
+                <Route path="rfq" element={<PermissionGuard permission="purchase_orders.read"><FeatureGate flagKey="submodule:inventory:rfq"><RFQListPage /></FeatureGate></PermissionGuard>} />
+                <Route path="rfq/:id" element={<PermissionGuard permission="purchase_orders.read"><FeatureGate flagKey="submodule:inventory:rfq"><RFQDetailPage /></FeatureGate></PermissionGuard>} />
+                <Route path="rfq/:id/compare" element={<PermissionGuard permission="purchase_orders.read"><FeatureGate flagKey="submodule:inventory:rfq"><RFQComparisonPage /></FeatureGate></PermissionGuard>} />
+                <Route path="quality" element={<PermissionGuard permission="goods_receipts.read"><FeatureGate flagKey="submodule:inventory:quality"><QualityInspectionPage /></FeatureGate></PermissionGuard>} />
+                <Route path="returns" element={<PermissionGuard permission="goods_receipts.read"><FeatureGate flagKey="submodule:inventory:returns"><VendorReturnsPage /></FeatureGate></PermissionGuard>} />
+                <Route path="dashboard" element={<PermissionGuard permission="procurement_analytics.read"><FeatureGate flagKey="submodule:inventory:procurement"><ProcurementDashboardPage /></FeatureGate></PermissionGuard>} />
+                <Route path="reports" element={<PermissionGuard permission="procurement_analytics.read"><FeatureGate flagKey="submodule:inventory:procurement"><ProcurementReportsPage /></FeatureGate></PermissionGuard>} />
+                <Route path="vendor-performance" element={<PermissionGuard permission="procurement_analytics.read"><FeatureGate flagKey="submodule:inventory:procurement"><VendorPerformancePage /></FeatureGate></PermissionGuard>} />
+                <Route path="sales-demand" element={<PermissionGuard permission="procurement_analytics.read"><FeatureGate flagKey="submodule:inventory:procurement"><SalesDemandPage /></FeatureGate></PermissionGuard>} />
 
                 {/* ── Vendor routes (mounted at /vendors/*) ── */}
-                <Route path="contracts" element={<ContractsPage />} />
-                <Route path=":id" element={<VendorDetailPage />} />
+                <Route path="contracts" element={<PermissionGuard permission="suppliers.read"><ContractsPage /></PermissionGuard>} />
+                <Route path=":id" element={<PermissionGuard permission="suppliers.read"><VendorDetailPage /></PermissionGuard>} />
 
                 {/* ── Backward-compat: old /inventory/procurement/... and /inventory/vendors/... ── */}
-                <Route path="procurement/pr" element={<FeatureGate flagKey="submodule:inventory:procurement"><PRListPage /></FeatureGate>} />
-                <Route path="procurement/pr/:id" element={<FeatureGate flagKey="submodule:inventory:procurement"><PRDetailPage /></FeatureGate>} />
-                <Route path="procurement/po" element={<FeatureGate flagKey="submodule:inventory:procurement"><POListPage /></FeatureGate>} />
-                <Route path="procurement/po/:id" element={<FeatureGate flagKey="submodule:inventory:procurement"><PODetailPage /></FeatureGate>} />
-                <Route path="procurement/grn" element={<FeatureGate flagKey="submodule:inventory:procurement"><GRNListPage /></FeatureGate>} />
-                <Route path="procurement/grn/new" element={<FeatureGate flagKey="submodule:inventory:procurement"><GRNEntryPage /></FeatureGate>} />
-                <Route path="procurement/grn/:id" element={<FeatureGate flagKey="submodule:inventory:procurement"><GRNDetailPage /></FeatureGate>} />
-                <Route path="procurement/opening-balance" element={<FeatureGate flagKey="submodule:inventory:procurement"><OpeningBalancePage /></FeatureGate>} />
-                <Route path="procurement/rfq" element={<FeatureGate flagKey="submodule:inventory:rfq"><RFQListPage /></FeatureGate>} />
-                <Route path="procurement/rfq/:id" element={<FeatureGate flagKey="submodule:inventory:rfq"><RFQDetailPage /></FeatureGate>} />
-                <Route path="procurement/rfq/:id/compare" element={<FeatureGate flagKey="submodule:inventory:rfq"><RFQComparisonPage /></FeatureGate>} />
-                <Route path="procurement/quality" element={<FeatureGate flagKey="submodule:inventory:quality"><QualityInspectionPage /></FeatureGate>} />
-                <Route path="procurement/returns" element={<FeatureGate flagKey="submodule:inventory:returns"><VendorReturnsPage /></FeatureGate>} />
-                <Route path="procurement/dashboard" element={<FeatureGate flagKey="submodule:inventory:procurement"><ProcurementDashboardPage /></FeatureGate>} />
-                <Route path="procurement/reports" element={<FeatureGate flagKey="submodule:inventory:procurement"><ProcurementReportsPage /></FeatureGate>} />
-                <Route path="procurement/vendor-performance" element={<FeatureGate flagKey="submodule:inventory:procurement"><VendorPerformancePage /></FeatureGate>} />
-                <Route path="procurement/sales-demand" element={<FeatureGate flagKey="submodule:inventory:procurement"><SalesDemandPage /></FeatureGate>} />
-                <Route path="vendors" element={<VendorListPage />} />
-                <Route path="vendors/:id" element={<VendorDetailPage />} />
-                <Route path="vendors/contracts" element={<ContractsPage />} />
+                <Route path="procurement/pr" element={<PermissionGuard permission="purchase_orders.read"><FeatureGate flagKey="submodule:inventory:procurement"><PRListPage /></FeatureGate></PermissionGuard>} />
+                <Route path="procurement/pr/:id" element={<PermissionGuard permission="purchase_orders.read"><FeatureGate flagKey="submodule:inventory:procurement"><PRDetailPage /></FeatureGate></PermissionGuard>} />
+                <Route path="procurement/po" element={<PermissionGuard permission="purchase_orders.read"><FeatureGate flagKey="submodule:inventory:procurement"><POListPage /></FeatureGate></PermissionGuard>} />
+                <Route path="procurement/po/:id" element={<PermissionGuard permission="purchase_orders.read"><FeatureGate flagKey="submodule:inventory:procurement"><PODetailPage /></FeatureGate></PermissionGuard>} />
+                <Route path="procurement/grn" element={<PermissionGuard permission="goods_receipts.read"><FeatureGate flagKey="submodule:inventory:procurement"><GRNListPage /></FeatureGate></PermissionGuard>} />
+                <Route path="procurement/grn/new" element={<PermissionGuard permission="goods_receipts.read"><FeatureGate flagKey="submodule:inventory:procurement"><GRNEntryPage /></FeatureGate></PermissionGuard>} />
+                <Route path="procurement/grn/:id" element={<PermissionGuard permission="goods_receipts.read"><FeatureGate flagKey="submodule:inventory:procurement"><GRNDetailPage /></FeatureGate></PermissionGuard>} />
+                <Route path="procurement/opening-balance" element={<PermissionGuard permission={['stock.receive', 'goods_receipts.read']}><FeatureGate flagKey="submodule:inventory:procurement"><OpeningBalancePage /></FeatureGate></PermissionGuard>} />
+                <Route path="procurement/rfq" element={<PermissionGuard permission="purchase_orders.read"><FeatureGate flagKey="submodule:inventory:rfq"><RFQListPage /></FeatureGate></PermissionGuard>} />
+                <Route path="procurement/rfq/:id" element={<PermissionGuard permission="purchase_orders.read"><FeatureGate flagKey="submodule:inventory:rfq"><RFQDetailPage /></FeatureGate></PermissionGuard>} />
+                <Route path="procurement/rfq/:id/compare" element={<PermissionGuard permission="purchase_orders.read"><FeatureGate flagKey="submodule:inventory:rfq"><RFQComparisonPage /></FeatureGate></PermissionGuard>} />
+                <Route path="procurement/quality" element={<PermissionGuard permission="goods_receipts.read"><FeatureGate flagKey="submodule:inventory:quality"><QualityInspectionPage /></FeatureGate></PermissionGuard>} />
+                <Route path="procurement/returns" element={<PermissionGuard permission="goods_receipts.read"><FeatureGate flagKey="submodule:inventory:returns"><VendorReturnsPage /></FeatureGate></PermissionGuard>} />
+                <Route path="procurement/dashboard" element={<PermissionGuard permission="procurement_analytics.read"><FeatureGate flagKey="submodule:inventory:procurement"><ProcurementDashboardPage /></FeatureGate></PermissionGuard>} />
+                <Route path="procurement/reports" element={<PermissionGuard permission="procurement_analytics.read"><FeatureGate flagKey="submodule:inventory:procurement"><ProcurementReportsPage /></FeatureGate></PermissionGuard>} />
+                <Route path="procurement/vendor-performance" element={<PermissionGuard permission="procurement_analytics.read"><FeatureGate flagKey="submodule:inventory:procurement"><VendorPerformancePage /></FeatureGate></PermissionGuard>} />
+                <Route path="procurement/sales-demand" element={<PermissionGuard permission="procurement_analytics.read"><FeatureGate flagKey="submodule:inventory:procurement"><SalesDemandPage /></FeatureGate></PermissionGuard>} />
+                <Route path="vendors" element={<PermissionGuard permission="suppliers.read"><VendorListPage /></PermissionGuard>} />
+                <Route path="vendors/:id" element={<PermissionGuard permission="suppliers.read"><VendorDetailPage /></PermissionGuard>} />
+                <Route path="vendors/contracts" element={<PermissionGuard permission="suppliers.read"><ContractsPage /></PermissionGuard>} />
 
                 {/* Legacy Redirects */}
                 <Route path="products" element={<Navigate to="../items" replace />} />
