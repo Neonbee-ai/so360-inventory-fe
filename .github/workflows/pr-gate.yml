@@ -1,0 +1,19 @@
+# Verification only — this workflow has no deploy capability by construction.
+# See neonbee-devops/neonbee-pr-gate.yml for why that is structural.
+name: PR Gate
+
+on:
+  pull_request:
+    branches: [develop, qa, main]
+
+concurrency:
+  group: pr-gate-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  gate:
+    uses: Neonbee-ai/neonbee-devops/.github/workflows/neonbee-pr-gate.yml@main
+    with:
+      service_name: inventory-fe-pr
+      deploy_type: vite-mfe
+    secrets: inherit
