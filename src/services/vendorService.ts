@@ -56,7 +56,10 @@ class VendorService {
                     ? 'Vendor API endpoint not reachable — please contact support.'
                     : `Request failed (${response.status} ${response.statusText})`;
             }
-            throw new Error(message);
+            // Carry the HTTP status on the Error so callers can tell an expected
+            // authorization denial (403) apart from a genuine server/network
+            // failure and message the user accordingly.
+            throw Object.assign(new Error(message), { status: response.status });
         }
 
         return response.json();

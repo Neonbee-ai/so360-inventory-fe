@@ -4,11 +4,27 @@ import { procurementService } from '../../services/procurementService';
 import { vendorService } from '../../services/vendorService';
 import { useBusinessSettings, useActivity, useShellBridge, useQuota } from '@so360/shell-context';
 import { useInventoryFormatters } from '../../utils/formatters';
+import { useAuth } from '../../hooks/useAuth';
 import ItemSearchSelector from '../../components/ItemSearchSelector';
 import { QuotaBar, QuotaGate, FeatureGate, toast, getErrorMessage } from '@so360/design-system';
 
+/**
+ * A 403 from an RBAC guard is an *expected* outcome for a role without the
+ * permission — not a system failure. Detect it so the page can explain the
+ * restriction instead of claiming the module is broken.
+ */
+const isForbidden = (error: any): boolean =>
+    error?.status === 403 ||
+    /\b403\b|forbidden|requires one of these permissions/i.test(String(error?.message || ''));
+
+const VENDOR_PERMISSION_MESSAGE =
+    'You do not have permission to view vendor information required for Purchase Orders. Please contact your administrator.';
+
+type PageNotice = { kind: 'permission' | 'error'; message: string } | null;
+
 const POListPage = () => {
     const shell = useShellBridge();
+    const { can, isLoading: permissionsLoading } = useAuth();
     const createPoState = (shell as any)?.getFeatureState ? (shell as any).getFeatureState('action:inventory:procurement:create_po') : 'enabled';
     const quotaChecks = useMemo(() => [{ module_code: 'inventory', quota_key: 'max_po_per_month' }], []);
     const { getQuota } = useQuota({ checks: quotaChecks, orgId: shell?.currentOrg?.id || '' });
@@ -20,7 +36,8 @@ const POListPage = () => {
     const { recordActivity } = useActivity();
     const [pos, setPos] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [fetchError, setFetchError] = useState<string | null>(null);
+    const [fetchError, setFetchError] = useState<PageNotice>(null);
+    const [vendorNotice, setVendorNotice] = useState<PageNotice>(null);
     const [showForm, setShowForm] = useState(false);
     const [vendors, setVendors] = useState<any[]>([]);
     const [approvedPrs, setApprovedPrs] = useState<any[]>([]);
@@ -32,9 +49,13 @@ const POListPage = () => {
     const [items, setItems] = useState<any[]>([]);
     const [submitting, setSubmitting] = useState(false);
 
+    // Wait for the Shell to resolve permissions before firing anything: issuing
+    // the vendor request first and reading the 403 afterwards is what produced
+    // the console noise and the misleading "failed to load" banner.
     useEffect(() => {
+        if (permissionsLoading) return;
         fetchData();
-    }, []);
+    }, [permissionsLoading]);
 
     // Detect navigation state from PRDetailPage conversion
     useEffect(() => {
@@ -67,25 +88,80 @@ const POListPage = () => {
         }
     }, [location.state]);
 
+    const unwrap = (payload: any) => (Array.isArray(payload) ? payload : (payload?.data || []));
+
     const fetchData = async () => {
-        try {
-            const [poData, vendorData] = await Promise.all([
-                procurementService.getPOs(),
-                vendorService.getVendors(),
-            ]);
-            setPos(Array.isArray(poData) ? poData : (poData?.data || []));
-            setVendors(Array.isArray(vendorData) ? vendorData : (vendorData?.data || []));
-        } catch (error) {
-            console.error('Failed to fetch POs/vendors', error);
-            setFetchError('Failed to load purchase orders. Please refresh the page.');
-        } finally {
+        setLoading(true);
+        setFetchError(null);
+
+        if (!can('purchase_orders.read')) {
+            setPos([]);
+            setVendors([]);
+            setVendorNotice(null);
+            setFetchError({
+                kind: 'permission',
+                message: 'You do not have permission to view purchase orders. Please contact your administrator.',
+            });
             setLoading(false);
+            return;
         }
+
+        // Vendors are an *auxiliary* dependency of this page — they populate the
+        // vendor column labels and the create-PO form. Skip the call entirely
+        // when the role lacks `suppliers.read` rather than firing a request we
+        // already know the backend will reject.
+        const canReadVendors = can('suppliers.read');
+        setVendorNotice(canReadVendors ? null : { kind: 'permission', message: VENDOR_PERMISSION_MESSAGE });
+
+        // Settled (not `all`) so a vendor denial can never discard purchase
+        // orders that loaded perfectly well.
+        const [poResult, vendorResult] = await Promise.allSettled([
+            procurementService.getPOs(),
+            canReadVendors ? vendorService.getVendors() : Promise.resolve([]),
+        ]);
+
+        if (poResult.status === 'fulfilled') {
+            setPos(unwrap(poResult.value));
+        } else {
+            setPos([]);
+            if (isForbidden(poResult.reason)) {
+                setFetchError({
+                    kind: 'permission',
+                    message: 'You do not have permission to view purchase orders. Please contact your administrator.',
+                });
+            } else {
+                console.error('Failed to fetch POs', poResult.reason);
+                setFetchError({ kind: 'error', message: 'Failed to load purchase orders. Please try again.' });
+            }
+        }
+
+        if (vendorResult.status === 'fulfilled') {
+            setVendors(unwrap(vendorResult.value));
+        } else {
+            setVendors([]);
+            if (isForbidden(vendorResult.reason)) {
+                setVendorNotice({ kind: 'permission', message: VENDOR_PERMISSION_MESSAGE });
+            } else {
+                console.error('Failed to fetch vendors', vendorResult.reason);
+                setVendorNotice({
+                    kind: 'error',
+                    message: 'Vendor information could not be loaded. Purchase orders are still shown below.',
+                });
+            }
+        }
+
+        setLoading(false);
         // PRs loaded independently so a failure doesn't block the PO list
         loadPRs();
     };
 
     const loadPRs = async () => {
+        // PRs are guarded by the same `purchase_orders.read` code as the PO list.
+        if (!can('purchase_orders.read')) {
+            setAllPrs([]);
+            setApprovedPrs([]);
+            return;
+        }
         try {
             const prData = await procurementService.getPRs();
             const prArray = Array.isArray(prData) ? prData : (prData?.data || []);
@@ -94,7 +170,11 @@ const POListPage = () => {
                 ['approved', 'partially_converted', 'converted_to_po'].includes(p.status)
             ));
         } catch (error) {
-            console.error('Failed to fetch PRs', error);
+            setAllPrs([]);
+            setApprovedPrs([]);
+            // A 403 here is an expected role outcome — the PR shortcuts simply
+            // stay hidden. Only surface genuine failures to the console.
+            if (!isForbidden(error)) console.error('Failed to fetch PRs', error);
         }
     };
 
@@ -227,8 +307,47 @@ const POListPage = () => {
     return (
         <div className="p-8 space-y-8 animate-in fade-in duration-700">
             {fetchError && (
-                <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl flex items-center gap-3 text-rose-400 text-sm">
-                    <span>⚠</span> {fetchError}
+                <div
+                    role={fetchError.kind === 'error' ? 'alert' : 'status'}
+                    className={`p-4 rounded-xl flex items-center gap-3 text-sm ${
+                        fetchError.kind === 'permission'
+                            ? 'bg-amber-500/10 border border-amber-500/20 text-amber-300'
+                            : 'bg-rose-500/10 border border-rose-500/20 text-rose-400'
+                    }`}
+                >
+                    <span>{fetchError.kind === 'permission' ? '🔒' : '⚠'}</span>
+                    <span className="flex-1">{fetchError.message}</span>
+                    {/* Retry is only meaningful for transient failures — retrying a
+                        permission denial would just fail identically. */}
+                    {fetchError.kind === 'error' && (
+                        <button
+                            onClick={fetchData}
+                            className="px-3 py-1.5 rounded-lg bg-rose-500/20 border border-rose-500/30 text-rose-200 text-xs font-bold hover:bg-rose-500/30 transition-colors"
+                        >
+                            Retry
+                        </button>
+                    )}
+                </div>
+            )}
+            {vendorNotice && (
+                <div
+                    role={vendorNotice.kind === 'error' ? 'alert' : 'status'}
+                    className={`p-4 rounded-xl flex items-center gap-3 text-sm ${
+                        vendorNotice.kind === 'permission'
+                            ? 'bg-amber-500/10 border border-amber-500/20 text-amber-300'
+                            : 'bg-rose-500/10 border border-rose-500/20 text-rose-400'
+                    }`}
+                >
+                    <span>{vendorNotice.kind === 'permission' ? '🔒' : '⚠'}</span>
+                    <span className="flex-1">{vendorNotice.message}</span>
+                    {vendorNotice.kind === 'error' && (
+                        <button
+                            onClick={fetchData}
+                            className="px-3 py-1.5 rounded-lg bg-rose-500/20 border border-rose-500/30 text-rose-200 text-xs font-bold hover:bg-rose-500/30 transition-colors"
+                        >
+                            Retry
+                        </button>
+                    )}
                 </div>
             )}
             <div className="flex items-center justify-between gap-4">
@@ -283,7 +402,9 @@ const POListPage = () => {
                     >
                         <button
                             onClick={openNewPOForm}
-                            className="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-semibold transition-all shadow-lg shadow-blue-900/20 active:scale-95 flex items-center gap-2"
+                            disabled={!!vendorNotice}
+                            title={vendorNotice ? vendorNotice.message : undefined}
+                            className="px-6 py-3 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-blue-600 text-white rounded-xl font-semibold transition-all shadow-lg shadow-blue-900/20 active:scale-95 flex items-center gap-2"
                         >
                             <span className="text-xl leading-none">+</span> New PO
                         </button>

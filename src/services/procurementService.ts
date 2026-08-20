@@ -33,7 +33,9 @@ class ProcurementService {
             const errorBody = await response.json().catch(() => ({ message: 'API Request failed' }));
             const rawMsg = errorBody.message;
             const msg = Array.isArray(rawMsg) ? rawMsg.join(', ') : (rawMsg || 'API Request failed');
-            throw new Error(msg);
+            // Carry the HTTP status so callers can distinguish an expected 403
+            // (missing permission) from a genuine server/network failure.
+            throw Object.assign(new Error(msg), { status: response.status });
         }
 
         return response.json();

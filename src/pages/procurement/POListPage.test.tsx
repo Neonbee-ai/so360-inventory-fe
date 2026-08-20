@@ -27,7 +27,18 @@ vi.mock('react-router-dom', () => ({
 }));
 
 const mockUseShellBridgePO = vi.fn();
-vi.mock('@so360/shell-context', () => ({
+// Mutable shell used by useAuth() via ShellContext — tests flip `granted` to
+// simulate roles with/without `suppliers.read`.
+const shellCtxValue = vi.hoisted(() => {
+  const ctx: any = {
+    permissionsLoaded: true,
+    granted: ['purchase_orders.read', 'suppliers.read'],
+    hasPermission: (code: string) => ctx.granted.includes(code),
+  };
+  return ctx;
+});
+vi.mock('@so360/shell-context', async () => ({
+  ShellContext: (await import('react')).createContext<any>(shellCtxValue),
   useBusinessSettings: () => ({ settings: { base_currency: 'USD', is_tax_inclusive_pricing: false } }),
   useActivity: () => ({ recordActivity: async () => {} }),
   useShellBridge: (...args: any[]) => mockUseShellBridgePO(...args),
@@ -65,6 +76,8 @@ const makePO = (overrides: any = {}) => ({
 
 beforeEach(() => {
   vi.clearAllMocks();
+  shellCtxValue.permissionsLoaded = true;
+  shellCtxValue.granted = ['purchase_orders.read', 'suppliers.read'];
   mockGetPOs.mockResolvedValue([]);
   mockGetVendors.mockResolvedValue([]);
   mockGetPRs.mockResolvedValue([]);
@@ -262,6 +275,95 @@ describe('POListPage', () => {
       });
       render(<POListPage />);
       await waitFor(() => expect(screen.getByText('New PO')).toBeInTheDocument());
+    });
+  });
+
+  describe('Given a role without suppliers.read', () => {
+    beforeEach(() => {
+      shellCtxValue.granted = ['purchase_orders.read'];
+    });
+
+    it('When the page loads / Then the vendor API is never called', async () => {
+      render(<POListPage />);
+      await waitFor(() => expect(mockGetPOs).toHaveBeenCalled());
+      expect(mockGetVendors).not.toHaveBeenCalled();
+    });
+
+    it('When the page loads / Then a permission message is shown instead of a load failure', async () => {
+      render(<POListPage />);
+      await waitFor(() =>
+        expect(screen.getByText(/do not have permission to view vendor information/i)).toBeInTheDocument(),
+      );
+      expect(screen.queryByText(/Failed to load purchase orders/i)).not.toBeInTheDocument();
+    });
+
+    it('When purchase orders exist / Then they still render', async () => {
+      mockGetPOs.mockResolvedValue([makePO()]);
+      render(<POListPage />);
+      await waitFor(() => expect(screen.getByText('#PO-2025-0001')).toBeInTheDocument());
+    });
+
+    it('When vendors are unavailable / Then the New PO button is disabled', async () => {
+      render(<POListPage />);
+      await waitFor(() =>
+        expect(screen.getByText(/do not have permission to view vendor information/i)).toBeInTheDocument(),
+      );
+      expect(screen.getByText('New PO').closest('button')).toBeDisabled();
+    });
+  });
+
+  describe('Given the vendor API returns 403 despite a granted permission', () => {
+    it('When vendors 403 / Then POs still render and no error is logged', async () => {
+      const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      mockGetPOs.mockResolvedValue([makePO()]);
+      mockGetVendors.mockRejectedValue(Object.assign(new Error('Forbidden'), { status: 403 }));
+      render(<POListPage />);
+      await waitFor(() => expect(screen.getByText('#PO-2025-0001')).toBeInTheDocument());
+      expect(screen.getByText(/do not have permission to view vendor information/i)).toBeInTheDocument();
+      expect(spy).not.toHaveBeenCalled();
+      spy.mockRestore();
+    });
+  });
+
+  describe('Given the purchase orders API fails', () => {
+    it('When it fails with a server error / Then a generic error with a Retry action is shown', async () => {
+      const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      mockGetPOs.mockRejectedValue(Object.assign(new Error('boom'), { status: 500 }));
+      render(<POListPage />);
+      await waitFor(() =>
+        expect(screen.getByText(/Failed to load purchase orders/i)).toBeInTheDocument(),
+      );
+      expect(screen.getByText('Retry')).toBeInTheDocument();
+      spy.mockRestore();
+    });
+
+    it('When it fails with 403 / Then a permission message is shown with no Retry action', async () => {
+      mockGetPOs.mockRejectedValue(Object.assign(new Error('Forbidden'), { status: 403 }));
+      render(<POListPage />);
+      await waitFor(() =>
+        expect(screen.getByText(/do not have permission to view purchase orders/i)).toBeInTheDocument(),
+      );
+      expect(screen.queryByText('Retry')).not.toBeInTheDocument();
+    });
+
+    it('When Retry is clicked after a transient failure / Then the data is refetched', async () => {
+      const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      mockGetPOs.mockRejectedValueOnce(new Error('network down')).mockResolvedValue([makePO()]);
+      render(<POListPage />);
+      await waitFor(() => expect(screen.getByText('Retry')).toBeInTheDocument());
+      fireEvent.click(screen.getByText('Retry'));
+      await waitFor(() => expect(screen.getByText('#PO-2025-0001')).toBeInTheDocument());
+      spy.mockRestore();
+    });
+  });
+
+  describe('Given shell permissions are still loading', () => {
+    it('When permissionsLoaded is false / Then no restricted request is issued yet', async () => {
+      shellCtxValue.permissionsLoaded = false;
+      render(<POListPage />);
+      await waitFor(() => expect(screen.getByText('Purchase Orders')).toBeInTheDocument());
+      expect(mockGetPOs).not.toHaveBeenCalled();
+      expect(mockGetVendors).not.toHaveBeenCalled();
     });
   });
 });

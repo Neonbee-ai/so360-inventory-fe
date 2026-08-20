@@ -200,5 +200,19 @@ describe('vendorService', () => {
       );
       await expect(vendorService.getVendors()).rejects.toThrow('Request failed (200');
     });
+
+    it('When API returns 403 / Then the thrown error carries status 403 so callers can detect a permission denial', async () => {
+      mockFetch.mockReturnValue(
+        jsonFail(403, 'This action requires one of these permissions: suppliers.read')
+      );
+      const err = await vendorService.getVendors().catch((e) => e);
+      expect(err.status).toBe(403);
+    });
+
+    it('When API returns 500 / Then the thrown error carries status 500', async () => {
+      mockFetch.mockReturnValue(jsonFail(500, 'Server error'));
+      const err = await vendorService.getVendors().catch((e) => e);
+      expect(err.status).toBe(500);
+    });
   });
 });
