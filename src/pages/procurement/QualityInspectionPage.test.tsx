@@ -180,6 +180,14 @@ describe('QualityInspectionPage', () => {
             fireEvent.click(screen.getByText('+ Open Inspection'));
 
             await waitFor(() => expect(mockGetGRNs).toHaveBeenCalled());
+            // The fetch resolving is not the same as React having committed the
+            // options: changing a <select> to a value with no matching <option>
+            // leaves it '', the submit warns, and createInspection never fires.
+            // Wait for the option list itself before selecting.
+            await waitFor(() => {
+                const select = screen.getByLabelText('Goods Receipt') as HTMLSelectElement;
+                expect(select.options.length).toBeGreaterThan(1);
+            });
             fireEvent.change(screen.getByLabelText('Goods Receipt'), { target: { value: 'grn-1' } });
             fireEvent.click(screen.getByRole('button', { name: 'Open Inspection' }));
 
