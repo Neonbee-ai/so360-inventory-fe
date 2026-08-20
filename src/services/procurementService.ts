@@ -6,6 +6,7 @@ class ProcurementService {
 
     constructor() {
         const win = typeof window !== 'undefined' ? (window as any) : undefined;
+        /* v8 ignore next -- import.meta.env is always present under Vite/vitest; the `|| {}` only guards non-Vite bundlers and is unreachable in tests */
         const env = (import.meta as any)?.env || {};
         const resolved =
             (win && win.VITE_SO360_INVENTORY_API) ||

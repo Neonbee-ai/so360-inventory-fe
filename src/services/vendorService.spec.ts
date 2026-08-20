@@ -214,5 +214,105 @@ describe('vendorService', () => {
       const err = await vendorService.getVendors().catch((e) => e);
       expect(err.status).toBe(500);
     });
+
+    it('When the body carries `error` rather than `message` / Then that reason is used', async () => {
+      mockFetch.mockReturnValue(
+        Promise.resolve({ ok: false, status: 409, json: () => Promise.resolve({ error: 'Duplicate vendor' }) } as any)
+      );
+      await expect(vendorService.getVendors()).rejects.toThrow('Duplicate vendor');
+    });
+
+    it('When the body is empty JSON / Then the status is reported', async () => {
+      mockFetch.mockReturnValue(
+        Promise.resolve({ ok: false, status: 418, json: () => Promise.resolve({}) } as any)
+      );
+      await expect(vendorService.getVendors()).rejects.toThrow('Request failed (418)');
+    });
+
+    it('When a 405 has an unparseable body / Then an actionable reachability message is used', async () => {
+      mockFetch.mockReturnValue(
+        Promise.resolve({
+          ok: false,
+          status: 405,
+          statusText: 'Method Not Allowed',
+          json: () => Promise.reject(new SyntaxError('bad json')),
+        } as any)
+      );
+      await expect(vendorService.getVendors()).rejects.toThrow(
+        'Vendor API endpoint not reachable — please contact support.'
+      );
+    });
   });
+
+  describe('Given request headers with nothing resolved yet', () => {
+    it('When tenant, org and user are unset / Then the headers are sent empty rather than undefined', async () => {
+      mockFetch.mockReturnValue(jsonOk([]));
+      inventoryService.setTenantId('' as any);
+      inventoryService.setOrgId('' as any);
+      vendorService.setUserId('' as any);
+      await vendorService.getVendors();
+      const [, opts] = mockFetch.mock.calls[0];
+      expect(opts.headers['X-Tenant-Id']).toBe('');
+      expect(opts.headers['X-Org-Id']).toBe('');
+      expect(opts.headers['x-user-id']).toBe('');
+    });
+  });
+});
+
+/**
+ * The gateway origin is resolved once in the constructor, so these cases
+ * re-import the module under different ambient conditions.
+ */
+describe('vendorService — gateway origin resolution', () => {
+  const loadWith = async (win: any) => {
+    vi.resetModules();
+    if (win === undefined) vi.stubGlobal('window', undefined);
+    else vi.stubGlobal('window', win);
+    const mod = await import('./vendorService');
+    const inv = (await import('./inventoryService')).inventoryService;
+    inv.setOrgId('org-1');
+    inv.setAccessToken('tok');
+    return mod.vendorService;
+  };
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.resetModules();
+  });
+
+  it('Given a shell-injected API global / When resolving / Then that origin wins', async () => {
+    const svc = await loadWith({ VITE_SO360_INVENTORY_API: 'https://gateway.test/inventory/', location: { hostname: 'localhost' } });
+    mockFetch.mockReturnValue(jsonOk([]));
+    await svc.getVendors();
+    expect(mockFetch.mock.calls[0][0]).toBe('https://gateway.test/inventory/v1/vendors/org-1');
+  });
+
+  it('Given the apex Neonbee host / When resolving / Then the production gateway is used', async () => {
+    const svc = await loadWith({ location: { hostname: 'neonbee.app' } });
+    mockFetch.mockReturnValue(jsonOk([]));
+    await svc.getVendors();
+    expect(mockFetch.mock.calls[0][0]).toContain('https://api.neonbee.app/inventory/v1/vendors');
+  });
+
+  it('Given a Neonbee subdomain / When resolving / Then the production gateway is used', async () => {
+    const svc = await loadWith({ location: { hostname: 'dashboard.neonbee.app' } });
+    mockFetch.mockReturnValue(jsonOk([]));
+    await svc.getVendors();
+    expect(mockFetch.mock.calls[0][0]).toContain('https://api.neonbee.app/inventory/v1/vendors');
+  });
+
+  it('Given any other host / When resolving / Then it falls back to the local backend', async () => {
+    const svc = await loadWith({ location: { hostname: 'staging.example.com' } });
+    mockFetch.mockReturnValue(jsonOk([]));
+    await svc.getVendors();
+    expect(mockFetch.mock.calls[0][0]).toContain('http://localhost:3006/v1/vendors');
+  });
+
+  it('Given no window at all (SSR) / When resolving / Then it falls back to the local backend', async () => {
+    const svc = await loadWith(undefined);
+    mockFetch.mockReturnValue(jsonOk([]));
+    await svc.getVendors();
+    expect(mockFetch.mock.calls[0][0]).toContain('http://localhost:3006/v1/vendors');
+  });
+
 });

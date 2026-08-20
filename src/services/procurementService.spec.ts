@@ -296,5 +296,127 @@ describe('procurementService', () => {
       const err = await procurementService.getPOs().catch((e) => e);
       expect(err.status).toBe(500);
     });
+
+    it('When validation returns a list of messages / Then they are joined into one reason', async () => {
+      mockFetch.mockReturnValue(
+        Promise.resolve({
+          ok: false,
+          status: 400,
+          json: () => Promise.resolve({ message: ['vendor_id must be a UUID', 'items should not be empty'] }),
+        } as any)
+      );
+      await expect(procurementService.getPOs()).rejects.toThrow(
+        'vendor_id must be a UUID, items should not be empty'
+      );
+    });
+
+    it('When the error body carries no message / Then a generic reason is used', async () => {
+      mockFetch.mockReturnValue(
+        Promise.resolve({ ok: false, status: 500, json: () => Promise.resolve({}) } as any)
+      );
+      await expect(procurementService.getPOs()).rejects.toThrow('API Request failed');
+    });
+
+    it('When the error body is unparseable / Then a generic reason is used', async () => {
+      mockFetch.mockReturnValue(
+        Promise.resolve({ ok: false, status: 502, json: () => Promise.reject(new SyntaxError('bad json')) } as any)
+      );
+      await expect(procurementService.getPOs()).rejects.toThrow('API Request failed');
+    });
+  });
+
+  describe('Given request headers with nothing resolved yet', () => {
+    it('When tenant and org are unset / Then the headers are sent empty rather than undefined', async () => {
+      mockFetch.mockReturnValue(jsonOk([]));
+      inventoryService.setTenantId('' as any);
+      inventoryService.setOrgId('' as any);
+      await procurementService.getPOs();
+      const [, opts] = mockFetch.mock.calls[0];
+      expect(opts.headers['X-Tenant-Id']).toBe('');
+      expect(opts.headers['X-Org-Id']).toBe('');
+    });
+  });
+
+  describe('Given sales demand', () => {
+    it('When called without filters / Then it fetches the org demand unfiltered', async () => {
+      mockFetch.mockReturnValue(jsonOk([]));
+      await procurementService.getSalesDemand();
+      expect(mockFetch.mock.calls[0][0]).toContain('/v1/procurement/sales-demand/org-1');
+      expect(mockFetch.mock.calls[0][0]).not.toContain('?');
+    });
+
+    it('When filtered to shortfalls for one order / Then both filters are sent', async () => {
+      mockFetch.mockReturnValue(jsonOk([]));
+      await procurementService.getSalesDemand({ only_short: true, sales_order_id: 'so-1' });
+      const [url] = mockFetch.mock.calls[0];
+      expect(url).toContain('only_short=true');
+      expect(url).toContain('sales_order_id=so-1');
+    });
+
+    it('When raising a requisition for a sales order / Then it posts the payload', async () => {
+      mockFetch.mockReturnValue(jsonOk({ id: 'pr-1' }));
+      const result = await procurementService.raiseRequisitionForSalesOrder('so-1', { note: 'urgent' });
+      const [url, opts] = mockFetch.mock.calls[0];
+      expect(url).toContain('/v1/procurement/sales-demand/so-1/requisition');
+      expect(opts.method).toBe('POST');
+      expect(JSON.parse(opts.body)).toEqual({ note: 'urgent' });
+      expect(result.id).toBe('pr-1');
+    });
+
+    it('When raising a requisition with no payload / Then an empty body is posted', async () => {
+      mockFetch.mockReturnValue(jsonOk({ id: 'pr-2' }));
+      await procurementService.raiseRequisitionForSalesOrder('so-2');
+      expect(JSON.parse(mockFetch.mock.calls[0][1].body)).toEqual({});
+    });
+  });
+
+  describe('Given a document trace', () => {
+    it('When requested for a document / Then the org, type and id are addressed', async () => {
+      mockFetch.mockReturnValue(jsonOk({ nodes: [] }));
+      await procurementService.getDocumentTrace('po', 'po-1');
+      expect(mockFetch.mock.calls[0][0]).toContain('/v1/procurement/trace/org-1/po/po-1');
+    });
+  });
+});
+
+/**
+ * The gateway origin is resolved once in the constructor, so these cases
+ * re-import the module under different ambient conditions.
+ */
+describe('procurementService — gateway origin resolution', () => {
+  const loadWith = async (win: any) => {
+    vi.resetModules();
+    vi.stubGlobal('window', win);
+    const mod = await import('./procurementService');
+    const inv = (await import('./inventoryService')).inventoryService;
+    inv.setOrgId('org-1');
+    inv.setAccessToken('tok');
+    return mod.procurementService;
+  };
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.resetModules();
+  });
+
+  it('Given a shell-injected API global / When resolving / Then that origin wins', async () => {
+    const svc = await loadWith({ VITE_SO360_INVENTORY_API: 'https://gateway.test/inventory/', location: { hostname: 'localhost' } });
+    mockFetch.mockReturnValue(jsonOk([]));
+    await svc.getPOs();
+    expect(mockFetch.mock.calls[0][0]).toBe('https://gateway.test/inventory/v1/procurement/po/org-1');
+  });
+
+  it('Given no window at all (SSR) / When resolving / Then it falls back to the local backend', async () => {
+    const svc = await loadWith(undefined);
+    mockFetch.mockReturnValue(jsonOk([]));
+    await svc.getPOs();
+    expect(mockFetch.mock.calls[0][0]).toContain('http://localhost:3006/v1/procurement');
+  });
+
+  it('Given a window without the API global / When resolving / Then it falls back to the local backend', async () => {
+    const svc = await loadWith({ location: { hostname: 'localhost' } });
+    mockFetch.mockReturnValue(jsonOk([]));
+    await svc.getPOs();
+    expect(mockFetch.mock.calls[0][0]).toContain('http://localhost:3006/v1/procurement');
   });
 });

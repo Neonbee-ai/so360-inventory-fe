@@ -7,6 +7,7 @@ class VendorService {
 
     constructor() {
         const win = typeof window !== 'undefined' ? (window as any) : undefined;
+        /* v8 ignore next -- import.meta.env is always present under Vite/vitest; the `|| {}` only guards non-Vite bundlers and is unreachable in tests */
         const env = (import.meta as any)?.env || {};
         // Hostname-aware smart default: on any *.neonbee.app deployment the
         // correct gateway is always api.neonbee.app/inventory, regardless of
