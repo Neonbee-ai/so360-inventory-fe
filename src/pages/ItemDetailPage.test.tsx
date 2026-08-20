@@ -33,8 +33,9 @@ vi.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
 }));
 
+const mockCanItemDetail = vi.hoisted(() => vi.fn((_action: string) => true));
 vi.mock('../hooks/useAuth', () => ({
-  useAuth: () => ({ can: () => true }),
+  useAuth: () => ({ can: mockCanItemDetail }),
 }));
 
 vi.mock('../components/common/Skeleton', () => ({
@@ -144,6 +145,7 @@ const makeLedgerEntry = (overrides: any = {}) => ({
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mockCanItemDetail.mockImplementation((_action: string) => true);
   mockGetItem.mockResolvedValue(makeItem());
   mockGetLedger.mockResolvedValue([]);
   mockGetSettings.mockResolvedValue({ categories: [], uoms: [] });
@@ -356,6 +358,24 @@ describe('ItemDetailPage', () => {
       await waitFor(() => {
         expect(screen.getByText('No sales recorded for this item yet.')).toBeInTheDocument();
       });
+    });
+  });
+
+  describe('Given RBAC gates Edit and Delete independently', () => {
+    it('When can("items.update") is denied but can("items.delete") is granted / Then Edit is hidden and Delete is shown', async () => {
+      mockCanItemDetail.mockImplementation((action: string) => action === 'items.delete');
+      render(<ItemDetailPage />);
+      await waitFor(() => expect(screen.getAllByText('Premium Widget').length).toBeGreaterThan(0));
+      expect(screen.queryByText('Edit')).not.toBeInTheDocument();
+      expect(screen.getByText('Delete')).toBeInTheDocument();
+    });
+
+    it('When can("items.delete") is denied but can("items.update") is granted / Then Delete is hidden and Edit is shown', async () => {
+      mockCanItemDetail.mockImplementation((action: string) => action === 'items.update');
+      render(<ItemDetailPage />);
+      await waitFor(() => expect(screen.getAllByText('Premium Widget').length).toBeGreaterThan(0));
+      expect(screen.getByText('Edit')).toBeInTheDocument();
+      expect(screen.queryByText('Delete')).not.toBeInTheDocument();
     });
   });
 });

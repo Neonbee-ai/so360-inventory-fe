@@ -19,8 +19,9 @@ vi.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
 }));
 
+const mockCanVendorList = vi.hoisted(() => vi.fn((_action: string) => true));
 vi.mock('../../hooks/useAuth', () => ({
-  useAuth: () => ({ can: () => true }),
+  useAuth: () => ({ can: mockCanVendorList }),
 }));
 
 vi.mock('../../components/common/Modal', () => ({
@@ -61,6 +62,7 @@ const makeVendor = (overrides: any = {}) => ({
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mockCanVendorList.mockImplementation((_action: string) => true);
   mockQuotaBar.mockClear();
   mockGetVendors.mockResolvedValue([]);
   mockCreateVendor.mockResolvedValue({ id: 'vendor-new' });
@@ -250,6 +252,21 @@ describe('VendorListPage', () => {
         permissionsLoaded: true, hasPermission: () => true, hasAnyPermission: () => true, effectiveFlagsLoaded: true,
         permissionsLoaded: true, hasPermission: () => true, hasAnyPermission: () => true, getFeatureState: () => 'enabled',
       });
+      render(<VendorListPage />);
+      await waitFor(() => expect(screen.getByText('Add Vendor')).toBeInTheDocument());
+    });
+  });
+
+  describe('Given RBAC gates Add Vendor on suppliers.create', () => {
+    it('When can("suppliers.create") is denied / Then Add Vendor button is hidden', async () => {
+      mockCanVendorList.mockImplementation((action: string) => action !== 'suppliers.create');
+      render(<VendorListPage />);
+      await waitFor(() => expect(screen.getByText('Vendors & Subcontractors')).toBeInTheDocument());
+      expect(screen.queryByText('Add Vendor')).not.toBeInTheDocument();
+    });
+
+    it('When can("suppliers.create") is granted / Then Add Vendor button is shown', async () => {
+      mockCanVendorList.mockImplementation((action: string) => action === 'suppliers.create');
       render(<VendorListPage />);
       await waitFor(() => expect(screen.getByText('Add Vendor')).toBeInTheDocument());
     });

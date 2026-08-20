@@ -499,7 +499,7 @@ const StockMovementRegisterPage = () => {
                         <SlidersHorizontal size={18} />
                         Filters
                     </button>
-                    {can('create_adjustment') && (
+                    {can('stock.adjust') && (
                         <FeatureGate
                             state={adjustStockState}
                             loading={shell?.effectiveFlagsLoaded === false}

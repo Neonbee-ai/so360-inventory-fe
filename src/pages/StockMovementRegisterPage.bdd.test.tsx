@@ -44,6 +44,13 @@ vi.mock('@so360/shell-context', async (importOriginal) => {
   };
 });
 
+// useAuth().can() is exercised directly by the "New Adjustment" RBAC gate below;
+// default it to granted so the rest of this file's form-focused specs are unaffected.
+const mockCanSMR = vi.hoisted(() => vi.fn((_action: string) => true));
+vi.mock('../hooks/useAuth', () => ({
+  useAuth: () => ({ can: mockCanSMR }),
+}));
+
 import StockMovementRegisterPage from './StockMovementRegisterPage';
 import { inventoryService } from '../services/inventoryService';
 
@@ -77,6 +84,7 @@ const renderPage = () =>
 
 beforeEach(() => {
     vi.resetAllMocks();
+    mockCanSMR.mockImplementation((_action: string) => true);
     inv.getMovements.mockResolvedValue([]);
     inv.getLocations.mockResolvedValue([{ id: WH, name: 'Main WH' }]);
     inv.getOrgDefaultLogic.mockResolvedValue({
@@ -263,5 +271,20 @@ describe('Stock Movement Register — entry form guards', () => {
                 }),
             ),
         );
+    });
+});
+
+describe('Stock Movement Register — RBAC gates New Transaction on stock.adjust', () => {
+    it('Given can("stock.adjust") is denied / When the page renders / Then New Transaction is hidden', async () => {
+        mockCanSMR.mockImplementation((action: string) => action !== 'stock.adjust');
+        renderPage();
+        await waitFor(() => expect(inv.getMovements).toHaveBeenCalled());
+        expect(screen.queryByText('New Transaction')).not.toBeInTheDocument();
+    });
+
+    it('Given can("stock.adjust") is granted / When the page renders / Then New Transaction is shown', async () => {
+        mockCanSMR.mockImplementation((action: string) => action === 'stock.adjust');
+        renderPage();
+        await waitFor(() => expect(screen.getByText('New Transaction')).toBeInTheDocument());
     });
 });

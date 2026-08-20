@@ -134,7 +134,7 @@ const VendorListPage = () => {
                     </h1>
                     <p className="text-slate-400 mt-2 font-medium">Manage supply chain partners and commercial contracts.</p>
                 </div>
-                {can('manage_vendors') && (
+                {can('suppliers.create') && (
                     <FeatureGate state={createVendorState} loading={(shell?.effectiveFlagsLoaded === false)} onUpgradeClick={() => navigate('/org/billing')}>
                     <QuotaGate
                         quotaKey="max_vendors"
@@ -258,7 +258,7 @@ const VendorListPage = () => {
                                     >
                                         View Profile →
                                     </button>
-                                    {can('manage_vendors') && canCreateVendor && (
+                                    {can('suppliers.create') && canCreateVendor && (
                                         <button
                                             onClick={() => setDeletingVendor(vendor)}
                                             className="text-slate-500 hover:text-rose-400 transition-colors"

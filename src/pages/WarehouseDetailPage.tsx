@@ -208,7 +208,7 @@ const WarehouseDetailPage = () => {
                             <span className={`px-2 py-1 rounded text-[10px] uppercase font-bold border ${warehouse.is_active ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-slate-500/10 text-slate-400'}`}>
                                 {warehouse.is_active ? 'Operational' : 'Inactive'}
                             </span>
-                            {can('manage_locations') && (
+                            {can('warehouses.create') && (
                                 <FeatureGate state={warehouseState} loading={(shell?.effectiveFlagsLoaded === false)} onUpgradeClick={() => navigate('/org/billing')}>
                                 <>
                                     <button
@@ -266,7 +266,7 @@ const WarehouseDetailPage = () => {
                     <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
                         <div className="flex items-center justify-between mb-6">
                             <h2 className="text-xl font-bold text-slate-50">Storage Locations</h2>
-                            {can('manage_locations') && canManageWarehouse && (
+                            {can('warehouses.create') && canManageWarehouse && (
                                 <button
                                     onClick={() => openLocationModal()}
                                     className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-lg transition-colors shadow-lg shadow-blue-900/20"
@@ -288,7 +288,7 @@ const WarehouseDetailPage = () => {
                                             </div>
                                             <div className="flex items-center gap-1">
                                                 <span className="text-xs font-mono text-slate-500 mr-2">{loc.code}</span>
-                                                {can('manage_locations') && canManageWarehouse && (
+                                                {can('warehouses.create') && canManageWarehouse && (
                                                     <>
                                                         <button
                                                             onClick={() => openLocationModal(loc)}
@@ -324,7 +324,7 @@ const WarehouseDetailPage = () => {
                             <div className="text-center py-8 text-slate-500">
                                 <MapPin size={48} className="mx-auto mb-4 opacity-50" />
                                 <p>No storage locations defined</p>
-                                {can('manage_locations') && canManageWarehouse && (
+                                {can('warehouses.create') && canManageWarehouse && (
                                     <button
                                         onClick={() => openLocationModal()}
                                         className="mt-3 text-blue-400 hover:text-blue-300 text-sm font-medium"

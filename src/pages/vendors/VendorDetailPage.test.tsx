@@ -22,8 +22,9 @@ vi.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
 }));
 
+const mockCanVendorDetail = vi.hoisted(() => vi.fn((_action: string) => true));
 vi.mock('../../hooks/useAuth', () => ({
-  useAuth: () => ({ can: () => true }),
+  useAuth: () => ({ can: mockCanVendorDetail }),
 }));
 
 vi.mock('../../components/common/Modal', () => ({
@@ -75,6 +76,7 @@ const makeVendor = (overrides: any = {}) => ({
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mockCanVendorDetail.mockImplementation((_action: string) => true);
   mockGetVendorDetail.mockResolvedValue(makeVendor());
   mockUpdateVendor.mockResolvedValue({});
   mockDeleteVendor.mockResolvedValue({});
@@ -189,6 +191,24 @@ describe('VendorDetailPage', () => {
       await waitFor(() => {
         expect(mockGetVendorDetail).toHaveBeenCalledWith('vendor-1');
       });
+    });
+  });
+
+  describe('Given RBAC gates vendor manage actions on suppliers.create', () => {
+    it('When can("suppliers.create") is denied / Then Edit/Delete Vendor are hidden', async () => {
+      mockCanVendorDetail.mockImplementation((action: string) => action !== 'suppliers.create');
+      render(<VendorDetailPage />);
+      await waitFor(() => expect(screen.getByText('Acme Corp')).toBeInTheDocument());
+      expect(screen.queryByTitle('Edit Vendor')).not.toBeInTheDocument();
+      expect(screen.queryByTitle('Delete Vendor')).not.toBeInTheDocument();
+    });
+
+    it('When can("suppliers.create") is granted / Then Edit/Delete Vendor are shown', async () => {
+      mockCanVendorDetail.mockImplementation((action: string) => action === 'suppliers.create');
+      render(<VendorDetailPage />);
+      await waitFor(() => expect(screen.getByText('Acme Corp')).toBeInTheDocument());
+      expect(screen.getByTitle('Edit Vendor')).toBeInTheDocument();
+      expect(screen.getByTitle('Delete Vendor')).toBeInTheDocument();
     });
   });
 });

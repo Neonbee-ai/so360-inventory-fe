@@ -146,7 +146,7 @@ const VendorDetailPage = () => {
     };
 
     const handleRatingClick = async (newRating: number) => {
-        if (!id || !can('manage_vendors') || ratingLoading) return;
+        if (!id || !can('suppliers.create') || ratingLoading) return;
         const oldRating = vendor?.vendor_profiles?.[0]?.performance_rating;
         const oldCount = vendor?.vendor_profiles?.[0]?.rating_count ?? 0;
         // Optimistic update
@@ -208,7 +208,7 @@ const VendorDetailPage = () => {
                                     Preferred
                                 </span>
                             )}
-                            {can('manage_vendors') && (
+                            {can('suppliers.create') && (
                                 <>
                                     <button
                                         onClick={handleEditClick}
@@ -271,7 +271,7 @@ const VendorDetailPage = () => {
                                         size={28}
                                         fill={isActive ? 'currentColor' : 'none'}
                                         className={`transition-colors ${
-                                            can('manage_vendors')
+                                            can('suppliers.create')
                                                 ? 'cursor-pointer'
                                                 : 'cursor-default'
                                         } ${
@@ -279,7 +279,7 @@ const VendorDetailPage = () => {
                                                 ? 'text-yellow-300'
                                                 : 'text-emerald-300/30'
                                         } ${ratingLoading ? 'animate-pulse' : ''}`}
-                                        onMouseEnter={() => can('manage_vendors') && !ratingLoading && setHoverRating(star)}
+                                        onMouseEnter={() => can('suppliers.create') && !ratingLoading && setHoverRating(star)}
                                         onMouseLeave={() => setHoverRating(0)}
                                         onClick={() => handleRatingClick(star)}
                                     />
@@ -293,7 +293,7 @@ const VendorDetailPage = () => {
                         {(profile?.rating_count ?? 0) > 0 && (
                             <p className="text-xs text-emerald-200/80">from {profile?.rating_count} rating{profile?.rating_count !== 1 ? 's' : ''}</p>
                         )}
-                        {can('manage_vendors') && (
+                        {can('suppliers.create') && (
                             <p className="mt-1 text-[11px] text-emerald-200/60">Click to rate</p>
                         )}
                         <p className="mt-2 text-sm text-emerald-200">
@@ -360,7 +360,7 @@ const VendorDetailPage = () => {
                                 <FileText size={20} className="text-purple-400" />
                                 <h2 className="text-xl font-bold text-slate-50">Vendor Invoices</h2>
                             </div>
-                            {can('manage_vendors') && (
+                            {can('suppliers.create') && (
                                 <button
                                     onClick={() => setIsInvoiceModalOpen(true)}
                                     className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white text-sm font-semibold rounded-lg transition-all"

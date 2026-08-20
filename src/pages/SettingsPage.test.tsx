@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent, within } from '@testing-library/react';
 import React from 'react';
 
 const mockGetSettings = vi.fn();
@@ -27,8 +27,9 @@ vi.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
 }));
 
+const mockCanSettings = vi.hoisted(() => vi.fn((_action: string) => true));
 vi.mock('../hooks/useAuth', () => ({
-  useAuth: () => ({ can: () => true }),
+  useAuth: () => ({ can: mockCanSettings }),
 }));
 
 vi.mock('../components/categories/CategoryTreeView', () => ({
@@ -56,6 +57,7 @@ const makeSettings = (overrides: any = {}) => ({
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mockCanSettings.mockImplementation((_action: string) => true);
   mockGetSettings.mockResolvedValue(makeSettings());
   mockCreateUom.mockResolvedValue({ id: 'uom-new' });
   mockDeleteUom.mockResolvedValue({});
@@ -142,6 +144,24 @@ describe('SettingsPage', () => {
       await waitFor(() => {
         expect(mockCreateUom).toHaveBeenCalledWith('Liter', 'L');
       });
+    });
+  });
+
+  describe('Given RBAC gates UoM removal on items.update', () => {
+    it('When can("items.update") is denied / Then the UoM remove button is hidden', async () => {
+      mockCanSettings.mockImplementation((action: string) => action !== 'items.update');
+      render(<SettingsPage />);
+      await waitFor(() => expect(screen.getByText('Kilogram (kg)')).toBeInTheDocument());
+      const pill = screen.getByText('Kilogram (kg)').closest('div') as HTMLElement;
+      expect(within(pill).queryByRole('button')).not.toBeInTheDocument();
+    });
+
+    it('When can("items.update") is granted / Then the UoM remove button is shown', async () => {
+      mockCanSettings.mockImplementation((action: string) => action === 'items.update');
+      render(<SettingsPage />);
+      await waitFor(() => expect(screen.getByText('Kilogram (kg)')).toBeInTheDocument());
+      const pill = screen.getByText('Kilogram (kg)').closest('div') as HTMLElement;
+      expect(within(pill).getByRole('button')).toBeInTheDocument();
     });
   });
 });

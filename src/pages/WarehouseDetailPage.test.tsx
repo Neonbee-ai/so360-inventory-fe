@@ -32,8 +32,9 @@ vi.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
 }));
 
+const mockCanWD = vi.hoisted(() => vi.fn((_action: string) => true));
 vi.mock('../hooks/useAuth', () => ({
-  useAuth: () => ({ can: () => true }),
+  useAuth: () => ({ can: mockCanWD }),
 }));
 
 vi.mock('../components/common/Modal', () => ({
@@ -73,6 +74,7 @@ const makeLocation = (overrides: any = {}) => ({
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mockCanWD.mockImplementation((_action: string) => true);
   mockGetWarehouse.mockResolvedValue(makeWarehouse());
   mockUpdateWarehouse.mockResolvedValue({});
   mockDeleteWarehouse.mockResolvedValue({});
@@ -229,6 +231,29 @@ describe('WarehouseDetailPage', () => {
         expect(screen.getByTitle('Edit Warehouse')).toBeInTheDocument();
         expect(screen.getByTitle('Delete Warehouse')).toBeInTheDocument();
       });
+    });
+  });
+
+  describe('Given RBAC gates warehouse manage actions on warehouses.create', () => {
+    it('When can("warehouses.create") is denied / Then Edit/Delete Warehouse and Add Location are hidden', async () => {
+      mockCanWD.mockImplementation((action: string) => action !== 'warehouses.create');
+      mockGetWarehouse.mockResolvedValue(makeWarehouse({ warehouse_locations: [makeLocation()] }));
+      render(<WarehouseDetailPage />);
+      await waitFor(() => expect(screen.getByText('Main Warehouse')).toBeInTheDocument());
+      expect(screen.queryByTitle('Edit Warehouse')).not.toBeInTheDocument();
+      expect(screen.queryByTitle('Delete Warehouse')).not.toBeInTheDocument();
+      expect(screen.queryByText('Add Location')).not.toBeInTheDocument();
+      expect(screen.queryByTitle('Edit Location')).not.toBeInTheDocument();
+      expect(screen.queryByTitle('Delete Location')).not.toBeInTheDocument();
+    });
+
+    it('When can("warehouses.create") is granted / Then Edit/Delete Warehouse and Add Location are shown', async () => {
+      mockCanWD.mockImplementation((action: string) => action === 'warehouses.create');
+      render(<WarehouseDetailPage />);
+      await waitFor(() => expect(screen.getByText('Main Warehouse')).toBeInTheDocument());
+      expect(screen.getByTitle('Edit Warehouse')).toBeInTheDocument();
+      expect(screen.getByTitle('Delete Warehouse')).toBeInTheDocument();
+      expect(screen.getByText('Add Location')).toBeInTheDocument();
     });
   });
 });

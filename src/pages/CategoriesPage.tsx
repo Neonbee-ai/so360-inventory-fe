@@ -195,7 +195,7 @@ const CategoryCardsView: React.FC<{
 const CategoriesPage = () => {
     const navigate = useNavigate();
     const { can } = useAuth();
-    const canManage = can('manage_locations');
+    const canManage = can('items.update');
     const { recordActivity } = useActivity();
     const shell = useShellBridge();
     const createState = (shell as any)?.getFeatureState ? (shell as any).getFeatureState('action:inventory:items:create') : 'enabled';

@@ -130,7 +130,7 @@ const ItemsPage = () => {
                     <p className="text-slate-400 mt-1">Manage physical products and trackable assets</p>
                 </div>
                 <div className="flex items-center gap-3">
-                {can('import_item') && (
+                {can('items.import') && (
                     <FeatureGate state={bulkImportState} loading={(shell?.effectiveFlagsLoaded === false)} onUpgradeClick={() => navigate('/org/billing')}>
                         <div className="relative group/tooltip">
                             <button
@@ -165,7 +165,7 @@ const ItemsPage = () => {
                         </div>
                     </FeatureGate>
                 )}
-                {can('create_item') && (
+                {can('items.create') && (
                     <FeatureGate state={createItemState} loading={(shell?.effectiveFlagsLoaded === false)} onUpgradeClick={() => navigate('/org/billing')}>
                     <QuotaGate
                         quotaKey="max_skus"

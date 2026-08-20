@@ -490,7 +490,7 @@ const ItemDetailPage = () => {
                                 Back to Catalog
                             </button>
                             <div className="flex items-center gap-3">
-                                {can('update_item') && (
+                                {can('items.update') && (
                                     <button
                                         onClick={handleEditClick}
                                         className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-50 text-sm font-semibold rounded-lg transition-all flex items-center gap-2"
@@ -498,7 +498,7 @@ const ItemDetailPage = () => {
                                         <Edit2 size={16} /> Edit
                                     </button>
                                 )}
-                                {can('delete_item') && (
+                                {can('items.delete') && (
                                     <button
                                         onClick={() => setShowDeleteConfirm(true)}
                                         className="px-4 py-2 bg-slate-800 hover:bg-rose-600/20 text-slate-400 hover:text-rose-400 text-sm font-semibold rounded-lg transition-all flex items-center gap-2 border border-slate-700 hover:border-rose-500/30"

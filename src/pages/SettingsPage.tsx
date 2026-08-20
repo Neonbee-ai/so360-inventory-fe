@@ -190,7 +190,7 @@ const SettingsPage = () => {
                         {settings?.uoms.map((uom: UomItem) => (
                             <div key={uom.id} className="bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-lg text-sm text-slate-300 flex items-center gap-2 group">
                                 <span>{uom.name} ({uom.abbreviation})</span>
-                                {can('manage_locations') && (
+                                {can('items.update') && (
                                     <button
                                         onClick={() => handleDeleteUom(uom.id)}
                                         className="opacity-0 group-hover:opacity-100 text-rose-400 hover:text-rose-300 transition-all"
@@ -282,7 +282,7 @@ const SettingsPage = () => {
                                 setError(err.message || 'Failed to delete category');
                             }
                         }}
-                        canManage={can('manage_locations')}
+                        canManage={can('items.update')}
                         onSelect={() => {}}
                     />
                 </section>
@@ -295,7 +295,7 @@ const SettingsPage = () => {
                     <p className="text-sm text-slate-500 mb-4">Define custom attributes per category (e.g. Material, Finish, Shelf Life). Values are stored as flexible metadata on each item.</p>
                     <ItemAttributeSettingsSection
                         categories={settings?.categories || []}
-                        canManage={can('manage_locations')}
+                        canManage={can('items.update')}
                     />
                 </section>
 

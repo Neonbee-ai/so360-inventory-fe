@@ -164,7 +164,7 @@ const StockLocationsPage = () => {
                     <h1 className="text-3xl font-bold text-slate-50 tracking-tight">Warehouses</h1>
                     <p className="text-slate-400 mt-1">Manage physical storage facilities and fulfillment centers</p>
                 </div>
-                {can('manage_locations') && (
+                {can('warehouses.create') && (
                     <FeatureGate state={createWarehouseState} loading={(shell?.effectiveFlagsLoaded === false)} onUpgradeClick={() => navigate('/org/billing')}>
                     <QuotaGate
                         quotaKey="max_warehouses"
@@ -277,7 +277,7 @@ const StockLocationsPage = () => {
                                     >
                                         View
                                     </button>
-                                    {can('manage_locations') && canCreateWarehouse && (
+                                    {can('warehouses.create') && canCreateWarehouse && (
                                         <>
                                             <button
                                                 onClick={() => handleEditClick(wh)}
@@ -299,7 +299,7 @@ const StockLocationsPage = () => {
                     ))}
 
 
-                    {can('manage_locations') && canCreateWarehouse && (
+                    {can('warehouses.create') && canCreateWarehouse && (
                         <button
                             onClick={() => !atWarehouseLimit && setIsCreateModalOpen(true)}
                             disabled={atWarehouseLimit}

@@ -30,8 +30,9 @@ vi.mock('../services/mediaService', () => ({
   },
 }));
 
+const mockCanCat = vi.hoisted(() => vi.fn((_action: string) => true));
 vi.mock('../hooks/useAuth', () => ({
-  useAuth: () => ({ can: () => true }),
+  useAuth: () => ({ can: mockCanCat }),
 }));
 
 vi.mock('../components/categories/CategoryTreeView', () => ({
@@ -85,6 +86,7 @@ const makeCategory = (overrides: any = {}) => ({
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mockCanCat.mockImplementation((_action: string) => true);
   mockGetSettings.mockResolvedValue({ categories: [] });
   mockCreateCategory.mockResolvedValue({ id: 'cat-new', name: 'New Cat' });
   mockUpdateCategory.mockResolvedValue({});
@@ -230,6 +232,21 @@ describe('CategoriesPage', () => {
         permissionsLoaded: true, hasPermission: () => true, hasAnyPermission: () => true, effectiveFlagsLoaded: true,
         permissionsLoaded: true, hasPermission: () => true, hasAnyPermission: () => true, getFeatureState: () => 'enabled',
       });
+      render(<CategoriesPage />);
+      await waitFor(() => expect(screen.getByText('New Category')).toBeInTheDocument());
+    });
+  });
+
+  describe('Given RBAC gates category management on items.update', () => {
+    it('When can("items.update") is denied / Then New Category button is hidden', async () => {
+      mockCanCat.mockImplementation((action: string) => action !== 'items.update');
+      render(<CategoriesPage />);
+      await waitFor(() => expect(screen.getByText('Product Categories')).toBeInTheDocument());
+      expect(screen.queryByText('New Category')).not.toBeInTheDocument();
+    });
+
+    it('When can("items.update") is granted / Then New Category button is shown', async () => {
+      mockCanCat.mockImplementation((action: string) => action === 'items.update');
       render(<CategoriesPage />);
       await waitFor(() => expect(screen.getByText('New Category')).toBeInTheDocument());
     });
