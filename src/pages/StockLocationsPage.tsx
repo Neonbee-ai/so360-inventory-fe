@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapPin, Plus, Home, Edit2, AlertCircle, Trash2, Loader2, X, Save } from 'lucide-react';
 import { inventoryService } from '../services/inventoryService';
@@ -6,6 +6,17 @@ import { Warehouse } from '../types/inventory';
 import { Modal } from '../components/common/Modal';
 import { TableSkeleton } from '../components/common/Skeleton';
 import { useAuth } from '../hooks/useAuth';
+import {
+    firstError,
+    optional,
+    validateAddress,
+    validateCode,
+    validateName,
+    validatePersonName,
+    validatePhone,
+    validatePlaceName,
+    ValidationResult,
+} from '../utils/validators';
 import { useActivity, useShellBridge, useQuota } from '@so360/shell-context';
 import { QuotaBar, QuotaGate, FeatureGate } from '@so360/design-system';
 
@@ -60,12 +71,49 @@ const StockLocationsPage = () => {
     const [deletingWarehouse, setDeletingWarehouse] = useState<Warehouse | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
+    // Which form's errors are currently allowed on screen. Errors stay hidden
+    // until the user has actually tried to save that form, so an untouched
+    // modal does not open covered in red.
+    const [showCreateErrors, setShowCreateErrors] = useState(false);
+    const [showEditErrors, setShowEditErrors] = useState(false);
+
+    /**
+     * Warehouse master-data rules. Mirrors the CreateWarehouseDto decorators in
+     * so360-inventory-be — this copy exists to put the message next to the
+     * field; the backend copy is what actually protects the table.
+     */
+    const validateWarehouse = (wh: typeof newWarehouse): Record<string, ValidationResult> => ({
+        name: validateName(wh.name, 'Warehouse Name', 3, 100),
+        code: validateCode(wh.code, 'Short Code', 3, 15),
+        warehouse_type: wh.warehouse_type ? null : 'Please select a Warehouse Type.',
+        address: optional(wh.address, (v) => validateAddress(v)),
+        city: optional(wh.city, (v) => validatePlaceName(v, 'City')),
+        state: optional(wh.state, (v) => validatePlaceName(v, 'State/Region')),
+        country: optional(wh.country, (v) => validatePlaceName(v, 'Country')),
+        contact_person: optional(wh.contact_person, (v) => validatePersonName(v)),
+        contact_phone: optional(wh.contact_phone, (v) => validatePhone(v)),
+    });
+
+    const createErrors = useMemo(() => validateWarehouse(newWarehouse), [newWarehouse]);
+    const editErrors = useMemo(() => validateWarehouse(editForm), [editForm]);
+    const createBlocked = firstError(createErrors);
+    const editBlocked = firstError(editErrors);
+
+    // Warehouses this session has successfully deleted. The list endpoint is
+    // cached server-side (and served by more than one instance in production),
+    // so a refetch immediately after a delete can still contain the row we just
+    // removed — which is how "deleted but still visible" was reported. Ids stay
+    // here for the life of the page; a re-created warehouse gets a new id.
+    const deletedIds = useRef<Set<string>>(new Set());
+
     const fetchWarehouses = async () => {
         setIsLoading(true);
         setError(null);
         try {
             const data = await inventoryService.getLocations();
-            setWarehouses(data);
+            setWarehouses(
+                (Array.isArray(data) ? data : []).filter((w) => !deletedIds.current.has(w.id)),
+            );
         } catch (err) {
             setError('Failed to load warehouses.');
         } finally {
@@ -79,6 +127,11 @@ const StockLocationsPage = () => {
 
     const handleCreateWarehouse = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (createBlocked) {
+            setShowCreateErrors(true);
+            setError(createBlocked);
+            return;
+        }
         setIsCreating(true);
         setError(null);
         try {
@@ -87,6 +140,7 @@ const StockLocationsPage = () => {
             setIsCreateModalOpen(false);
             fetchWarehouses();
             setNewWarehouse({ name: '', code: '', address: '', city: '', state: '', country: '', contact_person: '', contact_phone: '', warehouse_type: 'general', is_active: true });
+            setShowCreateErrors(false);
             setSuccessMessage('Warehouse created successfully');
             setTimeout(() => setSuccessMessage(null), 3000);
         } catch (err: any) {
@@ -115,6 +169,12 @@ const StockLocationsPage = () => {
     const handleSaveEdit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!editingWarehouse) return;
+        if (editBlocked) {
+            setShowEditErrors(true);
+            setError(editBlocked);
+            return;
+        }
+        setShowEditErrors(false);
         setIsSaving(true);
         setError(null);
         try {
@@ -137,6 +197,13 @@ const StockLocationsPage = () => {
         setError(null);
         try {
             await inventoryService.deleteWarehouse(deletingWarehouse.id);
+            // Drop the card straight away rather than waiting for the refetch.
+            // The list endpoint is cached server-side, so a refetch alone could
+            // return the deleted warehouse and leave it on screen — which is
+            // exactly how "deleted but still visible" was reported.
+            const deletedId = deletingWarehouse.id;
+            deletedIds.current.add(deletedId);
+            setWarehouses((prev) => prev.filter((w) => w.id !== deletedId));
             setDeletingWarehouse(null);
             fetchWarehouses();
             setSuccessMessage('Warehouse deleted successfully');
@@ -156,6 +223,14 @@ const StockLocationsPage = () => {
     const whLimit = whUnlimited || quotaData == null || (quotaData.limit ?? -1) <= 0 ? null : quotaData.limit;
     const whUsed = warehouses.length;
     const atWarehouseLimit = whLimit !== null && whUsed >= whLimit;
+
+    /** Error text rendered directly beneath the field it belongs to. */
+    const FieldErr = ({ show, message, field }: { show: boolean; message: ValidationResult; field: string }) =>
+        show && message ? (
+            <p role="alert" data-testid={`error-${field}`} className="text-rose-400 text-xs mt-1">
+                {message}
+            </p>
+        ) : null;
 
     return (
         <div className="p-8">
@@ -299,8 +374,12 @@ const StockLocationsPage = () => {
                     ))}
 
 
-                    {can('warehouses.create') && canCreateWarehouse && (
+                    {/* One primary call to action. The "+ New Warehouse" button in the
+                        header owns warehouse creation; this tile is the empty state and
+                        disappears the moment a warehouse exists, so the two never compete. */}
+                    {warehouses.length === 0 && can('warehouses.create') && canCreateWarehouse && (
                         <button
+                            data-testid="empty-state-add-warehouse"
                             onClick={() => !atWarehouseLimit && setIsCreateModalOpen(true)}
                             disabled={atWarehouseLimit}
                             title={atWarehouseLimit ? `Used ${whUsed} of ${whLimit} warehouses — upgrade your plan to add more` : undefined}
@@ -326,25 +405,25 @@ const StockLocationsPage = () => {
                         <div className="col-span-2">
                             <label className="block text-sm font-medium text-slate-400 mb-1.5">Warehouse Name *</label>
                             <input
-                                required
                                 type="text"
                                 value={newWarehouse.name}
                                 onChange={(e) => setNewWarehouse({ ...newWarehouse, name: e.target.value })}
-                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                className={`w-full bg-slate-800 border ${showCreateErrors && createErrors.name ? 'border-rose-500/60' : 'border-slate-700'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50`}
                                 placeholder="e.g. Dubai South Hub"
                             />
+                            <FieldErr show={showCreateErrors} message={createErrors.name} field="name" />
                         </div>
 
                         <div>
                             <label className="block text-sm font-medium text-slate-400 mb-1.5">Short Code *</label>
                             <input
-                                required
                                 type="text"
                                 value={newWarehouse.code}
                                 onChange={(e) => setNewWarehouse({ ...newWarehouse, code: e.target.value.toUpperCase() })}
-                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50 font-mono"
+                                className={`w-full bg-slate-800 border ${showCreateErrors && createErrors.code ? 'border-rose-500/60' : 'border-slate-700'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50 font-mono`}
                                 placeholder="e.g. DXB-01"
                             />
+                            <FieldErr show={showCreateErrors} message={createErrors.code} field="code" />
                         </div>
 
                         <div>
@@ -352,7 +431,7 @@ const StockLocationsPage = () => {
                             <select
                                 value={newWarehouse.warehouse_type}
                                 onChange={(e) => setNewWarehouse({ ...newWarehouse, warehouse_type: e.target.value })}
-                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-200"
+                                className={`w-full bg-slate-800 border ${showCreateErrors && createErrors.warehouse_type ? 'border-rose-500/60' : 'border-slate-700'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-200`}
                             >
                                 <option value="general">General</option>
                                 <option value="distribution">Distribution</option>
@@ -360,6 +439,7 @@ const StockLocationsPage = () => {
                                 <option value="manufacturing">Manufacturing</option>
                                 <option value="transit">Transit / Cross-dock</option>
                             </select>
+                            <FieldErr show={showCreateErrors} message={createErrors.warehouse_type} field="warehouse_type" />
                         </div>
 
                         <div className="col-span-2">
@@ -368,9 +448,10 @@ const StockLocationsPage = () => {
                                 type="text"
                                 value={newWarehouse.address}
                                 onChange={(e) => setNewWarehouse({ ...newWarehouse, address: e.target.value })}
-                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                className={`w-full bg-slate-800 border ${showCreateErrors && createErrors.address ? 'border-rose-500/60' : 'border-slate-700'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50`}
                                 placeholder="Street address"
                             />
+                            <FieldErr show={showCreateErrors} message={createErrors.address} field="address" />
                         </div>
 
                         <div>
@@ -379,9 +460,10 @@ const StockLocationsPage = () => {
                                 type="text"
                                 value={newWarehouse.city}
                                 onChange={(e) => setNewWarehouse({ ...newWarehouse, city: e.target.value })}
-                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                className={`w-full bg-slate-800 border ${showCreateErrors && createErrors.city ? 'border-rose-500/60' : 'border-slate-700'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50`}
                                 placeholder="City"
                             />
+                            <FieldErr show={showCreateErrors} message={createErrors.city} field="city" />
                         </div>
 
                         <div>
@@ -390,9 +472,10 @@ const StockLocationsPage = () => {
                                 type="text"
                                 value={newWarehouse.state}
                                 onChange={(e) => setNewWarehouse({ ...newWarehouse, state: e.target.value })}
-                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                className={`w-full bg-slate-800 border ${showCreateErrors && createErrors.state ? 'border-rose-500/60' : 'border-slate-700'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50`}
                                 placeholder="State / Province"
                             />
+                            <FieldErr show={showCreateErrors} message={createErrors.state} field="state" />
                         </div>
 
                         <div>
@@ -401,9 +484,10 @@ const StockLocationsPage = () => {
                                 type="text"
                                 value={newWarehouse.country}
                                 onChange={(e) => setNewWarehouse({ ...newWarehouse, country: e.target.value })}
-                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                className={`w-full bg-slate-800 border ${showCreateErrors && createErrors.country ? 'border-rose-500/60' : 'border-slate-700'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50`}
                                 placeholder="Country"
                             />
+                            <FieldErr show={showCreateErrors} message={createErrors.country} field="country" />
                         </div>
 
                         <div>
@@ -412,9 +496,10 @@ const StockLocationsPage = () => {
                                 type="text"
                                 value={newWarehouse.contact_person}
                                 onChange={(e) => setNewWarehouse({ ...newWarehouse, contact_person: e.target.value })}
-                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                className={`w-full bg-slate-800 border ${showCreateErrors && createErrors.contact_person ? 'border-rose-500/60' : 'border-slate-700'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50`}
                                 placeholder="Manager / Supervisor name"
                             />
+                            <FieldErr show={showCreateErrors} message={createErrors.contact_person} field="contact_person" />
                         </div>
 
                         <div className="col-span-2">
@@ -423,9 +508,10 @@ const StockLocationsPage = () => {
                                 type="tel"
                                 value={newWarehouse.contact_phone}
                                 onChange={(e) => setNewWarehouse({ ...newWarehouse, contact_phone: e.target.value })}
-                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                className={`w-full bg-slate-800 border ${showCreateErrors && createErrors.contact_phone ? 'border-rose-500/60' : 'border-slate-700'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50`}
                                 placeholder="+971 50 000 0000"
                             />
+                            <FieldErr show={showCreateErrors} message={createErrors.contact_phone} field="contact_phone" />
                         </div>
                     </div>
 
@@ -460,23 +546,23 @@ const StockLocationsPage = () => {
                         <div className="col-span-2">
                             <label className="block text-sm font-medium text-slate-400 mb-1.5">Warehouse Name *</label>
                             <input
-                                required
                                 type="text"
                                 value={editForm.name}
                                 onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                className={`w-full bg-slate-800 border ${showEditErrors && editErrors.name ? 'border-rose-500/60' : 'border-slate-700'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50`}
                             />
+                            <FieldErr show={showEditErrors} message={editErrors.name} field="name" />
                         </div>
 
                         <div>
                             <label className="block text-sm font-medium text-slate-400 mb-1.5">Short Code *</label>
                             <input
-                                required
                                 type="text"
                                 value={editForm.code}
                                 onChange={(e) => setEditForm({ ...editForm, code: e.target.value.toUpperCase() })}
-                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50 font-mono"
+                                className={`w-full bg-slate-800 border ${showEditErrors && editErrors.code ? 'border-rose-500/60' : 'border-slate-700'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50 font-mono`}
                             />
+                            <FieldErr show={showEditErrors} message={editErrors.code} field="code" />
                         </div>
 
                         <div>
@@ -484,7 +570,7 @@ const StockLocationsPage = () => {
                             <select
                                 value={editForm.warehouse_type}
                                 onChange={(e) => setEditForm({ ...editForm, warehouse_type: e.target.value })}
-                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-200"
+                                className={`w-full bg-slate-800 border ${showEditErrors && editErrors.warehouse_type ? 'border-rose-500/60' : 'border-slate-700'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-200`}
                             >
                                 <option value="general">General</option>
                                 <option value="distribution">Distribution</option>
@@ -492,6 +578,7 @@ const StockLocationsPage = () => {
                                 <option value="manufacturing">Manufacturing</option>
                                 <option value="transit">Transit / Cross-dock</option>
                             </select>
+                            <FieldErr show={showEditErrors} message={editErrors.warehouse_type} field="warehouse_type" />
                         </div>
 
                         <div className="col-span-2">
@@ -500,8 +587,9 @@ const StockLocationsPage = () => {
                                 type="text"
                                 value={editForm.address}
                                 onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
-                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                className={`w-full bg-slate-800 border ${showEditErrors && editErrors.address ? 'border-rose-500/60' : 'border-slate-700'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50`}
                             />
+                            <FieldErr show={showEditErrors} message={editErrors.address} field="address" />
                         </div>
 
                         <div>
@@ -510,8 +598,9 @@ const StockLocationsPage = () => {
                                 type="text"
                                 value={editForm.city}
                                 onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
-                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                className={`w-full bg-slate-800 border ${showEditErrors && editErrors.city ? 'border-rose-500/60' : 'border-slate-700'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50`}
                             />
+                            <FieldErr show={showEditErrors} message={editErrors.city} field="city" />
                         </div>
 
                         <div>
@@ -520,8 +609,9 @@ const StockLocationsPage = () => {
                                 type="text"
                                 value={editForm.state}
                                 onChange={(e) => setEditForm({ ...editForm, state: e.target.value })}
-                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                className={`w-full bg-slate-800 border ${showEditErrors && editErrors.state ? 'border-rose-500/60' : 'border-slate-700'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50`}
                             />
+                            <FieldErr show={showEditErrors} message={editErrors.state} field="state" />
                         </div>
 
                         <div>
@@ -530,8 +620,9 @@ const StockLocationsPage = () => {
                                 type="text"
                                 value={editForm.country}
                                 onChange={(e) => setEditForm({ ...editForm, country: e.target.value })}
-                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                className={`w-full bg-slate-800 border ${showEditErrors && editErrors.country ? 'border-rose-500/60' : 'border-slate-700'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50`}
                             />
+                            <FieldErr show={showEditErrors} message={editErrors.country} field="country" />
                         </div>
 
                         <div>
@@ -540,8 +631,9 @@ const StockLocationsPage = () => {
                                 type="text"
                                 value={editForm.contact_person}
                                 onChange={(e) => setEditForm({ ...editForm, contact_person: e.target.value })}
-                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                className={`w-full bg-slate-800 border ${showEditErrors && editErrors.contact_person ? 'border-rose-500/60' : 'border-slate-700'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50`}
                             />
+                            <FieldErr show={showEditErrors} message={editErrors.contact_person} field="contact_person" />
                         </div>
 
                         <div className="col-span-2">
@@ -550,8 +642,9 @@ const StockLocationsPage = () => {
                                 type="tel"
                                 value={editForm.contact_phone}
                                 onChange={(e) => setEditForm({ ...editForm, contact_phone: e.target.value })}
-                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                className={`w-full bg-slate-800 border ${showEditErrors && editErrors.contact_phone ? 'border-rose-500/60' : 'border-slate-700'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50`}
                             />
+                            <FieldErr show={showEditErrors} message={editErrors.contact_phone} field="contact_phone" />
                         </div>
                     </div>
 

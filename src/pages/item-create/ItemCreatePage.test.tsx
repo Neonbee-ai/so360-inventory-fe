@@ -18,6 +18,8 @@ vi.mock('../../services/inventoryService', () => ({
     createItem: (...args: any[]) => mockCreateItem(...args),
     createCategory: (...args: any[]) => mockCreateCategory(...args),
     createUom: (...args: any[]) => mockCreateUom(...args),
+    // Selecting a category triggers an attribute-definition lookup.
+    getAttributeDefinitions: vi.fn().mockResolvedValue([]),
   },
 }));
 
@@ -50,13 +52,25 @@ vi.mock('./components/TabNavigation', () => ({
 
 vi.mock('./tabs/BasicInfoTab', () => ({
   __esModule: true,
-  default: ({ name, updateField }: any) => (
+  default: ({ name, sku, unit_id, updateField }: any) => (
     <div data-testid="basic-tab">
       <input
         data-testid="item-name"
         value={name}
         placeholder="Item name"
         onChange={(e) => updateField('name', e.target.value)}
+      />
+      <input
+        data-testid="item-sku"
+        value={sku}
+        placeholder="SKU"
+        onChange={(e) => updateField('sku', e.target.value)}
+      />
+      <input
+        data-testid="item-unit"
+        value={unit_id}
+        placeholder="Unit"
+        onChange={(e) => updateField('unit_id', e.target.value)}
       />
     </div>
   ),
@@ -74,7 +88,16 @@ vi.mock('./tabs/PricingTab', () => ({
 
 vi.mock('./tabs/CategoryTab', () => ({
   __esModule: true,
-  default: () => <div data-testid="category-tab">Category Tab</div>,
+  default: ({ category_id, updateField }: any) => (
+    <div data-testid="category-tab">
+      <input
+        data-testid="item-category"
+        value={category_id}
+        placeholder="Category"
+        onChange={(e) => updateField('category_id', e.target.value)}
+      />
+    </div>
+  ),
 }));
 
 vi.mock('./tabs/StockTrackingTab', () => ({
@@ -173,7 +196,7 @@ describe('ItemCreatePage', () => {
   });
 
   describe('Given form validation', () => {
-    it('When Save clicked without name / Then shows validation error', async () => {
+    it('When Save clicked without name / Then shows the field-level requirement', async () => {
       render(<ItemCreatePage />);
       // Wait for tax codes to finish loading so Save buttons become enabled
       await waitFor(() => expect(mockGetTaxCodes).toHaveBeenCalled());
@@ -183,7 +206,7 @@ describe('ItemCreatePage', () => {
       });
       fireEvent.click(screen.getAllByText('Save Item')[0]);
       await waitFor(() => {
-        expect(screen.getByText('Please fill in all required fields')).toBeInTheDocument();
+        expect(screen.getByText('Item Name is required.')).toBeInTheDocument();
       });
     });
 
@@ -205,6 +228,11 @@ describe('ItemCreatePage', () => {
       await waitFor(() => expect(mockGetTaxCodes).toHaveBeenCalled());
       await waitFor(() => screen.getByTestId('item-name'));
       fireEvent.change(screen.getByTestId('item-name'), { target: { value: 'Test Widget' } });
+      fireEvent.change(screen.getByTestId('item-sku'), { target: { value: 'TW-001' } });
+      fireEvent.change(screen.getByTestId('item-unit'), { target: { value: 'uom-1' } });
+      fireEvent.click(screen.getByTestId('tab-category'));
+      fireEvent.change(screen.getByTestId('item-category'), { target: { value: 'cat-1' } });
+      fireEvent.click(screen.getByTestId('tab-basic'));
       await waitFor(() => {
         const btns = screen.getAllByText('Save Item');
         expect(btns[0]).not.toBeDisabled();
@@ -220,6 +248,11 @@ describe('ItemCreatePage', () => {
       await waitFor(() => expect(mockGetTaxCodes).toHaveBeenCalled());
       await waitFor(() => screen.getByTestId('item-name'));
       fireEvent.change(screen.getByTestId('item-name'), { target: { value: 'Test Widget' } });
+      fireEvent.change(screen.getByTestId('item-sku'), { target: { value: 'TW-001' } });
+      fireEvent.change(screen.getByTestId('item-unit'), { target: { value: 'uom-1' } });
+      fireEvent.click(screen.getByTestId('tab-category'));
+      fireEvent.change(screen.getByTestId('item-category'), { target: { value: 'cat-1' } });
+      fireEvent.click(screen.getByTestId('tab-basic'));
       await waitFor(() => {
         const btns = screen.getAllByText('Save Item');
         expect(btns[0]).not.toBeDisabled();
@@ -238,6 +271,11 @@ describe('ItemCreatePage', () => {
       await waitFor(() => expect(mockGetTaxCodes).toHaveBeenCalled());
       await waitFor(() => screen.getByTestId('item-name'));
       fireEvent.change(screen.getByTestId('item-name'), { target: { value: 'Test Widget' } });
+      fireEvent.change(screen.getByTestId('item-sku'), { target: { value: 'TW-001' } });
+      fireEvent.change(screen.getByTestId('item-unit'), { target: { value: 'uom-1' } });
+      fireEvent.click(screen.getByTestId('tab-category'));
+      fireEvent.change(screen.getByTestId('item-category'), { target: { value: 'cat-1' } });
+      fireEvent.click(screen.getByTestId('tab-basic'));
       await waitFor(() => {
         const btns = screen.getAllByText('Save Item');
         expect(btns[0]).not.toBeDisabled();

@@ -1,5 +1,27 @@
 import { createRequestCache } from './requestCache';
 
+/**
+ * Statuses that mean "this can no longer receive material". Kept as exclusion
+ * lists rather than allow-lists so a new in-flight status added by Projects or
+ * Manufacturing shows up in the allocation dropdowns instead of silently
+ * disappearing from them.
+ */
+const CLOSED_PROJECT_STATUSES = new Set([
+    'completed',
+    'closed',
+    'cancelled',
+    'canceled',
+    'archived',
+]);
+
+const CLOSED_WORK_ORDER_STATUSES = new Set([
+    'completed',
+    'closed',
+    'cancelled',
+    'canceled',
+    'done',
+]);
+
 class InventoryService {
     private orgId: string | null = null;
     private tenantId: string | null = null;
@@ -584,25 +606,42 @@ class InventoryService {
         return response.json();
     }
 
-    /** Active projects from the Projects module (best-effort; [] on failure). */
+    /**
+     * Projects a stock movement may be allocated to.
+     *
+     * Closed work cannot receive new material, so completed/cancelled/archived
+     * projects are dropped here rather than being offered and then rejected by
+     * the backend's assertLinkedEntitiesActive check. Still best-effort: the
+     * Projects module being down must not stop a warehouse recording reality,
+     * so a failure yields an empty list and the caller says so in the UI.
+     */
     async searchProjects(search?: string): Promise<any[]> {
         try {
             const origin = this.crossServiceOrigin('VITE_SO360_PROJECTS_API', 'projects', 3010);
             const qs = new URLSearchParams({ limit: '50' });
             if (search) qs.append('search', search);
             const res = await this.crossServiceGet(`${origin}/v1/projects?${qs.toString()}`);
-            return res?.data || res?.projects || (Array.isArray(res) ? res : []);
+            const list = res?.data || res?.projects || (Array.isArray(res) ? res : []);
+            return (Array.isArray(list) ? list : []).filter(
+                (p: any) => !CLOSED_PROJECT_STATUSES.has(String(p?.status || '').toLowerCase()),
+            );
         } catch {
             return [];
         }
     }
 
-    /** Manufacturing orders (work orders) from the Manufacturing module (best-effort; [] on failure). */
+    /**
+     * Manufacturing orders open enough to consume material. Completed and
+     * cancelled orders are excluded for the same reason as closed projects.
+     */
     async searchWorkOrders(): Promise<any[]> {
         try {
             const origin = this.crossServiceOrigin('VITE_SO360_MANUFACTURING_API', 'manufacturing', 3034);
             const res = await this.crossServiceGet(`${origin}/v1/manufacturing/orders`);
-            return res?.data || (Array.isArray(res) ? res : []);
+            const list = res?.data || (Array.isArray(res) ? res : []);
+            return (Array.isArray(list) ? list : []).filter(
+                (w: any) => !CLOSED_WORK_ORDER_STATUSES.has(String(w?.status || '').toLowerCase()),
+            );
         } catch {
             return [];
         }

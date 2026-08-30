@@ -240,11 +240,14 @@ describe('Stock Movement Register — entry form guards', () => {
         fireEvent.change(screen.getByLabelText('Movement source'), {
             target: { value: 'production' },
         });
+        fireEvent.change(screen.getByLabelText('Reason'), { target: { value: 'PURCHASE_RECEIPT' } });
         fireEvent.change(screen.getByLabelText('Quantity'), { target: { value: '5' } });
         fireEvent.click(screen.getByText('Record Transaction'));
 
         await waitFor(() =>
-            expect(screen.getByText(/Work Order is required/i)).toBeInTheDocument(),
+            expect(screen.getByTestId('error-work_order')).toHaveTextContent(
+                'Please select a work order.',
+            ),
         );
         expect(inv.createAdjustment).not.toHaveBeenCalled();
     });
@@ -254,6 +257,7 @@ describe('Stock Movement Register — entry form guards', () => {
         await selectItem();
 
         fireEvent.change(screen.getByLabelText('Warehouse'), { target: { value: WH } });
+        fireEvent.change(screen.getByLabelText('Reason'), { target: { value: 'PURCHASE_RECEIPT' } });
         fireEvent.change(screen.getByLabelText('Quantity'), { target: { value: '25' } });
         fireEvent.change(screen.getByLabelText('Remarks'), {
             target: { value: 'Received in good condition' },
@@ -267,6 +271,7 @@ describe('Stock Movement Register — entry form guards', () => {
                     item_id: ITEM.id,
                     warehouse_id: WH,
                     quantity: 25,
+                    reason_code: 'PURCHASE_RECEIPT',
                     remarks: 'Received in good condition',
                 }),
             ),

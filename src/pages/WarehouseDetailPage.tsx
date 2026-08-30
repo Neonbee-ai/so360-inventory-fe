@@ -9,6 +9,7 @@ import { Warehouse } from '../types/inventory';
 import { Modal } from '../components/common/Modal';
 import { TableSkeleton } from '../components/common/Skeleton';
 import { useAuth } from '../hooks/useAuth';
+import { firstError, optional, validateAddress, validateCode, validateName, ValidationResult } from '../utils/validators';
 import { useActivity, useShellBridge } from '@so360/shell-context';
 import { FeatureGate } from '@so360/design-system';
 
@@ -43,6 +44,8 @@ const WarehouseDetailPage = () => {
     const [editingLocation, setEditingLocation] = useState<any>(null);
     const [locationForm, setLocationForm] = useState({ name: '', code: '' });
     const [isSavingLocation, setIsSavingLocation] = useState(false);
+    const [showLocationErrors, setShowLocationErrors] = useState(false);
+    const [showEditErrors, setShowEditErrors] = useState(false);
     const [deletingLocationId, setDeletingLocationId] = useState<string | null>(null);
     const [isDeletingLocation, setIsDeletingLocation] = useState(false);
 
@@ -76,9 +79,24 @@ const WarehouseDetailPage = () => {
         }
     };
 
+    // Same warehouse rules as the Warehouses list page — this modal is a second
+    // edit surface for the same record and must not be a way around them.
+    const editErrors: Record<string, ValidationResult> = {
+        name: validateName(editForm.name, 'Warehouse Name', 3, 100),
+        code: validateCode(editForm.code, 'Short Code', 3, 15),
+        address: optional(editForm.address, (v) => validateAddress(v)),
+    };
+    const editBlocked = firstError(editErrors);
+
     const handleSaveEdit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!id) return;
+        if (editBlocked) {
+            setShowEditErrors(true);
+            setError(editBlocked);
+            return;
+        }
+        setShowEditErrors(false);
         setIsSaving(true);
         try {
             await inventoryService.updateWarehouse(id, editForm);
@@ -114,12 +132,31 @@ const WarehouseDetailPage = () => {
             setEditingLocation(null);
             setLocationForm({ name: '', code: '' });
         }
+        setShowLocationErrors(false);
         setIsLocationModalOpen(true);
     };
+
+    /**
+     * Storage locations are referenced by scanners, transfer documents and
+     * reports, so `)*&(^` is not a usable name and `_( )*_` is not a usable
+     * code. Mirrors CreateWarehouseLocationDto on the backend, which is what
+     * actually rejects a payload that skips this form.
+     */
+    const locationErrors: Record<string, ValidationResult> = {
+        name: validateName(locationForm.name, 'Location Name', 2, 100),
+        code: validateCode(locationForm.code, 'Location Code', 2, 20),
+    };
+    const locationBlocked = firstError(locationErrors);
 
     const handleSaveLocation = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!id) return;
+        if (locationBlocked) {
+            setShowLocationErrors(true);
+            setError(locationBlocked);
+            return;
+        }
+        setShowLocationErrors(false);
         setIsSavingLocation(true);
         setError(null);
         try {
@@ -131,6 +168,7 @@ const WarehouseDetailPage = () => {
             setIsLocationModalOpen(false);
             setEditingLocation(null);
             setLocationForm({ name: '', code: '' });
+            setShowLocationErrors(false);
             fetchWarehouse();
         } catch (err: any) {
             setError(err.message || 'Failed to save location');
@@ -385,22 +423,27 @@ const WarehouseDetailPage = () => {
                     <div>
                         <label className="block text-sm font-medium text-slate-400 mb-1.5">Warehouse Name *</label>
                         <input
-                            required
                             type="text"
                             value={editForm.name}
                             onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                            className={`w-full bg-slate-800 border ${showEditErrors && editErrors.name ? 'border-rose-500/60' : 'border-slate-700'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50`}
                         />
+                        {showEditErrors && editErrors.name && (
+                            <p role="alert" data-testid="error-warehouse-name" className="text-rose-400 text-xs mt-1">{editErrors.name}</p>
+                        )}
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-400 mb-1.5">Short Code</label>
+                        <label className="block text-sm font-medium text-slate-400 mb-1.5">Short Code *</label>
                         <input
                             type="text"
                             value={editForm.code}
                             onChange={(e) => setEditForm({ ...editForm, code: e.target.value.toUpperCase() })}
-                            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50 font-mono"
+                            className={`w-full bg-slate-800 border ${showEditErrors && editErrors.code ? 'border-rose-500/60' : 'border-slate-700'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50 font-mono`}
                         />
+                        {showEditErrors && editErrors.code && (
+                            <p role="alert" data-testid="error-warehouse-code" className="text-rose-400 text-xs mt-1">{editErrors.code}</p>
+                        )}
                     </div>
 
                     <div>
@@ -408,8 +451,11 @@ const WarehouseDetailPage = () => {
                         <textarea
                             value={editForm.address}
                             onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
-                            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50 h-24 resize-none"
+                            className={`w-full bg-slate-800 border ${showEditErrors && editErrors.address ? 'border-rose-500/60' : 'border-slate-700'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50 h-24 resize-none`}
                         />
+                        {showEditErrors && editErrors.address && (
+                            <p role="alert" data-testid="error-warehouse-address" className="text-rose-400 text-xs mt-1">{editErrors.address}</p>
+                        )}
                     </div>
 
                     <label className="flex items-center gap-2 cursor-pointer group">
@@ -452,25 +498,33 @@ const WarehouseDetailPage = () => {
                     <div>
                         <label className="block text-sm font-medium text-slate-400 mb-1.5">Location Name *</label>
                         <input
-                            required
                             type="text"
                             value={locationForm.name}
                             onChange={(e) => setLocationForm({ ...locationForm, name: e.target.value })}
                             placeholder="e.g. Zone A, Aisle 3"
-                            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                            className={`w-full bg-slate-800 border ${showLocationErrors && locationErrors.name ? 'border-rose-500/60' : 'border-slate-700'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50`}
                         />
+                        {showLocationErrors && locationErrors.name && (
+                            <p role="alert" data-testid="error-location-name" className="text-rose-400 text-xs mt-1">
+                                {locationErrors.name}
+                            </p>
+                        )}
                     </div>
 
                     <div>
                         <label className="block text-sm font-medium text-slate-400 mb-1.5">Location Code *</label>
                         <input
-                            required
                             type="text"
                             value={locationForm.code}
                             onChange={(e) => setLocationForm({ ...locationForm, code: e.target.value.toUpperCase() })}
                             placeholder="e.g. ZA, A3"
-                            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50 font-mono"
+                            className={`w-full bg-slate-800 border ${showLocationErrors && locationErrors.code ? 'border-rose-500/60' : 'border-slate-700'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50 font-mono`}
                         />
+                        {showLocationErrors && locationErrors.code && (
+                            <p role="alert" data-testid="error-location-code" className="text-rose-400 text-xs mt-1">
+                                {locationErrors.code}
+                            </p>
+                        )}
                     </div>
 
                     <div className="flex gap-3 mt-8">

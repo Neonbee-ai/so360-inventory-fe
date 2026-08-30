@@ -4,6 +4,8 @@ import { ITEM_CLASSIFICATIONS, ItemClassification } from '../../../types/itemTyp
 import { Unit } from '../../../types/inventory';
 import ProductTypePicker from '../../../components/attributes/ProductTypePicker';
 
+export type FieldErrors = Record<string, string | null>;
+
 interface BasicInfoTabProps {
     name: string;
     sku: string;
@@ -23,6 +25,8 @@ interface BasicInfoTabProps {
     setNewUomName: (name: string) => void;
     setNewUomAbbr: (abbr: string) => void;
     onCreateUom: () => void;
+    errors?: FieldErrors;
+    showErrors?: boolean;
 }
 
 const inputClass = 'w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all placeholder:text-slate-600';
@@ -32,7 +36,18 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
     name, sku, type, brand, barcode, description, unit_id, uoms, product_type_id,
     showNewUom, newUomName, newUomAbbr, isCreatingUom,
     updateField, setShowNewUom, setNewUomName, setNewUomAbbr, onCreateUom,
+    errors = {}, showErrors = false,
 }) => {
+    const errorFor = (field: string) => (showErrors ? errors[field] || null : null);
+    const cls = (field: string) =>
+        errorFor(field) ? inputClass.replace('border-slate-700', 'border-rose-500/60') : inputClass;
+    const FieldError = ({ field }: { field: string }) => {
+        const message = errorFor(field);
+        return message ? (
+            <p role="alert" data-testid={`error-${field}`} className="text-rose-400 text-xs mt-1">{message}</p>
+        ) : null;
+    };
+
     return (
         <div className="space-y-8">
             <FormSection title="Identification">
@@ -43,19 +58,21 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
                             type="text"
                             value={name}
                             onChange={e => updateField('name', e.target.value)}
-                            className={inputClass}
+                            className={cls('name')}
                             placeholder="e.g. MacBook Pro 14"
                         />
+                        <FieldError field="name" />
                     </div>
                     <div>
-                        <label className={labelClass}>SKU</label>
+                        <label className={labelClass}>SKU *</label>
                         <input
                             type="text"
                             value={sku}
                             onChange={e => updateField('sku', e.target.value)}
-                            className={inputClass}
+                            className={cls('sku')}
                             placeholder="e.g. LAP-001"
                         />
+                        <FieldError field="sku" />
                     </div>
                     <div>
                         <label className={labelClass}>Barcode / UPC</label>
@@ -63,9 +80,10 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
                             type="text"
                             value={barcode}
                             onChange={e => updateField('barcode', e.target.value)}
-                            className={inputClass}
+                            className={cls('barcode')}
                             placeholder="e.g. 012345678905"
                         />
+                        <FieldError field="barcode" />
                     </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
@@ -75,12 +93,13 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
                             type="text"
                             value={brand}
                             onChange={e => updateField('brand', e.target.value)}
-                            className={inputClass}
+                            className={cls('brand')}
                             placeholder="e.g. Apple"
                         />
+                        <FieldError field="brand" />
                     </div>
                     <div>
-                        <label className={labelClass}>Unit of Measure</label>
+                        <label className={labelClass}>Unit of Measure *</label>
                         {!showNewUom ? (
                             <select
                                 value={unit_id}
@@ -91,7 +110,7 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
                                         updateField('unit_id', e.target.value);
                                     }
                                 }}
-                                className={inputClass}
+                                className={cls('unit_id')}
                             >
                                 <option value="">Select unit...</option>
                                 {uoms.map(u => (
@@ -135,6 +154,7 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
                                 </div>
                             </div>
                         )}
+                        <FieldError field="unit_id" />
                     </div>
                 </div>
             </FormSection>
@@ -166,6 +186,7 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
                         );
                     })}
                 </div>
+                <FieldError field="type" />
             </FormSection>
 
             <FormSection title="Product Type" description="Optional — assigns dynamic attribute fields in the Attributes tab">

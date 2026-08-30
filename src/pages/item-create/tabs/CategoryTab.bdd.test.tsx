@@ -37,7 +37,7 @@ describe('CategoryTab', () => {
   describe('Given the tab is rendered with a list of categories', () => {
     it('When the tab renders / Then shows the "Item Category" section heading', () => {
       render(<CategoryTab {...makeProps()} />);
-      expect(screen.getByText('Item Category')).toBeInTheDocument();
+      expect(screen.getByText('Item Category *')).toBeInTheDocument();
     });
 
     it('When the tab renders / Then the CategoryPicker component is present', () => {

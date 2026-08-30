@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, Loader2 } from 'lucide-react';
 import { inventoryService } from '../../services/inventoryService';
@@ -14,6 +14,7 @@ import ShippingTab from './tabs/ShippingTab';
 import AttributesTab from './tabs/AttributesTab';
 import { useInventoryCurrencySymbol } from '../../utils/formatters';
 import { useActivity } from '@so360/shell-context';
+import { optional, validateBarcode, validateName, validateSku } from '../../utils/validators';
 
 interface FormData {
     name: string;
@@ -99,6 +100,7 @@ const ItemCreatePage = () => {
     const [isTaxCodesLoading, setIsTaxCodesLoading] = useState(true);
     const [taxCodesError, setTaxCodesError] = useState<string | null>(null);
     const [attributeDefs, setAttributeDefs] = useState<ItemAttributeDefinition[]>([]);
+    const [showErrors, setShowErrors] = useState(false);
 
     // Inline create states — category
     const [showNewCategory, setShowNewCategory] = useState(false);
@@ -145,7 +147,7 @@ const ItemCreatePage = () => {
 
     const updateField = (field: string, value: any) => {
         setForm(prev => ({ ...prev, [field]: value }));
-        if (field === 'name') setTabErrors(prev => ({ ...prev, basic: false }));
+
         if (field === 'category_id') {
             setAttributeDefs([]);
             setForm(prev => ({ ...prev, category_id: value, metadata: {} }));
@@ -195,22 +197,49 @@ const ItemCreatePage = () => {
         }
     };
 
+    /**
+     * The minimum an item needs before it can exist as master data. An item
+     * without a unit of measure cannot be counted, one without a category
+     * cannot be found, and one without a SKU cannot be purchased or scanned —
+     * which is how records reading "Unit: Not Set / Category: Uncategorized"
+     * ended up live in the catalogue.
+     */
+    const fieldErrors = useMemo<Record<string, string | null>>(() => ({
+        name: validateName(form.name, 'Item Name', 2, 200),
+        sku: validateSku(form.sku),
+        unit_id: form.unit_id ? null : 'Unit of Measure is required.',
+        type: form.type ? null : 'Please select a classification.',
+        category_id: form.category_id ? null : 'Please select a category.',
+        barcode: validateBarcode(form.barcode),
+        brand: optional(form.brand, (v) => validateName(v, 'Brand', 2, 100)),
+    }), [form.name, form.sku, form.unit_id, form.type, form.category_id, form.barcode, form.brand]);
+
+    /** Which tab each required field lives on, so the form can jump there. */
+    const FIELD_TABS: Record<string, TabId> = {
+        name: 'basic', sku: 'basic', unit_id: 'basic', type: 'basic',
+        barcode: 'basic', brand: 'basic', category_id: 'category',
+    };
+
     const validate = (): boolean => {
         const errors: Partial<Record<TabId, boolean>> = {};
-        if (!form.name.trim()) {
-            errors.basic = true;
+        for (const [field, message] of Object.entries(fieldErrors)) {
+            if (message) errors[FIELD_TABS[field]] = true;
         }
         if (isTaxCodesLoading || taxCodesError) {
             errors.pricing = true;
         }
         setTabErrors(errors);
+        setShowErrors(true);
 
         if (Object.keys(errors).length > 0) {
             // Switch to the first tab with errors
             const firstErrorTab = (['basic', 'media', 'pricing', 'category', 'stock', 'shipping', 'attributes'] as TabId[])
                 .find(t => errors[t]);
             if (firstErrorTab) setActiveTab(firstErrorTab);
-            if (isTaxCodesLoading) {
+            const firstFieldMessage = Object.values(fieldErrors).find(m => m);
+            if (firstFieldMessage) {
+                setError(firstFieldMessage);
+            } else if (isTaxCodesLoading) {
                 setError('Tax codes are still loading. Please wait before saving.');
             } else if (taxCodesError) {
                 setError('Tax codes failed to load from Core settings. Please retry.');
@@ -238,7 +267,7 @@ const ItemCreatePage = () => {
                 is_serial_tracked: form.is_serial_tracked,
             };
 
-            if (form.sku.trim()) dto.sku = form.sku.trim();
+            dto.sku = form.sku.trim();
             if (form.brand.trim()) dto.brand = form.brand.trim();
             if (form.barcode.trim()) dto.barcode = form.barcode.trim();
             if (form.description.trim()) dto.description = form.description.trim();
@@ -305,6 +334,8 @@ const ItemCreatePage = () => {
                         setNewUomName={setNewUomName}
                         setNewUomAbbr={setNewUomAbbr}
                         onCreateUom={handleCreateUom}
+                        errors={fieldErrors}
+                        showErrors={showErrors}
                     />
                 );
             case 'media':
@@ -337,6 +368,7 @@ const ItemCreatePage = () => {
                         updateField={updateField}
                         attributeDefs={attributeDefs}
                         metadata={form.metadata}
+                        error={showErrors ? fieldErrors.category_id : null}
                         onQuickAddCategory={async (name: string) => {
                             try {
                                 const created = await inventoryService.createCategory(name);

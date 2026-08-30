@@ -11,9 +11,65 @@ import { Modal } from '../components/common/Modal';
 import { useAuth } from '../hooks/useAuth';
 import { useActivity, useShellBridge } from '@so360/shell-context';
 import { useInventoryFormatters } from '../utils/formatters';
+import { optional, validateReference } from '../utils/validators';
 import { FeatureGate } from '@so360/design-system';
 
 type TransactionType = 'stock_in' | 'stock_out' | 'adjustment' | 'transfer';
+
+/**
+ * Sources that represent a document-backed movement with an outside party.
+ * A vendor receipt or a customer issue without a reference (PO-1001, GRN-00012)
+ * cannot be traced back to anything, so the party field is mandatory for these.
+ */
+const PARTY_REQUIRED_SOURCES = new Set(['supplier', 'vendor', 'customer']);
+
+/**
+ * How each stored movement_type is presented in the register. Transfers and
+ * adjustments are fundamentally different transactions — one relocates stock
+ * and leaves company totals untouched, the other changes them — so they get
+ * distinct colours rather than a shared grey row that has to be read carefully.
+ */
+const MOVEMENT_BADGES: Record<string, { label: string; className: string }> = {
+    transfer: { label: 'TRANSFER', className: 'bg-blue-500/10 text-blue-400 border-blue-500/30' },
+    adjustment: { label: 'ADJUSTMENT', className: 'bg-amber-500/10 text-amber-400 border-amber-500/30' },
+    inbound: { label: 'RECEIPT', className: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' },
+    purchase_receipt: { label: 'RECEIPT', className: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' },
+    outbound: { label: 'ISSUE', className: 'bg-rose-500/10 text-rose-400 border-rose-500/30' },
+    sales_issue: { label: 'ISSUE', className: 'bg-rose-500/10 text-rose-400 border-rose-500/30' },
+    production: { label: 'PRODUCTION', className: 'bg-purple-500/10 text-purple-400 border-purple-500/30' },
+    production_receipt: { label: 'PRODUCTION', className: 'bg-purple-500/10 text-purple-400 border-purple-500/30' },
+    production_consumption: { label: 'PRODUCTION', className: 'bg-purple-500/10 text-purple-400 border-purple-500/30' },
+    return: { label: 'RETURN', className: 'bg-teal-500/10 text-teal-400 border-teal-500/30' },
+};
+
+const badgeFor = (movementType?: string | null) =>
+    MOVEMENT_BADGES[(movementType || '').toLowerCase()] || {
+        label: (movementType || 'MOVEMENT').replace(/_/g, ' ').toUpperCase(),
+        className: 'bg-slate-700/40 text-slate-300 border-slate-600',
+    };
+
+/** Human label for a reason code — falls back to the raw code, never blank. */
+const REASON_LABELS: Record<string, string> = {
+    PURCHASE_RECEIPT: 'Purchase Receipt',
+    PRODUCTION_COMPLETION: 'Production Completion',
+    CUSTOMER_RETURN: 'Customer Return',
+    TRANSFER_IN: 'Stock Transfer In',
+    ADJUSTMENT_INCREASE: 'Adjustment Increase',
+    MATERIAL_ISSUE: 'Material Issue',
+    SALES_DISPATCH: 'Sales Dispatch',
+    PROJECT_CONSUMPTION: 'Project Consumption',
+    WORK_ORDER_ISSUE: 'Work Order Issue',
+    DAMAGE: 'Damage',
+    SAMPLE_ISSUE: 'Sample Issue',
+    PHYSICAL_VERIFICATION: 'Physical Verification',
+    CYCLE_COUNT: 'Cycle Count',
+    CORRECTION_ENTRY: 'Correction Entry',
+    SHRINKAGE: 'Shrinkage',
+    EXCESS_STOCK: 'Excess Stock',
+};
+
+const reasonLabel = (code?: string | null) =>
+    code ? REASON_LABELS[code] || code.replace(/_/g, ' ') : null;
 
 const SOURCE_TYPES = [
     { value: 'supplier', label: 'Supplier' },
@@ -264,17 +320,43 @@ const StockMovementRegisterPage = () => {
 
     const quantityNum = Number(form.quantity) || 0;
 
-    const signedQuantity = useMemo(() => {
-        if (form.transaction_type === 'stock_in') return Math.abs(quantityNum);
-        if (form.transaction_type === 'stock_out') return -Math.abs(quantityNum);
-        return quantityNum; // adjustment accepts a signed value; transfer uses positive
-    }, [form.transaction_type, quantityNum]);
+    /**
+     * Quantity rules per transaction type. Only an adjustment carries a sign —
+     * it is the one transaction that can go either way. For every other type a
+     * negative entry is a data-entry error, not an instruction to flip direction.
+     */
+    const quantityError = useMemo<string | null>(() => {
+        const raw = form.quantity.trim();
+        if (!raw) return 'Quantity is required.';
+        const n = Number(raw);
+        if (!Number.isFinite(n)) return 'Quantity must be a number.';
+        if (n === 0) return 'Quantity must be greater than zero.';
+        if (form.transaction_type !== 'adjustment' && n < 0) {
+            return 'Quantity must be greater than zero. Use the Adjustment type to record a decrease.';
+        }
+        return null;
+    }, [form.quantity, form.transaction_type]);
+
+    /**
+     * The signed effect on the source warehouse, or null when the quantity is
+     * not usable. Returning null rather than a coerced number is the fix for
+     * the register's arithmetic bug: a "-8" typed into a Stock In used to be
+     * silently `Math.abs`-ed to +8, so a balance of 5 previewed as 13. Now the
+     * projection refuses to render until the quantity itself is valid.
+     */
+    const signedQuantity = useMemo<number | null>(() => {
+        if (quantityError) return null;
+        const n = Number(form.quantity);
+        if (form.transaction_type === 'stock_in') return n;
+        if (form.transaction_type === 'stock_out') return -n;
+        if (form.transaction_type === 'transfer') return -n;
+        return n; // adjustment: the signed value is the user's intent
+    }, [form.transaction_type, form.quantity, quantityError]);
 
     const projectedBalance = useMemo(() => {
-        if (currentBalance === null) return null;
-        if (form.transaction_type === 'transfer') return currentBalance - Math.abs(quantityNum);
+        if (currentBalance === null || signedQuantity === null) return null;
         return currentBalance + signedQuantity;
-    }, [currentBalance, signedQuantity, quantityNum, form.transaction_type]);
+    }, [currentBalance, signedQuantity]);
 
     const insufficientStock =
         projectedBalance !== null &&
@@ -294,39 +376,82 @@ const StockMovementRegisterPage = () => {
 
     const requiresWorkOrder = form.source_type === 'production';
     const requiresProject = form.source_type === 'project_site';
+    const requiresParty = PARTY_REQUIRED_SOURCES.has(form.source_type);
+    const isTransfer = form.transaction_type === 'transfer';
+
+    /**
+     * One place that decides what is wrong with the form. The modal renders
+     * each entry beneath its own field and the submit button reads the same map,
+     * so a message can never appear without the field it belongs to being blocked.
+     */
+    const fieldErrors = useMemo<Record<string, string | null>>(() => ({
+        item: form.item_id ? null : 'Please select an item.',
+        warehouse: form.warehouse_id
+            ? null
+            : isTransfer
+                ? 'Please select a source warehouse.'
+                : 'Please select a warehouse.',
+        to_warehouse: !isTransfer
+            ? null
+            : !form.to_warehouse_id
+                ? 'Please select a destination warehouse.'
+                : form.to_warehouse_id === form.warehouse_id
+                    ? 'Source and destination warehouses must be different.'
+                    : null,
+        quantity: quantityError,
+        // A transfer relocates stock and needs no reason; every other type
+        // changes company-wide quantities and is unauditable without one.
+        reason: isTransfer || form.reason_code ? null : 'Please select a transaction reason.',
+        source_label:
+            form.source_type === 'warehouse'
+                ? null
+                : requiresParty
+                    ? validateReference(form.source_label, 'Party / Reference')
+                    : optional(form.source_label, (v) => validateReference(v, 'Party / Reference')),
+        project: requiresProject && !form.project_id ? 'Please select a project.' : null,
+        work_order: requiresWorkOrder && !form.work_order_id ? 'Please select a work order.' : null,
+        transaction_date: dateWarning,
+        stock: insufficientStock
+            ? `Insufficient stock available. Current balance is ${currentBalance}.`
+            : null,
+    }), [
+        form.item_id, form.warehouse_id, form.to_warehouse_id, form.reason_code,
+        form.source_type, form.source_label, form.project_id, form.work_order_id,
+        isTransfer, quantityError, requiresParty, requiresProject, requiresWorkOrder,
+        dateWarning, insufficientStock, currentBalance,
+    ]);
+
+    /**
+     * Work orders narrowed to the chosen project. Filtering only when a project
+     * is selected keeps the full list available for unallocated issues.
+     */
+    const availableWorkOrders = useMemo(
+        () => workOrders.filter((w) => !form.project_id || w.project_id === form.project_id),
+        [workOrders, form.project_id],
+    );
+
+    const [showFieldErrors, setShowFieldErrors] = useState(false);
+    const firstFieldError = useMemo(
+        () => Object.values(fieldErrors).find((m) => m) || null,
+        [fieldErrors],
+    );
+    const errorFor = (field: string) =>
+        showFieldErrors ? fieldErrors[field] || null : null;
 
     const resetForm = () => {
         setForm(emptyForm());
         setSelectedItem(null);
         setCurrentBalance(null);
+        setShowFieldErrors(false);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
 
-        if (!form.item_id) return setError('Item is required');
-        if (quantityNum === 0) return setError('Quantity must be greater than zero');
-        if (form.transaction_type !== 'adjustment' && quantityNum < 0) {
-            return setError('Quantity must be a positive number');
-        }
-        if (dateWarning) return setError(dateWarning);
-        if (insufficientStock) {
-            return setError(
-                `Insufficient stock: available ${currentBalance}, requested ${Math.abs(quantityNum)}`,
-            );
-        }
-        if (requiresWorkOrder && !form.work_order_id) {
-            return setError('Work Order is required for production movements');
-        }
-        if (requiresProject && !form.project_id) {
-            return setError('Project is required for project-site movements');
-        }
-        if (form.transaction_type === 'transfer') {
-            if (!form.to_warehouse_id) return setError('Destination warehouse is required');
-            if (form.warehouse_id === form.to_warehouse_id) {
-                return setError('Source and destination warehouses must be different');
-            }
+        if (firstFieldError) {
+            setShowFieldErrors(true);
+            return setError(firstFieldError);
         }
 
         const allocation = {
@@ -357,8 +482,8 @@ const StockMovementRegisterPage = () => {
                 await inventoryService.createAdjustment({
                     item_id: form.item_id,
                     warehouse_id: form.warehouse_id,
-                    quantity: signedQuantity,
-                    reason_code: form.reason_code || undefined,
+                    quantity: signedQuantity as number,
+                    reason_code: form.reason_code,
                     ...allocation,
                 });
             }
@@ -378,6 +503,25 @@ const StockMovementRegisterPage = () => {
         }
     };
 
+    /**
+     * Pair the two legs of each transfer by their shared reference number so
+     * the register can show a route instead of two unrelated-looking rows.
+     * Only reference numbers with both legs loaded produce an entry.
+     */
+    const transferContext = useMemo(() => {
+        const byRef = new Map<string, { from?: string; to?: string }>();
+        for (const m of movements) {
+            const type = (m.movement_type || m.type || '').toLowerCase();
+            if (type !== 'transfer' || !m.reference_number) continue;
+            const entry = byRef.get(m.reference_number) || {};
+            const name = m.warehouses?.name;
+            if (m.quantity < 0) entry.from = name;
+            else entry.to = name;
+            byRef.set(m.reference_number, entry);
+        }
+        return byRef;
+    }, [movements]);
+
     const columns = [
         {
             header: 'Date',
@@ -393,16 +537,25 @@ const StockMovementRegisterPage = () => {
             ),
         },
         {
+            header: 'Transaction Type',
+            accessor: (m: StockMovement) => {
+                const badge = badgeFor(m.movement_type || (m as any).type);
+                return (
+                    <span
+                        data-testid="movement-type-badge"
+                        className={`inline-block text-[10px] font-bold tracking-wider px-2 py-1 rounded border ${badge.className}`}
+                    >
+                        {badge.label}
+                    </span>
+                );
+            },
+        },
+        {
             header: 'Reference',
             accessor: (m: StockMovement) => (
-                <div className="flex flex-col">
-                    <span className="font-mono text-slate-200 text-xs">
-                        {m.reference_number || '—'}
-                    </span>
-                    <span className="text-slate-500 text-xs capitalize">
-                        {(m.movement_type || m.type || '').replace(/_/g, ' ')}
-                    </span>
-                </div>
+                <span className="font-mono text-slate-200 text-xs">
+                    {m.reference_number || '—'}
+                </span>
             ),
         },
         {
@@ -416,12 +569,28 @@ const StockMovementRegisterPage = () => {
         },
         {
             header: 'Warehouse',
-            accessor: (m: StockMovement) => (
-                <div className="flex items-center gap-1.5 text-slate-300">
-                    <MapPin size={14} className="text-slate-500" />
-                    <span>{m.warehouses?.name || '—'}</span>
-                </div>
-            ),
+            accessor: (m: StockMovement) => {
+                const context = m.reference_number
+                    ? transferContext.get(m.reference_number)
+                    : undefined;
+                // A transfer is two rows sharing one reference number. Showing
+                // only this leg's warehouse forces the reader to hunt for the
+                // other half, so when both legs are on screen we state the route.
+                if (context?.from && context?.to) {
+                    return (
+                        <div className="flex items-center gap-1.5 text-slate-300 text-xs">
+                            <ArrowRightLeft size={14} className="text-blue-400 flex-shrink-0" />
+                            <span>{context.from} → {context.to}</span>
+                        </div>
+                    );
+                }
+                return (
+                    <div className="flex items-center gap-1.5 text-slate-300">
+                        <MapPin size={14} className="text-slate-500" />
+                        <span>{m.warehouses?.name || '—'}</span>
+                    </div>
+                );
+            },
         },
         {
             header: 'Qty',
@@ -438,8 +607,16 @@ const StockMovementRegisterPage = () => {
                 m.balance_after === null || m.balance_after === undefined ? (
                     <span className="text-slate-600">—</span>
                 ) : (
-                    <span className="text-slate-300">
-                        {m.balance_before ?? '—'} → <span className="font-bold text-slate-50">{m.balance_after}</span>
+                    // before → delta → after, so a correction reads as a
+                    // complete arithmetic statement (100 → -5 → 95).
+                    <span data-testid="movement-balance" className="text-slate-300 text-xs whitespace-nowrap">
+                        {m.balance_before ?? '—'}
+                        {' → '}
+                        <span className={m.quantity < 0 ? 'text-rose-400' : 'text-emerald-400'}>
+                            {m.quantity > 0 ? `+${m.quantity}` : m.quantity}
+                        </span>
+                        {' → '}
+                        <span className="font-bold text-slate-50">{m.balance_after}</span>
                     </span>
                 ),
         },
@@ -466,16 +643,42 @@ const StockMovementRegisterPage = () => {
             ),
         },
         {
-            header: 'Remarks',
-            accessor: (m: StockMovement) => (
-                <span className="text-slate-400 text-xs">{m.remarks || m.reason_code || '—'}</span>
-            ),
+            header: 'Reason / Remarks',
+            accessor: (m: StockMovement) => {
+                const reason = reasonLabel(m.reason_code);
+                return (
+                    <div className="flex flex-col text-xs max-w-[220px]">
+                        {reason && (
+                            <span data-testid="movement-reason" className="text-slate-300 font-medium">
+                                {reason}
+                            </span>
+                        )}
+                        {m.remarks && <span className="text-slate-500">{m.remarks}</span>}
+                        {!reason && !m.remarks && <span className="text-slate-600">—</span>}
+                    </div>
+                );
+            },
             className: 'max-w-[220px]',
         },
     ];
 
     const inputClass =
         'w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-50';
+    /** Same input, but wearing its error state. */
+    const fieldClass = (field: string) =>
+        errorFor(field)
+            ? `${inputClass} border-rose-500/60 focus:ring-rose-500/40`
+            : inputClass;
+    /** Error text rendered directly beneath the field it belongs to. */
+    const FieldError = ({ field }: { field: string }) => {
+        const message = errorFor(field);
+        if (!message) return null;
+        return (
+            <p role="alert" data-testid={`error-${field}`} className="text-rose-400 text-xs mt-1">
+                {message}
+            </p>
+        );
+    };
     const labelClass = 'block text-sm font-medium text-slate-400 mb-1.5';
     const sectionClass = 'border border-slate-800 rounded-xl p-4 bg-slate-900/40 space-y-4';
     const sectionTitle = 'text-xs font-bold uppercase tracking-wide text-slate-400';
@@ -690,25 +893,28 @@ const StockMovementRegisterPage = () => {
                                     className={inputClass}
                                 />
                                 {dateWarning && (
-                                    <p className="text-amber-400 text-xs mt-1">{dateWarning}</p>
+                                    <p role="alert" data-testid="error-transaction_date" className="text-amber-400 text-xs mt-1">
+                                        {dateWarning}
+                                    </p>
                                 )}
                             </div>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {form.transaction_type !== 'transfer' && (
                                 <div>
-                                    <label className={labelClass}>Reason</label>
+                                    <label className={labelClass}>Reason *</label>
                                     <select
                                         value={form.reason_code}
                                         aria-label="Reason"
                                         onChange={(e) => setForm({ ...form, reason_code: e.target.value })}
-                                        className={inputClass}
+                                        className={fieldClass('reason')}
                                     >
                                         <option value="">Select reason…</option>
                                         {REASON_CODES[form.transaction_type].map((r) => (
                                             <option key={r.value} value={r.value}>{r.label}</option>
                                         ))}
                                     </select>
+                                    <FieldError field="reason" />
                                 </div>
                             )}
                             <div>
@@ -736,6 +942,7 @@ const StockMovementRegisterPage = () => {
                                         setForm((f) => ({ ...f, item_id: item?.id || '' }));
                                     }}
                                 />
+                                <FieldError field="item" />
                             </div>
                             <div>
                                 <label className={labelClass}>Unit</label>
@@ -757,33 +964,33 @@ const StockMovementRegisterPage = () => {
                                     {form.transaction_type === 'transfer' ? 'Source Warehouse *' : 'Warehouse *'}
                                 </label>
                                 <select
-                                    required
                                     value={form.warehouse_id}
                                     aria-label="Warehouse"
                                     onChange={(e) => setForm({ ...form, warehouse_id: e.target.value })}
-                                    className={inputClass}
+                                    className={fieldClass('warehouse')}
                                 >
                                     <option value="">Select warehouse…</option>
                                     {warehouses.map((w) => (
                                         <option key={w.id} value={w.id}>{w.name}</option>
                                     ))}
                                 </select>
+                                <FieldError field="warehouse" />
                             </div>
                             {form.transaction_type === 'transfer' && (
                                 <div>
                                     <label className={labelClass}>Destination Warehouse *</label>
                                     <select
-                                        required
                                         value={form.to_warehouse_id}
                                         aria-label="Destination warehouse"
                                         onChange={(e) => setForm({ ...form, to_warehouse_id: e.target.value })}
-                                        className={inputClass}
+                                        className={fieldClass('to_warehouse')}
                                     >
                                         <option value="">Select destination…</option>
                                         {warehouses.map((w) => (
                                             <option key={w.id} value={w.id}>{w.name}</option>
                                         ))}
                                     </select>
+                                    <FieldError field="to_warehouse" />
                                 </div>
                             )}
                             <div>
@@ -794,14 +1001,18 @@ const StockMovementRegisterPage = () => {
                                     )}
                                 </label>
                                 <input
-                                    required
                                     type="number"
                                     step="any"
+                                    min={form.transaction_type === 'adjustment' ? undefined : 0}
                                     value={form.quantity}
                                     aria-label="Quantity"
-                                    onChange={(e) => setForm({ ...form, quantity: e.target.value })}
-                                    className={`${inputClass} text-center font-bold`}
+                                    onChange={(e) => {
+                                        setForm({ ...form, quantity: e.target.value });
+                                        setShowFieldErrors(true);
+                                    }}
+                                    className={`${fieldClass('quantity')} text-center font-bold`}
                                 />
+                                <FieldError field="quantity" />
                             </div>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
@@ -819,9 +1030,9 @@ const StockMovementRegisterPage = () => {
                             </div>
                         </div>
                         {insufficientStock && (
-                            <p className="text-rose-400 text-xs flex items-center gap-2">
+                            <p role="alert" data-testid="error-stock" className="text-rose-400 text-xs flex items-center gap-2">
                                 <AlertCircle size={14} />
-                                Insufficient stock — enable negative inventory in Inventory Settings to allow this.
+                                {fieldErrors.stock} Enable negative inventory in Inventory Settings to allow this.
                             </p>
                         )}
                     </section>
@@ -849,6 +1060,7 @@ const StockMovementRegisterPage = () => {
                             <div>
                                 <label className={labelClass}>
                                     {form.source_type === 'warehouse' ? 'Warehouse' : 'Party / Reference'}
+                                    {requiresParty && <span className="text-rose-400"> *</span>}
                                 </label>
                                 {form.source_type === 'warehouse' ? (
                                     <select
@@ -868,10 +1080,14 @@ const StockMovementRegisterPage = () => {
                                         placeholder="Name or reference"
                                         value={form.source_label}
                                         aria-label="Source party label"
-                                        onChange={(e) => setForm({ ...form, source_label: e.target.value })}
-                                        className={inputClass}
+                                        onChange={(e) => {
+                                            setForm({ ...form, source_label: e.target.value });
+                                            setShowFieldErrors(true);
+                                        }}
+                                        className={fieldClass('source_label')}
                                     />
                                 )}
+                                <FieldError field="source_label" />
                             </div>
                             <div>
                                 <label className={labelClass}>
@@ -880,14 +1096,20 @@ const StockMovementRegisterPage = () => {
                                 <select
                                     value={form.project_id}
                                     aria-label="Project"
-                                    onChange={(e) => setForm({ ...form, project_id: e.target.value })}
-                                    className={inputClass}
+                                    onChange={(e) => setForm({ ...form, project_id: e.target.value, work_order_id: '' })}
+                                    className={fieldClass('project')}
+                                    disabled={projects.length === 0}
                                 >
-                                    <option value="">Not linked</option>
+                                    {/* "Not linked" alone told the user nothing about why the
+                                        list was empty. An empty result now says so explicitly. */}
+                                    <option value="">
+                                        {projects.length === 0 ? 'No active projects available.' : 'Not linked'}
+                                    </option>
                                     {projects.map((p) => (
                                         <option key={p.id} value={p.id}>{p.name}</option>
                                     ))}
                                 </select>
+                                <FieldError field="project" />
                             </div>
                             <div>
                                 <label className={labelClass}>
@@ -897,15 +1119,23 @@ const StockMovementRegisterPage = () => {
                                     value={form.work_order_id}
                                     aria-label="Work order"
                                     onChange={(e) => setForm({ ...form, work_order_id: e.target.value })}
-                                    className={inputClass}
+                                    className={fieldClass('work_order')}
+                                    disabled={availableWorkOrders.length === 0}
                                 >
-                                    <option value="">Not linked</option>
-                                    {workOrders
-                                        .filter((w) => !form.project_id || w.project_id === form.project_id)
-                                        .map((w) => (
-                                            <option key={w.id} value={w.id}>{w.code || w.id}</option>
-                                        ))}
+                                    <option value="">
+                                        {availableWorkOrders.length === 0
+                                            ? 'No active work orders available.'
+                                            : 'Not linked'}
+                                    </option>
+                                    {availableWorkOrders.map((w) => (
+                                        <option key={w.id} value={w.id}>
+                                            {[w.code || w.order_number || w.id, w.item_name || w.description, w.status]
+                                                .filter(Boolean)
+                                                .join(' · ')}
+                                        </option>
+                                    ))}
                                 </select>
+                                <FieldError field="work_order" />
                             </div>
                         </div>
                     </section>

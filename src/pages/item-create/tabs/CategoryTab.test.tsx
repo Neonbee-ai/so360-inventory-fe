@@ -33,7 +33,7 @@ const makeProps = (overrides: any = {}) => ({
 describe('Given CategoryTab', () => {
   it('When rendered / Then shows Item Category section', () => {
     render(<CategoryTab {...makeProps()} />);
-    expect(screen.getByText('Item Category')).toBeInTheDocument();
+    expect(screen.getByText('Item Category *')).toBeInTheDocument();
   });
 
   it('When rendered / Then shows category picker', () => {

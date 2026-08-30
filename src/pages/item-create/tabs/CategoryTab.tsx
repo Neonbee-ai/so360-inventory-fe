@@ -10,6 +10,7 @@ interface CategoryTabProps {
     onQuickAddCategory: (name: string) => Promise<void>;
     attributeDefs?: ItemAttributeDefinition[];
     metadata?: Record<string, any>;
+    error?: string | null;
 }
 
 const inputClass = 'w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all placeholder:text-slate-600';
@@ -17,7 +18,7 @@ const labelClass = 'block text-sm font-medium text-slate-400 mb-1.5';
 
 const CategoryTab: React.FC<CategoryTabProps> = ({
     category_id, categories, updateField, onQuickAddCategory,
-    attributeDefs = [], metadata = {},
+    attributeDefs = [], metadata = {}, error = null,
 }) => {
     const handleMetadataChange = (key: string, value: any) => {
         updateField('metadata', { ...metadata, [key]: value });
@@ -170,13 +171,19 @@ const CategoryTab: React.FC<CategoryTabProps> = ({
 
     return (
         <div className="space-y-6">
-            <FormSection title="Item Category" description="Assign this item to a category for organization and filtering. Categories support hierarchy.">
+            <FormSection title="Item Category *" description="Assign this item to a category for organization and filtering. Categories support hierarchy.">
                 <CategoryPicker
                     categories={categories}
                     value={category_id}
                     onChange={(id) => updateField('category_id', id)}
                     onQuickAdd={onQuickAddCategory}
                 />
+
+                {error && (
+                    <p role="alert" data-testid="error-category_id" className="text-rose-400 text-xs mt-2">
+                        {error}
+                    </p>
+                )}
 
                 {category_id && (
                     <div className="mt-4 p-3 bg-slate-800/30 border border-slate-700/50 rounded-lg">
