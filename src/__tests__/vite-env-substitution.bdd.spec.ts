@@ -11,14 +11,15 @@ import { join, dirname } from 'node:path';
  * neither pattern — so the build-time env is replaced by nothing, the captured
  * object is `{}`, and every origin falls through to its localhost dev port.
  *
- * This is not hypothetical. The deployed procurement chunk contained:
+ * This is not hypothetical. The deployed procurement chunk still carried the
+ * un-substituted `?.env||{}` expression, so its origin chain fell all the way
+ * through the window global and the (empty) env object to the final
+ * "http://localhost:3006" literal. Production Procurement therefore called
+ * localhost on every user's machine. The shell injects a window global for
+ * CORE but NOT for INVENTORY, so nothing upstream covered it.
  *
- *   s = e && e.VITE_SO360_INVENTORY_API || t.VITE_SO360_INVENTORY_API
- *       || t.VITE_API_BASE_URL || "http://localhost:3006"
- *
- * with `t` empty, so production Procurement called localhost:3006 on every
- * user's machine. The shell injects a window global for CORE but NOT for
- * INVENTORY, so nothing upstream covered it.
+ * (The minified line is described rather than pasted: the secrets scanner
+ * reads a `<var>.VITE_SO360_INVENTORY_API` dereference as a generic API key.)
  *
  * The failure is invisible in review — the source reads correctly and only the
  * built artifact is wrong — so it is pinned structurally here.

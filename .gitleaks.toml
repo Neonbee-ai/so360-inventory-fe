@@ -1,0 +1,24 @@
+title = "SO360 Inventory Frontend Gitleaks Config"
+
+[extend]
+# Start from the default rules
+useDefault = true
+
+[allowlist]
+description = "Build artifacts, and env VARIABLE NAMES that are not secrets"
+paths = [
+    '''coverage/''',
+    '''dist/''',
+    '''dist-ssr/''',
+    '''node_modules/''',
+]
+
+# `generic-api-key` fires on a minified property access such as
+# `t.VITE_SO360_INVENTORY_API` — a variable dereference quoted while explaining
+# a build bug, not a credential. VITE_* names are public by construction: Vite
+# inlines their VALUES into the client bundle, so anything genuinely secret can
+# never carry this prefix. Scoped to the dereference shape (`<ident>.VITE_...`)
+# so a real `VITE_X=<value>` assignment is still caught.
+regexes = [
+    '''\b[A-Za-z_$][A-Za-z0-9_$]*\.VITE_[A-Z0-9_]+\b''',
+]
