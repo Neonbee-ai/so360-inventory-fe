@@ -20,3 +20,8 @@ export const useEntitlements = () => ({ can: () => true, isLoading: false });
 export const useQuota = () => ({ quotas: [], isLoading: false, error: null, isExceeded: () => false, getQuota: () => null, getPercentage: () => 0, refresh: async () => {} });
 export const useSandboxLimit = () => ({ isSandboxMode: false, sandboxEntryLimit: 5, limitItems: (items: any[]) => items, isLimited: () => false });
 export const ShellContext = React.createContext<any>({ user: { id: 'mock-user-id', email: 'test@test.com' }, currentOrg: { id: 'mock-org-id' } });
+export const QUOTA_EXCEEDED_EVENT = '__so360_quota_exceeded';
+export const buildQuotaExceededDetail = (error: any): unknown => {
+  const data = error?.response?.data ?? {};
+  return data?.resolution ?? data;
+};

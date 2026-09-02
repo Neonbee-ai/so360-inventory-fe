@@ -1,4 +1,5 @@
 import { inventoryService } from './inventoryService';
+import { notifyQuotaExceeded } from './quotaExceeded';
 
 export type ProcurementReport =
     | 'purchase_register'
@@ -42,6 +43,7 @@ class ProcurementInsightsService {
                 'X-Org-Id': inventoryService.getOrgId() || '',
             },
         });
+        await notifyQuotaExceeded(response);
 
         if (!response.ok) {
             const errorBody = await response.json().catch(() => ({ message: 'API Request failed' }));

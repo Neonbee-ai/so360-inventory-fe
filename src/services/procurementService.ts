@@ -1,4 +1,5 @@
 import { inventoryService } from './inventoryService';
+import { notifyQuotaExceeded } from './quotaExceeded';
 
 class ProcurementService {
     private readonly origin: string;
@@ -33,6 +34,7 @@ class ProcurementService {
                 ...options.headers,
             },
         });
+        await notifyQuotaExceeded(response);
 
         if (!response.ok) {
             const errorBody = await response.json().catch(() => ({ message: 'API Request failed' }));

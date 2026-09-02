@@ -1,4 +1,5 @@
 import { inventoryService } from './inventoryService';
+import { notifyQuotaExceeded } from './quotaExceeded';
 
 export interface RFQLineInput {
     item_id?: string;
@@ -56,6 +57,7 @@ class RfqService {
                 ...options.headers,
             },
         });
+        await notifyQuotaExceeded(response);
 
         if (!response.ok) {
             const errorBody = await response.json().catch(() => ({ message: 'API Request failed' }));

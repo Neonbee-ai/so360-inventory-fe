@@ -1,4 +1,5 @@
 import { inventoryService } from './inventoryService';
+import { notifyQuotaExceeded } from './quotaExceeded';
 
 class VendorService {
     private readonly origin: string;
@@ -48,6 +49,7 @@ class VendorService {
                 ...options.headers,
             },
         });
+        await notifyQuotaExceeded(response);
 
         if (!response.ok) {
             let message: string;

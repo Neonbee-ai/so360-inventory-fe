@@ -1,4 +1,5 @@
 import { createRequestCache } from './requestCache';
+import { notifyQuotaExceeded } from './quotaExceeded';
 
 /**
  * Statuses that mean "this can no longer receive material". Kept as exclusion
@@ -112,6 +113,7 @@ class InventoryService {
             ...options,
             headers,
         });
+        await notifyQuotaExceeded(response);
 
         if (!response.ok) {
             const error = await response.json().catch(() => ({ message: 'API Request failed' }));
@@ -208,6 +210,7 @@ class InventoryService {
                 'X-Org-Id': this.orgId || '',
             }
         });
+        await notifyQuotaExceeded(response);
         if (!response.ok) throw new Error('Failed to load warehouse');
         return response.json();
     }
@@ -223,6 +226,7 @@ class InventoryService {
             },
             body: JSON.stringify(dto),
         });
+        await notifyQuotaExceeded(response);
         if (!response.ok) {
             const error = await response.json().catch(() => ({ message: 'Failed to create warehouse' }));
             throw new Error(error.message);
@@ -241,6 +245,7 @@ class InventoryService {
             },
             body: JSON.stringify(dto),
         });
+        await notifyQuotaExceeded(response);
         if (!response.ok) throw new Error('Failed to update warehouse');
         return response.json();
     }
@@ -254,6 +259,7 @@ class InventoryService {
                 'X-Org-Id': this.orgId || '',
             }
         });
+        await notifyQuotaExceeded(response);
         if (!response.ok) {
             const error = await response.json().catch(() => ({ message: 'Failed to delete warehouse' }));
             throw new Error(error.message);
@@ -273,6 +279,7 @@ class InventoryService {
             },
             body: JSON.stringify(dto),
         });
+        await notifyQuotaExceeded(response);
         if (!response.ok) {
             const error = await response.json().catch(() => ({ message: 'Failed to create location' }));
             throw new Error(error.message);
@@ -291,6 +298,7 @@ class InventoryService {
             },
             body: JSON.stringify(dto),
         });
+        await notifyQuotaExceeded(response);
         if (!response.ok) {
             const error = await response.json().catch(() => ({ message: 'Failed to update location' }));
             throw new Error(error.message);
@@ -307,6 +315,7 @@ class InventoryService {
                 'X-Org-Id': this.orgId || '',
             },
         });
+        await notifyQuotaExceeded(response);
         if (!response.ok) {
             const error = await response.json().catch(() => ({ message: 'Failed to delete location' }));
             throw new Error(error.message);
@@ -368,6 +377,7 @@ class InventoryService {
                 'X-Org-Id': this.orgId || '',
             }
         });
+        await notifyQuotaExceeded(response);
         return response.json();
     }
 
@@ -392,6 +402,7 @@ class InventoryService {
                 'X-Org-Id': this.orgId || '',
             },
         });
+        await notifyQuotaExceeded(response);
         if (!response.ok) {
             console.error(`[InventoryService] Could not fetch tax codes from Core API (${response.status}) at ${endpoint}`);
             return [];
@@ -432,6 +443,7 @@ class InventoryService {
                 'X-Org-Id': this.orgId || '',
             },
         });
+        await notifyQuotaExceeded(response);
         if (!response.ok) throw new Error('Failed to fetch business settings');
         return response.json();
     }
@@ -618,6 +630,7 @@ class InventoryService {
                 'X-Org-Id': this.orgId || '',
             },
         });
+        await notifyQuotaExceeded(response);
         if (!response.ok) throw new Error(`Request failed (${response.status})`);
         return response.json();
     }
@@ -699,6 +712,7 @@ class InventoryService {
             },
             body: form,
         });
+        await notifyQuotaExceeded(response);
         if (!response.ok) {
             const err = await response.json().catch(() => ({ message: 'Failed to parse CSV' }));
             throw new Error(err.message || 'Failed to parse CSV');
@@ -718,6 +732,7 @@ class InventoryService {
             },
             body: form,
         });
+        await notifyQuotaExceeded(response);
         if (!response.ok) {
             const err = await response.json().catch(() => ({ message: 'Failed to upload images' }));
             throw new Error(err.message || 'Failed to upload images');
@@ -736,6 +751,7 @@ class InventoryService {
             },
             body: JSON.stringify({ rows }),
         });
+        await notifyQuotaExceeded(response);
         if (!response.ok) {
             const err = await response.json().catch(() => ({ message: 'Import failed' }));
             throw new Error(err.message || 'Import failed');

@@ -1,4 +1,5 @@
 import { inventoryService } from './inventoryService';
+import { notifyQuotaExceeded } from './quotaExceeded';
 
 export interface InspectionResultLine {
     line_id: string;
@@ -55,6 +56,7 @@ class QualityService {
                 ...options.headers,
             },
         });
+        await notifyQuotaExceeded(response);
 
         if (!response.ok) {
             const errorBody = await response.json().catch(() => ({ message: 'API Request failed' }));

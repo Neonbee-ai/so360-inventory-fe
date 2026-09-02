@@ -1,3 +1,5 @@
+import { notifyQuotaExceeded } from './quotaExceeded';
+
 // Uploads to Core BE's DigitalOcean Spaces pipe (see
 // so360-core/src/media/media.service.ts). Previously used bare `/v1/*`
 // paths that only worked locally via Vite's dev proxy — in prod they
@@ -45,6 +47,7 @@ class MediaService {
             },
             body: formData,
         });
+        await notifyQuotaExceeded(response);
 
         if (!response.ok) {
             const error = await response.json().catch(() => ({ message: 'Upload failed' }));
@@ -68,6 +71,7 @@ class MediaService {
             },
             body: formData,
         });
+        await notifyQuotaExceeded(response);
 
         if (!response.ok) {
             const error = await response.json().catch(() => ({ message: 'Document upload failed' }));
