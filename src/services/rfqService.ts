@@ -34,7 +34,9 @@ class RfqService {
 
     constructor() {
         const win = typeof window !== 'undefined' ? (window as any) : undefined;
-        const env = (import.meta as any)?.env || {};
+        // Bare `import.meta.env` — see procurementService for why the
+        // optional-chained form silently ships localhost.
+        const env = (import.meta as any).env || {};
         const resolved =
             (win && win.VITE_SO360_INVENTORY_API) ||
             env.VITE_SO360_INVENTORY_API ||

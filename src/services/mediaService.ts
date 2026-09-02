@@ -6,7 +6,11 @@
 // VITE_SO360_CORE_API matches the pattern used in inventoryService.ts.
 function resolveCoreOrigin(): string {
     const win = typeof window !== 'undefined' ? (window as any) : undefined;
-    const env = (import.meta as any)?.env || {};
+    // NOT `(import.meta as any)?.env` — that compiles to `import.meta?.env`,
+    // which Vite never pattern-matches, so the build-time env is replaced by
+    // nothing and this object is empty in the shipped bundle. Bare
+    // `import.meta.env` IS substituted.
+    const env = (import.meta as any).env || {};
     const origin =
         (win && win.VITE_SO360_CORE_API) ||
         env.VITE_SO360_CORE_API ||

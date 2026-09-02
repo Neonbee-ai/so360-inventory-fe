@@ -7,7 +7,11 @@ class ProcurementService {
     constructor() {
         const win = typeof window !== 'undefined' ? (window as any) : undefined;
         /* v8 ignore next -- import.meta.env is always present under Vite/vitest; the `|| {}` only guards non-Vite bundlers and is unreachable in tests */
-        const env = (import.meta as any)?.env || {};
+        // Bare `import.meta.env`, never `(import.meta as any)?.env`: the
+        // optional chain compiles to `import.meta?.env`, which Vite does not
+        // pattern-match, so the build-time env vanished and this fell through
+        // to the localhost dev port in production.
+        const env = (import.meta as any).env || {};
         const resolved =
             (win && win.VITE_SO360_INVENTORY_API) ||
             env.VITE_SO360_INVENTORY_API ||

@@ -14,6 +14,21 @@ const CLOSED_PROJECT_STATUSES = new Set([
     'archived',
 ]);
 
+/**
+ * Build-time origins for the cross-service lookups below, read by their FULL
+ * literal key.
+ *
+ * Vite substitutes `import.meta.env.VITE_X` only where the key is written out
+ * in source. A dynamic `env[someVariable]` has no key to match, so it depends
+ * on the whole env object surviving into the bundle — which is exactly the
+ * assumption that already shipped `http://localhost:3006` to production here.
+ * Naming the keys makes the substitution observable in the built artifact.
+ */
+const CROSS_SERVICE_BUILD_ENV: Record<string, string | undefined> = {
+    VITE_SO360_PROJECTS_API: (import.meta as any).env.VITE_SO360_PROJECTS_API,
+    VITE_SO360_MANUFACTURING_API: (import.meta as any).env.VITE_SO360_MANUFACTURING_API,
+};
+
 const CLOSED_WORK_ORDER_STATUSES = new Set([
     'completed',
     'closed',
@@ -36,7 +51,9 @@ class InventoryService {
 
     constructor() {
         const win = typeof window !== 'undefined' ? (window as any) : undefined;
-        const env = (import.meta as any)?.env || {};
+        // Bare `import.meta.env` — see procurementService for why the
+        // optional-chained form silently ships localhost.
+        const env = (import.meta as any).env || {};
 
         const isNeonbeeHost =
             typeof window !== 'undefined' &&
@@ -581,14 +598,13 @@ class InventoryService {
      */
     private crossServiceOrigin(winKey: string, prodPath: string, devPort: number): string {
         const win = typeof window !== 'undefined' ? (window as any) : undefined;
-        const env = (import.meta as any)?.env || {};
         const isNeonbeeHost =
             typeof window !== 'undefined' &&
             (window.location.hostname === 'neonbee.app' ||
                 window.location.hostname.endsWith('.neonbee.app'));
         const origin =
             (win && win[winKey]) ||
-            env[winKey] ||
+            CROSS_SERVICE_BUILD_ENV[winKey] ||
             (isNeonbeeHost ? `https://api.neonbee.app/${prodPath}` : `http://localhost:${devPort}`);
         return String(origin).replace(/\/$/, '');
     }
