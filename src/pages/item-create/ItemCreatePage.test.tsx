@@ -20,6 +20,8 @@ vi.mock('../../services/inventoryService', () => ({
     createUom: (...args: any[]) => mockCreateUom(...args),
     // Selecting a category triggers an attribute-definition lookup.
     getAttributeDefinitions: vi.fn().mockResolvedValue([]),
+    getNumberingSettings: vi.fn().mockResolvedValue({ sku: { enabled: true, prefix: 'SKU-', padding: 5, separator: '-' } }),
+    getNextNumber: vi.fn().mockResolvedValue({ number: 'SKU-00001' }),
   },
 }));
 

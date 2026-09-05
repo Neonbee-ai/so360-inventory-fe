@@ -101,6 +101,9 @@ const ItemCreatePage = () => {
     const [taxCodesError, setTaxCodesError] = useState<string | null>(null);
     const [attributeDefs, setAttributeDefs] = useState<ItemAttributeDefinition[]>([]);
     const [showErrors, setShowErrors] = useState(false);
+    const [skuScheme, setSkuScheme] = useState<{ enabled: boolean; prefix: string; start_number: number; padding: number; separator: string } | null>(null);
+    const [isSkuManuallyEdited, setIsSkuManuallyEdited] = useState(false);
+    const isGeneratingSkuRef = React.useRef(false);
 
     // Inline create states — category
     const [showNewCategory, setShowNewCategory] = useState(false);
@@ -135,6 +138,17 @@ const ItemCreatePage = () => {
         }
 
         try {
+            const numberingData = await inventoryService.getNumberingSettings();
+            const skuConfig = numberingData?.sku || numberingData?.data?.sku;
+            if (skuConfig) {
+                setSkuScheme(skuConfig);
+            }
+        } catch {
+            // Fallback default numbering scheme
+            setSkuScheme({ enabled: true, prefix: 'SKU-', start_number: 1, padding: 5, separator: '-' });
+        }
+
+        try {
             const taxCodeData = await inventoryService.getTaxCodes();
             setTaxCodes(taxCodeData);
         } catch {
@@ -145,8 +159,43 @@ const ItemCreatePage = () => {
         }
     };
 
+    const ensureAutoSku = async () => {
+        if (isGeneratingSkuRef.current || isSkuManuallyEdited) return;
+        isGeneratingSkuRef.current = true;
+        try {
+            const res = await inventoryService.getNextNumber('sku');
+            const nextNum = res?.number || res?.data?.number;
+            if (nextNum) {
+                setForm(prev => {
+                    if (isSkuManuallyEdited || (prev.sku && prev.sku.trim() !== '')) return prev;
+                    return { ...prev, sku: nextNum };
+                });
+            }
+        } catch {
+            const prefix = skuScheme?.prefix || 'SKU-';
+            const num = String(skuScheme?.start_number || 1).padStart(skuScheme?.padding || 5, '0');
+            const fallback = `${prefix.replace(/[-/_]$/, '')}-${num}`;
+            setForm(prev => {
+                if (isSkuManuallyEdited || (prev.sku && prev.sku.trim() !== '')) return prev;
+                return { ...prev, sku: fallback };
+            });
+        } finally {
+            isGeneratingSkuRef.current = false;
+        }
+    };
+
     const updateField = (field: string, value: any) => {
         setForm(prev => ({ ...prev, [field]: value }));
+
+        if (field === 'sku') {
+            setIsSkuManuallyEdited(true);
+        }
+
+        if (field === 'name' && value && String(value).trim().length > 0) {
+            if (!isSkuManuallyEdited && (skuScheme === null || skuScheme.enabled)) {
+                ensureAutoSku();
+            }
+        }
 
         if (field === 'category_id') {
             setAttributeDefs([]);
@@ -336,6 +385,8 @@ const ItemCreatePage = () => {
                         onCreateUom={handleCreateUom}
                         errors={fieldErrors}
                         showErrors={showErrors}
+                        isSkuAutoEnabled={skuScheme?.enabled ?? true}
+                        isSkuManuallyEdited={isSkuManuallyEdited}
                     />
                 );
             case 'media':

@@ -448,6 +448,39 @@ class InventoryService {
         return response.json();
     }
 
+    async getNumberingSettings() {
+        if (!this.orgId) throw new Error('OrgId not set');
+        const response = await fetch(`${this.coreOrigin}/v1/business-settings/${this.orgId}/numbering`, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${this.accessToken}`,
+                'X-Tenant-Id': this.tenantId || '',
+                'X-Org-Id': this.orgId || '',
+            },
+        });
+        await notifyQuotaExceeded(response);
+        if (!response.ok) throw new Error('Failed to fetch numbering settings');
+        const json = await response.json();
+        return json.data || json;
+    }
+
+    async getNextNumber(entityType: string) {
+        if (!this.orgId) throw new Error('OrgId not set');
+        const response = await fetch(`${this.coreOrigin}/v1/business-settings/${this.orgId}/numbering/${entityType}/next`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${this.accessToken}`,
+                'X-Tenant-Id': this.tenantId || '',
+                'X-Org-Id': this.orgId || '',
+            },
+        });
+        await notifyQuotaExceeded(response);
+        if (!response.ok) throw new Error(`Failed to generate next number for ${entityType}`);
+        const json = await response.json();
+        return json.data || json;
+    }
+
     // ==================== Settings ====================
 
     async getSettings() {
