@@ -9,6 +9,7 @@ const mockGetNextNumber = vi.fn();
 const mockGetSettings = vi.fn();
 const mockGetLocations = vi.fn();
 const mockGetTaxCodes = vi.fn();
+const mockCheckSkuAvailable = vi.fn();
 
 vi.mock('../../services/inventoryService', () => ({
   inventoryService: {
@@ -17,6 +18,7 @@ vi.mock('../../services/inventoryService', () => ({
     getTaxCodes: (...args: any[]) => mockGetTaxCodes(...args),
     getNumberingSettings: (...args: any[]) => mockGetNumberingSettings(...args),
     getNextNumber: (...args: any[]) => mockGetNextNumber(...args),
+    checkSkuAvailable: (...args: any[]) => mockCheckSkuAvailable(...args),
     getAttributeDefinitions: vi.fn().mockResolvedValue([]),
     createItem: vi.fn().mockResolvedValue({ id: 'item-1' }),
   },
@@ -24,6 +26,7 @@ vi.mock('../../services/inventoryService', () => ({
 
 vi.mock('react-router-dom', () => ({
   useNavigate: () => vi.fn(),
+  useLocation: () => ({ pathname: '/inventory/items/new', search: '', hash: '' }),
 }));
 
 vi.mock('../../utils/formatters', () => ({
@@ -45,19 +48,14 @@ describe('ItemCreatePage — SKU Auto-Generation & Manual Override (P0)', () => 
         entity_type: 'sku',
         module: 'inventory',
         name: 'Item SKU',
-        prefix: 'SKU-',
-        start_number: 1,
-        padding: 5,
-        separator: '-',
-        reset_frequency: 'never',
         enabled: true,
       },
     });
-    mockGetNextNumber.mockResolvedValue({ number: 'SKU-00042' });
+    mockCheckSkuAvailable.mockResolvedValue({ sku: '', available: true });
   });
 
-  describe('Given SKU auto-generation is enabled in Core Settings', () => {
-    it('When user enters an item name / Then SKU is automatically assigned from centralized numbering', async () => {
+  describe('Given SKU auto-generation is enabled', () => {
+    it('When user enters an item name / Then SKU is automatically derived from Item Name', async () => {
       render(<ItemCreatePage />);
 
       await waitFor(() => {
@@ -65,20 +63,47 @@ describe('ItemCreatePage — SKU Auto-Generation & Manual Override (P0)', () => 
       });
 
       const nameInput = screen.getByPlaceholderText(/macbook pro 14/i);
-      fireEvent.change(nameInput, { target: { value: 'Ergonomic Desk Chair' } });
+      fireEvent.change(nameInput, { target: { value: 'ABC Office Chair' } });
+
+      const skuInput = screen.getByPlaceholderText(/lap-001/i);
+      expect((skuInput as HTMLInputElement).value).toBe('ABC-OFFICE-CHAIR');
+
+      // Auto-generated badge should be visible
+      const badge = screen.getByTestId('sku-autogen-badge');
+      expect(badge).toBeDefined();
+      expect(badge.textContent).toBe('Auto-generated from Item Name');
+    });
+
+    it('When user enters special characters in Item Name / Then SKU is normalized cleanly', async () => {
+      render(<ItemCreatePage />);
 
       await waitFor(() => {
-        expect(mockGetNextNumber).toHaveBeenCalledWith('sku');
+        expect(mockGetNumberingSettings).toHaveBeenCalled();
       });
+
+      const nameInput = screen.getByPlaceholderText(/macbook pro 14/i);
+      fireEvent.change(nameInput, { target: { value: 'LED Light 24W / Cool White (V2)' } });
+
+      const skuInput = screen.getByPlaceholderText(/lap-001/i);
+      expect((skuInput as HTMLInputElement).value).toBe('LED-LIGHT-24W-COOL-WHITE-V2');
+    });
+
+    it('When duplicate SKU is detected in organization / Then debounced check resolves unique suffix', async () => {
+      mockCheckSkuAvailable.mockResolvedValue({
+        sku: 'ABC-OFFICE-CHAIR',
+        available: false,
+        suggestedSku: 'ABC-OFFICE-CHAIR-001',
+      });
+
+      render(<ItemCreatePage />);
+
+      const nameInput = screen.getByPlaceholderText(/macbook pro 14/i);
+      fireEvent.change(nameInput, { target: { value: 'ABC Office Chair' } });
 
       const skuInput = screen.getByPlaceholderText(/lap-001/i);
       await waitFor(() => {
-        expect((skuInput as HTMLInputElement).value).toBe('SKU-00042');
+        expect((skuInput as HTMLInputElement).value).toBe('ABC-OFFICE-CHAIR-001');
       });
-
-      // Auto-generated badge should be visible
-      expect(screen.getByTestId('sku-autogen-badge')).toBeDefined();
-      expect(screen.getByTestId('sku-autogen-badge').textContent).toBe('Auto-generated');
     });
   });
 
@@ -90,14 +115,11 @@ describe('ItemCreatePage — SKU Auto-Generation & Manual Override (P0)', () => 
         expect(mockGetNumberingSettings).toHaveBeenCalled();
       });
 
-      // User first types item name -> auto-generates
       const nameInput = screen.getByPlaceholderText(/macbook pro 14/i);
       fireEvent.change(nameInput, { target: { value: 'Standing Desk Pro' } });
 
       const skuInput = screen.getByPlaceholderText(/lap-001/i);
-      await waitFor(() => {
-        expect((skuInput as HTMLInputElement).value).toBe('SKU-00042');
-      });
+      expect((skuInput as HTMLInputElement).value).toBe('STANDING-DESK-PRO');
 
       // User manually overrides SKU
       fireEvent.change(skuInput, { target: { value: 'CUSTOM-DESK-99' } });
@@ -106,11 +128,49 @@ describe('ItemCreatePage — SKU Auto-Generation & Manual Override (P0)', () => 
       // Badge updates to Manual Override
       expect(screen.getByTestId('sku-autogen-badge').textContent).toBe('Manual Override');
 
+      // Re-generate button appears
+      expect(screen.getByTestId('sku-reset-btn')).toBeDefined();
+
       // User changes Item Name again
       fireEvent.change(nameInput, { target: { value: 'Standing Desk Pro V2' } });
 
       // SKU remains the custom override!
       expect((skuInput as HTMLInputElement).value).toBe('CUSTOM-DESK-99');
+    });
+
+    it('When user clicks Re-generate button / Then SKU re-syncs with Item Name', async () => {
+      render(<ItemCreatePage />);
+
+      const nameInput = screen.getByPlaceholderText(/macbook pro 14/i);
+      fireEvent.change(nameInput, { target: { value: 'Modern Sofa' } });
+
+      const skuInput = screen.getByPlaceholderText(/lap-001/i);
+      fireEvent.change(skuInput, { target: { value: 'MY-CUSTOM-SOFA' } });
+      expect((skuInput as HTMLInputElement).value).toBe('MY-CUSTOM-SOFA');
+
+      // Click Re-generate
+      const resetBtn = screen.getByTestId('sku-reset-btn');
+      fireEvent.click(resetBtn);
+
+      expect((skuInput as HTMLInputElement).value).toBe('MODERN-SOFA');
+      expect(screen.getByTestId('sku-autogen-badge').textContent).toBe('Auto-generated from Item Name');
+    });
+
+    it('When user completely clears manual SKU / Then auto-generation mode is restored', async () => {
+      render(<ItemCreatePage />);
+
+      const nameInput = screen.getByPlaceholderText(/macbook pro 14/i);
+      fireEvent.change(nameInput, { target: { value: 'Wireless Mouse' } });
+
+      const skuInput = screen.getByPlaceholderText(/lap-001/i);
+      fireEvent.change(skuInput, { target: { value: 'CUSTOM-MOUSE' } });
+      expect((skuInput as HTMLInputElement).value).toBe('CUSTOM-MOUSE');
+
+      // User clears the SKU input
+      fireEvent.change(skuInput, { target: { value: '' } });
+
+      expect((skuInput as HTMLInputElement).value).toBe('WIRELESS-MOUSE');
+      expect(screen.getByTestId('sku-autogen-badge').textContent).toBe('Auto-generated from Item Name');
     });
   });
 
@@ -119,7 +179,6 @@ describe('ItemCreatePage — SKU Auto-Generation & Manual Override (P0)', () => 
       mockGetNumberingSettings.mockResolvedValue({
         sku: {
           enabled: false,
-          prefix: 'SKU-',
         },
       });
 
@@ -131,8 +190,6 @@ describe('ItemCreatePage — SKU Auto-Generation & Manual Override (P0)', () => 
 
       const nameInput = screen.getByPlaceholderText(/macbook pro 14/i);
       fireEvent.change(nameInput, { target: { value: 'Manual SKU Item' } });
-
-      expect(mockGetNextNumber).not.toHaveBeenCalled();
 
       const skuInput = screen.getByPlaceholderText(/lap-001/i);
       expect((skuInput as HTMLInputElement).value).toBe('');

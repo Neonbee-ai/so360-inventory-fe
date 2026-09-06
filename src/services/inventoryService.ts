@@ -481,6 +481,13 @@ class InventoryService {
         return json.data || json;
     }
 
+    async checkSkuAvailable(sku: string, excludeItemId?: string): Promise<{ sku: string; available: boolean; suggestedSku?: string }> {
+        if (!this.orgId) throw new Error('OrgId not set');
+        const params = new URLSearchParams({ sku });
+        if (excludeItemId) params.append('exclude_item_id', excludeItemId);
+        return this.request(`/items/${this.orgId}/check-sku?${params.toString()}`);
+    }
+
     // ==================== Settings ====================
 
     async getSettings() {

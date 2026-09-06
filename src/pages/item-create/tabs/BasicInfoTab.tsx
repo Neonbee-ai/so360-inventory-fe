@@ -29,6 +29,7 @@ interface BasicInfoTabProps {
     showErrors?: boolean;
     isSkuAutoEnabled?: boolean;
     isSkuManuallyEdited?: boolean;
+    onResetSku?: () => void;
 }
 
 const inputClass = 'w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all placeholder:text-slate-600';
@@ -39,6 +40,7 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
     showNewUom, newUomName, newUomAbbr, isCreatingUom,
     updateField, setShowNewUom, setNewUomName, setNewUomAbbr, onCreateUom,
     errors = {}, showErrors = false, isSkuAutoEnabled = true, isSkuManuallyEdited = false,
+    onResetSku,
 }) => {
     const errorFor = (field: string) => (showErrors ? errors[field] || null : null);
     const cls = (field: string) =>
@@ -68,18 +70,30 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
                     <div>
                         <div className="flex items-center justify-between mb-1.5">
                             <label className="text-sm font-medium text-slate-400">SKU *</label>
-                            {isSkuAutoEnabled && (
-                                <span
-                                    data-testid="sku-autogen-badge"
-                                    className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
-                                        isSkuManuallyEdited
-                                            ? 'bg-slate-800 text-slate-400 border border-slate-700'
-                                            : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
-                                    }`}
-                                >
-                                    {isSkuManuallyEdited ? 'Manual Override' : 'Auto-generated'}
-                                </span>
-                            )}
+                            <div className="flex items-center gap-1.5">
+                                {isSkuAutoEnabled && (
+                                    <span
+                                        data-testid="sku-autogen-badge"
+                                        className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
+                                            isSkuManuallyEdited
+                                                ? 'bg-slate-800 text-slate-400 border border-slate-700'
+                                                : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                                        }`}
+                                    >
+                                        {isSkuManuallyEdited ? 'Manual Override' : 'Auto-generated from Item Name'}
+                                    </span>
+                                )}
+                                {isSkuManuallyEdited && onResetSku && (
+                                    <button
+                                        type="button"
+                                        data-testid="sku-reset-btn"
+                                        onClick={onResetSku}
+                                        className="text-[10px] text-blue-400 hover:text-blue-300 underline focus:outline-none"
+                                    >
+                                        Re-generate
+                                    </button>
+                                )}
+                            </div>
                         </div>
                         <input
                             type="text"

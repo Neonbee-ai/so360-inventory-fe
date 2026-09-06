@@ -27,6 +27,7 @@ vi.mock('../../services/inventoryService', () => ({
 
 vi.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
+  useLocation: () => ({ pathname: '/inventory/items/new', search: '', hash: '' }),
 }));
 
 vi.mock('../../utils/formatters', () => ({
@@ -151,6 +152,34 @@ describe('ItemCreatePage', () => {
       await waitFor(() => {
         expect(screen.getByText('Back to Items')).toBeInTheDocument();
       });
+    });
+
+    it('When mounted / Then starts with pristine empty form fields and no leaked state', async () => {
+      const { unmount } = render(<ItemCreatePage />);
+      await waitFor(() => screen.getByPlaceholderText('Item name'));
+
+      const nameInput = screen.getByPlaceholderText('Item name');
+      const skuInput = screen.getByPlaceholderText('SKU');
+      const unitInput = screen.getByPlaceholderText('Unit');
+
+      expect((nameInput as HTMLInputElement).value).toBe('');
+      expect((skuInput as HTMLInputElement).value).toBe('');
+      expect((unitInput as HTMLInputElement).value).toBe('');
+
+      // Enter dirty state
+      fireEvent.change(nameInput, { target: { value: 'Dirty Item' } });
+      fireEvent.change(skuInput, { target: { value: 'DIRTY-SKU' } });
+
+      unmount();
+
+      // Re-mount new instance
+      render(<ItemCreatePage />);
+      await waitFor(() => screen.getByPlaceholderText('Item name'));
+      const freshNameInput = screen.getByPlaceholderText('Item name');
+      const freshSkuInput = screen.getByPlaceholderText('SKU');
+
+      expect((freshNameInput as HTMLInputElement).value).toBe('');
+      expect((freshSkuInput as HTMLInputElement).value).toBe('');
     });
 
     it('When Back to Items clicked / Then navigates to items list', async () => {

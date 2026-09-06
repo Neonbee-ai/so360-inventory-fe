@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Save, Loader2 } from 'lucide-react';
 import { inventoryService } from '../../services/inventoryService';
 import { Unit, ItemCategory, Warehouse, ItemAttributeDefinition } from '../../types/inventory';
@@ -15,8 +15,9 @@ import AttributesTab from './tabs/AttributesTab';
 import { useInventoryCurrencySymbol } from '../../utils/formatters';
 import { useActivity } from '@so360/shell-context';
 import { optional, validateBarcode, validateName, validateSku } from '../../utils/validators';
+import { generateSkuFromName } from '../../utils/skuGenerator';
 
-interface FormData {
+export interface FormData {
     name: string;
     sku: string;
     type: ItemClassification;
@@ -50,7 +51,7 @@ interface FormData {
     tax_code_id: string;
 }
 
-const initialFormData: FormData = {
+export const createFreshItemForm = (): FormData => ({
     name: '',
     sku: '',
     type: 'product',
@@ -82,13 +83,14 @@ const initialFormData: FormData = {
     default_warehouse_id: '',
     is_online_visible: false,
     tax_code_id: '',
-};
+});
 
 const ItemCreatePage = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const currencySymbol = useInventoryCurrencySymbol();
     const { recordActivity } = useActivity();
-    const [form, setForm] = useState<FormData>(initialFormData);
+    const [form, setForm] = useState<FormData>(createFreshItemForm);
     const [activeTab, setActiveTab] = useState<TabId>('basic');
     const [categories, setCategories] = useState<ItemCategory[]>([]);
     const [uoms, setUoms] = useState<Unit[]>([]);
@@ -103,7 +105,12 @@ const ItemCreatePage = () => {
     const [showErrors, setShowErrors] = useState(false);
     const [skuScheme, setSkuScheme] = useState<{ enabled: boolean; prefix: string; start_number: number; padding: number; separator: string } | null>(null);
     const [isSkuManuallyEdited, setIsSkuManuallyEdited] = useState(false);
-    const isGeneratingSkuRef = React.useRef(false);
+
+    const skuCheckTimeoutRef = useRef<any>(null);
+    const isSkuManuallyEditedRef = useRef(isSkuManuallyEdited);
+    useEffect(() => {
+        isSkuManuallyEditedRef.current = isSkuManuallyEdited;
+    }, [isSkuManuallyEdited]);
 
     // Inline create states — category
     const [showNewCategory, setShowNewCategory] = useState(false);
@@ -117,9 +124,30 @@ const ItemCreatePage = () => {
     const [newUomAbbr, setNewUomAbbr] = useState('');
     const [isCreatingUom, setIsCreatingUom] = useState(false);
 
+    const resetForm = () => {
+        setForm(createFreshItemForm());
+        setIsSkuManuallyEdited(false);
+        setActiveTab('basic');
+        setTabErrors({});
+        setShowErrors(false);
+        setError(null);
+        setShowNewCategory(false);
+        setNewCategoryName('');
+        setNewCategoryDesc('');
+        setShowNewUom(false);
+        setNewUomName('');
+        setNewUomAbbr('');
+    };
+
     useEffect(() => {
+        resetForm();
         loadSettings();
-    }, []);
+        return () => {
+            if (skuCheckTimeoutRef.current) {
+                clearTimeout(skuCheckTimeoutRef.current);
+            }
+        };
+    }, [location.pathname]);
 
     const loadSettings = async () => {
         setIsTaxCodesLoading(true);
@@ -159,43 +187,76 @@ const ItemCreatePage = () => {
         }
     };
 
-    const ensureAutoSku = async () => {
-        if (isGeneratingSkuRef.current || isSkuManuallyEdited) return;
-        isGeneratingSkuRef.current = true;
-        try {
-            const res = await inventoryService.getNextNumber('sku');
-            const nextNum = res?.number || res?.data?.number;
-            if (nextNum) {
-                setForm(prev => {
-                    if (isSkuManuallyEdited || (prev.sku && prev.sku.trim() !== '')) return prev;
-                    return { ...prev, sku: nextNum };
-                });
+    const debouncedCheckSku = (candidateSku: string) => {
+        if (skuCheckTimeoutRef.current) {
+            clearTimeout(skuCheckTimeoutRef.current);
+        }
+        skuCheckTimeoutRef.current = setTimeout(async () => {
+            if (isSkuManuallyEditedRef.current || !candidateSku) return;
+            try {
+                const res = await inventoryService.checkSkuAvailable(candidateSku);
+                if (!isSkuManuallyEditedRef.current && res && !res.available && res.suggestedSku) {
+                    setForm(prev => {
+                        if (isSkuManuallyEditedRef.current) return prev;
+                        return { ...prev, sku: res.suggestedSku! };
+                    });
+                }
+            } catch {
+                // Non-blocking
             }
-        } catch {
-            const prefix = skuScheme?.prefix || 'SKU-';
-            const num = String(skuScheme?.start_number || 1).padStart(skuScheme?.padding || 5, '0');
-            const fallback = `${prefix.replace(/[-/_]$/, '')}-${num}`;
-            setForm(prev => {
-                if (isSkuManuallyEdited || (prev.sku && prev.sku.trim() !== '')) return prev;
-                return { ...prev, sku: fallback };
-            });
-        } finally {
-            isGeneratingSkuRef.current = false;
+        }, 300);
+    };
+
+    const handleResetSku = () => {
+        setIsSkuManuallyEdited(false);
+        const isAutoEnabled = skuScheme?.enabled ?? true;
+        const derivedSku = isAutoEnabled ? generateSkuFromName(form.name) : '';
+        setForm(prev => ({ ...prev, sku: derivedSku }));
+        if (derivedSku) {
+            debouncedCheckSku(derivedSku);
         }
     };
 
     const updateField = (field: string, value: any) => {
-        setForm(prev => ({ ...prev, [field]: value }));
+        if (field === 'name') {
+            const newName = String(value ?? '');
+            const isAutoEnabled = skuScheme?.enabled ?? true;
+
+            setForm(prev => {
+                if (!isSkuManuallyEdited && isAutoEnabled) {
+                    const derivedSku = generateSkuFromName(newName);
+                    return { ...prev, name: newName, sku: derivedSku };
+                }
+                return { ...prev, name: newName };
+            });
+
+            if (!isSkuManuallyEdited && isAutoEnabled) {
+                const derivedSku = generateSkuFromName(newName);
+                if (derivedSku) {
+                    debouncedCheckSku(derivedSku);
+                }
+            }
+            return;
+        }
 
         if (field === 'sku') {
-            setIsSkuManuallyEdited(true);
+            const newSku = String(value ?? '');
+            if (newSku.trim() === '') {
+                setIsSkuManuallyEdited(false);
+                const isAutoEnabled = skuScheme?.enabled ?? true;
+                const derivedSku = isAutoEnabled ? generateSkuFromName(form.name) : '';
+                setForm(prev => ({ ...prev, sku: derivedSku }));
+                if (derivedSku) {
+                    debouncedCheckSku(derivedSku);
+                }
+            } else {
+                setIsSkuManuallyEdited(true);
+                setForm(prev => ({ ...prev, sku: newSku }));
+            }
+            return;
         }
 
-        if (field === 'name' && value && String(value).trim().length > 0) {
-            if (!isSkuManuallyEdited && (skuScheme === null || skuScheme.enabled)) {
-                ensureAutoSku();
-            }
-        }
+        setForm(prev => ({ ...prev, [field]: value }));
 
         if (field === 'category_id') {
             setAttributeDefs([]);
@@ -387,6 +448,7 @@ const ItemCreatePage = () => {
                         showErrors={showErrors}
                         isSkuAutoEnabled={skuScheme?.enabled ?? true}
                         isSkuManuallyEdited={isSkuManuallyEdited}
+                        onResetSku={handleResetSku}
                     />
                 );
             case 'media':

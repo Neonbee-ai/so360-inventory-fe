@@ -29,7 +29,10 @@ vi.mock('../../services/inventoryService', () => ({
     },
 }));
 
-vi.mock('react-router-dom', () => ({ useNavigate: () => mockNavigate }));
+vi.mock('react-router-dom', () => ({
+    useNavigate: () => mockNavigate,
+    useLocation: () => ({ pathname: '/inventory/items/new', search: '', hash: '' }),
+}));
 vi.mock('../../utils/formatters', () => ({ useInventoryCurrencySymbol: () => '$' }));
 vi.mock('@so360/shell-context', () => ({
     useActivity: () => ({ recordActivity: vi.fn().mockResolvedValue(undefined) }),
