@@ -159,6 +159,8 @@ export interface ItemAttributeDefinition {
     description?: string | null;
     is_required: boolean;
     sort_order: number;
+    min_value?: number | null;
+    max_value?: number | null;
     created_at?: string;
     updated_at?: string;
 }

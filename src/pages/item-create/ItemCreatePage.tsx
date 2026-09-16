@@ -8,7 +8,7 @@ import TabNavigation from './components/TabNavigation';
 import BasicInfoTab from './tabs/BasicInfoTab';
 import MediaTab from './tabs/MediaTab';
 import PricingTab, { TaxCodeOption } from './tabs/PricingTab';
-import CategoryTab from './tabs/CategoryTab';
+import CategoryTab, { getAttributeRangeError } from './tabs/CategoryTab';
 import StockTrackingTab from './tabs/StockTrackingTab';
 import ShippingTab from './tabs/ShippingTab';
 import AttributesTab from './tabs/AttributesTab';
@@ -322,12 +322,20 @@ const ItemCreatePage = () => {
         category_id: form.category_id ? null : 'Please select a category.',
         barcode: validateBarcode(form.barcode),
         brand: optional(form.brand, (v) => validateName(v, 'Brand', 2, 100)),
-    }), [form.name, form.sku, form.unit_id, form.type, form.category_id, form.barcode, form.brand]);
+        // Blocks save while any category attribute's numeric value is out of
+        // its admin-configured min_value/max_value bound (Pulse 3aafa377 —
+        // "Prevent Negative Values in Max Weight Capacity Attribute").
+        category_attributes: attributeDefs.reduce<string | null>(
+            (found, def) => found || getAttributeRangeError(def, form.metadata?.[def.attribute_key]),
+            null,
+        ),
+    }), [form.name, form.sku, form.unit_id, form.type, form.category_id, form.barcode, form.brand, attributeDefs, form.metadata]);
 
     /** Which tab each required field lives on, so the form can jump there. */
     const FIELD_TABS: Record<string, TabId> = {
         name: 'basic', sku: 'basic', unit_id: 'basic', type: 'basic',
         barcode: 'basic', brand: 'basic', category_id: 'category',
+        category_attributes: 'category',
     };
 
     const validate = (): boolean => {

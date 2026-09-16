@@ -156,5 +156,105 @@ describe('CategoryTab', () => {
       fireEvent.change(input, { target: { value: 'https://x/y.pdf' } });
       expect(updateField).toHaveBeenCalledWith('metadata', { spec_sheet: 'https://x/y.pdf' });
     });
+
+    // Pulse 3aafa377 — "Prevent Negative Values in Max Weight Capacity Attribute"
+    describe('Given a numeric attribute definition has a min_value of 0 configured', () => {
+      const weightDef = defOf({
+        attribute_type: 'number',
+        attribute_key: 'max_weight_capacity',
+        attribute_label: 'Max Weight Capacity',
+        unit: 'kg',
+        min_value: 0,
+        max_value: null,
+      });
+
+      it('When a negative value is entered / Then an inline error is shown', () => {
+        render(
+          <CategoryTab
+            {...makeProps({
+              category_id: 'cat-1',
+              attributeDefs: [weightDef],
+              metadata: { max_weight_capacity: -12 },
+            })}
+          />,
+        );
+        expect(screen.getByTestId('error-attr-max_weight_capacity')).toHaveTextContent(
+          'Max Weight Capacity must be greater than 0.',
+        );
+      });
+
+      it('When a valid positive value is entered / Then no inline error is shown', () => {
+        render(
+          <CategoryTab
+            {...makeProps({
+              category_id: 'cat-1',
+              attributeDefs: [weightDef],
+              metadata: { max_weight_capacity: 12 },
+            })}
+          />,
+        );
+        expect(screen.queryByTestId('error-attr-max_weight_capacity')).not.toBeInTheDocument();
+      });
+
+      it('When the input is rendered / Then the HTML min attribute mirrors min_value', () => {
+        render(
+          <CategoryTab
+            {...makeProps({
+              category_id: 'cat-1',
+              attributeDefs: [weightDef],
+              metadata: { max_weight_capacity: 12 },
+            })}
+          />,
+        );
+        const input = screen.getByPlaceholderText('Max Weight Capacity') as HTMLInputElement;
+        expect(input.min).toBe('0');
+      });
+    });
+
+    describe('Given a numeric attribute definition has no min_value or max_value configured', () => {
+      it('When any value including a negative one is entered / Then no inline error is shown (regression — unbounded attributes stay unbounded)', () => {
+        const unboundedDef = defOf({
+          attribute_type: 'number',
+          attribute_key: 'shelf_count',
+          attribute_label: 'Shelf Count',
+          min_value: null,
+          max_value: null,
+        });
+        render(
+          <CategoryTab
+            {...makeProps({
+              category_id: 'cat-1',
+              attributeDefs: [unboundedDef],
+              metadata: { shelf_count: -50 },
+            })}
+          />,
+        );
+        expect(screen.queryByTestId('error-attr-shelf_count')).not.toBeInTheDocument();
+      });
+    });
+
+    describe('Given a currency attribute definition has a max_value configured', () => {
+      it('When a value above the max is entered / Then an inline error is shown', () => {
+        const priceDef = defOf({
+          attribute_type: 'currency',
+          attribute_key: 'trade_in_value',
+          attribute_label: 'Trade-in Value',
+          min_value: null,
+          max_value: 1000,
+        });
+        render(
+          <CategoryTab
+            {...makeProps({
+              category_id: 'cat-1',
+              attributeDefs: [priceDef],
+              metadata: { trade_in_value: 1500 },
+            })}
+          />,
+        );
+        expect(screen.getByTestId('error-attr-trade_in_value')).toHaveTextContent(
+          'Trade-in Value must be less than 1000.',
+        );
+      });
+    });
   });
 });

@@ -16,6 +16,31 @@ interface CategoryTabProps {
 const inputClass = 'w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all placeholder:text-slate-600';
 const labelClass = 'block text-sm font-medium text-slate-400 mb-1.5';
 
+/**
+ * Numeric range check shared between the inline per-field error and the
+ * parent's save-gating logic. Returns null when the value is unset, not a
+ * number, or has no configured min_value/max_value bound (regression guard —
+ * attributes with no bound configured must never be forced into range).
+ */
+export const getAttributeRangeError = (
+    def: ItemAttributeDefinition,
+    rawValue: any,
+): string | null => {
+    if (def.attribute_type !== 'number' && def.attribute_type !== 'currency') return null;
+    if (rawValue === undefined || rawValue === null || rawValue === '') return null;
+
+    const value = Number(rawValue);
+    if (Number.isNaN(value)) return null;
+
+    if (def.min_value !== null && def.min_value !== undefined && value < def.min_value) {
+        return `${def.attribute_label} must be greater than ${def.min_value}.`;
+    }
+    if (def.max_value !== null && def.max_value !== undefined && value > def.max_value) {
+        return `${def.attribute_label} must be less than ${def.max_value}.`;
+    }
+    return null;
+};
+
 const CategoryTab: React.FC<CategoryTabProps> = ({
     category_id, categories, updateField, onQuickAddCategory,
     attributeDefs = [], metadata = {}, error = null,
@@ -38,19 +63,30 @@ const CategoryTab: React.FC<CategoryTabProps> = ({
                         placeholder={def.attribute_label}
                     />
                 );
-            case 'number':
+            case 'number': {
+                const rangeError = getAttributeRangeError(def, value);
                 return (
-                    <div className="flex items-center gap-2">
-                        <input
-                            type="number"
-                            value={value ?? ''}
-                            onChange={e => handleMetadataChange(def.attribute_key, e.target.value ? parseFloat(e.target.value) : '')}
-                            className={inputClass}
-                            placeholder={def.attribute_label}
-                        />
-                        {def.unit && <span className="text-sm text-slate-500 whitespace-nowrap">{def.unit}</span>}
+                    <div>
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="number"
+                                min={def.min_value ?? undefined}
+                                max={def.max_value ?? undefined}
+                                value={value ?? ''}
+                                onChange={e => handleMetadataChange(def.attribute_key, e.target.value ? parseFloat(e.target.value) : '')}
+                                className={inputClass}
+                                placeholder={def.attribute_label}
+                            />
+                            {def.unit && <span className="text-sm text-slate-500 whitespace-nowrap">{def.unit}</span>}
+                        </div>
+                        {rangeError && (
+                            <p role="alert" data-testid={`error-attr-${def.attribute_key}`} className="text-rose-400 text-xs mt-1.5">
+                                {rangeError}
+                            </p>
+                        )}
                     </div>
                 );
+            }
             case 'boolean':
                 return (
                     <label className="flex items-center gap-3 cursor-pointer group">
@@ -65,20 +101,31 @@ const CategoryTab: React.FC<CategoryTabProps> = ({
                         </span>
                     </label>
                 );
-            case 'currency':
+            case 'currency': {
+                const rangeError = getAttributeRangeError(def, value);
                 return (
-                    <div className="flex items-center gap-2">
-                        {def.unit && <span className="text-sm text-slate-500 whitespace-nowrap">{def.unit}</span>}
-                        <input
-                            type="number"
-                            step="0.01"
-                            value={value ?? ''}
-                            onChange={e => handleMetadataChange(def.attribute_key, e.target.value ? parseFloat(e.target.value) : '')}
-                            className={inputClass}
-                            placeholder={def.attribute_label}
-                        />
+                    <div>
+                        <div className="flex items-center gap-2">
+                            {def.unit && <span className="text-sm text-slate-500 whitespace-nowrap">{def.unit}</span>}
+                            <input
+                                type="number"
+                                step="0.01"
+                                min={def.min_value ?? undefined}
+                                max={def.max_value ?? undefined}
+                                value={value ?? ''}
+                                onChange={e => handleMetadataChange(def.attribute_key, e.target.value ? parseFloat(e.target.value) : '')}
+                                className={inputClass}
+                                placeholder={def.attribute_label}
+                            />
+                        </div>
+                        {rangeError && (
+                            <p role="alert" data-testid={`error-attr-${def.attribute_key}`} className="text-rose-400 text-xs mt-1.5">
+                                {rangeError}
+                            </p>
+                        )}
                     </div>
                 );
+            }
             case 'date':
                 return (
                     <input

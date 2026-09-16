@@ -551,6 +551,8 @@ class InventoryService {
         description?: string;
         is_required?: boolean;
         sort_order?: number;
+        min_value?: number;
+        max_value?: number;
     }) {
         return this.request(`/settings/${this.orgId}/attribute-definitions`, {
             method: 'POST',
@@ -567,6 +569,8 @@ class InventoryService {
         description?: string;
         is_required?: boolean;
         sort_order?: number;
+        min_value?: number;
+        max_value?: number;
     }>) {
         return this.request(`/settings/${this.orgId}/attribute-definitions/${id}`, {
             method: 'PATCH',
