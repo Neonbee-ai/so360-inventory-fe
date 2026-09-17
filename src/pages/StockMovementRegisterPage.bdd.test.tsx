@@ -283,6 +283,121 @@ describe('Stock Movement Register — entry form guards', () => {
             ),
         );
     });
+
+    it('Given no project or work order is selected / When a plain stock-in is submitted / Then it still succeeds (no regression for the unlinked flow)', async () => {
+        await openForm();
+        await selectItem();
+
+        fireEvent.change(screen.getByLabelText('Warehouse'), { target: { value: WH } });
+        fireEvent.change(screen.getByLabelText('Reason'), { target: { value: 'PURCHASE_RECEIPT' } });
+        fireEvent.change(screen.getByLabelText('Quantity'), { target: { value: '10' } });
+        fireEvent.click(screen.getByText('Record Transaction'));
+
+        await waitFor(() =>
+            expect(inv.createAdjustment).toHaveBeenCalledWith(
+                expect.objectContaining({ project_id: undefined, work_order_id: undefined }),
+            ),
+        );
+    });
+});
+
+// ===========================================================================
+// P0 fix: the Project selector was frozen (never populated), which also
+// blocked the dependent Work Order field. These specs cover both Stock Input
+// (transaction_type stock_in) and Stock Output (stock_out) and pin: the
+// Project select opens/loads/selects, the Work Order list narrows to the
+// selected project, and changing/clearing Project resets an incompatible
+// Work Order selection.
+// ===========================================================================
+describe('Stock Movement Register — Project selector (Stock Input & Stock Output)', () => {
+    const PROJECT_A = { id: 'proj-a', title: 'Warehouse Expansion' };
+    const PROJECT_B = { id: 'proj-b', title: 'Client Site Fit-out' };
+    const WO_FOR_A = { id: 'wo-a1', project_id: 'proj-a', code: 'WO-A1', status: 'in_progress' };
+    const WO_FOR_B = { id: 'wo-b1', project_id: 'proj-b', code: 'WO-B1', status: 'in_progress' };
+
+    const openForm = async () => {
+        renderPage();
+        await waitFor(() => expect(inv.getLocations).toHaveBeenCalled());
+        fireEvent.click(screen.getByText('New Transaction'));
+        await screen.findByText('Transaction Information');
+    };
+
+    const selectItem = async () => {
+        fireEvent.focus(screen.getByLabelText('Search items'));
+        await waitFor(() => expect(inv.getItems).toHaveBeenCalled());
+        fireEvent.click(await screen.findByText(ITEM.name));
+    };
+
+    beforeEach(() => {
+        inv.searchProjects.mockResolvedValue([PROJECT_A, PROJECT_B]);
+        inv.searchWorkOrders.mockResolvedValue([WO_FOR_A, WO_FOR_B]);
+    });
+
+    it.each([
+        ['Stock Input', 'stock_in'],
+        ['Stock Output', 'stock_out'],
+    ])(
+        'Given %s / When the form opens / Then the Project selector loads and is not frozen',
+        async (label, transactionType) => {
+            await openForm();
+            if (transactionType === 'stock_out') fireEvent.click(screen.getByText('Stock Out'));
+            await selectItem();
+
+            await waitFor(() => expect(inv.searchProjects).toHaveBeenCalled());
+
+            const projectSelect = (await screen.findByLabelText('Project')) as HTMLSelectElement;
+            expect(projectSelect).not.toBeDisabled();
+
+            fireEvent.change(projectSelect, { target: { value: PROJECT_A.id } });
+            expect(projectSelect.value).toBe(PROJECT_A.id);
+        },
+    );
+
+    it('Given projects and work orders for two different projects exist / When a Project is selected / Then only that Project\'s work orders are offered', async () => {
+        await openForm();
+        await selectItem();
+        await waitFor(() => expect(inv.searchWorkOrders).toHaveBeenCalled());
+
+        fireEvent.change(await screen.findByLabelText('Project'), {
+            target: { value: PROJECT_A.id },
+        });
+
+        expect(screen.getByText(WO_FOR_A.code, { exact: false })).toBeInTheDocument();
+        expect(screen.queryByText(WO_FOR_B.code, { exact: false })).not.toBeInTheDocument();
+    });
+
+    it('Given a Project and its Work Order are both selected / When the Project is changed / Then the incompatible Work Order selection is cleared', async () => {
+        await openForm();
+        await selectItem();
+        await waitFor(() => expect(inv.searchWorkOrders).toHaveBeenCalled());
+
+        fireEvent.change(await screen.findByLabelText('Project'), {
+            target: { value: PROJECT_A.id },
+        });
+        const workOrderSelect = screen.getByLabelText('Work order') as HTMLSelectElement;
+        fireEvent.change(workOrderSelect, { target: { value: WO_FOR_A.id } });
+        expect(workOrderSelect.value).toBe(WO_FOR_A.id);
+
+        fireEvent.change(screen.getByLabelText('Project'), { target: { value: PROJECT_B.id } });
+
+        expect(workOrderSelect.value).toBe('');
+    });
+
+    it('Given a Project and Work Order are selected / When the Project is cleared / Then the Work Order is cleared too', async () => {
+        await openForm();
+        await selectItem();
+        await waitFor(() => expect(inv.searchWorkOrders).toHaveBeenCalled());
+
+        fireEvent.change(await screen.findByLabelText('Project'), {
+            target: { value: PROJECT_A.id },
+        });
+        const workOrderSelect = screen.getByLabelText('Work order') as HTMLSelectElement;
+        fireEvent.change(workOrderSelect, { target: { value: WO_FOR_A.id } });
+
+        fireEvent.change(screen.getByLabelText('Project'), { target: { value: '' } });
+
+        expect(workOrderSelect.value).toBe('');
+    });
 });
 
 describe('Stock Movement Register — RBAC gates New Transaction on stock.adjust', () => {
