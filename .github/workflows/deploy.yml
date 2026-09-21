@@ -3,6 +3,7 @@ name: Deploy Inventory Frontend
 on:
   push:
     branches: [develop, qa]
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -18,4 +19,10 @@ jobs:
       vite_base_url_dev: https://dev-cdn.skyoffice360.com/inventory/
       vite_base_url_staging: https://staging.inventory.skyoffice360.com/
       is_mfe: true
+      vite_env_dev: |
+        VITE_SO360_CORE_API=https://dev.api.skyoffice360.com/core
+        VITE_SO360_INVENTORY_API=https://dev.api.skyoffice360.com/inventory
+      vite_env_staging: |
+        VITE_SO360_CORE_API=https://staging.api.skyoffice360.com/core
+        VITE_SO360_INVENTORY_API=https://staging.api.skyoffice360.com/inventory
     secrets: inherit
