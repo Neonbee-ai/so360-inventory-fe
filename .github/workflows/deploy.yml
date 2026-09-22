@@ -25,4 +25,5 @@ jobs:
       vite_env_staging: |
         VITE_SO360_CORE_API=https://staging.api.skyoffice360.com/core
         VITE_SO360_INVENTORY_API=https://staging.api.skyoffice360.com/inventory
+      needs_shell_packages: true
     secrets: inherit
