@@ -7,6 +7,7 @@ import { TabId, ItemClassification } from '../../types/itemTypes';
 import TabNavigation from './components/TabNavigation';
 import BasicInfoTab from './tabs/BasicInfoTab';
 import MediaTab from './tabs/MediaTab';
+import { imageMetaForUrls, type ImageMetaEntry } from '../../utils/imageMeta';
 import PricingTab, { TaxCodeOption } from './tabs/PricingTab';
 import CategoryTab, { getAttributeRangeError } from './tabs/CategoryTab';
 import StockTrackingTab from './tabs/StockTrackingTab';
@@ -25,6 +26,8 @@ export interface FormData {
     barcode: string;
     description: string;
     image_urls: string[];
+    /** Measured photo sizes, keyed by url (sent as image_meta). */
+    image_meta: ImageMetaEntry[];
     price: string;
     cost: string;
     category_id: string;
@@ -59,6 +62,7 @@ export const createFreshItemForm = (): FormData => ({
     barcode: '',
     description: '',
     image_urls: [],
+    image_meta: [],
     price: '',
     cost: '',
     category_id: '',
@@ -389,7 +393,11 @@ const ItemCreatePage = () => {
             if (form.brand.trim()) dto.brand = form.brand.trim();
             if (form.barcode.trim()) dto.barcode = form.barcode.trim();
             if (form.description.trim()) dto.description = form.description.trim();
-            if (form.image_urls.length > 0) dto.image_urls = form.image_urls;
+            if (form.image_urls.length > 0) {
+                dto.image_urls = form.image_urls;
+                const meta = imageMetaForUrls(form.image_meta, form.image_urls);
+                if (meta.length > 0) dto.image_meta = meta;
+            }
             if (form.price) dto.price = parseFloat(form.price);
             if (form.cost) dto.cost = parseFloat(form.cost);
             if (form.category_id) dto.category_id = form.category_id;
@@ -463,6 +471,7 @@ const ItemCreatePage = () => {
                 return (
                     <MediaTab
                         image_urls={form.image_urls}
+                        image_meta={form.image_meta}
                         updateField={updateField}
                     />
                 );

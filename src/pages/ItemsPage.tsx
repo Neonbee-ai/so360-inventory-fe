@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Filter, Plus, Package, Layers, AlertCircle, Flame, Building2, Factory, Wrench, Upload, Info } from 'lucide-react';
+import { Search, Filter, Plus, Package, Layers, AlertCircle, AlertTriangle, Flame, Building2, Factory, Wrench, Upload, Info } from 'lucide-react';
 import { inventoryService } from '../services/inventoryService';
 import { Item } from '../types/inventory';
 import { Table } from '../components/common/Table';
+import PhotoAttentionIndicator from '../components/media/PhotoAttentionIndicator';
 import { useAuth } from '../hooks/useAuth';
 import { useShellBridge, useQuota, useSandboxLimit } from '@so360/shell-context';
 import { QuotaBar, QuotaGate, FeatureGate } from '@so360/design-system';
@@ -23,15 +24,22 @@ const ItemsPage = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [typeFilter, setTypeFilter] = useState<'All' | 'product' | 'service' | 'raw_material' | 'finished_good' | 'consumable' | 'fixed_asset'>('All');
+    const [attentionOnly, setAttentionOnly] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     const fetchItems = async () => {
         setIsLoading(true);
         setError(null);
         try {
-            const response = await inventoryService.getItems();
+            // "Photos need attention" asks the API to filter, so flagged items
+            // beyond the first page are found too.
+            const response = attentionOnly
+                ? await inventoryService.getItems({ imageNeedsAttention: true, limit: 1000 })
+                : await inventoryService.getItems();
             setItems(response.data || []);
-            setTotalItemCount(response.pagination?.total ?? (response.data?.length ?? 0));
+            if (!attentionOnly) {
+                setTotalItemCount(response.pagination?.total ?? (response.data?.length ?? 0));
+            }
         } catch (err) {
             setError('Failed to load items. Please try again.');
         } finally {
@@ -41,14 +49,17 @@ const ItemsPage = () => {
 
     useEffect(() => {
         fetchItems();
-    }, []);
+    }, [attentionOnly]);
 
     const filteredItems = items.filter(item => {
         const matchesSearch =
             item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             (item.sku?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false);
         const matchesType = typeFilter === 'All' || item.type === typeFilter;
-        return matchesSearch && matchesType;
+        // Also checked here: until the flag exists the API ignores the filter
+        // and returns everything.
+        const matchesAttention = !attentionOnly || item.image_needs_attention === true;
+        return matchesSearch && matchesType && matchesAttention;
     });
 
     const columns = [
@@ -66,7 +77,10 @@ const ItemsPage = () => {
                         {!['product','consumable','fixed_asset','raw_material','finished_good','service'].includes(item.type) && <Package size={20} className="text-slate-400" />}
                     </div>
                     <div className="flex flex-col">
-                        <span className="font-semibold text-slate-50">{item.name}</span>
+                        <span className="font-semibold text-slate-50 flex items-center gap-2">
+                            {item.name}
+                            <PhotoAttentionIndicator needsAttention={item.image_needs_attention} />
+                        </span>
                         <span className="text-xs text-slate-500 font-mono tracking-wider">{item.sku || 'NO-SKU'}</span>
                     </div>
                 </div>
@@ -219,6 +233,20 @@ const ItemsPage = () => {
                 </div>
 
                 <div className="flex items-center gap-4">
+                    <button
+                        type="button"
+                        aria-pressed={attentionOnly}
+                        onClick={() => setAttentionOnly(v => !v)}
+                        title="Items with a photo under 800px or far from square"
+                        className={`flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm border transition-colors ${
+                            attentionOnly
+                                ? 'bg-amber-500/15 border-amber-500/40 text-amber-300'
+                                : 'bg-slate-900/50 border-slate-800 text-slate-400 hover:text-slate-200'
+                        }`}
+                    >
+                        <AlertTriangle size={15} />
+                        Photos need attention
+                    </button>
                     <div className="flex items-center gap-2 bg-slate-900/50 border border-slate-800 rounded-lg px-3 py-1">
                         <Filter size={16} className="text-slate-500" />
                         <select
@@ -251,7 +279,9 @@ const ItemsPage = () => {
                 columns={columns}
                 isLoading={isLoading}
                 onRowClick={(item) => navigate(`/inventory/items/${item.id}`)}
-                emptyMessage="No items found. Register your first item to start tracking inventory."
+                emptyMessage={attentionOnly
+                    ? 'No items with photos that need attention.'
+                    : 'No items found. Register your first item to start tracking inventory.'}
             />
 
         </div>

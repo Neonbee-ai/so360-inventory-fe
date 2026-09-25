@@ -33,6 +33,10 @@ export interface Item {
     cost?: number;
     description?: string;
     image_urls?: string[];
+    /** Natural size of each photo (absent until migration 051 / first save). */
+    image_meta?: Array<{ url: string; width: number; height: number }>;
+    /** Server-derived: a photo is under 800px or far from square. */
+    image_needs_attention?: boolean;
     barcode?: string;
     brand?: string;
     hsn_code?: string;
