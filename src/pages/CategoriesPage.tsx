@@ -6,6 +6,7 @@ import { mediaService } from '../services/mediaService';
 import { useAuth } from '../hooks/useAuth';
 import CategoryTreeView from '../components/categories/CategoryTreeView';
 import CategoryIconLibrary from '../components/categories/CategoryIconLibrary';
+import CategoryChannelsPanel from '../components/categories/CategoryChannelsPanel';
 import { buildCategoryTree } from '../utils/categoryTree';
 import { ItemCategory } from '../types/inventory';
 import { renderCategoryIcon, isPresetUrl } from '../constants/categoryIcons';
@@ -199,6 +200,9 @@ const CategoriesPage = () => {
     const { recordActivity } = useActivity();
     const shell = useShellBridge();
     const createState = (shell as any)?.getFeatureState ? (shell as any).getFeatureState('action:inventory:items:create') : 'enabled';
+    const channelVisibilityState = (shell as any)?.getFeatureState
+        ? (shell as any).getFeatureState('submodule:inventory:channel_visibility')
+        : 'enabled';
     const canCreate = (shell?.permissionsLoaded === true) && (shell?.hasPermission?.('items.create') ?? false) && (shell?.effectiveFlagsLoaded !== false) && createState === 'enabled';
     const deleteState = (shell as any)?.getFeatureState ? (shell as any).getFeatureState('action:inventory:items:delete') : 'enabled';
     const canDelete = (shell?.permissionsLoaded === true) && (shell?.hasPermission?.('items.delete') ?? false) && (shell?.effectiveFlagsLoaded !== false) && deleteState === 'enabled';
@@ -544,6 +548,26 @@ const CategoriesPage = () => {
                                     <p className="text-xs text-slate-600 mt-1">Lower = appears first</p>
                                 </div>
                             </div>
+
+                            {/* Sales channel visibility */}
+                            {channelVisibilityState === 'enabled' && (
+                                <div className="border-t border-slate-800 pt-5">
+                                    <CategoryChannelsPanel
+                                        key={selectedCategory.id}
+                                        categoryId={selectedCategory.id}
+                                        canManage={canManage}
+                                        onSaved={() => {
+                                            recordActivity({
+                                                eventType: 'inventory.category.channels_updated',
+                                                eventCategory: 'data',
+                                                description: `Updated sales channels for "${selectedCategory.name}"`,
+                                                resourceType: 'category',
+                                                resourceId: selectedCategory.id,
+                                            }).catch(() => {});
+                                        }}
+                                    />
+                                </div>
+                            )}
 
                             {/* Parent info */}
                             {selectedCategory.parent_id && (

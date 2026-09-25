@@ -21,6 +21,9 @@ vi.mock('../services/inventoryService', () => ({
     createCategory: (...args: any[]) => mockCreateCategory(...args),
     updateCategory: (...args: any[]) => mockUpdateCategory(...args),
     deleteCategory: (...args: any[]) => mockDeleteCategory(...args),
+    // Channel visibility panel (migration 050) loads on category select.
+    getCategoryChannels: vi.fn().mockResolvedValue([]),
+    setCategoryChannels: vi.fn().mockResolvedValue([]),
   },
 }));
 

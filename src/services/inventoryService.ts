@@ -534,6 +534,24 @@ class InventoryService {
         });
     }
 
+    // ==================== Category Channel Visibility ====================
+
+    async getCategoryChannels(categoryId?: string) {
+        const query = categoryId ? `?category_id=${categoryId}` : '';
+        return this.request(`/settings/${this.orgId}/category-channels${query}`);
+    }
+
+    async setCategoryChannels(
+        categoryId: string,
+        channels: { channel: string; is_visible: boolean; sort_order?: number; label_override?: string | null }[],
+        applyToChildren = false,
+    ) {
+        return this.request(`/settings/${this.orgId}/categories/${categoryId}/channels`, {
+            method: 'PUT',
+            body: JSON.stringify({ channels, apply_to_children: applyToChildren }),
+        });
+    }
+
     // ==================== Attribute Definitions ====================
 
     async getAttributeDefinitions(categoryId?: string) {
