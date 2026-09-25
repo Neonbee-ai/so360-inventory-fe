@@ -238,7 +238,9 @@ describe('MediaUploader', () => {
     });
 
     it('When it is still over 10 MB after downscaling / Then it is rejected with the 10 MB message', async () => {
-      mockCompress.mockResolvedValue(fileOfSize('blob', 'image/jpeg', 12 * MB));
+      // Real bytes: the uploader re-wraps the compressor's Blob in a new File,
+      // which takes its size from the content, not a faked .size property.
+      mockCompress.mockResolvedValue(new Blob([new Uint8Array(12 * MB)], { type: 'image/jpeg' }));
       const onImagesChange = vi.fn();
       render(<MediaUploader imageUrls={[]} onImagesChange={onImagesChange} />);
       selectFiles([fileOfSize('big.jpg', 'image/jpeg', 14 * MB)]);
