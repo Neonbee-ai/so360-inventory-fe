@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { assessProductImage, ratioLabel } from './imageRatio';
+import {
+  assessProductImage,
+  ratioLabel,
+  assessImageForSlot,
+  productImageNeedsAttention,
+  CATEGORY_IMAGE_SLOT,
+  CATEGORY_BANNER_SLOT,
+} from './imageRatio';
 
 describe('ratioLabel', () => {
   describe('Given a photo close to a common shape', () => {
@@ -74,6 +81,57 @@ describe('assessProductImage', () => {
   describe('Given a small and very tall photo', () => {
     it('When assessed / Then both issues are reported', () => {
       expect(assessProductImage(400, 900).issues).toHaveLength(2);
+    });
+  });
+});
+
+describe('productImageNeedsAttention', () => {
+  describe('Given the same thresholds the API uses for image_needs_attention', () => {
+    it('When a 1200×1200 photo / Then it does not need attention', () => {
+      expect(productImageNeedsAttention(1200, 1200)).toBe(false);
+    });
+
+    it('When a 600×600 or a 1080×1920 photo / Then it needs attention', () => {
+      expect(productImageNeedsAttention(600, 600)).toBe(true);
+      expect(productImageNeedsAttention(1080, 1920)).toBe(true);
+    });
+  });
+});
+
+describe('assessImageForSlot', () => {
+  describe('Given the square category image slot (1:1, 1600×1600)', () => {
+    it('When a 1600×1600 image / Then it is ok', () => {
+      expect(assessImageForSlot(1600, 1600, CATEGORY_IMAGE_SLOT)).toEqual({
+        size: '1600×1600', ratio: '1:1', ok: true, issues: [],
+      });
+    });
+
+    it('When the old 1200×400 banner-shaped image / Then it is flagged as the wrong shape', () => {
+      const a = assessImageForSlot(1200, 400, CATEGORY_IMAGE_SLOT);
+      expect(a.ok).toBe(false);
+      expect(a.issues.some(i => /this slot is 1:1/.test(i))).toBe(true);
+    });
+
+    it('When a 500×500 image / Then it is flagged as low resolution only', () => {
+      const a = assessImageForSlot(500, 500, CATEGORY_IMAGE_SLOT);
+      expect(a.issues).toHaveLength(1);
+      expect(a.issues[0]).toMatch(/Low resolution/);
+    });
+  });
+
+  describe('Given the category banner slot (16:5, 2400×750)', () => {
+    it('When a 2400×750 image / Then it is ok', () => {
+      expect(assessImageForSlot(2400, 750, CATEGORY_BANNER_SLOT).ok).toBe(true);
+    });
+
+    it('When a square image / Then it is flagged with the 16:5 target in the message', () => {
+      const a = assessImageForSlot(1600, 1600, CATEGORY_BANNER_SLOT);
+      expect(a.ok).toBe(false);
+      expect(a.issues.join(' ')).toMatch(/16:5 \(2400×750\)/);
+    });
+
+    it('When a 3:1 image (within 15% of 16:5) / Then the shape is accepted', () => {
+      expect(assessImageForSlot(2400, 800, CATEGORY_BANNER_SLOT).ok).toBe(true);
     });
   });
 });

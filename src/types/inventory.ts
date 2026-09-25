@@ -11,7 +11,10 @@ export interface ItemCategory {
     parent_id?: string;
     children?: ItemCategory[];
     icon_url?: string | null;
+    /** Square 1:1 image shown on category tiles. */
     image_url?: string | null;
+    /** Wide 16:5 hero at the top of the category page (absent until migration 052). */
+    banner_url?: string | null;
     color?: string | null;
     sort_order?: number;
 }

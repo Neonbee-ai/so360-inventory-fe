@@ -255,3 +255,75 @@ describe('CategoriesPage', () => {
     });
   });
 });
+
+describe('CategoriesPage — category image and banner slots', () => {
+  const openEditor = async (overrides: any = {}) => {
+    mockGetSettings.mockResolvedValue({ categories: [makeCategory(overrides)] });
+    render(<CategoriesPage />);
+    await waitFor(() => screen.getByTestId('select-cat-1'));
+    fireEvent.click(screen.getByTestId('select-cat-1'));
+    await waitFor(() => screen.getByText('Edit Category'));
+  };
+  const saveButton = () => screen.getByText('Save', { selector: 'button' });
+
+  it('Given a category is being edited / When the editor renders / Then it asks for a square 1600×1600 image and a 16:5 2400×750 banner', async () => {
+    await openEditor();
+    expect(screen.getByText('Category image — square 1:1, 1600×1600')).toBeInTheDocument();
+    expect(screen.getByText('Category banner — 16:5, 2400×750')).toBeInTheDocument();
+    expect(screen.queryByText(/1200×400/)).not.toBeInTheDocument();
+  });
+
+  it('Given a banner is uploaded / When Save is clicked / Then banner_url is sent separately from image_url', async () => {
+    await openEditor({ image_url: 'https://cdn.example.com/square.png' });
+    const fileInputs = document.querySelectorAll('input[type="file"]');
+    // First slot is the banner.
+    fireEvent.change(fileInputs[0], {
+      target: { files: [new File(['x'], 'banner.png', { type: 'image/png' })] },
+    });
+    await waitFor(() =>
+      expect((document.querySelectorAll('img')[0] as HTMLImageElement).src).toBe('https://cdn.example.com/img.png'),
+    );
+    fireEvent.click(saveButton());
+    await waitFor(() => expect(mockUpdateCategory).toHaveBeenCalled());
+    expect(mockUpdateCategory).toHaveBeenCalledWith(
+      'cat-1',
+      expect.objectContaining({
+        banner_url: 'https://cdn.example.com/img.png',
+        image_url: 'https://cdn.example.com/square.png',
+      }),
+    );
+  });
+
+  it('Given the banner was not touched / When Save is clicked / Then banner_url is not sent at all', async () => {
+    await openEditor();
+    fireEvent.click(saveButton());
+    await waitFor(() => expect(mockUpdateCategory).toHaveBeenCalled());
+    expect(mockUpdateCategory.mock.calls[0][1]).not.toHaveProperty('banner_url');
+  });
+
+  it('Given a WebP file / When dropped on a slot / Then it is accepted (not rejected as a wrong type)', async () => {
+    await openEditor();
+    const fileInputs = document.querySelectorAll('input[type="file"]');
+    expect((fileInputs[0] as HTMLInputElement).accept).toContain('image/webp');
+    fireEvent.change(fileInputs[0], {
+      target: { files: [new File(['x'], 'banner.webp', { type: 'image/webp' })] },
+    });
+    await waitFor(() =>
+      expect((document.querySelectorAll('img')[0] as HTMLImageElement).src).toBe('https://cdn.example.com/img.png'),
+    );
+    expect(screen.queryByText(/PNG, JPG, SVG or WebP only/)).not.toBeInTheDocument();
+  });
+
+  it('Given a saved square image that is actually banner-shaped / When it loads / Then the slot badge warns about its shape', async () => {
+    await openEditor({ image_url: 'https://cdn.example.com/old-wide.png' });
+    const img = Array.from(document.querySelectorAll('img')).find(
+      i => (i as HTMLImageElement).src === 'https://cdn.example.com/old-wide.png',
+    ) as HTMLImageElement;
+    Object.defineProperty(img, 'naturalWidth', { configurable: true, value: 1200 });
+    Object.defineProperty(img, 'naturalHeight', { configurable: true, value: 400 });
+    fireEvent.load(img);
+    const badge = await screen.findByTestId('slot-size-badge');
+    expect(badge).toHaveTextContent('⚠ 1200×400');
+    expect(badge.getAttribute('title')).toMatch(/this slot is 1:1/);
+  });
+});
