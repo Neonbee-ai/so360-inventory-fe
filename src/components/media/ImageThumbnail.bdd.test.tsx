@@ -76,4 +76,53 @@ describe('ImageThumbnail', () => {
       expect(screen.getAllByRole('button')).toHaveLength(1);
     });
   });
+
+  describe('Given a loaded image, to show its size and shape', () => {
+    const loadWith = (img: HTMLElement, width: number, height: number) => {
+      Object.defineProperty(img, 'naturalWidth', { configurable: true, value: width });
+      Object.defineProperty(img, 'naturalHeight', { configurable: true, value: height });
+      fireEvent.load(img);
+    };
+
+    it('When a large square photo loads / Then the badge shows its size and 1:1 without a warning', () => {
+      render(<ImageThumbnail url="http://cdn.example.com/square.jpg" onRemove={vi.fn()} />);
+      loadWith(screen.getByRole('img'), 1200, 1200);
+      const badge = screen.getByTestId('image-size-badge');
+      expect(badge).toHaveTextContent('1200×1200 · 1:1');
+      expect(badge).not.toHaveTextContent('⚠');
+      expect(badge).toHaveAttribute('title', 'Good fit for store product cards');
+    });
+
+    it('When a 9:16 phone photo loads / Then the badge warns and explains why in its tooltip', () => {
+      render(<ImageThumbnail url="http://cdn.example.com/tall.jpg" onRemove={vi.fn()} />);
+      loadWith(screen.getByRole('img'), 1080, 1920);
+      const badge = screen.getByTestId('image-size-badge');
+      expect(badge).toHaveTextContent('⚠ 1080×1920 · 9:16');
+      expect(badge.getAttribute('title')).toMatch(/Very tall/);
+    });
+
+    it('When the image has not loaded yet / Then no badge is shown', () => {
+      render(<ImageThumbnail url="http://cdn.example.com/pending.jpg" onRemove={vi.fn()} />);
+      expect(screen.queryByTestId('image-size-badge')).not.toBeInTheDocument();
+    });
+
+    it('When the broken-image placeholder loads / Then it is not graded', () => {
+      render(<ImageThumbnail url="http://broken.link/img.jpg" onRemove={vi.fn()} />);
+      const img = screen.getByRole('img') as HTMLImageElement;
+      img.src = 'data:image/svg+xml,<svg/>';
+      loadWith(img, 96, 96);
+      expect(screen.queryByTestId('image-size-badge')).not.toBeInTheDocument();
+    });
+
+    it('When an SVG reports no intrinsic size / Then no badge is shown', () => {
+      render(<ImageThumbnail url="http://cdn.example.com/logo.svg" onRemove={vi.fn()} />);
+      loadWith(screen.getByRole('img'), 0, 0);
+      expect(screen.queryByTestId('image-size-badge')).not.toBeInTheDocument();
+    });
+
+    it('When a photo loads / Then the whole photo is shown (contain), not cropped', () => {
+      render(<ImageThumbnail url="http://cdn.example.com/tall.jpg" onRemove={vi.fn()} />);
+      expect(screen.getByRole('img').className).toContain('object-contain');
+    });
+  });
 });

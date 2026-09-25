@@ -162,6 +162,13 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({ imageUrls, onImagesChange
                 </div>
             )}
 
+            {(imageUrls.length > 0 || uploading.length > 0) && (
+                <p className="text-xs text-slate-500">
+                    Best results: square photos (1:1), at least 1200×1200px, product centred on a plain background.
+                    Fashion stores: portrait 3:4. Images marked ⚠ will still show, but small or blurry.
+                </p>
+            )}
+
             {imageUrls.length >= maxFiles && (
                 <p className="text-xs text-amber-400">Maximum {maxFiles} images reached</p>
             )}

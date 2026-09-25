@@ -41,6 +41,18 @@ describe('MediaUploader', () => {
     });
   });
 
+  describe('Given photo guidance for the storefront', () => {
+    it('When images exist / Then shows the recommended size and shape', () => {
+      render(<MediaUploader imageUrls={['http://example.com/a.jpg']} onImagesChange={vi.fn()} />);
+      expect(screen.getByText(/square photos \(1:1\), at least 1200×1200px/i)).toBeInTheDocument();
+    });
+
+    it('When there are no images yet / Then the guidance is not shown', () => {
+      render(<MediaUploader imageUrls={[]} onImagesChange={vi.fn()} />);
+      expect(screen.queryByText(/square photos \(1:1\)/i)).not.toBeInTheDocument();
+    });
+  });
+
   describe('Given existing images', () => {
     it('When imageUrls provided / Then shows thumbnails', () => {
       render(<MediaUploader imageUrls={['http://example.com/a.jpg', 'http://example.com/b.jpg']} onImagesChange={vi.fn()} />);

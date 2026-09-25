@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { X, Loader2, AlertCircle } from 'lucide-react';
+import { assessProductImage, type ProductImageAssessment } from '../../utils/imageRatio';
 
 interface ImageThumbnailProps {
     url: string;
@@ -9,6 +10,10 @@ interface ImageThumbnailProps {
 }
 
 const ImageThumbnail: React.FC<ImageThumbnailProps> = ({ url, isLoading, error, onRemove }) => {
+    // Measured from the loaded image so merchants see size/shape for new and
+    // previously saved photos alike. SVGs can report 0×0 — no badge then.
+    const [assessment, setAssessment] = useState<ProductImageAssessment | null>(null);
+
     return (
         <div className="relative group w-24 h-24 rounded-lg overflow-hidden border border-slate-700 bg-slate-800">
             {isLoading ? (
@@ -24,9 +29,26 @@ const ImageThumbnail: React.FC<ImageThumbnailProps> = ({ url, isLoading, error, 
                 <img
                     src={url}
                     alt="Uploaded"
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain"
+                    onLoad={e => {
+                        const { naturalWidth: w, naturalHeight: h, src } = e.currentTarget;
+                        // The onError fallback is an inline SVG — don't grade the placeholder.
+                        const isFallback = src.startsWith('data:');
+                        setAssessment(!isFallback && w > 0 && h > 0 ? assessProductImage(w, h) : null);
+                    }}
                     onError={e => { (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" fill="%23475569"><rect width="96" height="96"/><text x="48" y="54" text-anchor="middle" fill="%2394a3b8" font-size="12">Error</text></svg>'; }}
                 />
+            )}
+            {assessment && !isLoading && !error && (
+                <div
+                    data-testid="image-size-badge"
+                    title={assessment.ok ? 'Good fit for store product cards' : assessment.issues.join('\n')}
+                    className={`absolute bottom-0 inset-x-0 px-1 py-0.5 text-[9px] leading-tight text-center truncate ${
+                        assessment.ok ? 'bg-slate-900/80 text-slate-300' : 'bg-amber-500/90 text-slate-950 font-medium'
+                    }`}
+                >
+                    {assessment.ok ? '' : '⚠ '}{assessment.size} · {assessment.ratio}
+                </div>
             )}
             <button
                 type="button"
