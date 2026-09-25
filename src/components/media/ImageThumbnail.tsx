@@ -7,9 +7,11 @@ interface ImageThumbnailProps {
     isLoading?: boolean;
     error?: string;
     onRemove: () => void;
+    /** Natural size of the loaded photo (not reported for the error placeholder or 0×0 SVGs). */
+    onMeasured?: (url: string, width: number, height: number) => void;
 }
 
-const ImageThumbnail: React.FC<ImageThumbnailProps> = ({ url, isLoading, error, onRemove }) => {
+const ImageThumbnail: React.FC<ImageThumbnailProps> = ({ url, isLoading, error, onRemove, onMeasured }) => {
     // Measured from the loaded image so merchants see size/shape for new and
     // previously saved photos alike. SVGs can report 0×0 — no badge then.
     const [assessment, setAssessment] = useState<ProductImageAssessment | null>(null);
@@ -34,7 +36,9 @@ const ImageThumbnail: React.FC<ImageThumbnailProps> = ({ url, isLoading, error, 
                         const { naturalWidth: w, naturalHeight: h, src } = e.currentTarget;
                         // The onError fallback is an inline SVG — don't grade the placeholder.
                         const isFallback = src.startsWith('data:');
-                        setAssessment(!isFallback && w > 0 && h > 0 ? assessProductImage(w, h) : null);
+                        const measured = !isFallback && w > 0 && h > 0;
+                        setAssessment(measured ? assessProductImage(w, h) : null);
+                        if (measured && onMeasured) onMeasured(url, w, h);
                     }}
                     onError={e => { (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" fill="%23475569"><rect width="96" height="96"/><text x="48" y="54" text-anchor="middle" fill="%2394a3b8" font-size="12">Error</text></svg>'; }}
                 />

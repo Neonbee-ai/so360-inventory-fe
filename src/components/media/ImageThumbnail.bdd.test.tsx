@@ -125,4 +125,35 @@ describe('ImageThumbnail', () => {
       expect(screen.getByRole('img').className).toContain('object-contain');
     });
   });
+
+  describe('Given a parent that records photo dimensions (onMeasured)', () => {
+    const loadWith = (img: HTMLElement, width: number, height: number) => {
+      Object.defineProperty(img, 'naturalWidth', { configurable: true, value: width });
+      Object.defineProperty(img, 'naturalHeight', { configurable: true, value: height });
+      fireEvent.load(img);
+    };
+
+    it('When the photo loads / Then onMeasured receives the url and natural size', () => {
+      const onMeasured = vi.fn();
+      render(<ImageThumbnail url="http://cdn.example.com/a.jpg" onRemove={vi.fn()} onMeasured={onMeasured} />);
+      loadWith(screen.getByRole('img'), 1600, 1200);
+      expect(onMeasured).toHaveBeenCalledWith('http://cdn.example.com/a.jpg', 1600, 1200);
+    });
+
+    it('When the broken-image placeholder loads / Then onMeasured is not called', () => {
+      const onMeasured = vi.fn();
+      render(<ImageThumbnail url="http://broken.link/img.jpg" onRemove={vi.fn()} onMeasured={onMeasured} />);
+      const img = screen.getByRole('img') as HTMLImageElement;
+      img.src = 'data:image/svg+xml,<svg/>';
+      loadWith(img, 96, 96);
+      expect(onMeasured).not.toHaveBeenCalled();
+    });
+
+    it('When an SVG reports 0×0 / Then onMeasured is not called', () => {
+      const onMeasured = vi.fn();
+      render(<ImageThumbnail url="http://cdn.example.com/logo.svg" onRemove={vi.fn()} onMeasured={onMeasured} />);
+      loadWith(screen.getByRole('img'), 0, 0);
+      expect(onMeasured).not.toHaveBeenCalled();
+    });
+  });
 });
