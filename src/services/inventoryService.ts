@@ -542,7 +542,7 @@ class InventoryService {
     }
 
     async createAttributeDefinition(dto: {
-        category_id?: string;
+        category_id?: string | null;
         attribute_key: string;
         attribute_label: string;
         attribute_type: 'text' | 'number' | 'currency' | 'select' | 'multi_select' | 'date' | 'boolean' | 'radio' | 'textarea' | 'file';
