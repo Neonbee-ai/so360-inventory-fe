@@ -425,3 +425,46 @@ describe('Given an existing attribute is edited', () => {
     expect((screen.getByPlaceholderText('No maximum') as HTMLInputElement).value).toBe('');
   });
 });
+
+describe('Given edge values in the bound fields', () => {
+  test('Given a Number attribute with a stored maximum / When edit opens / Then the maximum field shows it', async () => {
+    mockInventoryService.getAttributeDefinitions.mockResolvedValue([
+      {
+        id: 'def-num',
+        attribute_key: 'weight',
+        attribute_label: 'Weight',
+        attribute_type: 'number',
+        category_id: null,
+        is_required: false,
+        sort_order: 0,
+        unit: 'kg',
+        options: null,
+        min_value: null,
+        max_value: 500,
+      },
+    ]);
+    render(<ItemAttributeSettingsSection categories={mockCategories} canManage />);
+    await waitFor(() => screen.getByText('Weight'));
+    fireEvent.click(screen.getAllByTitle('Edit')[0]);
+
+    expect((screen.getByPlaceholderText('No minimum') as HTMLInputElement).value).toBe('');
+    expect((screen.getByPlaceholderText('No maximum') as HTMLInputElement).value).toBe('500');
+  });
+
+  test('Given a bound too large to be a real number (1e999) / When saved / Then it is sent as no bound rather than Infinity', async () => {
+    mockInventoryService.getAttributeDefinitions.mockResolvedValue([]);
+    mockInventoryService.createAttributeDefinition.mockResolvedValue({ id: 'def-new' });
+    render(<ItemAttributeSettingsSection categories={mockCategories} canManage />);
+    await waitFor(() => screen.getByText(/add attribute/i));
+    fireEvent.click(screen.getByText(/add attribute/i));
+    fireEvent.change(screen.getByPlaceholderText(/e\.g\. Material/), { target: { value: 'Load' } });
+    fireEvent.change(screen.getByPlaceholderText('e.g. material'), { target: { value: 'load' } });
+    fireEvent.change(screen.getByDisplayValue('Text'), { target: { value: 'number' } });
+    fireEvent.change(screen.getByPlaceholderText('No maximum'), { target: { value: '1e999' } });
+    fireEvent.click(screen.getByText('Save'));
+
+    await waitFor(() => expect(mockInventoryService.createAttributeDefinition).toHaveBeenCalledWith(
+      expect.objectContaining({ max_value: null }),
+    ));
+  });
+});

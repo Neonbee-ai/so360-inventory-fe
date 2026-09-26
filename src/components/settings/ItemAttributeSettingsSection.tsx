@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Plus, Pencil, Trash2, X, Check, Info } from 'lucide-react';
 import { inventoryService } from '../../services/inventoryService';
 import { ItemAttributeDefinition, ItemCategory } from '../../types/inventory';
+import { toBound } from '../../utils/attributeBounds';
 
 interface Props {
     categories: ItemCategory[];
@@ -58,13 +59,6 @@ const emptyForm = (): FormState => ({
     max_value: '',
 });
 
-/** '' → null (no bound); otherwise the parsed number. */
-const toBound = (raw: string): number | null => {
-    const trimmed = raw.trim();
-    if (trimmed === '') return null;
-    const n = Number(trimmed);
-    return Number.isFinite(n) ? n : null;
-};
 
 const inputClass = 'w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all placeholder:text-slate-600';
 const labelClass = 'block text-xs font-medium text-slate-400 mb-1';
