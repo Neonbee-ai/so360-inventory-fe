@@ -311,3 +311,117 @@ describe('Given ItemAttributeSettingsSection', () => {
     });
   });
 });
+
+// ── Type-aware bounds, category reset, friendly errors (Pulse c4e63e84) ───────
+describe('Given the attribute form sends only what each type supports', () => {
+  const openCreate = async () => {
+    mockInventoryService.getAttributeDefinitions.mockResolvedValue([]);
+    render(<ItemAttributeSettingsSection categories={mockCategories} canManage />);
+    await waitFor(() => screen.getByText(/add attribute/i));
+    fireEvent.click(screen.getByText(/add attribute/i));
+    fireEvent.change(screen.getByPlaceholderText(/e\.g\. Material/), { target: { value: 'Seat Height' } });
+    fireEvent.change(screen.getByPlaceholderText('e.g. material'), { target: { value: 'seat_height' } });
+  };
+
+  test('Given a Text attribute / When saved / Then no min_value or max_value is sent and no bound fields are shown', async () => {
+    mockInventoryService.createAttributeDefinition.mockResolvedValue({ id: 'def-new' });
+    await openCreate();
+
+    expect(screen.queryByPlaceholderText('No minimum')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByText('Save'));
+
+    await waitFor(() => expect(mockInventoryService.createAttributeDefinition).toHaveBeenCalled());
+    const dto = mockInventoryService.createAttributeDefinition.mock.calls[0][0];
+    expect(dto).not.toHaveProperty('min_value');
+    expect(dto).not.toHaveProperty('max_value');
+  });
+
+  test('Given a Number attribute with bounds / When saved / Then the bounds are sent', async () => {
+    mockInventoryService.createAttributeDefinition.mockResolvedValue({ id: 'def-new' });
+    await openCreate();
+    fireEvent.change(screen.getByDisplayValue('Text'), { target: { value: 'number' } });
+    fireEvent.change(screen.getByPlaceholderText('No minimum'), { target: { value: '0' } });
+    fireEvent.change(screen.getByPlaceholderText('No maximum'), { target: { value: '120' } });
+    fireEvent.click(screen.getByText('Save'));
+
+    await waitFor(() => expect(mockInventoryService.createAttributeDefinition).toHaveBeenCalledWith(
+      expect.objectContaining({ attribute_type: 'number', min_value: 0, max_value: 120 }),
+    ));
+  });
+
+  test('Given a Number attribute with blank bounds / When saved / Then the bounds are sent as null (no limit)', async () => {
+    mockInventoryService.createAttributeDefinition.mockResolvedValue({ id: 'def-new' });
+    await openCreate();
+    fireEvent.change(screen.getByDisplayValue('Text'), { target: { value: 'currency' } });
+    fireEvent.click(screen.getByText('Save'));
+
+    await waitFor(() => expect(mockInventoryService.createAttributeDefinition).toHaveBeenCalledWith(
+      expect.objectContaining({ min_value: null, max_value: null }),
+    ));
+  });
+
+  test('Given min greater than max / When saved / Then it is blocked with a message', async () => {
+    await openCreate();
+    fireEvent.change(screen.getByDisplayValue('Text'), { target: { value: 'number' } });
+    fireEvent.change(screen.getByPlaceholderText('No minimum'), { target: { value: '50' } });
+    fireEvent.change(screen.getByPlaceholderText('No maximum'), { target: { value: '10' } });
+    fireEvent.click(screen.getByText('Save'));
+
+    await waitFor(() => expect(screen.getByText(/minimum value cannot be greater than the maximum/i)).toBeInTheDocument());
+    expect(mockInventoryService.createAttributeDefinition).not.toHaveBeenCalled();
+  });
+
+  test('Given the backend rejects a duplicate key / When saved / Then its plain message is shown', async () => {
+    mockInventoryService.createAttributeDefinition.mockRejectedValue(
+      new Error("An attribute with the key 'seat_height' already exists for this category."),
+    );
+    await openCreate();
+    fireEvent.click(screen.getByText('Save'));
+
+    await waitFor(() => expect(
+      screen.getByText("An attribute with the key 'seat_height' already exists for this category."),
+    ).toBeInTheDocument());
+  });
+});
+
+describe('Given an existing attribute is edited', () => {
+  test('Given a category-scoped attribute / When its category is set back to All items / Then null is sent so the change persists', async () => {
+    mockInventoryService.getAttributeDefinitions.mockResolvedValue(mockDefs);
+    mockInventoryService.updateAttributeDefinition.mockResolvedValue({});
+    render(<ItemAttributeSettingsSection categories={mockCategories} canManage />);
+    await waitFor(() => screen.getByText('Material'));
+    fireEvent.click(screen.getAllByTitle('Edit')[0]);
+
+    fireEvent.change(screen.getByDisplayValue('Electronics'), { target: { value: '' } });
+    fireEvent.click(screen.getByText('Save'));
+
+    await waitFor(() => expect(mockInventoryService.updateAttributeDefinition).toHaveBeenCalledWith(
+      'def-1',
+      expect.objectContaining({ category_id: null }),
+    ));
+  });
+
+  test('Given a Number attribute whose minimum is 0 / When edit opens / Then the minimum field shows 0, not blank', async () => {
+    mockInventoryService.getAttributeDefinitions.mockResolvedValue([
+      {
+        id: 'def-num',
+        attribute_key: 'weight',
+        attribute_label: 'Weight',
+        attribute_type: 'number',
+        category_id: null,
+        is_required: false,
+        sort_order: 0,
+        unit: 'kg',
+        options: null,
+        min_value: 0,
+        max_value: null,
+      },
+    ]);
+    render(<ItemAttributeSettingsSection categories={mockCategories} canManage />);
+    await waitFor(() => screen.getByText('Weight'));
+    fireEvent.click(screen.getAllByTitle('Edit')[0]);
+
+    expect((screen.getByPlaceholderText('No minimum') as HTMLInputElement).value).toBe('0');
+    expect((screen.getByPlaceholderText('No maximum') as HTMLInputElement).value).toBe('');
+  });
+});
