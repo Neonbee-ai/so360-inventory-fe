@@ -542,7 +542,7 @@ class InventoryService {
     }
 
     async createAttributeDefinition(dto: {
-        category_id?: string;
+        category_id?: string | null;
         attribute_key: string;
         attribute_label: string;
         attribute_type: 'text' | 'number' | 'currency' | 'select' | 'multi_select' | 'date' | 'boolean' | 'radio' | 'textarea' | 'file';
@@ -551,8 +551,8 @@ class InventoryService {
         description?: string;
         is_required?: boolean;
         sort_order?: number;
-        min_value?: number;
-        max_value?: number;
+        min_value?: number | null;
+        max_value?: number | null;
     }) {
         return this.request(`/settings/${this.orgId}/attribute-definitions`, {
             method: 'POST',
@@ -561,7 +561,7 @@ class InventoryService {
     }
 
     async updateAttributeDefinition(id: string, dto: Partial<{
-        category_id?: string;
+        category_id?: string | null;
         attribute_label: string;
         attribute_type: 'text' | 'number' | 'currency' | 'select' | 'multi_select' | 'date' | 'boolean' | 'radio' | 'textarea' | 'file';
         options?: { value: string; label: string }[];
@@ -569,8 +569,8 @@ class InventoryService {
         description?: string;
         is_required?: boolean;
         sort_order?: number;
-        min_value?: number;
-        max_value?: number;
+        min_value?: number | null;
+        max_value?: number | null;
     }>) {
         return this.request(`/settings/${this.orgId}/attribute-definitions/${id}`, {
             method: 'PATCH',

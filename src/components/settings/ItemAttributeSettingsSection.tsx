@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Plus, Pencil, Trash2, X, Check, Info } from 'lucide-react';
 import { inventoryService } from '../../services/inventoryService';
 import { ItemAttributeDefinition, ItemCategory } from '../../types/inventory';
+import { toBound } from '../../utils/attributeBounds';
 
 interface Props {
     categories: ItemCategory[];
@@ -24,6 +25,10 @@ const ATTRIBUTE_TYPES = [
 // Field types that require a configurable list of options
 const OPTION_TYPES = ['select', 'multi_select', 'radio'];
 
+// Field types that take an optional min/max bound. Only these send
+// min_value/max_value; every other type leaves them out of the request.
+const NUMERIC_TYPES = ['number', 'currency'];
+
 type AttributeType = 'text' | 'number' | 'currency' | 'select' | 'multi_select' | 'date' | 'boolean' | 'radio' | 'textarea' | 'file';
 
 interface FormState {
@@ -36,6 +41,8 @@ interface FormState {
     description: string;
     is_required: boolean;
     sort_order: string;
+    min_value: string;
+    max_value: string;
 }
 
 const emptyForm = (): FormState => ({
@@ -48,7 +55,10 @@ const emptyForm = (): FormState => ({
     description: '',
     is_required: false,
     sort_order: '0',
+    min_value: '',
+    max_value: '',
 });
+
 
 const inputClass = 'w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all placeholder:text-slate-600';
 const labelClass = 'block text-xs font-medium text-slate-400 mb-1';
@@ -96,6 +106,8 @@ const ItemAttributeSettingsSection: React.FC<Props> = ({ categories, canManage }
             description: def.description || '',
             is_required: def.is_required,
             sort_order: String(def.sort_order),
+            min_value: def.min_value === null || def.min_value === undefined ? '' : String(def.min_value),
+            max_value: def.max_value === null || def.max_value === undefined ? '' : String(def.max_value),
         });
         setShowForm(true);
         setError(null);
@@ -134,11 +146,21 @@ const ItemAttributeSettingsSection: React.FC<Props> = ({ categories, canManage }
             setError('Attribute key must contain only lowercase letters, numbers, and underscores (e.g. material, shelf_life)');
             return;
         }
+        const isNumeric = NUMERIC_TYPES.includes(form.attribute_type);
+        const minValue = toBound(form.min_value);
+        const maxValue = toBound(form.max_value);
+        if (isNumeric && minValue !== null && maxValue !== null && minValue > maxValue) {
+            setError('Minimum value cannot be greater than the maximum value.');
+            return;
+        }
         setSaving(true);
         setError(null);
         try {
             const dto = {
-                category_id: form.category_id || undefined,
+                // On edit, a blank category means "All items" and must be sent
+                // as null — undefined was ignored, so an attribute could never
+                // be moved back from a category to all items.
+                category_id: form.category_id || (editingId ? null : undefined),
                 attribute_key: form.attribute_key.trim(),
                 attribute_label: form.attribute_label.trim(),
                 attribute_type: form.attribute_type,
@@ -147,6 +169,7 @@ const ItemAttributeSettingsSection: React.FC<Props> = ({ categories, canManage }
                 description: form.description.trim(),
                 is_required: form.is_required,
                 sort_order: parseInt(form.sort_order) || 0,
+                ...(isNumeric ? { min_value: minValue, max_value: maxValue } : {}),
             };
             if (editingId) {
                 await inventoryService.updateAttributeDefinition(editingId, dto);
@@ -354,6 +377,30 @@ const ItemAttributeSettingsSection: React.FC<Props> = ({ categories, canManage }
                                         placeholder="e.g. cm, kg, days"
                                     />
                                 </div>
+                                {NUMERIC_TYPES.includes(form.attribute_type) && (
+                                    <>
+                                        <div>
+                                            <label className={labelClass}>Minimum value (optional)</label>
+                                            <input
+                                                type="number"
+                                                value={form.min_value}
+                                                onChange={e => setForm(f => ({ ...f, min_value: e.target.value }))}
+                                                className={inputClass}
+                                                placeholder="No minimum"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className={labelClass}>Maximum value (optional)</label>
+                                            <input
+                                                type="number"
+                                                value={form.max_value}
+                                                onChange={e => setForm(f => ({ ...f, max_value: e.target.value }))}
+                                                className={inputClass}
+                                                placeholder="No maximum"
+                                            />
+                                        </div>
+                                    </>
+                                )}
                                 <div>
                                     <label className={labelClass}>Sort Order</label>
                                     <input
