@@ -18,6 +18,7 @@ import TabNavigation from './item-create/components/TabNavigation';
 import FormSection from './item-create/components/FormSection';
 import BasicInfoTab from './item-create/tabs/BasicInfoTab';
 import MediaTab from './item-create/tabs/MediaTab';
+import { imageMetaForUrls, type ImageMetaEntry } from '../utils/imageMeta';
 import PricingTab, { TaxCodeOption } from './item-create/tabs/PricingTab';
 import CategoryTab from './item-create/tabs/CategoryTab';
 import StockTrackingTab from './item-create/tabs/StockTrackingTab';
@@ -46,6 +47,7 @@ interface EditFormData {
     barcode: string;
     description: string;
     image_urls: string[];
+    image_meta: ImageMetaEntry[];
     price: string;
     cost: string;
     category_id: string;
@@ -240,6 +242,9 @@ const ItemDetailPage = () => {
             if (editForm.barcode.trim()) dto.barcode = editForm.barcode.trim(); else dto.barcode = null;
             if (editForm.description.trim()) dto.description = editForm.description.trim(); else dto.description = null;
             dto.image_urls = editForm.image_urls.length > 0 ? editForm.image_urls : [];
+            // Sizes for the photos still on the item — new uploads plus any saved
+            // photo whose thumbnail was measured while editing.
+            dto.image_meta = imageMetaForUrls(editForm.image_meta, editForm.image_urls);
             if (editForm.price) dto.price = parseFloat(editForm.price); else dto.price = null;
             if (editForm.cost) dto.cost = parseFloat(editForm.cost); else dto.cost = null;
             if (editForm.category_id) dto.category_id = editForm.category_id; else dto.category_id = null;
@@ -312,7 +317,7 @@ const ItemDetailPage = () => {
                     />
                 );
             case 'media':
-                return <MediaTab image_urls={editForm.image_urls} updateField={updateField} />;
+                return <MediaTab image_urls={editForm.image_urls} image_meta={editForm.image_meta} updateField={updateField} />;
             case 'pricing':
                 return <PricingTab price={editForm.price} cost={editForm.cost} tax_class={editForm.tax_class} tax_code_id={editForm.tax_code_id} hsn_code={editForm.hsn_code} updateField={updateField} currencySymbol={currencySymbol} taxCodes={taxCodes} isTaxCodesLoading={isTaxCodesLoading} taxCodesError={taxCodesError} />;
             case 'category':
@@ -1138,6 +1143,7 @@ function initEditForm(item: Item): EditFormData {
         barcode: item.barcode || '',
         description: item.description || '',
         image_urls: item.image_urls || [],
+        image_meta: Array.isArray(item.image_meta) ? item.image_meta : [],
         price: item.price?.toString() || '',
         cost: item.cost?.toString() || '',
         category_id: item.category_id || '',

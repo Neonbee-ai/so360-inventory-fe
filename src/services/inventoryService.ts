@@ -143,10 +143,13 @@ class InventoryService {
         sortOrder?: 'asc' | 'desc';
         page?: number;
         limit?: number;
+        /** Only items whose photos are small or far from square (server-derived flag). */
+        imageNeedsAttention?: boolean;
     }) {
         const query = new URLSearchParams();
         if (params?.search) query.append('search', params.search);
         if (params?.categoryId) query.append('category_id', params.categoryId);
+        if (params?.imageNeedsAttention) query.append('image_needs_attention', 'true');
         if (params?.sortBy) query.append('sort_by', params.sortBy);
         if (params?.sortOrder) query.append('sort_order', params.sortOrder);
         if (params?.page) query.append('page', params.page.toString());
@@ -521,7 +524,7 @@ class InventoryService {
         });
     }
 
-    async updateCategory(id: string, data: { name?: string; description?: string; parent_id?: string | null; icon_url?: string | null; image_url?: string | null; color?: string | null; sort_order?: number }) {
+    async updateCategory(id: string, data: { name?: string; description?: string; parent_id?: string | null; icon_url?: string | null; image_url?: string | null; banner_url?: string | null; color?: string | null; sort_order?: number }) {
         return this.request(`/settings/${this.orgId}/categories/${id}`, {
             method: 'PATCH',
             body: JSON.stringify(data),

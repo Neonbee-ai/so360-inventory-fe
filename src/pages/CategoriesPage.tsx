@@ -10,10 +10,22 @@ import CategoryChannelsPanel from '../components/categories/CategoryChannelsPane
 import { buildCategoryTree } from '../utils/categoryTree';
 import { ItemCategory } from '../types/inventory';
 import { renderCategoryIcon, isPresetUrl } from '../constants/categoryIcons';
+import {
+    assessImageForSlot,
+    CATEGORY_BANNER_SLOT,
+    CATEGORY_IMAGE_SLOT,
+    type ImageSlotSpec,
+    type ProductImageAssessment,
+} from '../utils/imageRatio';
 import { useActivity, useShellBridge } from '@so360/shell-context';
 import { FeatureGate } from '@so360/design-system';
 
 const PRESET_COLORS = ['#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#EC4899', '#06B6D4', '#64748B'];
+
+/** Core media accepts images up to 10 MB. */
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
+const IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/svg+xml', 'image/webp'];
+const IMAGE_ACCEPT = IMAGE_TYPES.join(',');
 
 const ImageUploadZone: React.FC<{
     label: string;
@@ -22,15 +34,20 @@ const ImageUploadZone: React.FC<{
     aspectClass?: string;
     onUpload: (url: string) => void;
     onRemove: () => void;
-}> = ({ label, subLabel, currentUrl, aspectClass = 'aspect-[3/1]', onUpload, onRemove }) => {
+    /** Target shape/size; when set, the preview shows a size badge graded against it. */
+    slot?: ImageSlotSpec;
+}> = ({ label, subLabel, currentUrl, aspectClass = 'aspect-[3/1]', onUpload, onRemove, slot }) => {
     const fileRef = useRef<HTMLInputElement>(null);
     const [uploading, setUploading] = useState(false);
     const [uploadError, setUploadError] = useState<string | null>(null);
     const [dragOver, setDragOver] = useState(false);
+    const [assessment, setAssessment] = useState<ProductImageAssessment | null>(null);
+
+    useEffect(() => { setAssessment(null); }, [currentUrl]);
 
     const handleFile = async (file: File) => {
-        if (file.size > 2 * 1024 * 1024) { setUploadError('Max file size is 2MB'); return; }
-        if (!['image/png', 'image/jpeg', 'image/svg+xml'].includes(file.type)) { setUploadError('PNG, JPG or SVG only'); return; }
+        if (file.size > MAX_IMAGE_BYTES) { setUploadError('Max file size is 10 MB'); return; }
+        if (!IMAGE_TYPES.includes(file.type)) { setUploadError('PNG, JPG, SVG or WebP only'); return; }
         setUploadError(null);
         setUploading(true);
         try {
@@ -55,7 +72,26 @@ const ImageUploadZone: React.FC<{
             <label className="text-xs font-medium text-slate-400 mb-1 block">{label}</label>
             {currentUrl ? (
                 <div className={`relative ${aspectClass} rounded-xl overflow-hidden bg-slate-800 border border-slate-700`}>
-                    <img src={currentUrl} alt="" className="w-full h-full object-cover" />
+                    <img
+                        src={currentUrl}
+                        alt=""
+                        className="w-full h-full object-cover"
+                        onLoad={e => {
+                            const { naturalWidth: w, naturalHeight: h } = e.currentTarget;
+                            setAssessment(slot && w > 0 && h > 0 ? assessImageForSlot(w, h, slot) : null);
+                        }}
+                    />
+                    {assessment && (
+                        <div
+                            data-testid="slot-size-badge"
+                            title={assessment.ok ? 'Good fit for this slot' : assessment.issues.join('\n')}
+                            className={`absolute bottom-0 inset-x-0 px-2 py-0.5 text-[10px] leading-tight text-center truncate ${
+                                assessment.ok ? 'bg-slate-900/80 text-slate-300' : 'bg-amber-500/90 text-slate-950 font-medium'
+                            }`}
+                        >
+                            {assessment.ok ? '' : '⚠ '}{assessment.size} · {assessment.ratio}
+                        </div>
+                    )}
                     <div className="absolute inset-0 bg-black/0 hover:bg-black/40 transition-colors flex items-center justify-center gap-2 opacity-0 hover:opacity-100">
                         <button
                             type="button"
@@ -72,7 +108,7 @@ const ImageUploadZone: React.FC<{
                             <X size={12} /> Remove
                         </button>
                     </div>
-                    <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/svg+xml" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ''; }} />
+                    <input ref={fileRef} type="file" accept={IMAGE_ACCEPT} className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ''; }} />
                 </div>
             ) : (
                 <div
@@ -90,7 +126,7 @@ const ImageUploadZone: React.FC<{
                             <span className="text-xs text-slate-500 text-center px-4">{subLabel || 'Click or drag to upload'}</span>
                         </>
                     )}
-                    <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/svg+xml" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ''; }} />
+                    <input ref={fileRef} type="file" accept={IMAGE_ACCEPT} className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ''; }} />
                 </div>
             )}
             {uploadError && (
@@ -220,6 +256,7 @@ const CategoriesPage = () => {
     const [editColor, setEditColor] = useState('');
     const [editIconUrl, setEditIconUrl] = useState<string | null>(null);
     const [editImageUrl, setEditImageUrl] = useState<string | null>(null);
+    const [editBannerUrl, setEditBannerUrl] = useState<string | null>(null);
     const [editSortOrder, setEditSortOrder] = useState(0);
     const [isSaving, setIsSaving] = useState(false);
     const [saveError, setSaveError] = useState<string | null>(null);
@@ -254,6 +291,7 @@ const CategoriesPage = () => {
         setEditColor(selectedCategory.color || '');
         setEditIconUrl(selectedCategory.icon_url || null);
         setEditImageUrl(selectedCategory.image_url || null);
+        setEditBannerUrl(selectedCategory.banner_url || null);
         setEditSortOrder(selectedCategory.sort_order ?? 0);
         setSaveError(null);
         setSaveSuccess(false);
@@ -307,6 +345,11 @@ const CategoriesPage = () => {
                 color: editColor || null,
                 icon_url: editIconUrl,
                 image_url: editImageUrl,
+                // Only when changed — keeps plain edits off the banner_url column,
+                // which may not exist until migration 052 is applied.
+                ...((editBannerUrl ?? null) !== (selectedCategory?.banner_url ?? null)
+                    ? { banner_url: editBannerUrl }
+                    : {}),
                 sort_order: editSortOrder,
             });
             recordActivity({ eventType: 'inventory.category.updated', eventCategory: 'data', description: `Updated category "${editName.trim()}"`, resourceType: 'category', resourceId: selectedId }).catch(() => {});
@@ -379,7 +422,7 @@ const CategoriesPage = () => {
                         </div>
                     </div>
                     <p className="text-[10px] text-slate-600 mb-3">
-                        {categories.filter(c => c.icon_url || c.image_url).length} of {categories.length} have images
+                        {categories.filter(c => c.icon_url || c.image_url || c.banner_url).length} of {categories.length} have images
                     </p>
                     <div className="overflow-y-auto max-h-[600px]">
                         {viewMode === 'tree' ? (
@@ -432,15 +475,27 @@ const CategoriesPage = () => {
                                 </div>
                             </div>
 
-                            {/* Banner image upload */}
+                            {/* Banner (category page hero) + square image (category tiles) */}
                             <ImageUploadZone
-                                label="Category Banner Image"
-                                subLabel="PNG, JPG, SVG · max 2MB · 1200×400px recommended"
-                                currentUrl={editImageUrl}
-                                aspectClass="aspect-[3/1]"
-                                onUpload={url => setEditImageUrl(url)}
-                                onRemove={() => setEditImageUrl(null)}
+                                label="Category banner — 16:5, 2400×750"
+                                subLabel="Shown at the top of the category page · PNG, JPG, SVG, WebP · up to 10 MB"
+                                currentUrl={editBannerUrl}
+                                aspectClass="aspect-[16/5]"
+                                slot={CATEGORY_BANNER_SLOT}
+                                onUpload={url => setEditBannerUrl(url)}
+                                onRemove={() => setEditBannerUrl(null)}
                             />
+                            <div className="w-48">
+                                <ImageUploadZone
+                                    label="Category image — square 1:1, 1600×1600"
+                                    subLabel="Shown on category tiles · up to 10 MB"
+                                    currentUrl={editImageUrl}
+                                    aspectClass="aspect-square"
+                                    slot={CATEGORY_IMAGE_SLOT}
+                                    onUpload={url => setEditImageUrl(url)}
+                                    onRemove={() => setEditImageUrl(null)}
+                                />
+                            </div>
 
                             {/* Icon upload + Name row */}
                             <div className="flex items-start gap-4">
@@ -467,7 +522,7 @@ const CategoriesPage = () => {
                                         <label className="text-xs font-medium text-slate-400 mb-1 block">Icon</label>
                                         <ImageUploadZone
                                             label=""
-                                            subLabel="Square · max 2MB"
+                                            subLabel="Square · up to 10 MB"
                                             currentUrl={editIconUrl}
                                             aspectClass="w-20 h-20"
                                             onUpload={url => setEditIconUrl(url)}
