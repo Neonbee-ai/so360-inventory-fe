@@ -54,6 +54,19 @@ vi.mock('../hooks/useAuth', () => ({
 import StockMovementRegisterPage from './StockMovementRegisterPage';
 import { inventoryService } from '../services/inventoryService';
 
+/**
+ * The register route returns a paginated envelope, and inventoryService.getMovements
+ * normalises to it — the mocked service must return the same shape.
+ */
+const movementPage = (rows: any[]) => ({
+    data: rows,
+    total: rows.length,
+    limit: rows.length || 100,
+    offset: 0,
+    has_more: false,
+});
+
+
 const inv = inventoryService as any;
 
 const WH = 'wh-1';
@@ -85,7 +98,7 @@ const renderPage = () =>
 beforeEach(() => {
     vi.resetAllMocks();
     mockCanSMR.mockImplementation((_action: string) => true);
-    inv.getMovements.mockResolvedValue([]);
+    inv.getMovements.mockResolvedValue(movementPage([]));
     inv.getLocations.mockResolvedValue([{ id: WH, name: 'Main WH' }]);
     inv.getOrgDefaultLogic.mockResolvedValue({
         allow_negative_stock: false,
@@ -104,7 +117,7 @@ beforeEach(() => {
 describe('Stock Movement Register — list', () => {
     describe('Given movements exist', () => {
         it('When the page renders / Then the reference number is shown', async () => {
-            inv.getMovements.mockResolvedValue([movement()]);
+            inv.getMovements.mockResolvedValue(movementPage([movement()]));
             renderPage();
             await waitFor(() =>
                 expect(screen.getByText('STK-202608-00001')).toBeInTheDocument(),
@@ -112,27 +125,27 @@ describe('Stock Movement Register — list', () => {
         });
 
         it('When the page renders / Then the running balance transition is shown', async () => {
-            inv.getMovements.mockResolvedValue([movement()]);
+            inv.getMovements.mockResolvedValue(movementPage([movement()]));
             renderPage();
             await waitFor(() => expect(screen.getByText('110')).toBeInTheDocument());
         });
 
         it('When a movement predates the register / Then balance shows a placeholder instead of a number', async () => {
-            inv.getMovements.mockResolvedValue([
+            inv.getMovements.mockResolvedValue(movementPage([
                 movement({ reference_number: null, balance_before: null, balance_after: null }),
-            ]);
+            ]));
             renderPage();
             await waitFor(() => expect(screen.getAllByText('—').length).toBeGreaterThan(0));
         });
 
         it('When a movement is allocated to a project and work order / Then both are listed', async () => {
-            inv.getMovements.mockResolvedValue([
+            inv.getMovements.mockResolvedValue(movementPage([
                 movement({
                     project_name_snapshot: 'Tower A',
                     work_order_number_snapshot: 'MO-0042',
                     source_type: 'production',
                 }),
-            ]);
+            ]));
             renderPage();
             await waitFor(() => {
                 expect(screen.getByText(/Tower A/)).toBeInTheDocument();

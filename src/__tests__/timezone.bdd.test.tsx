@@ -97,6 +97,19 @@ import ItemDetailPage from '../pages/ItemDetailPage';
 import { inventoryService } from '../services/inventoryService';
 import { procurementService } from '../services/procurementService';
 
+/**
+ * The register route returns a paginated envelope, and inventoryService.getMovements
+ * normalises to it — the mocked service must return the same shape.
+ */
+const movementPage = (rows: any[]) => ({
+    data: rows,
+    total: rows.length,
+    limit: rows.length || 100,
+    offset: 0,
+    has_more: false,
+});
+
+
 const inv = inventoryService as any;
 const proc = procurementService as any;
 
@@ -214,7 +227,7 @@ describe('StockMovementRegisterPage — timezone date rendering', () => {
       });
       inv.searchProjects.mockResolvedValue([]);
       inv.searchWorkOrders.mockResolvedValue([]);
-      inv.getMovements.mockResolvedValue([
+      inv.getMovements.mockResolvedValue(movementPage([
         {
           id: 'mv1',
           quantity: -5,
@@ -224,7 +237,7 @@ describe('StockMovementRegisterPage — timezone date rendering', () => {
           items: { name: 'Transferred Item' },
           warehouses: { name: 'Source WH' },
         },
-      ]);
+      ]));
     });
 
     it('When the page renders / Then the movement date shows Jun 1, 2025', async () => {
@@ -251,7 +264,7 @@ describe('StockMovementRegisterPage — timezone date rendering', () => {
       });
       inv.searchProjects.mockResolvedValue([]);
       inv.searchWorkOrders.mockResolvedValue([]);
-      inv.getMovements.mockResolvedValue([
+      inv.getMovements.mockResolvedValue(movementPage([
         {
           id: 'mv2',
           quantity: -20,
@@ -261,7 +274,7 @@ describe('StockMovementRegisterPage — timezone date rendering', () => {
           items: { name: 'Holiday Stock' },
           warehouses: { name: 'WH-North' },
         },
-      ]);
+      ]));
     });
 
     it('When the page renders / Then the movement date shows Dec 25, 2025', async () => {
@@ -281,7 +294,7 @@ describe('StockMovementRegisterPage — timezone date rendering', () => {
       });
       inv.searchProjects.mockResolvedValue([]);
       inv.searchWorkOrders.mockResolvedValue([]);
-      inv.getMovements.mockResolvedValue([]);
+      inv.getMovements.mockResolvedValue(movementPage([]));
     });
 
     it('When the page renders / Then empty state is shown', async () => {

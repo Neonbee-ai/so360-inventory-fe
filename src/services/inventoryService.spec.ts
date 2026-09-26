@@ -300,6 +300,40 @@ describe('inventoryService', () => {
     });
   });
 
+  describe('Given the stock-movement register listing', () => {
+    // The register route now returns a paginated envelope. Older deployments
+    // return a bare array, so both shapes must normalise to the same envelope.
+    it('When the API returns an envelope / Then it is passed through with its totals', async () => {
+      mockFetch.mockReturnValue(
+        jsonOk({ data: [{ id: 'm1' }], total: 420, limit: 100, offset: 0, has_more: true }),
+      );
+      const page = await inventoryService.getMovements();
+      expect(page).toEqual({
+        data: [{ id: 'm1' }],
+        total: 420,
+        limit: 100,
+        offset: 0,
+        has_more: true,
+      });
+    });
+
+    it('When the API returns a bare array / Then it is wrapped as a single complete page', async () => {
+      mockFetch.mockReturnValue(jsonOk([{ id: 'm1' }, { id: 'm2' }]));
+      const page = await inventoryService.getMovements();
+      expect(page.data).toHaveLength(2);
+      expect(page.total).toBe(2);
+      expect(page.has_more).toBe(false);
+    });
+
+    it('When limit and offset are given / Then they are forwarded as query params', async () => {
+      mockFetch.mockReturnValue(jsonOk({ data: [], total: 0, limit: 50, offset: 100, has_more: false }));
+      await inventoryService.getMovements({ limit: 50, offset: 100 });
+      const [url] = mockFetch.mock.calls[0];
+      expect(url).toContain('limit=50');
+      expect(url).toContain('offset=100');
+    });
+  });
+
   describe('Given searchProjects (Stock Out / Transfer "Project" dropdown)', () => {
     // The Projects backend controller is mounted at `/projects`, not `/v1/projects`
     // (confirmed: so360-projects-be has no global prefix/versioning). Calling
@@ -334,10 +368,18 @@ describe('inventoryService', () => {
       expect(result).toEqual([{ id: 'p1', name: 'Open Project', status: 'active' }]);
     });
 
-    it('When the Projects API request fails / Then returns an empty array rather than throwing', async () => {
+    // Reversal of the old behaviour: returning [] on failure made an unreachable
+    // Projects module look like an org with no projects, and the dropdown asserted
+    // "No active projects available" — a claim about the tenant's data that the
+    // service had no basis for. The caller now decides what to show.
+    it('When the Projects API request fails / Then it rejects instead of reporting an empty list', async () => {
       mockFetch.mockReturnValue(Promise.resolve({ ok: false, status: 404, json: async () => ({}) }));
-      const result = await inventoryService.searchProjects();
-      expect(result).toEqual([]);
+      await expect(inventoryService.searchProjects()).rejects.toBeDefined();
+    });
+
+    it('When the Manufacturing API request fails / Then searchWorkOrders rejects too', async () => {
+      mockFetch.mockReturnValue(Promise.resolve({ ok: false, status: 503, json: async () => ({}) }));
+      await expect(inventoryService.searchWorkOrders()).rejects.toBeDefined();
     });
   });
 
