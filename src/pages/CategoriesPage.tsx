@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Tag, Plus, Upload, X, Loader2, AlertCircle, ImageIcon, Save } from 'lucide-react';
+import { Tag, Plus, Upload, X, Loader2, AlertCircle, ImageIcon, Save, Building2, LayoutGrid, Sparkles } from 'lucide-react';
 import { inventoryService } from '../services/inventoryService';
 import { mediaService } from '../services/mediaService';
 import { useAuth } from '../hooks/useAuth';
@@ -8,7 +8,11 @@ import CategoryTreeView from '../components/categories/CategoryTreeView';
 import CategoryIconLibrary from '../components/categories/CategoryIconLibrary';
 import CategoryChannelsPanel from '../components/categories/CategoryChannelsPanel';
 import { buildCategoryTree } from '../utils/categoryTree';
-import { ItemCategory } from '../types/inventory';
+import { ItemCategory, CategoryMetadata } from '../types/inventory';
+import { usePropertyUnits } from '../hooks/usePropertyUnits';
+import ProjectDetailsSection from '../components/categories/ProjectDetailsSection';
+import GenerateUnitsDialog from '../components/categories/GenerateUnitsDialog';
+import AvailabilityMatrix from '../components/categories/AvailabilityMatrix';
 import { renderCategoryIcon, isPresetUrl } from '../constants/categoryIcons';
 import {
     assessImageForSlot,
@@ -263,6 +267,8 @@ const CategoriesPage = () => {
     const canCreate = (shell?.permissionsLoaded === true) && (shell?.hasPermission?.('items.create') ?? false) && (shell?.effectiveFlagsLoaded !== false) && createState === 'enabled';
     const deleteState = (shell as any)?.getFeatureState ? (shell as any).getFeatureState('action:inventory:items:delete') : 'enabled';
     const canDelete = (shell?.permissionsLoaded === true) && (shell?.hasPermission?.('items.delete') ?? false) && (shell?.effectiveFlagsLoaded !== false) && deleteState === 'enabled';
+    // Real-estate mode: categories become Projects (root) / Towers (child).
+    const { enabled: propertyUnits, labels } = usePropertyUnits();
 
     const [categories, setCategories] = useState<ItemCategory[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -282,6 +288,10 @@ const CategoriesPage = () => {
     const [isSaving, setIsSaving] = useState(false);
     const [saveError, setSaveError] = useState<string | null>(null);
     const [saveSuccess, setSaveSuccess] = useState(false);
+    const [editMetadata, setEditMetadata] = useState<CategoryMetadata>({});
+    const [showGenerate, setShowGenerate] = useState(false);
+    const [showAvailability, setShowAvailability] = useState(false);
+    const [availabilityKey, setAvailabilityKey] = useState(0);
 
     const fetchCategories = async () => {
         try {
@@ -314,6 +324,9 @@ const CategoriesPage = () => {
         setEditImageUrl(selectedCategory.image_url || null);
         setEditBannerUrl(selectedCategory.banner_url || null);
         setEditSortOrder(selectedCategory.sort_order ?? 0);
+        setEditMetadata({ ...(selectedCategory.metadata || {}) });
+        setShowGenerate(false);
+        setShowAvailability(false);
         setSaveError(null);
         setSaveSuccess(false);
     }, [selectedCategory?.id]);
@@ -372,6 +385,10 @@ const CategoriesPage = () => {
                     ? { banner_url: editBannerUrl }
                     : {}),
                 sort_order: editSortOrder,
+                // Project details live on the root category only, and only in real-estate mode.
+                ...(propertyUnits && !selectedCategory?.parent_id
+                    ? { metadata: { ...(selectedCategory?.metadata || {}), ...editMetadata } }
+                    : {}),
             });
             recordActivity({ eventType: 'inventory.category.updated', eventCategory: 'data', description: `Updated category "${editName.trim()}"`, resourceType: 'category', resourceId: selectedId }).catch(() => {});
             setSaveSuccess(true);
@@ -398,9 +415,14 @@ const CategoriesPage = () => {
             <header className="mb-6 flex items-center justify-between">
                 <div>
                     <h1 className="text-3xl font-bold text-slate-50 tracking-tight flex items-center gap-3">
-                        <Tag className="text-purple-400" /> Product Categories
+                        {propertyUnits ? <Building2 className="text-purple-400" /> : <Tag className="text-purple-400" />}
+                        {propertyUnits ? labels.categories : 'Product Categories'}
                     </h1>
-                    <p className="text-slate-400 mt-1 text-sm">Organize your products with a hierarchical category system</p>
+                    <p className="text-slate-400 mt-1 text-sm">
+                        {propertyUnits
+                            ? 'Projects, their towers and unit availability'
+                            : 'Organize your products with a hierarchical category system'}
+                    </p>
                 </div>
                 {canManage && (
                     <FeatureGate state={createState} loading={(shell?.effectiveFlagsLoaded === false)} onUpgradeClick={() => navigate('/org/billing')}>
@@ -412,7 +434,7 @@ const CategoriesPage = () => {
                         }}
                         className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                     >
-                        <Plus size={16} /> New Category
+                        <Plus size={16} /> {`New ${labels.category}`}
                     </button>
                     </FeatureGate>
                 )}
@@ -430,7 +452,7 @@ const CategoriesPage = () => {
                 {/* Left panel — tree / cards */}
                 <div className="w-1/3 min-w-[260px] bg-slate-900/50 border border-slate-800 rounded-2xl p-5">
                     <div className="flex items-center justify-between mb-1">
-                        <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Categories</h2>
+                        <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">{labels.categories}</h2>
                         <div className="flex items-center gap-1">
                             <button
                                 onClick={() => setViewMode('tree')}
@@ -474,13 +496,13 @@ const CategoriesPage = () => {
                             <div className="w-16 h-16 rounded-2xl bg-slate-800 flex items-center justify-center">
                                 <Tag size={28} className="text-slate-600" />
                             </div>
-                            <p className="text-slate-500 text-sm">Select a category from the tree<br />to view and edit its details</p>
+                            <p className="text-slate-500 text-sm">Select a {labels.category.toLowerCase()} from the tree<br />to view and edit its details</p>
                         </div>
                     ) : (
                         <div className="space-y-6">
                             <div className="flex items-center justify-between">
                                 <h2 className="text-lg font-bold text-slate-50">
-                                    {selectedCategory.parent_id ? 'Edit Subcategory' : 'Edit Category'}
+                                    {`Edit ${selectedCategory.parent_id ? labels.subcategory : labels.category}`}
                                 </h2>
                                 <div className="flex items-center gap-2">
                                     {saveSuccess && <span className="text-xs text-emerald-400">Saved!</span>}
@@ -495,6 +517,62 @@ const CategoriesPage = () => {
                                     </button>
                                 </div>
                             </div>
+
+                            {/* Real estate: project details, unit generation and availability */}
+                            {propertyUnits && (
+                                <div className="space-y-4" data-testid="property-units-panel">
+                                    {!selectedCategory.parent_id && (
+                                        <ProjectDetailsSection
+                                            value={editMetadata}
+                                            onChange={setEditMetadata}
+                                            disabled={!canManage}
+                                        />
+                                    )}
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowAvailability(v => !v)}
+                                            aria-pressed={showAvailability}
+                                            className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                                        >
+                                            <LayoutGrid size={14} /> {showAvailability ? 'Hide availability' : 'Availability'}
+                                        </button>
+                                        {selectedCategory.parent_id && canCreate && (
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowGenerate(true)}
+                                                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                                            >
+                                                <Sparkles size={14} /> Generate units
+                                            </button>
+                                        )}
+                                    </div>
+                                    {showAvailability && (
+                                        <AvailabilityMatrix
+                                            key={selectedCategory.id}
+                                            categoryId={selectedCategory.id}
+                                            refreshKey={availabilityKey}
+                                        />
+                                    )}
+                                    {selectedCategory.parent_id && (
+                                        <GenerateUnitsDialog
+                                            isOpen={showGenerate}
+                                            onClose={() => setShowGenerate(false)}
+                                            tower={{ id: selectedCategory.id, name: selectedCategory.name }}
+                                            onGenerated={result => {
+                                                setAvailabilityKey(k => k + 1);
+                                                recordActivity({
+                                                    eventType: 'inventory.category.units_generated',
+                                                    eventCategory: 'data',
+                                                    description: `Generated ${result.created} units in "${selectedCategory.name}"`,
+                                                    resourceType: 'category',
+                                                    resourceId: selectedCategory.id,
+                                                }).catch(() => {});
+                                            }}
+                                        />
+                                    )}
+                                </div>
+                            )}
 
                             {/* Banner (category page hero) + square image (category tiles) */}
                             <ImageUploadZone
