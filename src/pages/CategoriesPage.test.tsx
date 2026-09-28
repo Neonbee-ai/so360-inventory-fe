@@ -266,11 +266,34 @@ describe('CategoriesPage — category image and banner slots', () => {
   };
   const saveButton = () => screen.getByText('Save', { selector: 'button' });
 
-  it('Given a category is being edited / When the editor renders / Then it asks for a square 1600×1600 image and a 16:5 2400×750 banner', async () => {
+  it('Given a category is being edited / When the editor renders / Then each slot has a plain label and a spec chip (banner, image, icon)', async () => {
     await openEditor();
-    expect(screen.getByText('Category image — square 1:1, 1600×1600')).toBeInTheDocument();
-    expect(screen.getByText('Category banner — 16:5, 2400×750')).toBeInTheDocument();
+    expect(screen.getByText('Category image')).toBeInTheDocument();
+    expect(screen.getByText('Category banner')).toBeInTheDocument();
+    expect(screen.getByText('Icon')).toBeInTheDocument();
+    const chips = screen.getAllByTestId('image-spec-chip').map(c => c.textContent);
+    expect(chips).toEqual([
+      '16:5 · 2400×750 · ≤800 KB',
+      '1:1 · 1600×1600 · ≤600 KB',
+      '1:1 · 800×800 · ≤300 KB',
+    ]);
+    expect(screen.queryByText(/up to 10 MB/)).not.toBeInTheDocument();
     expect(screen.queryByText(/1200×400/)).not.toBeInTheDocument();
+  });
+
+  it('Given the banner chip / When its ⓘ is tapped / Then the explanation opens and says where it shows', async () => {
+    await openEditor();
+    fireEvent.click(screen.getAllByRole('button', { name: /about this image size/i })[0]);
+    expect(screen.getByRole('tooltip')).toHaveTextContent(/top of the category page/i);
+  });
+
+  it('Given a small banner file / When uploaded / Then the slot tells the merchant it went up as-is', async () => {
+    await openEditor();
+    const fileInputs = document.querySelectorAll('input[type="file"]');
+    fireEvent.change(fileInputs[0], {
+      target: { files: [new File(['x'], 'banner.png', { type: 'image/png' })] },
+    });
+    expect(await screen.findByTestId('image-fit-note')).toHaveTextContent('banner.png: 1 KB — uploaded as-is');
   });
 
   it('Given a banner is uploaded / When Save is clicked / Then banner_url is sent separately from image_url', async () => {
