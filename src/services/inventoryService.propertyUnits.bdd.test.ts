@@ -33,15 +33,34 @@ const dto = {
 describe('inventoryService property units', () => {
   describe('Given a tower id and a generate payload', () => {
     describe('When generateUnits is called', () => {
-      it('Then it POSTs the payload to the tower generate-units route and returns the counts', async () => {
+      it('Then it POSTs the backend contract to the tower units/generate route and returns the counts', async () => {
         mockFetch.mockReturnValue(jsonOk({ created: 3, skipped: 1 }));
         const res = await inventoryService.generateUnits('tower-1', dto);
         expect(res).toEqual({ created: 3, skipped: 1 });
         const [url, init] = mockFetch.mock.calls[0];
-        expect(url).toMatch(/\/v1\/inventory\/settings\/org-1\/categories\/tower-1\/generate-units$/);
+        expect(url).toMatch(/\/v1\/inventory\/property\/org-1\/towers\/tower-1\/units\/generate$/);
         expect(init.method).toBe('POST');
-        expect(JSON.parse(init.body)).toEqual(dto);
+        expect(JSON.parse(init.body)).toEqual({
+          floor_from: 1,
+          floor_to: 2,
+          units_per_floor: 2,
+          pattern: '{floor}{stack:02}',
+          sku_prefix: 'T1',
+          stacks: [{ stack: 1, bedrooms: 2, area_sqft: 1100, view: 'Sea', price: 150000 }],
+        });
         expect(init.headers['X-Org-Id']).toBe('org-1');
+      });
+
+      it('Then empty optional fields are left out rather than sent as null', async () => {
+        mockFetch.mockReturnValue(jsonOk({ created: 1, skipped: 0 }));
+        await inventoryService.generateUnits('tower-1', {
+          ...dto,
+          sku_prefix: '',
+          stacks: [{ stack: '2', bedrooms: null, area_sqft: undefined, view: '', price: null }],
+        });
+        const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+        expect(body.sku_prefix).toBeUndefined();
+        expect(body.stacks).toEqual([{ stack: 2 }]);
       });
 
       it('Then a missing count in the response reads as 0', async () => {
@@ -70,16 +89,20 @@ describe('inventoryService property units', () => {
 
   describe('Given a project id', () => {
     describe('When getCategoryAvailability is called', () => {
-      it('Then it GETs the availability route and returns towers and units', async () => {
-        const body = {
-          towers: [{ category_id: 't1', name: 'Tower A', total: 2, available: 1, on_hold: 0, sold: 1 }],
-          units: [{ item_id: 'i1', unit_number: '101', floor: 1, stack: '01', status: 'sold' }],
-        };
-        mockFetch.mockReturnValue(jsonOk(body));
+      it('Then it GETs the project availability route and flattens tower counts', async () => {
+        mockFetch.mockReturnValue(jsonOk({
+          project: { id: 'proj-1', name: 'Marina' },
+          totals: { total: 2, available: 1, on_hold: 0, sold: 1 },
+          towers: [{ category_id: 't1', name: 'Tower A', counts: { total: 2, available: 1, on_hold: 0, sold: 1 } }],
+          units: [{ item_id: 'i1', unit_number: '101', floor: 1, stack: 1, status: 'sold' }],
+        }));
         const res = await inventoryService.getCategoryAvailability('proj-1');
-        expect(res).toEqual(body);
+        expect(res).toEqual({
+          towers: [{ category_id: 't1', name: 'Tower A', total: 2, available: 1, on_hold: 0, sold: 1 }],
+          units: [{ item_id: 'i1', unit_number: '101', floor: 1, stack: '1', status: 'sold' }],
+        });
         const [url, init] = mockFetch.mock.calls[0];
-        expect(url).toMatch(/\/settings\/org-1\/categories\/proj-1\/availability$/);
+        expect(url).toMatch(/\/property\/org-1\/projects\/proj-1\/availability$/);
         expect(init.method).toBeUndefined();
       });
 

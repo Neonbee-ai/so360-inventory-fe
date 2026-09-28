@@ -542,9 +542,26 @@ class InventoryService {
 
     /** Bulk-create unit items on a tower (child category). */
     async generateUnits(categoryId: string, dto: GenerateUnitsDto): Promise<GenerateUnitsResult> {
-        const res = await this.request(`/settings/${this.orgId}/categories/${categoryId}/generate-units`, {
+        // Backend contract: `pattern` (not numbering_pattern), integer stacks,
+        // and absent (not null) optional stack attributes.
+        const stacks = dto.stacks.map((s) => {
+            const out: Record<string, any> = { stack: Number.parseInt(String(s.stack), 10) };
+            for (const key of ['bedrooms', 'area_sqft', 'view', 'price'] as const) {
+                if (s[key] !== null && s[key] !== undefined && s[key] !== '') out[key] = s[key];
+            }
+            return out;
+        });
+        const body: Record<string, any> = {
+            floor_from: dto.floor_from,
+            floor_to: dto.floor_to,
+            stacks,
+        };
+        if (dto.units_per_floor) body.units_per_floor = dto.units_per_floor;
+        if (dto.numbering_pattern) body.pattern = dto.numbering_pattern;
+        if (dto.sku_prefix) body.sku_prefix = dto.sku_prefix;
+        const res = await this.request(`/property/${this.orgId}/towers/${categoryId}/units/generate`, {
             method: 'POST',
-            body: JSON.stringify(dto),
+            body: JSON.stringify(body),
         });
         // Units are items — the cached reference catalog is now stale too.
         this.orgStaticCache.invalidate(`items|${this.orgId}`);
@@ -553,11 +570,24 @@ class InventoryService {
 
     /** Tower counts + unit grid for a project (root) or a single tower. */
     async getCategoryAvailability(categoryId: string): Promise<ProjectAvailability> {
-        const res = await this.request(`/settings/${this.orgId}/categories/${categoryId}/availability`);
-        return {
-            towers: Array.isArray(res?.towers) ? res.towers : [],
-            units: Array.isArray(res?.units) ? res.units : [],
-        };
+        const res = await this.request(`/property/${this.orgId}/projects/${categoryId}/availability`);
+        // Backend nests tower counts under `counts`; the UI reads them flat.
+        const towers = (Array.isArray(res?.towers) ? res.towers : []).map((t: any) => {
+            const c = t?.counts ?? t ?? {};
+            return {
+                category_id: t?.category_id,
+                name: t?.name,
+                total: Number(c.total) || 0,
+                available: Number(c.available) || 0,
+                on_hold: Number(c.on_hold) || 0,
+                sold: Number(c.sold) || 0,
+            };
+        });
+        const units = (Array.isArray(res?.units) ? res.units : []).map((u: any) => ({
+            ...u,
+            stack: u?.stack === null || u?.stack === undefined ? '' : String(u.stack),
+        }));
+        return { towers, units };
     }
 
     /**
