@@ -7,10 +7,20 @@ vi.mock('../components/FormSection', () => ({
 }));
 
 vi.mock('../../../components/media/MediaUploader', () => ({
-  default: ({ imageUrls, onImagesChange }: any) => (
+  default: ({ imageUrls, onImagesChange, onImageMeasured }: any) => (
     <div data-testid="media-uploader">
       <span>Images: {imageUrls.length}</span>
       <button onClick={() => onImagesChange([])}>clear</button>
+      {onImageMeasured && (
+        <button
+          onClick={() => {
+            onImageMeasured('http://a.com/1.jpg', 1600, 1600);
+            onImageMeasured('http://b.com/2.jpg', 600, 900);
+          }}
+        >
+          measure-two
+        </button>
+      )}
     </div>
   ),
 }));
@@ -121,6 +131,37 @@ describe('MediaTab', () => {
       render(<MediaTab {...makeProps({ image_urls: ['http://a.com/x.jpg'], updateField })} />);
       fireEvent.click(screen.getByText('clear'));
       expect(updateField).toHaveBeenCalledWith('image_urls', []);
+    });
+  });
+
+  describe('Given photo sizes are tracked (image_meta)', () => {
+    it('When two thumbnails report their size in the same tick / Then the last update carries both measurements', () => {
+      const updateField = vi.fn();
+      render(<MediaTab {...makeProps({ image_urls: ['http://a.com/1.jpg', 'http://b.com/2.jpg'], image_meta: [], updateField })} />);
+      fireEvent.click(screen.getByText('measure-two'));
+      expect(updateField).toHaveBeenLastCalledWith('image_meta', [
+        { url: 'http://a.com/1.jpg', width: 1600, height: 1600 },
+        { url: 'http://b.com/2.jpg', width: 600, height: 900 },
+      ]);
+    });
+
+    it('When a size already recorded is reported again / Then no update is sent', () => {
+      const updateField = vi.fn();
+      render(<MediaTab {...makeProps({
+        image_urls: ['http://a.com/1.jpg', 'http://b.com/2.jpg'],
+        image_meta: [
+          { url: 'http://a.com/1.jpg', width: 1600, height: 1600 },
+          { url: 'http://b.com/2.jpg', width: 600, height: 900 },
+        ],
+        updateField,
+      })} />);
+      fireEvent.click(screen.getByText('measure-two'));
+      expect(updateField).not.toHaveBeenCalled();
+    });
+
+    it('When image_meta is not passed / Then sizes are not tracked', () => {
+      render(<MediaTab {...makeProps()} />);
+      expect(screen.queryByText('measure-two')).not.toBeInTheDocument();
     });
   });
 });

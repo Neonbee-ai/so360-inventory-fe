@@ -234,6 +234,13 @@ const StockMovementRegisterPage = () => {
     const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
     const [projects, setProjects] = useState<any[]>([]);
     const [workOrders, setWorkOrders] = useState<any[]>([]);
+    // Loading and failure are distinct from "empty": an unreachable Projects or
+    // Manufacturing module must never be reported to the user as "no active
+    // projects available", which is a claim about their data.
+    const [projectsLoading, setProjectsLoading] = useState(true);
+    const [projectsError, setProjectsError] = useState(false);
+    const [workOrdersLoading, setWorkOrdersLoading] = useState(true);
+    const [workOrdersError, setWorkOrdersError] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [showFilters, setShowFilters] = useState(false);
@@ -266,8 +273,8 @@ const StockMovementRegisterPage = () => {
             const active = Object.fromEntries(
                 Object.entries(filters).filter(([, v]) => v),
             );
-            const data = await inventoryService.getMovements(active);
-            setMovements(data || []);
+            const page = await inventoryService.getMovements(active);
+            setMovements(page.data || []);
         } catch {
             setError('Failed to load stock movements');
         } finally {
@@ -277,13 +284,37 @@ const StockMovementRegisterPage = () => {
 
     useEffect(() => { fetchMovements(); }, [fetchMovements]);
 
+    const loadProjects = useCallback(async () => {
+        setProjectsLoading(true);
+        setProjectsError(false);
+        try {
+            setProjects((await inventoryService.searchProjects()) || []);
+        } catch {
+            setProjects([]);
+            setProjectsError(true);
+        } finally {
+            setProjectsLoading(false);
+        }
+    }, []);
+
+    const loadWorkOrders = useCallback(async () => {
+        setWorkOrdersLoading(true);
+        setWorkOrdersError(false);
+        try {
+            setWorkOrders((await inventoryService.searchWorkOrders()) || []);
+        } catch {
+            setWorkOrders([]);
+            setWorkOrdersError(true);
+        } finally {
+            setWorkOrdersLoading(false);
+        }
+    }, []);
+
     useEffect(() => {
         (async () => {
-            const [whData, defaults, projectList, woList] = await Promise.all([
+            const [whData, defaults] = await Promise.all([
                 inventoryService.getLocations().catch(() => []),
                 inventoryService.getOrgDefaultLogic().catch(() => null),
-                inventoryService.searchProjects(),
-                inventoryService.searchWorkOrders(),
             ]);
             setWarehouses(whData || []);
             if (defaults) {
@@ -294,10 +325,10 @@ const StockMovementRegisterPage = () => {
                     allow_future_dated_transactions: !!defaults.allow_future_dated_transactions,
                 });
             }
-            setProjects(projectList);
-            setWorkOrders(woList);
         })();
-    }, []);
+        loadProjects();
+        loadWorkOrders();
+    }, [loadProjects, loadWorkOrders]);
 
     // Live balance for the selected item + warehouse
     useEffect(() => {
@@ -1101,22 +1132,39 @@ const StockMovementRegisterPage = () => {
                                     aria-label="Project"
                                     onChange={(e) => setForm({ ...form, project_id: e.target.value, work_order_id: '' })}
                                     className={fieldClass('project')}
-                                    disabled={projects.length === 0}
+                                    disabled={projectsLoading || projectsError || projects.length === 0}
                                 >
-                                    {/* "Not linked" alone told the user nothing about why the
-                                        list was empty. An empty result now says so explicitly.
+                                    {/* Three states, three messages. "No active projects
+                                        available" is only said once the list has actually
+                                        loaded and come back empty — while loading, and when
+                                        the lookup failed, the placeholder says that instead.
                                         bg/text set explicitly on each <option> because native
                                         dropdown popups don't reliably inherit the <select>'s
                                         Tailwind classes — without this the options render with
                                         the browser's default light popup background and the
                                         same light text colour, making them invisible. */}
                                     <option value="" className="bg-slate-800 text-slate-50">
-                                        {projects.length === 0 ? 'No active projects available.' : 'Not linked'}
+                                        {projectsLoading
+                                            ? 'Loading projects…'
+                                            : projectsError
+                                                ? 'Could not load projects.'
+                                                : projects.length === 0
+                                                    ? 'No active projects available.'
+                                                    : 'Not linked'}
                                     </option>
                                     {projects.map((p) => (
                                         <option key={p.id} value={p.id} className="bg-slate-800 text-slate-50">{p.title || p.name}</option>
                                     ))}
                                 </select>
+                                {projectsError && (
+                                    <button
+                                        type="button"
+                                        onClick={loadProjects}
+                                        className="mt-1 text-xs text-rose-300 underline hover:text-rose-200"
+                                    >
+                                        Projects lookup failed — retry
+                                    </button>
+                                )}
                                 <FieldError field="project" />
                             </div>
                             <div>
@@ -1128,12 +1176,16 @@ const StockMovementRegisterPage = () => {
                                     aria-label="Work order"
                                     onChange={(e) => setForm({ ...form, work_order_id: e.target.value })}
                                     className={fieldClass('work_order')}
-                                    disabled={availableWorkOrders.length === 0}
+                                    disabled={workOrdersLoading || workOrdersError || availableWorkOrders.length === 0}
                                 >
                                     <option value="">
-                                        {availableWorkOrders.length === 0
-                                            ? 'No active work orders available.'
-                                            : 'Not linked'}
+                                        {workOrdersLoading
+                                            ? 'Loading work orders…'
+                                            : workOrdersError
+                                                ? 'Could not load work orders.'
+                                                : availableWorkOrders.length === 0
+                                                    ? 'No active work orders available.'
+                                                    : 'Not linked'}
                                     </option>
                                     {availableWorkOrders.map((w) => (
                                         <option key={w.id} value={w.id}>
@@ -1143,6 +1195,15 @@ const StockMovementRegisterPage = () => {
                                         </option>
                                     ))}
                                 </select>
+                                {workOrdersError && (
+                                    <button
+                                        type="button"
+                                        onClick={loadWorkOrders}
+                                        className="mt-1 text-xs text-rose-300 underline hover:text-rose-200"
+                                    >
+                                        Work orders lookup failed — retry
+                                    </button>
+                                )}
                                 <FieldError field="work_order" />
                             </div>
                         </div>
