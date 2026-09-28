@@ -1,4 +1,4 @@
-import type { AvailabilityUnit } from '../types/inventory';
+import type { AvailabilityUnit, UnitStatusCounts } from '../types/inventory';
 
 export const DEFAULT_NUMBERING_PATTERN = '{floor}{stack:02}';
 /** Guard against a typo generating tens of thousands of items in one click. */
@@ -44,22 +44,64 @@ export function formatUnitNumber(pattern: string, floor: number, stack: string |
     });
 }
 
-export interface AvailabilityCounts {
-    total: number;
-    available: number;
-    on_hold: number;
-    sold: number;
+export type AvailabilityCounts = UnitStatusCounts;
+
+const COUNTED_STATUSES = ['available', 'on_hold', 'sold', 'blocked', 'cancelled', 'unavailable'] as const;
+
+export const emptyCounts = (): AvailabilityCounts => ({
+    total: 0, available: 0, on_hold: 0, sold: 0, blocked: 0, cancelled: 0, unavailable: 0,
+});
+
+/** Read a counts object defensively: missing or non-numeric buckets are 0. */
+export function toCounts(raw: unknown): AvailabilityCounts {
+    const c = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
+    const out = emptyCounts();
+    out.total = Number(c.total) || 0;
+    for (const k of COUNTED_STATUSES) out[k] = Number(c[k]) || 0;
+    return out;
+}
+
+export function addCounts(a: AvailabilityCounts, b: AvailabilityCounts): AvailabilityCounts {
+    const out = emptyCounts();
+    out.total = a.total + b.total;
+    for (const k of COUNTED_STATUSES) out[k] = a[k] + b[k];
+    return out;
 }
 
 export function summarizeCounts(units: Pick<AvailabilityUnit, 'status'>[]): AvailabilityCounts {
-    const out: AvailabilityCounts = { total: 0, available: 0, on_hold: 0, sold: 0 };
+    const out = emptyCounts();
     for (const u of units || []) {
         out.total += 1;
-        if (u.status === 'available') out.available += 1;
-        else if (u.status === 'on_hold') out.on_hold += 1;
-        else if (u.status === 'sold') out.sold += 1;
+        if ((COUNTED_STATUSES as readonly string[]).includes(u.status)) out[u.status as (typeof COUNTED_STATUSES)[number]] += 1;
     }
     return out;
+}
+
+/** Sold share of all units, one decimal place; 0 for an empty project. */
+export function percentSold(counts: Pick<AvailabilityCounts, 'total' | 'sold'>): number {
+    if (!counts.total || counts.total <= 0) return 0;
+    return Math.round((counts.sold / counts.total) * 1000) / 10;
+}
+
+/**
+ * A unit price in its own currency, falling back to the org currency. An
+ * unknown currency code still renders (code + number) rather than throwing.
+ */
+export function formatUnitMoney(
+    amount: number | null | undefined,
+    currency: string | null | undefined,
+    orgCurrency: string | null | undefined,
+    locale = 'en-US',
+): string | null {
+    if (amount === null || amount === undefined || !Number.isFinite(Number(amount))) return null;
+    const code = (currency && currency.trim()) || (orgCurrency && orgCurrency.trim()) || '';
+    const n = Number(amount);
+    if (!code) return n.toLocaleString(locale);
+    try {
+        return new Intl.NumberFormat(locale, { style: 'currency', currency: code }).format(n);
+    } catch {
+        return `${code} ${n.toLocaleString(locale)}`;
+    }
 }
 
 export interface AvailabilityGrid {
