@@ -1,17 +1,33 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Image, Plus } from 'lucide-react';
 import FormSection from '../components/FormSection';
 import MediaUploader from '../../../components/media/MediaUploader';
+import { upsertImageMeta, type ImageMetaEntry } from '../../../utils/imageMeta';
 
 interface MediaTabProps {
     image_urls: string[];
+    /** Measured photo sizes (items.image_meta). Omit to not track them. */
+    image_meta?: ImageMetaEntry[];
     updateField: (field: string, value: any) => void;
 }
 
 const inputClass = 'w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all placeholder:text-slate-600';
 
-const MediaTab: React.FC<MediaTabProps> = ({ image_urls, updateField }) => {
+const MediaTab: React.FC<MediaTabProps> = ({ image_urls, image_meta, updateField }) => {
     const [imageUrlInput, setImageUrlInput] = useState('');
+
+    // Several thumbnails report their size in the same tick; accumulate in a
+    // ref so each updateField carries every measurement, not a stale copy.
+    const metaRef = useRef<ImageMetaEntry[]>(image_meta ?? []);
+    useEffect(() => { metaRef.current = image_meta ?? []; }, [image_meta]);
+    const trackMeta = image_meta !== undefined;
+
+    const handleMeasured = useCallback((url: string, width: number, height: number) => {
+        const next = upsertImageMeta(metaRef.current, url, width, height);
+        if (next === metaRef.current) return;
+        metaRef.current = next;
+        updateField('image_meta', next);
+    }, [updateField]);
 
     const addImageUrl = () => {
         const url = imageUrlInput.trim();
@@ -27,6 +43,7 @@ const MediaTab: React.FC<MediaTabProps> = ({ image_urls, updateField }) => {
                 <MediaUploader
                     imageUrls={image_urls}
                     onImagesChange={(urls) => updateField('image_urls', urls)}
+                    onImageMeasured={trackMeta ? handleMeasured : undefined}
                     maxFiles={10}
                 />
             </FormSection>

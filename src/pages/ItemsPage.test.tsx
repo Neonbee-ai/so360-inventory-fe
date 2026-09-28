@@ -213,3 +213,52 @@ describe('ItemsPage — Register Item permission gating', () => {
     expect(screen.queryByText('Register Item')).not.toBeInTheDocument();
   });
 });
+
+describe('ItemsPage — Photos need attention filter', () => {
+  it('Given the page loads / When the filter is off / Then the plain item list is requested', async () => {
+    render(<ItemsPage />);
+    await waitFor(() => expect(mockGetItems).toHaveBeenCalledTimes(1));
+    expect(mockGetItems.mock.calls[0]).toEqual([]);
+  });
+
+  it('Given flagged and unflagged items / When the filter is turned on / Then the API is asked for flagged items and only those are shown', async () => {
+    mockGetItems.mockResolvedValue({
+      data: [
+        makeItem({ id: 'bad', name: 'Blurry', image_needs_attention: true }),
+        makeItem({ id: 'ok', name: 'Sharp', image_needs_attention: false }),
+      ],
+    });
+    render(<ItemsPage />);
+    await waitFor(() => expect(screen.getByTestId('row-ok')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole('button', { name: /Photos need attention/i }));
+
+    await waitFor(() =>
+      expect(mockGetItems).toHaveBeenLastCalledWith(expect.objectContaining({ imageNeedsAttention: true })),
+    );
+    await waitFor(() => expect(screen.queryByTestId('row-ok')).not.toBeInTheDocument());
+    expect(screen.getByTestId('row-bad')).toBeInTheDocument();
+  });
+
+  it('Given the API does not know the flag yet (returns everything) / When the filter is on / Then no unflagged item is shown as needing attention', async () => {
+    mockGetItems.mockResolvedValue({ data: [makeItem({ id: 'legacy', name: 'Legacy' })] });
+    render(<ItemsPage />);
+    await waitFor(() => expect(screen.getByTestId('row-legacy')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole('button', { name: /Photos need attention/i }));
+
+    await waitFor(() =>
+      expect(screen.getByText('No items with photos that need attention.')).toBeInTheDocument(),
+    );
+  });
+
+  it('Given the filter is on / When clicked again / Then the full list is requested again', async () => {
+    render(<ItemsPage />);
+    const toggle = screen.getByRole('button', { name: /Photos need attention/i });
+    fireEvent.click(toggle);
+    await waitFor(() => expect(toggle).toHaveAttribute('aria-pressed', 'true'));
+    fireEvent.click(toggle);
+    await waitFor(() => expect(toggle).toHaveAttribute('aria-pressed', 'false'));
+    await waitFor(() => expect(mockGetItems.mock.calls[mockGetItems.mock.calls.length - 1]).toEqual([]));
+  });
+});

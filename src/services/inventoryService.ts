@@ -143,10 +143,13 @@ class InventoryService {
         sortOrder?: 'asc' | 'desc';
         page?: number;
         limit?: number;
+        /** Only items whose photos are small or far from square (server-derived flag). */
+        imageNeedsAttention?: boolean;
     }) {
         const query = new URLSearchParams();
         if (params?.search) query.append('search', params.search);
         if (params?.categoryId) query.append('category_id', params.categoryId);
+        if (params?.imageNeedsAttention) query.append('image_needs_attention', 'true');
         if (params?.sortBy) query.append('sort_by', params.sortBy);
         if (params?.sortOrder) query.append('sort_order', params.sortOrder);
         if (params?.page) query.append('page', params.page.toString());
@@ -521,7 +524,7 @@ class InventoryService {
         });
     }
 
-    async updateCategory(id: string, data: { name?: string; description?: string; parent_id?: string | null; icon_url?: string | null; image_url?: string | null; color?: string | null; sort_order?: number }) {
+    async updateCategory(id: string, data: { name?: string; description?: string; parent_id?: string | null; icon_url?: string | null; image_url?: string | null; banner_url?: string | null; color?: string | null; sort_order?: number }) {
         return this.request(`/settings/${this.orgId}/categories/${id}`, {
             method: 'PATCH',
             body: JSON.stringify(data),
@@ -531,6 +534,24 @@ class InventoryService {
     async deleteCategory(id: string) {
         return this.request(`/settings/${this.orgId}/categories/${id}`, {
             method: 'DELETE',
+        });
+    }
+
+    // ==================== Category Channel Visibility ====================
+
+    async getCategoryChannels(categoryId?: string) {
+        const query = categoryId ? `?category_id=${categoryId}` : '';
+        return this.request(`/settings/${this.orgId}/category-channels${query}`);
+    }
+
+    async setCategoryChannels(
+        categoryId: string,
+        channels: { channel: string; is_visible: boolean; sort_order?: number; label_override?: string | null }[],
+        applyToChildren = false,
+    ) {
+        return this.request(`/settings/${this.orgId}/categories/${categoryId}/channels`, {
+            method: 'PUT',
+            body: JSON.stringify({ channels, apply_to_children: applyToChildren }),
         });
     }
 
@@ -627,13 +648,28 @@ class InventoryService {
         movement_type?: string;
         date_from?: string;
         date_to?: string;
-    }) {
+        limit?: number;
+        offset?: number;
+    }): Promise<{ data: any[]; total: number; limit: number; offset: number; has_more: boolean }> {
         const query = new URLSearchParams();
         for (const [k, v] of Object.entries(filters || {})) {
             if (v) query.append(k, String(v));
         }
         const qs = query.toString();
-        return this.request(`/movements/${this.orgId}${qs ? `?${qs}` : ''}`);
+        const res: any = await this.request(`/movements/${this.orgId}${qs ? `?${qs}` : ''}`);
+        // The register route returns a paginated envelope; older deployments
+        // return a bare array, so accept both.
+        if (Array.isArray(res)) {
+            return { data: res, total: res.length, limit: res.length, offset: 0, has_more: false };
+        }
+        const rows = Array.isArray(res?.data) ? res.data : [];
+        return {
+            data: rows,
+            total: Number(res?.total ?? rows.length),
+            limit: Number(res?.limit ?? rows.length),
+            offset: Number(res?.offset ?? 0),
+            has_more: Boolean(res?.has_more),
+        };
     }
 
     /** Live available balance for one item in one (optional) warehouse. */
@@ -684,40 +720,36 @@ class InventoryService {
      *
      * Closed work cannot receive new material, so completed/cancelled/archived
      * projects are dropped here rather than being offered and then rejected by
-     * the backend's assertLinkedEntitiesActive check. Still best-effort: the
-     * Projects module being down must not stop a warehouse recording reality,
-     * so a failure yields an empty list and the caller says so in the UI.
+     * the backend's assertLinkedEntitiesActive check.
+     *
+     * Errors propagate. Swallowing them here made an unreachable Projects module
+     * indistinguishable from an org with no open projects, and the UI told the
+     * user "No active projects available" — a factual claim it could not make.
+     * The caller is responsible for keeping the form usable when this rejects.
      */
     async searchProjects(search?: string): Promise<any[]> {
-        try {
-            const origin = this.crossServiceOrigin('VITE_SO360_PROJECTS_API', 'projects', 3010);
-            const qs = new URLSearchParams({ limit: '50' });
-            if (search) qs.append('search', search);
-            const res = await this.crossServiceGet(`${origin}/projects?${qs.toString()}`);
-            const list = res?.data || res?.projects || (Array.isArray(res) ? res : []);
-            return (Array.isArray(list) ? list : []).filter(
-                (p: any) => !CLOSED_PROJECT_STATUSES.has(String(p?.status || '').toLowerCase()),
-            );
-        } catch {
-            return [];
-        }
+        const origin = this.crossServiceOrigin('VITE_SO360_PROJECTS_API', 'projects', 3010);
+        const qs = new URLSearchParams({ limit: '50' });
+        if (search) qs.append('search', search);
+        const res = await this.crossServiceGet(`${origin}/projects?${qs.toString()}`);
+        const list = res?.data || res?.projects || (Array.isArray(res) ? res : []);
+        return (Array.isArray(list) ? list : []).filter(
+            (p: any) => !CLOSED_PROJECT_STATUSES.has(String(p?.status || '').toLowerCase()),
+        );
     }
 
     /**
      * Manufacturing orders open enough to consume material. Completed and
      * cancelled orders are excluded for the same reason as closed projects.
+     * Errors propagate, for the same reason as searchProjects.
      */
     async searchWorkOrders(): Promise<any[]> {
-        try {
-            const origin = this.crossServiceOrigin('VITE_SO360_MANUFACTURING_API', 'manufacturing', 3034);
-            const res = await this.crossServiceGet(`${origin}/v1/manufacturing/orders`);
-            const list = res?.data || (Array.isArray(res) ? res : []);
-            return (Array.isArray(list) ? list : []).filter(
-                (w: any) => !CLOSED_WORK_ORDER_STATUSES.has(String(w?.status || '').toLowerCase()),
-            );
-        } catch {
-            return [];
-        }
+        const origin = this.crossServiceOrigin('VITE_SO360_MANUFACTURING_API', 'manufacturing', 3034);
+        const res = await this.crossServiceGet(`${origin}/v1/manufacturing/orders`);
+        const list = res?.data || (Array.isArray(res) ? res : []);
+        return (Array.isArray(list) ? list : []).filter(
+            (w: any) => !CLOSED_WORK_ORDER_STATUSES.has(String(w?.status || '').toLowerCase()),
+        );
     }
 
     async getTransferHistory(itemId?: string) {

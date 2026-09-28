@@ -51,6 +51,19 @@ vi.mock('../hooks/useAuth', () => ({
 import StockMovementRegisterPage from './StockMovementRegisterPage';
 import { inventoryService } from '../services/inventoryService';
 
+/**
+ * The register route returns a paginated envelope, and inventoryService.getMovements
+ * normalises to it — the mocked service must return the same shape.
+ */
+const movementPage = (rows: any[]) => ({
+    data: rows,
+    total: rows.length,
+    limit: rows.length || 100,
+    offset: 0,
+    has_more: false,
+});
+
+
 const inv = inventoryService as any;
 
 const WH = 'wh-1';
@@ -95,7 +108,7 @@ const selectItem = async () => {
 
 beforeEach(() => {
     vi.resetAllMocks();
-    inv.getMovements.mockResolvedValue([]);
+    inv.getMovements.mockResolvedValue(movementPage([]));
     inv.getLocations.mockResolvedValue([
         { id: WH, name: 'Dubai South Hub' },
         { id: WH2, name: 'City Distribution Centre' },
@@ -321,6 +334,41 @@ describe('Given the Project and Work Order allocation dropdowns', () => {
         expect(screen.getByLabelText('Work order')).toBeDisabled();
     });
 
+    // Regression: searchProjects used to swallow every failure and return [], so an
+    // unreachable Projects module rendered as "No active projects available." — the
+    // page asserted something about the tenant's data that it could not know.
+    it('Given the Projects lookup fails / When the form renders / Then it reports a failure, not an empty list', async () => {
+        inv.searchProjects.mockRejectedValue(new Error('projects api down'));
+        await openForm();
+        const select = screen.getByLabelText('Project');
+        expect(within(select).getByText('Could not load projects.')).toBeInTheDocument();
+        expect(within(select).queryByText('No active projects available.')).toBeNull();
+        expect(select).toBeDisabled();
+        expect(screen.getByText('Projects lookup failed — retry')).toBeInTheDocument();
+    });
+
+    it('Given the Projects lookup failed / When retry is clicked and succeeds / Then the options appear', async () => {
+        inv.searchProjects.mockRejectedValueOnce(new Error('projects api down'));
+        inv.searchProjects.mockResolvedValue([{ id: 'p-1', title: 'Marina Tower Fit-out' }]);
+        await openForm();
+        fireEvent.click(screen.getByText('Projects lookup failed — retry'));
+        await waitFor(() =>
+            expect(
+                within(screen.getByLabelText('Project')).getByText('Marina Tower Fit-out'),
+            ).toBeInTheDocument(),
+        );
+        expect(screen.queryByText('Projects lookup failed — retry')).toBeNull();
+    });
+
+    it('Given the Manufacturing lookup fails / When the form renders / Then work orders report a failure, not an empty list', async () => {
+        inv.searchWorkOrders.mockRejectedValue(new Error('manufacturing api down'));
+        await openForm();
+        const select = screen.getByLabelText('Work order');
+        expect(within(select).getByText('Could not load work orders.')).toBeInTheDocument();
+        expect(within(select).queryByText('No active work orders available.')).toBeNull();
+        expect(screen.getByText('Work orders lookup failed — retry')).toBeInTheDocument();
+    });
+
     it('Given active projects exist / When the form renders / Then they are selectable', async () => {
         // The Projects API's real field is `title`, not `name` (so360-projects-be
         // CreateProjectDto/`projects` table). A prior version of this test mocked
@@ -512,7 +560,7 @@ describe('Given a warehouse transfer', () => {
 
 describe('Given the movement register list', () => {
     it('Given an adjustment row / When rendered / Then it carries an ADJUSTMENT badge', async () => {
-        inv.getMovements.mockResolvedValue([movement()]);
+        inv.getMovements.mockResolvedValue(movementPage([movement()]));
         renderPage();
         await waitFor(() =>
             expect(screen.getByTestId('movement-type-badge')).toHaveTextContent('ADJUSTMENT'),
@@ -520,10 +568,10 @@ describe('Given the movement register list', () => {
     });
 
     it('Given transfer and adjustment rows / When rendered / Then their badges differ', async () => {
-        inv.getMovements.mockResolvedValue([
+        inv.getMovements.mockResolvedValue(movementPage([
             movement({ movement_type: 'adjustment', reference_number: 'ADJ-00012' }),
             movement({ movement_type: 'transfer', reference_number: 'TRF-00023', quantity: -50 }),
-        ]);
+        ]));
         renderPage();
         await waitFor(() => expect(screen.getAllByTestId('movement-type-badge')).toHaveLength(2));
         const labels = screen
@@ -533,7 +581,7 @@ describe('Given the movement register list', () => {
     });
 
     it('Given an unrecognised movement type / When rendered / Then it degrades to a readable label', async () => {
-        inv.getMovements.mockResolvedValue([movement({ movement_type: 'stock_take' })]);
+        inv.getMovements.mockResolvedValue(movementPage([movement({ movement_type: 'stock_take' })]));
         renderPage();
         await waitFor(() =>
             expect(screen.getByTestId('movement-type-badge')).toHaveTextContent('STOCK TAKE'),
@@ -541,7 +589,7 @@ describe('Given the movement register list', () => {
     });
 
     it('Given both legs of a transfer / When rendered / Then the route from source to destination is shown', async () => {
-        inv.getMovements.mockResolvedValue([
+        inv.getMovements.mockResolvedValue(movementPage([
             movement({
                 movement_type: 'transfer',
                 reference_number: 'TRF-00023',
@@ -554,7 +602,7 @@ describe('Given the movement register list', () => {
                 quantity: 50,
                 warehouses: { name: 'Dubai South Hub' },
             }),
-        ]);
+        ]));
         renderPage();
         await waitFor(() =>
             expect(
@@ -564,9 +612,9 @@ describe('Given the movement register list', () => {
     });
 
     it('Given only one leg of a transfer is loaded / When rendered / Then it falls back to that leg\'s warehouse', async () => {
-        inv.getMovements.mockResolvedValue([
+        inv.getMovements.mockResolvedValue(movementPage([
             movement({ movement_type: 'transfer', reference_number: 'TRF-00099', quantity: -50 }),
-        ]);
+        ]));
         renderPage();
         await waitFor(() =>
             expect(screen.getByText('Dubai South Hub')).toBeInTheDocument(),
@@ -574,7 +622,7 @@ describe('Given the movement register list', () => {
     });
 
     it('Given an adjustment with a reason code / When rendered / Then the reason is spelled out', async () => {
-        inv.getMovements.mockResolvedValue([movement({ reason_code: 'CYCLE_COUNT' })]);
+        inv.getMovements.mockResolvedValue(movementPage([movement({ reason_code: 'CYCLE_COUNT' })]));
         renderPage();
         await waitFor(() =>
             expect(screen.getByTestId('movement-reason')).toHaveTextContent('Cycle Count'),
@@ -582,7 +630,7 @@ describe('Given the movement register list', () => {
     });
 
     it('Given an unmapped reason code / When rendered / Then the raw code is humanised rather than blank', async () => {
-        inv.getMovements.mockResolvedValue([movement({ reason_code: 'LEGACY_REASON' })]);
+        inv.getMovements.mockResolvedValue(movementPage([movement({ reason_code: 'LEGACY_REASON' })]));
         renderPage();
         await waitFor(() =>
             expect(screen.getByTestId('movement-reason')).toHaveTextContent('LEGACY REASON'),
@@ -590,7 +638,7 @@ describe('Given the movement register list', () => {
     });
 
     it('Given an adjustment / When rendered / Then the balance reads before, delta and after', async () => {
-        inv.getMovements.mockResolvedValue([movement()]);
+        inv.getMovements.mockResolvedValue(movementPage([movement()]));
         renderPage();
         await waitFor(() =>
             expect(screen.getByTestId('movement-balance')).toHaveTextContent('100 → -5 → 95'),

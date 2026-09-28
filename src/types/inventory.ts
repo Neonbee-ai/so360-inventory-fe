@@ -11,7 +11,10 @@ export interface ItemCategory {
     parent_id?: string;
     children?: ItemCategory[];
     icon_url?: string | null;
+    /** Square 1:1 image shown on category tiles. */
     image_url?: string | null;
+    /** Wide 16:5 hero at the top of the category page (absent until migration 052). */
+    banner_url?: string | null;
     color?: string | null;
     sort_order?: number;
 }
@@ -33,6 +36,10 @@ export interface Item {
     cost?: number;
     description?: string;
     image_urls?: string[];
+    /** Natural size of each photo (absent until migration 051 / first save). */
+    image_meta?: Array<{ url: string; width: number; height: number }>;
+    /** Server-derived: a photo is under 800px or far from square. */
+    image_needs_attention?: boolean;
     barcode?: string;
     brand?: string;
     hsn_code?: string;
