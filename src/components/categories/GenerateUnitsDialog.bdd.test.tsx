@@ -163,3 +163,98 @@ describe('suggestSkuPrefix', () => {
     });
   });
 });
+
+describe('GenerateUnitsDialog edge branches', () => {
+  describe('Given units per floor is set to 0', () => {
+    it('Then no stack table or examples show and Create is disabled', () => {
+      renderDialog();
+      fireEvent.change(screen.getByLabelText('Units per floor'), { target: { value: '0' } });
+      expect(screen.queryAllByLabelText(/^Stack \d+ bedrooms$/)).toHaveLength(0);
+      expect(screen.queryByRole('columnheader', { name: 'Stack' })).toBeNull();
+      expect(screen.getByTestId('preview-count')).toHaveTextContent('Preview: 0 units');
+      expect(screen.queryByText(/\(.*….*\)/)).toBeNull();
+      expect(createButton()).toBeDisabled();
+    });
+  });
+
+  describe('Given units per floor grows from 4 to 6', () => {
+    it('Then two empty stack rows are added', () => {
+      renderDialog();
+      fireEvent.change(screen.getByLabelText('Units per floor'), { target: { value: '6' } });
+      expect(screen.getAllByLabelText(/^Stack \d+ bedrooms$/)).toHaveLength(6);
+      expect((screen.getByLabelText('Stack 06 bedrooms') as HTMLInputElement).value).toBe('');
+      expect(screen.getByText('(101 … 1006)')).toBeInTheDocument();
+    });
+  });
+
+  describe('Given a single floor with a single unit', () => {
+    it('Then only one example number shows', () => {
+      renderDialog();
+      fireEvent.change(screen.getByLabelText('Floor to'), { target: { value: '1' } });
+      fireEvent.change(screen.getByLabelText('Units per floor'), { target: { value: '1' } });
+      expect(screen.getByTestId('preview-count')).toHaveTextContent('Preview: 1 units');
+      expect(screen.getByText('(101)')).toBeInTheDocument();
+    });
+  });
+
+  describe('Given the backend rejects without a message', () => {
+    it('Then the generic error shows', async () => {
+      mockGenerateUnits.mockRejectedValue({});
+      renderDialog();
+      fireEvent.click(createButton());
+      expect(await screen.findByText('Failed to generate units')).toBeInTheDocument();
+    });
+  });
+
+  describe('Given no onGenerated callback', () => {
+    it('Then a successful run still shows the result', async () => {
+      mockGenerateUnits.mockResolvedValue({ created: 40, skipped: 0 });
+      render(<GenerateUnitsDialog isOpen onClose={onClose} tower={tower} />);
+      fireEvent.click(createButton());
+      expect(await screen.findByTestId('generate-result')).toHaveTextContent('40 units created.');
+    });
+  });
+
+  describe('Given a run that is still in flight', () => {
+    it('Then Create is disabled until it settles', async () => {
+      let resolveRun!: (v: { created: number; skipped: number }) => void;
+      mockGenerateUnits.mockReturnValue(new Promise((res) => { resolveRun = res; }));
+      renderDialog();
+      fireEvent.click(createButton());
+      await waitFor(() => expect(createButton()).toBeDisabled());
+      fireEvent.click(createButton());
+      expect(mockGenerateUnits).toHaveBeenCalledTimes(1);
+      resolveRun({ created: 40, skipped: 0 });
+      expect(await screen.findByTestId('generate-result')).toBeInTheDocument();
+    });
+  });
+
+  describe('Given the dialog is closed and reopened', () => {
+    it('Then the form and result are reset', async () => {
+      mockGenerateUnits.mockResolvedValue({ created: 40, skipped: 0 });
+      const { rerender } = renderDialog();
+      fireEvent.change(screen.getByLabelText('SKU prefix'), { target: { value: 'ZZ' } });
+      fireEvent.change(screen.getByLabelText('Floor to'), { target: { value: '3' } });
+      fireEvent.click(createButton());
+      await screen.findByTestId('generate-result');
+
+      rerender(<GenerateUnitsDialog isOpen={false} onClose={onClose} tower={tower} onGenerated={onGenerated} />);
+      rerender(<GenerateUnitsDialog isOpen onClose={onClose} tower={tower} onGenerated={onGenerated} />);
+
+      expect(screen.queryByTestId('generate-result')).toBeNull();
+      expect((screen.getByLabelText('SKU prefix') as HTMLInputElement).value).toBe('TOWERA');
+      expect(screen.getByTestId('preview-count')).toHaveTextContent('Preview: 40 units');
+    });
+  });
+
+  describe('Given a stack price that overflows to Infinity', () => {
+    it('Then the price is sent as null', async () => {
+      mockGenerateUnits.mockResolvedValue({ created: 40, skipped: 0 });
+      renderDialog();
+      fireEvent.change(screen.getByLabelText('Stack 01 price'), { target: { value: '1e999' } });
+      fireEvent.click(createButton());
+      await waitFor(() => expect(mockGenerateUnits).toHaveBeenCalled());
+      expect(mockGenerateUnits.mock.calls[0][1].stacks[0].price).toBeNull();
+    });
+  });
+});

@@ -28,7 +28,8 @@ vi.mock('../services/mediaService', () => ({
   mediaService: { uploadFile: vi.fn().mockResolvedValue({ url: 'https://cdn.example.com/x.png' }) },
 }));
 
-vi.mock('../hooks/useAuth', () => ({ useAuth: () => ({ can: () => true }) }));
+const mockCan = vi.fn<(perm: string) => boolean>();
+vi.mock('../hooks/useAuth', () => ({ useAuth: () => ({ can: (perm: string) => mockCan(perm) }) }));
 
 vi.mock('../components/categories/CategoryTreeView', () => ({
   __esModule: true,
@@ -51,8 +52,8 @@ vi.mock('../utils/categoryTree', () => ({ buildCategoryTree: (cats: any[]) => ca
 // The new components have their own specs; stub them to observe wiring.
 vi.mock('../components/categories/ProjectDetailsSection', () => ({
   __esModule: true,
-  default: ({ value, onChange }: any) => (
-    <div data-testid="project-details">
+  default: ({ value, onChange, disabled }: any) => (
+    <div data-testid="project-details" data-disabled={String(!!disabled)}>
       <span data-testid="project-details-value">{JSON.stringify(value)}</span>
       <button onClick={() => onChange({ ...value, location: 'Dubai Marina' })}>set-location</button>
     </div>
@@ -95,6 +96,7 @@ const shellWith = (flagOn: boolean) => ({
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mockCan.mockReturnValue(true);
   mockRecordActivity.mockResolvedValue(undefined);
   mockGetSettings.mockResolvedValue({ categories: [project, tower] });
   mockUpdateCategory.mockResolvedValue({});
@@ -204,6 +206,101 @@ describe('Given the property_units flag is on', () => {
       fireEvent.click(await screen.findByRole('button', { name: /^Save$/ }));
       await waitFor(() => expect(mockUpdateCategory).toHaveBeenCalled());
       expect(mockUpdateCategory.mock.calls[0][1]).not.toHaveProperty('metadata');
+    });
+  });
+});
+
+describe('CategoriesPage property units edge branches', () => {
+  beforeEach(() => mockUseShellBridge.mockReturnValue(shellWith(true)));
+
+  describe('Given the flag is on and nothing is selected', () => {
+    it('Then the empty state speaks of a project', async () => {
+      render(<CategoriesPage />);
+      expect(await screen.findByText(/Select a project from the tree/)).toBeTruthy();
+    });
+  });
+
+  describe('Given a project with no metadata', () => {
+    it('Then details are seeded empty and Save sends an empty metadata object', async () => {
+      const bare = { ...project, id: 'p2', name: 'Bare Project', metadata: undefined };
+      mockGetSettings.mockResolvedValue({ categories: [bare] });
+      render(<CategoriesPage />);
+      fireEvent.click(await screen.findByTestId('select-p2'));
+      expect((await screen.findByTestId('project-details-value')).textContent).toBe('{}');
+      fireEvent.click(screen.getByRole('button', { name: /^Save$/ }));
+      await waitFor(() => expect(mockUpdateCategory).toHaveBeenCalled());
+      expect(mockUpdateCategory.mock.calls[0][1].metadata).toEqual({});
+    });
+  });
+
+  describe('Given the user may manage categories', () => {
+    it('Then project details are editable', async () => {
+      render(<CategoriesPage />);
+      fireEvent.click(await screen.findByTestId('select-p1'));
+      expect((await screen.findByTestId('project-details')).getAttribute('data-disabled')).toBe('false');
+    });
+  });
+
+  describe('Given the user may not update categories', () => {
+    it('Then project details are read-only', async () => {
+      mockCan.mockReturnValue(false);
+      render(<CategoriesPage />);
+      fireEvent.click(await screen.findByTestId('select-p1'));
+      expect((await screen.findByTestId('project-details')).getAttribute('data-disabled')).toBe('true');
+      expect(mockCan).toHaveBeenCalledWith('items.update');
+    });
+  });
+
+  describe('Given the user lacks items.create', () => {
+    it('Then a tower shows Availability but no Generate units', async () => {
+      mockUseShellBridge.mockReturnValue({
+        ...shellWith(true),
+        hasPermission: (perm: string) => perm !== 'items.create',
+      });
+      render(<CategoriesPage />);
+      fireEvent.click(await screen.findByTestId('select-t1'));
+      expect(await screen.findByRole('button', { name: /Availability/ })).toBeTruthy();
+      expect(screen.queryByRole('button', { name: /Generate units/ })).toBeNull();
+    });
+  });
+
+  describe('Given the create action flag is not enabled', () => {
+    it('Then Generate units is hidden', async () => {
+      mockUseShellBridge.mockReturnValue({ ...shellWith(true), getFeatureState: () => 'disabled' });
+      render(<CategoriesPage />);
+      fireEvent.click(await screen.findByTestId('select-t1'));
+      expect(await screen.findByText('Edit Tower')).toBeTruthy();
+      expect(screen.queryByRole('button', { name: /Generate units/ })).toBeNull();
+    });
+  });
+
+  describe('Given logging the generation fails', () => {
+    it('Then the failure is swallowed and the matrix still refreshes', async () => {
+      render(<CategoriesPage />);
+      fireEvent.click(await screen.findByTestId('select-t1'));
+      fireEvent.click(await screen.findByRole('button', { name: /Availability/ }));
+      fireEvent.click(screen.getByRole('button', { name: /Generate units/ }));
+      mockRecordActivity.mockRejectedValueOnce(new Error('activity down'));
+      fireEvent.click(screen.getByText('fake-generate'));
+      expect(screen.getByTestId('availability-matrix').textContent).toBe('t1:1');
+      await waitFor(() => expect(mockRecordActivity).toHaveBeenCalledWith(
+        expect.objectContaining({ description: 'Generated 4 units in "Tower A"' }),
+      ));
+    });
+  });
+
+  describe('Given availability is open for one category', () => {
+    it('Then selecting another category closes it and the dialog', async () => {
+      render(<CategoriesPage />);
+      fireEvent.click(await screen.findByTestId('select-t1'));
+      fireEvent.click(await screen.findByRole('button', { name: /Availability/ }));
+      fireEvent.click(screen.getByRole('button', { name: /Generate units/ }));
+      expect(screen.getByTestId('availability-matrix')).toBeTruthy();
+      fireEvent.click(screen.getByTestId('select-p1'));
+      expect(await screen.findByText('Edit Project')).toBeTruthy();
+      expect(screen.queryByTestId('availability-matrix')).toBeNull();
+      expect(screen.queryByTestId('generate-dialog')).toBeNull();
+      expect(screen.getByRole('button', { name: /Availability/ }).getAttribute('aria-pressed')).toBe('false');
     });
   });
 });

@@ -157,3 +157,84 @@ describe('inventoryService property units', () => {
     });
   });
 });
+
+describe('inventoryService property units edge branches', () => {
+  describe('Given generateUnits with no units_per_floor and a blank pattern', () => {
+    it('Then both keys are left out of the body', async () => {
+      mockFetch.mockReturnValue(jsonOk({ created: 1, skipped: 0 }));
+      await inventoryService.generateUnits('tower-1', { ...dto, units_per_floor: 0, numbering_pattern: '' });
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+      expect(body).not.toHaveProperty('units_per_floor');
+      expect(body).not.toHaveProperty('pattern');
+      expect(body).toMatchObject({ floor_from: 1, floor_to: 2, sku_prefix: 'T1' });
+    });
+  });
+
+  describe('Given generateUnits gets a null JSON body', () => {
+    it('Then both counts read as 0', async () => {
+      mockFetch.mockReturnValue(jsonOk(null));
+      await expect(inventoryService.generateUnits('tower-1', dto)).resolves.toEqual({ created: 0, skipped: 0 });
+    });
+  });
+
+  describe('Given getCategoryAvailability returns flat and null towers', () => {
+    it('Then flat counts are read from the tower and a null tower reads as zeros', async () => {
+      mockFetch.mockReturnValue(jsonOk({
+        towers: [
+          { category_id: 't1', name: 'Flat', total: '4', available: 3, on_hold: null, sold: 'x' },
+          null,
+        ],
+        units: [
+          { item_id: 'a', floor: 1, stack: null },
+          { item_id: 'b', floor: 1 },
+          { item_id: 'c', floor: 1, stack: 0 },
+        ],
+      }));
+      const res = await inventoryService.getCategoryAvailability('proj-1');
+      expect(res.towers).toEqual([
+        { category_id: 't1', name: 'Flat', total: 4, available: 3, on_hold: 0, sold: 0 },
+        { category_id: undefined, name: undefined, total: 0, available: 0, on_hold: 0, sold: 0 },
+      ]);
+      expect(res.units.map((u) => u.stack)).toEqual(['', '', '0']);
+    });
+  });
+
+  describe('Given getCategoryAvailability gets a null JSON body', () => {
+    it('Then both lists are empty', async () => {
+      mockFetch.mockReturnValue(jsonOk(null));
+      await expect(inventoryService.getCategoryAvailability('proj-1')).resolves.toEqual({ towers: [], units: [] });
+    });
+  });
+
+  describe('Given no org is set', () => {
+    it('Then searchDevelopers throws without calling Core', async () => {
+      inventoryService.setOrgId('');
+      await expect(inventoryService.searchDevelopers()).rejects.toThrow('OrgId not set');
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Given Core returns an object with no data array', () => {
+    it('Then an empty object yields no developers', async () => {
+      mockFetch.mockReturnValue(jsonOk({}));
+      await expect(inventoryService.searchDevelopers()).resolves.toEqual([]);
+    });
+
+    it('Then a non-array data field yields no developers', async () => {
+      mockFetch.mockReturnValue(jsonOk({ data: { not: 'array' } }));
+      await expect(inventoryService.searchDevelopers()).resolves.toEqual([]);
+    });
+
+    it('Then a null body yields no developers', async () => {
+      mockFetch.mockReturnValue(jsonOk(null));
+      await expect(inventoryService.searchDevelopers()).resolves.toEqual([]);
+    });
+  });
+
+  describe('Given partner entries that are null or have no name', () => {
+    it('Then nulls are dropped and the id is used as the name', async () => {
+      mockFetch.mockReturnValue(jsonOk({ data: [null, { id: 42 }] }));
+      await expect(inventoryService.searchDevelopers()).resolves.toEqual([{ id: '42', name: '42' }]);
+    });
+  });
+});

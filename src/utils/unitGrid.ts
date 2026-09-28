@@ -5,8 +5,12 @@ export const DEFAULT_NUMBERING_PATTERN = '{floor}{stack:02}';
 export const MAX_UNITS_PER_RUN = 2000;
 
 function toInt(v: unknown): number | null {
-    const n = typeof v === 'number' ? v : Number(String(v ?? '').trim());
-    return Number.isFinite(n) && Number.isInteger(n) ? n : null;
+    if (typeof v === 'number') return Number.isInteger(v) ? v : null;
+    // A blank form field is "not entered", not 0 — Number('') would read it as 0.
+    const s = String(v ?? '').trim();
+    if (s === '') return null;
+    const n = Number(s);
+    return Number.isInteger(n) ? n : null;
 }
 
 /** Units a Generate run will attempt: floors (inclusive) × units per floor. 0 when the inputs are unusable. */
