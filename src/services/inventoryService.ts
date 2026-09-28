@@ -1,5 +1,6 @@
 import { createRequestCache } from './requestCache';
 import { notifyQuotaExceeded } from './quotaExceeded';
+import type { CategoryMetadata, GenerateUnitsDto, GenerateUnitsResult, ProjectAvailability } from '../types/inventory';
 
 /**
  * Statuses that mean "this can no longer receive material". Kept as exclusion
@@ -524,7 +525,7 @@ class InventoryService {
         });
     }
 
-    async updateCategory(id: string, data: { name?: string; description?: string; parent_id?: string | null; icon_url?: string | null; image_url?: string | null; banner_url?: string | null; color?: string | null; sort_order?: number }) {
+    async updateCategory(id: string, data: { name?: string; description?: string; parent_id?: string | null; icon_url?: string | null; image_url?: string | null; banner_url?: string | null; color?: string | null; sort_order?: number; metadata?: CategoryMetadata | null }) {
         return this.request(`/settings/${this.orgId}/categories/${id}`, {
             method: 'PATCH',
             body: JSON.stringify(data),
@@ -535,6 +536,44 @@ class InventoryService {
         return this.request(`/settings/${this.orgId}/categories/${id}`, {
             method: 'DELETE',
         });
+    }
+
+    // ==================== Property Units (submodule:inventory:property_units) ====================
+
+    /** Bulk-create unit items on a tower (child category). */
+    async generateUnits(categoryId: string, dto: GenerateUnitsDto): Promise<GenerateUnitsResult> {
+        const res = await this.request(`/settings/${this.orgId}/categories/${categoryId}/generate-units`, {
+            method: 'POST',
+            body: JSON.stringify(dto),
+        });
+        // Units are items — the cached reference catalog is now stale too.
+        this.orgStaticCache.invalidate(`items|${this.orgId}`);
+        return { created: Number(res?.created) || 0, skipped: Number(res?.skipped) || 0 };
+    }
+
+    /** Tower counts + unit grid for a project (root) or a single tower. */
+    async getCategoryAvailability(categoryId: string): Promise<ProjectAvailability> {
+        const res = await this.request(`/settings/${this.orgId}/categories/${categoryId}/availability`);
+        return {
+            towers: Array.isArray(res?.towers) ? res.towers : [],
+            units: Array.isArray(res?.units) ? res.units : [],
+        };
+    }
+
+    /**
+     * Core partners playing the developer role. Relies on Core honouring
+     * `type=developer`; an unknown type is ignored there, so an older Core
+     * returns every partner rather than none.
+     */
+    async searchDevelopers(search?: string): Promise<{ id: string; name: string }[]> {
+        if (!this.orgId) throw new Error('OrgId not set');
+        const qs = new URLSearchParams({ type: 'developer', limit: '100' });
+        if (search) qs.set('search', search);
+        const res = await this.crossServiceGet(`${this.coreOrigin}/v1/partners/${this.orgId}?${qs.toString()}`);
+        const list = res?.data || (Array.isArray(res) ? res : []);
+        return (Array.isArray(list) ? list : [])
+            .filter((p: any) => p && p.id)
+            .map((p: any) => ({ id: String(p.id), name: String(p.name || p.display_name || p.id) }));
     }
 
     // ==================== Category Channel Visibility ====================

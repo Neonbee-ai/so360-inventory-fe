@@ -17,6 +17,67 @@ export interface ItemCategory {
     banner_url?: string | null;
     color?: string | null;
     sort_order?: number;
+    /** Real-estate project details (submodule:inventory:property_units). */
+    metadata?: CategoryMetadata | null;
+}
+
+/** Project-level details kept on a root category when property units are on. */
+export interface CategoryMetadata {
+    developer_partner_id?: string | null;
+    location?: string | null;
+    handover?: string | null;
+    brochure_url?: string | null;
+}
+
+export interface UnitStackSpec {
+    stack: string;
+    bedrooms?: number | null;
+    area_sqft?: number | null;
+    view?: string | null;
+    price?: number | null;
+}
+
+export interface GenerateUnitsDto {
+    floor_from: number;
+    floor_to: number;
+    units_per_floor: number;
+    numbering_pattern: string;
+    sku_prefix: string;
+    stacks: UnitStackSpec[];
+}
+
+export interface GenerateUnitsResult {
+    created: number;
+    skipped: number;
+}
+
+export type UnitStatus = 'available' | 'on_hold' | 'sold';
+
+export interface AvailabilityTower {
+    category_id: string;
+    name: string;
+    total: number;
+    available: number;
+    on_hold: number;
+    sold: number;
+}
+
+export interface AvailabilityUnit {
+    item_id: string;
+    /** Tower the unit belongs to (absent on a single-tower response). */
+    category_id?: string;
+    unit_number: string;
+    floor: number;
+    stack: string;
+    bedrooms?: number | null;
+    price?: number | null;
+    status: UnitStatus;
+    hold?: { reference_type: string; reference_id: string; expires_at: string | null } | null;
+}
+
+export interface ProjectAvailability {
+    towers: AvailabilityTower[];
+    units: AvailabilityUnit[];
 }
 
 export interface Item {
