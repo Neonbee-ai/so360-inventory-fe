@@ -17,12 +17,14 @@ import {
     type ImageSlotSpec,
     type ProductImageAssessment,
 } from '../utils/imageRatio';
+import { fitImageFile, describeFit, IMAGE_FIT_SLOTS, type ImageFitSlot } from '../utils/imageFit';
+import ImageSpecChip from '../components/media/ImageSpecChip';
 import { useActivity, useShellBridge } from '@so360/shell-context';
 import { FeatureGate } from '@so360/design-system';
 
 const PRESET_COLORS = ['#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#EC4899', '#06B6D4', '#64748B'];
 
-/** Core media accepts images up to 10 MB. */
+/** Core media's hard limit. Images are auto-fitted to their slot's cap first. */
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 const IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/svg+xml', 'image/webp'];
 const IMAGE_ACCEPT = IMAGE_TYPES.join(',');
@@ -36,22 +38,35 @@ const ImageUploadZone: React.FC<{
     onRemove: () => void;
     /** Target shape/size; when set, the preview shows a size badge graded against it. */
     slot?: ImageSlotSpec;
-}> = ({ label, subLabel, currentUrl, aspectClass = 'aspect-[3/1]', onUpload, onRemove, slot }) => {
+    /** Stored size + cap: files are auto-fitted to it before upload and the chip shows it. */
+    fitSlot: ImageFitSlot;
+}> = ({ label, subLabel, currentUrl, aspectClass = 'aspect-[3/1]', onUpload, onRemove, slot, fitSlot }) => {
     const fileRef = useRef<HTMLInputElement>(null);
     const [uploading, setUploading] = useState(false);
     const [uploadError, setUploadError] = useState<string | null>(null);
     const [dragOver, setDragOver] = useState(false);
     const [assessment, setAssessment] = useState<ProductImageAssessment | null>(null);
+    /** What auto-fit did to the last file — never silent. */
+    const [fitNote, setFitNote] = useState<string | null>(null);
 
     useEffect(() => { setAssessment(null); }, [currentUrl]);
 
     const handleFile = async (file: File) => {
-        if (file.size > MAX_IMAGE_BYTES) { setUploadError('Max file size is 10 MB'); return; }
         if (!IMAGE_TYPES.includes(file.type)) { setUploadError('PNG, JPG, SVG or WebP only'); return; }
         setUploadError(null);
+        setFitNote(null);
         setUploading(true);
         try {
-            const { url } = await mediaService.uploadFile(file);
+            let toSend = file;
+            try {
+                const fit = await fitImageFile(file, fitSlot);
+                toSend = fit.file;
+                setFitNote(describeFit(fit));
+            } catch {
+                toSend = file; // fall back to the original if it still fits
+            }
+            if (toSend.size > MAX_IMAGE_BYTES) { setUploadError('Max file size is 10 MB'); return; }
+            const { url } = await mediaService.uploadFile(toSend);
             onUpload(url);
         } catch (err: any) {
             setUploadError(err.message || 'Upload failed');
@@ -69,7 +84,10 @@ const ImageUploadZone: React.FC<{
 
     return (
         <div>
-            <label className="text-xs font-medium text-slate-400 mb-1 block">{label}</label>
+            <div className="mb-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+                {label && <label className="text-xs font-medium text-slate-400">{label}</label>}
+                <ImageSpecChip slot={fitSlot} />
+            </div>
             {currentUrl ? (
                 <div className={`relative ${aspectClass} rounded-xl overflow-hidden bg-slate-800 border border-slate-700`}>
                     <img
@@ -131,6 +149,9 @@ const ImageUploadZone: React.FC<{
             )}
             {uploadError && (
                 <p className="text-xs text-rose-400 mt-1">{uploadError}</p>
+            )}
+            {fitNote && !uploadError && (
+                <p data-testid="image-fit-note" className="text-[11px] text-slate-500 mt-1 break-words">{fitNote}</p>
             )}
         </div>
     );
@@ -477,21 +498,23 @@ const CategoriesPage = () => {
 
                             {/* Banner (category page hero) + square image (category tiles) */}
                             <ImageUploadZone
-                                label="Category banner — 16:5, 2400×750"
-                                subLabel="Shown at the top of the category page · PNG, JPG, SVG, WebP · up to 10 MB"
+                                label="Category banner"
+                                subLabel="Shown at the top of the category page"
                                 currentUrl={editBannerUrl}
                                 aspectClass="aspect-[16/5]"
                                 slot={CATEGORY_BANNER_SLOT}
+                                fitSlot={IMAGE_FIT_SLOTS.categoryBanner}
                                 onUpload={url => setEditBannerUrl(url)}
                                 onRemove={() => setEditBannerUrl(null)}
                             />
                             <div className="w-48">
                                 <ImageUploadZone
-                                    label="Category image — square 1:1, 1600×1600"
-                                    subLabel="Shown on category tiles · up to 10 MB"
+                                    label="Category image"
+                                    subLabel="Shown on category tiles"
                                     currentUrl={editImageUrl}
                                     aspectClass="aspect-square"
                                     slot={CATEGORY_IMAGE_SLOT}
+                                    fitSlot={IMAGE_FIT_SLOTS.categoryImage}
                                     onUpload={url => setEditImageUrl(url)}
                                     onRemove={() => setEditImageUrl(null)}
                                 />
@@ -518,13 +541,13 @@ const CategoriesPage = () => {
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="flex-shrink-0">
-                                        <label className="text-xs font-medium text-slate-400 mb-1 block">Icon</label>
+                                    <div className="flex-shrink-0 w-36">
                                         <ImageUploadZone
-                                            label=""
-                                            subLabel="Square · up to 10 MB"
+                                            label="Icon"
+                                            subLabel="Click or drag"
                                             currentUrl={editIconUrl}
                                             aspectClass="w-20 h-20"
+                                            fitSlot={IMAGE_FIT_SLOTS.categoryIcon}
                                             onUpload={url => setEditIconUrl(url)}
                                             onRemove={() => setEditIconUrl(null)}
                                         />

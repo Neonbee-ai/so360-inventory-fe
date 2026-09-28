@@ -1,9 +1,9 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { Upload, Image } from 'lucide-react';
-import imageCompression from 'browser-image-compression';
+import { Upload } from 'lucide-react';
 import { mediaService } from '../../services/mediaService';
-import { measureImageFile, type ImageSize } from '../../utils/imageDimensions';
+import { fitImageFile, describeFit, IMAGE_FIT_SLOTS } from '../../utils/imageFit';
 import ImageThumbnail from './ImageThumbnail';
+import ImageSpecChip from './ImageSpecChip';
 
 interface MediaUploaderProps {
     imageUrls: string[];
@@ -18,50 +18,9 @@ interface MediaUploaderProps {
 }
 
 const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml', 'image/webp'];
-/** Core media accepts images up to 10 MB. */
+/** Core media's hard limit. Photos are auto-fitted to the 1 MB product cap first. */
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
-/** Masters up to this longest side are uploaded untouched. */
-export const MAX_ORIGINAL_EDGE_PX = 4096;
-/** Oversized masters are downscaled to this longest side — never smaller. */
-export const DOWNSCALE_EDGE_PX = 2400;
-const DOWNSCALE_QUALITY = 0.92;
-
-const EXT_BY_TYPE: Record<string, string> = {
-    'image/png': '.png',
-    'image/webp': '.webp',
-    'image/jpeg': '.jpg',
-    'image/jpg': '.jpg',
-};
-
-/**
- * Keep the merchant's master: upload the original bytes whenever the file is
- * within 10 MB and 4096 px. Only an oversized master is re-encoded — to 2400 px
- * on the longest side at quality 0.92, same format (PNG stays PNG).
- */
-export const needsDownscale = (file: File, size: ImageSize | null): boolean =>
-    file.type !== 'image/svg+xml' &&
-    (file.size > MAX_UPLOAD_BYTES || (size !== null && Math.max(size.width, size.height) > MAX_ORIGINAL_EDGE_PX));
-
-const downscale = async (file: File): Promise<File> => {
-    const out = await imageCompression(file, {
-        // Only the >10 MB case should ever iterate; stay a little under the cap.
-        maxSizeMB: 9.5,
-        maxWidthOrHeight: DOWNSCALE_EDGE_PX,
-        // Never shrink below 2400 px while fitting the size budget — drop quality instead.
-        alwaysKeepResolution: true,
-        initialQuality: DOWNSCALE_QUALITY,
-        fileType: file.type,
-        useWebWorker: true,
-        preserveExif: false,
-    });
-    // imageCompression returns a Blob, not a File. FormData.append with a
-    // Blob defaults the multipart filename to "blob" → backend path.extname
-    // returns "" → 400 Invalid file type. Re-wrap as a real File.
-    const type = out.type || file.type;
-    const ext = EXT_BY_TYPE[type] ?? EXT_BY_TYPE[file.type] ?? '.jpg';
-    const baseName = file.name.replace(/\.[^/.]+$/, '');
-    return new File([out], `${baseName}${ext}`, { type });
-};
+const PRODUCT_SLOT = IMAGE_FIT_SLOTS.product;
 
 interface UploadingFile {
     id: string;
@@ -72,6 +31,8 @@ interface UploadingFile {
 const MediaUploader: React.FC<MediaUploaderProps> = ({ imageUrls, onImagesChange, maxFiles = 10, onImageMeasured }) => {
     const [isDragOver, setIsDragOver] = useState(false);
     const [uploading, setUploading] = useState<UploadingFile[]>([]);
+    /** What auto-fit did to each file of the latest drop — never silent. */
+    const [notes, setNotes] = useState<string[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleFiles = useCallback(async (files: FileList | File[]) => {
@@ -86,6 +47,7 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({ imageUrls, onImagesChange
         }));
 
         setUploading(prev => [...prev, ...tempIds]);
+        setNotes([]);
 
         // Several files in one drop: append to the running list, not the
         // imageUrls captured when the drop started, or only the last one sticks.
@@ -102,22 +64,16 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({ imageUrls, onImagesChange
                 continue;
             }
 
-            let size = await measureImageFile(file);
+            // Auto-fit to the product slot (2000 px, ≤1 MB); SVG and small photos go up untouched.
             let processedFile: File = file;
-
-            if (needsDownscale(file, size)) {
-                try {
-                    processedFile = await downscale(file);
-                    const measured = await measureImageFile(processedFile);
-                    if (measured) {
-                        size = measured;
-                    } else if (size) {
-                        const scale = Math.min(1, DOWNSCALE_EDGE_PX / Math.max(size.width, size.height));
-                        size = { width: Math.round(size.width * scale), height: Math.round(size.height * scale) };
-                    }
-                } catch {
-                    processedFile = file; // fall back to the original if it still fits
-                }
+            let size: { width: number; height: number } | null = null;
+            try {
+                const fit = await fitImageFile(file, PRODUCT_SLOT);
+                processedFile = fit.file;
+                size = fit.width && fit.height ? { width: fit.width, height: fit.height } : null;
+                setNotes(prev => [...prev, describeFit(fit)]);
+            } catch {
+                processedFile = file; // fall back to the original if it still fits
             }
 
             if (processedFile.size > MAX_UPLOAD_BYTES) {
@@ -164,6 +120,11 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({ imageUrls, onImagesChange
 
     return (
         <div className="space-y-4">
+            <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs font-medium text-slate-400">Product photos</span>
+                <ImageSpecChip slot={PRODUCT_SLOT} />
+            </div>
+
             {/* Drop zone */}
             <div
                 onDrop={handleDrop}
@@ -182,7 +143,7 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({ imageUrls, onImagesChange
                 <p className="text-sm text-slate-400 mt-3">
                     {isDragOver ? 'Drop files here' : 'Drag and drop images here, or click to browse'}
                 </p>
-                <p className="text-xs text-slate-600 mt-1">PNG, JPG, SVG, WebP — up to 10 MB each, originals kept</p>
+                <p className="text-xs text-slate-600 mt-1">PNG, JPG, SVG, WebP — large photos are shrunk automatically</p>
                 <input
                     ref={fileInputRef}
                     type="file"
@@ -216,11 +177,10 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({ imageUrls, onImagesChange
                 </div>
             )}
 
-            {(imageUrls.length > 0 || uploading.length > 0) && (
-                <p className="text-xs text-slate-500">
-                    Best results: square photos (1:1), at least 1200×1200px, product centred on a plain background.
-                    Fashion stores: portrait 3:4. Images marked ⚠ will still show, but small or blurry.
-                </p>
+            {notes.length > 0 && (
+                <ul data-testid="image-fit-notes" className="space-y-0.5 text-xs text-slate-500">
+                    {notes.map((n, i) => <li key={i}>{n}</li>)}
+                </ul>
             )}
 
             {imageUrls.length >= maxFiles && (

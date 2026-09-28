@@ -5,7 +5,11 @@
  * Storefront themes show product photos in square frames (portrait 3:4 for
  * fashion) and fit odd shapes with padding, so a photo far from those shapes
  * still works but renders small with wide bands around it.
+ *
+ * Recommended sizes come from the upload slot table in ./imageFit — the same
+ * numbers the uploader auto-fits to.
  */
+import { IMAGE_FIT_SLOTS, type ImageFitSlot } from './imageFit';
 
 const COMMON_RATIOS: Array<[number, number]> = [
     [1, 1], [4, 5], [3, 4], [2, 3], [9, 16],
@@ -14,6 +18,8 @@ const COMMON_RATIOS: Array<[number, number]> = [
 
 /** Shortest side below this looks soft on large product pages. */
 export const MIN_RECOMMENDED_PX = 800;
+/** Stored product photo size (square) — the uploader fits larger photos to this. */
+export const PRODUCT_RECOMMENDED_PX = IMAGE_FIT_SLOTS.product.width;
 /**
  * Width/height range that fills square and 3:4 frames without heavy padding.
  * Mirrored by so360-inventory-be `src/inventory/image-meta.ts`, which derives
@@ -40,7 +46,7 @@ export interface ProductImageAssessment {
 export const assessProductImage = (width: number, height: number): ProductImageAssessment => {
     const issues: string[] = [];
     if (Math.min(width, height) < MIN_RECOMMENDED_PX) {
-        issues.push(`Low resolution (under ${MIN_RECOMMENDED_PX}px) — may look blurry. Aim for 1200×1200 or larger.`);
+        issues.push(`Low resolution (under ${MIN_RECOMMENDED_PX}px) — may look blurry. Aim for ${PRODUCT_RECOMMENDED_PX}×${PRODUCT_RECOMMENDED_PX}.`);
     }
     const r = width / height;
     if (r < GOOD_RATIO_MIN || r > GOOD_RATIO_MAX) {
@@ -70,8 +76,15 @@ export interface ImageSlotSpec {
     ratioTolerance?: number;
 }
 
-export const CATEGORY_IMAGE_SLOT: ImageSlotSpec = { ratio: 1, recommendedWidth: 1600, recommendedHeight: 1600 };
-export const CATEGORY_BANNER_SLOT: ImageSlotSpec = { ratio: 16 / 5, recommendedWidth: 2400, recommendedHeight: 750 };
+const fromFitSlot = (s: ImageFitSlot): ImageSlotSpec => ({
+    ratio: s.width / s.height,
+    recommendedWidth: s.width,
+    recommendedHeight: s.height,
+});
+
+export const CATEGORY_IMAGE_SLOT: ImageSlotSpec = fromFitSlot(IMAGE_FIT_SLOTS.categoryImage); // 1:1, 1600×1600
+export const CATEGORY_BANNER_SLOT: ImageSlotSpec = fromFitSlot(IMAGE_FIT_SLOTS.categoryBanner); // 16:5, 2400×750
+export const CATEGORY_ICON_SLOT: ImageSlotSpec = fromFitSlot(IMAGE_FIT_SLOTS.categoryIcon); // 1:1, 800×800
 
 const slotRatioLabel = (ratio: number): string => {
     for (const [a, b] of [...COMMON_RATIOS, [16, 5] as [number, number], [3, 1] as [number, number]]) {
