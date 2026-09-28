@@ -1,6 +1,16 @@
 import { createRequestCache } from './requestCache';
 import { notifyQuotaExceeded } from './quotaExceeded';
-import type { CategoryMetadata, GenerateUnitsDto, GenerateUnitsResult, ProjectAvailability } from '../types/inventory';
+import type {
+    CategoryMetadata,
+    DeveloperProfile,
+    GenerateUnitsDto,
+    GenerateUnitsResult,
+    ProjectAvailability,
+    UnitStatusOverride,
+    UnitStatusOverrideResult,
+} from '../types/inventory';
+import { toCounts } from '../utils/unitGrid';
+import { toDeveloperProfile } from '../utils/developerProfile';
 
 /**
  * Statuses that mean "this can no longer receive material". Kept as exclusion
@@ -572,22 +582,57 @@ class InventoryService {
     async getCategoryAvailability(categoryId: string): Promise<ProjectAvailability> {
         const res = await this.request(`/property/${this.orgId}/projects/${categoryId}/availability`);
         // Backend nests tower counts under `counts`; the UI reads them flat.
-        const towers = (Array.isArray(res?.towers) ? res.towers : []).map((t: any) => {
-            const c = t?.counts ?? t ?? {};
-            return {
-                category_id: t?.category_id,
-                name: t?.name,
-                total: Number(c.total) || 0,
-                available: Number(c.available) || 0,
-                on_hold: Number(c.on_hold) || 0,
-                sold: Number(c.sold) || 0,
-            };
-        });
+        const towers = (Array.isArray(res?.towers) ? res.towers : []).map((t: any) => ({
+            category_id: t?.category_id,
+            name: t?.name,
+            ...toCounts(t?.counts ?? t),
+        }));
         const units = (Array.isArray(res?.units) ? res.units : []).map((u: any) => ({
             ...u,
             stack: u?.stack === null || u?.stack === undefined ? '' : String(u.stack),
         }));
-        return { towers, units };
+        const out: ProjectAvailability = { towers, units };
+        if (res?.totals && typeof res.totals === 'object') out.totals = toCounts(res.totals);
+        return out;
+    }
+
+    /**
+     * Set (or clear with null) a unit's manual status. Blocked / cancelled /
+     * unavailable win over the stock- and reservation-derived status.
+     */
+    async setUnitStatusOverride(
+        itemId: string,
+        override: UnitStatusOverride | null,
+        reason?: string | null,
+    ): Promise<UnitStatusOverrideResult> {
+        const body: Record<string, any> = { override };
+        const trimmed = typeof reason === 'string' ? reason.trim() : '';
+        if (override && trimmed) body.reason = trimmed;
+        const res = await this.request(`/property/${this.orgId}/units/${itemId}/status`, {
+            method: 'PATCH',
+            body: JSON.stringify(body),
+        });
+        // The override lives on the item's attributes — the cached catalog is stale.
+        this.orgStaticCache.invalidate(`items|${this.orgId}`);
+        return res;
+    }
+
+    /**
+     * A developer (Core partner) shaped for the project views. The primary
+     * contact comes from the partner's contacts; if that list is not readable
+     * the card still renders without it.
+     */
+    async getDeveloper(partnerId: string): Promise<DeveloperProfile> {
+        if (!this.orgId) throw new Error('OrgId not set');
+        const id = encodeURIComponent(partnerId);
+        const [p, contacts] = await Promise.all([
+            this.crossServiceGet(`${this.coreOrigin}/v1/partners/details/${id}`),
+            this.crossServiceGet(`${this.coreOrigin}/v1/partners/${id}/contacts?org_id=${encodeURIComponent(this.orgId)}`)
+                .catch(() => null),
+        ]);
+        const list: any[] = Array.isArray(contacts) ? contacts : Array.isArray(contacts?.data) ? contacts.data : [];
+        const primary = list.find((c) => c?.is_primary) || list[0] || null;
+        return toDeveloperProfile(p, primary);
     }
 
     /**

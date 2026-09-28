@@ -47,8 +47,10 @@ describe('Given a project with two towers and tower-tagged units', () => {
       const summary = await screen.findByTestId('availability-summary');
       expect(summary.textContent).toContain('Total 4');
       expect(summary.textContent).toContain('Available 2');
-      expect(summary.textContent).toContain('On hold 1');
+      expect(summary.textContent).toContain('Reserved 1');
       expect(summary.textContent).toContain('Sold 1');
+      expect(screen.getByTestId('percent-sold').textContent).toBe('25% Sold');
+      expect(summary.textContent).not.toContain('Blocked');
     });
 
     it('Then one tab per tower is shown and the first is selected', async () => {
@@ -81,9 +83,12 @@ describe('Given a project with two towers and tower-tagged units', () => {
   });
 
   describe('When the user clicks a unit chip', () => {
-    it('Then it navigates to the item detail page', async () => {
+    it('Then the unit panel opens and Open unit navigates to the item detail page', async () => {
       render(<AvailabilityMatrix categoryId="p1" />);
       fireEvent.click(await screen.findByRole('button', { name: 'Unit 102 On hold' }));
+      expect(mockNavigate).not.toHaveBeenCalled();
+      expect(screen.getByTestId('unit-panel').textContent).toContain('Unit 102');
+      fireEvent.click(screen.getByRole('button', { name: /Open unit/ }));
       expect(mockNavigate).toHaveBeenCalledWith('/inventory/items/i2');
     });
   });

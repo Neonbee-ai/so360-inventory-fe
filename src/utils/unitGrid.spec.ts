@@ -117,13 +117,13 @@ describe('summarizeCounts', () => {
         unit({ status: 'on_hold' }),
         unit({ status: 'sold' }),
       ]);
-      expect(counts).toEqual({ total: 4, available: 2, on_hold: 1, sold: 1 });
+      expect(counts).toEqual({ total: 4, available: 2, on_hold: 1, sold: 1, blocked: 0, cancelled: 0, unavailable: 0 });
     });
   });
   describe('Given no units', () => {
     it('Then every count is 0', () => {
-      expect(summarizeCounts([])).toEqual({ total: 0, available: 0, on_hold: 0, sold: 0 });
-      expect(summarizeCounts(undefined as any)).toEqual({ total: 0, available: 0, on_hold: 0, sold: 0 });
+      expect(summarizeCounts([])).toEqual({ total: 0, available: 0, on_hold: 0, sold: 0, blocked: 0, cancelled: 0, unavailable: 0 });
+      expect(summarizeCounts(undefined as any)).toEqual({ total: 0, available: 0, on_hold: 0, sold: 0, blocked: 0, cancelled: 0, unavailable: 0 });
     });
   });
 });
@@ -209,7 +209,7 @@ describe('unitGrid edge branches', () => {
     describe('Given a unit with an unknown status', () => {
       it('Then it counts toward the total only', () => {
         const odd = { status: 'reserved' } as unknown as Pick<AvailabilityUnit, 'status'>;
-        expect(summarizeCounts([odd, unit({ status: 'sold' })])).toEqual({ total: 2, available: 0, on_hold: 0, sold: 1 });
+        expect(summarizeCounts([odd, unit({ status: 'sold' })])).toEqual({ total: 2, available: 0, on_hold: 0, sold: 1, blocked: 0, cancelled: 0, unavailable: 0 });
       });
     });
   });

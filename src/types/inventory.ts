@@ -27,6 +27,49 @@ export interface CategoryMetadata {
     location?: string | null;
     handover?: string | null;
     brochure_url?: string | null;
+    // RFP §4 project fields (validated by the backend's category-metadata rules).
+    project_code?: string | null;
+    project_status?: ProjectStatus | null;
+    launch_date?: string | null;
+    completion_date?: string | null;
+    city?: string | null;
+    country?: string | null;
+    property_types?: string[] | null;
+    price_range?: { min?: number | null; max?: number | null } | null;
+    payment_plan?: string | null;
+    commission_percent?: number | null;
+    description?: string | null;
+    amenities?: string[] | null;
+    images?: string[] | null;
+    videos?: string[] | null;
+    floor_plans?: string[] | null;
+    documents?: string[] | null;
+    map?: { lat?: number | null; lng?: number | null; url?: string | null } | null;
+    assigned_user_ids?: string[] | null;
+    assigned_team_ids?: string[] | null;
+}
+
+export const PROJECT_STATUSES = ['planned', 'launched', 'under_construction', 'ready', 'completed', 'on_hold'] as const;
+export type ProjectStatus = (typeof PROJECT_STATUSES)[number];
+
+/** A Core partner in the developer role, shaped for the project views. */
+export interface DeveloperProfile {
+    id: string;
+    name: string;
+    company: string | null;
+    contact_name: string | null;
+    email: string | null;
+    phone: string | null;
+    website: string | null;
+    address: string | null;
+    country: string | null;
+    description: string | null;
+    logo_url: string | null;
+    account_manager: string | null;
+    status: string | null;
+    notes: string | null;
+    created_at: string | null;
+    updated_at: string | null;
 }
 
 export interface UnitStackSpec {
@@ -51,15 +94,33 @@ export interface GenerateUnitsResult {
     skipped: number;
 }
 
-export type UnitStatus = 'available' | 'on_hold' | 'sold';
+/** Manual statuses that win over the stock/reservation-derived one. */
+export const UNIT_STATUS_OVERRIDES = ['blocked', 'cancelled', 'unavailable'] as const;
+export type UnitStatusOverride = (typeof UNIT_STATUS_OVERRIDES)[number];
+export type UnitStatus = 'available' | 'on_hold' | 'sold' | UnitStatusOverride;
 
-export interface AvailabilityTower {
-    category_id: string;
-    name: string;
+export interface UnitStatusCounts {
     total: number;
     available: number;
     on_hold: number;
     sold: number;
+    blocked: number;
+    cancelled: number;
+    unavailable: number;
+}
+
+export interface AvailabilityTower extends UnitStatusCounts {
+    category_id: string;
+    name: string;
+}
+
+/** The reservation tying a unit to a sale; buyer and agent live on the referenced record. */
+export interface UnitDealRef {
+    reference_type: string;
+    reference_id: string;
+    reservation_status: 'active' | 'committed';
+    reserved_at: string | null;
+    sold_at: string | null;
 }
 
 export interface AvailabilityUnit {
@@ -73,11 +134,34 @@ export interface AvailabilityUnit {
     price?: number | null;
     status: UnitStatus;
     hold?: { reference_type: string; reference_id: string; expires_at: string | null } | null;
+    area_sqft?: number | null;
+    view?: string | null;
+    property_type?: string | null;
+    bathrooms?: number | null;
+    built_up_area?: number | null;
+    plot_area?: number | null;
+    original_price?: number | null;
+    discount?: number | null;
+    final_price?: number | null;
+    /** Blank means the org currency. */
+    currency?: string | null;
+    status_override?: UnitStatusOverride | null;
+    status_override_reason?: string | null;
+    deal_ref?: UnitDealRef | null;
 }
 
 export interface ProjectAvailability {
+    /** Whole-project counts from the backend; absent on an older backend. */
+    totals?: UnitStatusCounts;
     towers: AvailabilityTower[];
     units: AvailabilityUnit[];
+}
+
+export interface UnitStatusOverrideResult {
+    item_id: string;
+    status_override: UnitStatusOverride | null;
+    status_override_reason: string | null;
+    status_override_at: string | null;
 }
 
 export interface Item {

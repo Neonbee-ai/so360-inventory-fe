@@ -72,8 +72,18 @@ vi.mock('../components/categories/GenerateUnitsDialog', () => ({
 }));
 vi.mock('../components/categories/AvailabilityMatrix', () => ({
   __esModule: true,
-  default: ({ categoryId, refreshKey }: any) => (
-    <div data-testid="availability-matrix">{`${categoryId}:${refreshKey}`}</div>
+  default: ({ categoryId, refreshKey, canManage }: any) => (
+    <div data-testid="availability-matrix" data-can-manage={String(!!canManage)}>{`${categoryId}:${refreshKey}`}</div>
+  ),
+}));
+vi.mock('../components/categories/DeveloperCard', () => ({
+  __esModule: true,
+  default: ({ partnerId, projects, currentProjectId, onSelectProject }: any) => (
+    <div data-testid="developer-card-stub" data-partner={partnerId} data-current={currentProjectId}>
+      {projects.map((p: any) => (
+        <button key={p.id} onClick={() => onSelectProject(p.id)}>{`open-${p.name}`}</button>
+      ))}
+    </div>
   ),
 }));
 
@@ -301,6 +311,80 @@ describe('CategoriesPage property units edge branches', () => {
       expect(screen.queryByTestId('availability-matrix')).toBeNull();
       expect(screen.queryByTestId('generate-dialog')).toBeNull();
       expect(screen.getByRole('button', { name: /Availability/ }).getAttribute('aria-pressed')).toBe('false');
+    });
+  });
+});
+
+describe('Plan G1/G3 — developer card and unit status wiring', () => {
+  beforeEach(() => mockUseShellBridge.mockReturnValue(shellWith(true)));
+
+  const sister = { ...project, id: 'p3', name: 'Sky Towers', metadata: { developer_partner_id: 'dev-1' } };
+  const other = { ...project, id: 'p4', name: 'Other Dev', metadata: { developer_partner_id: 'dev-9' } };
+
+  describe('Given a project whose saved metadata names a developer', () => {
+    it('Then the developer card shows with that partner and only its projects', async () => {
+      mockGetSettings.mockResolvedValue({ categories: [project, tower, sister, other] });
+      render(<CategoriesPage />);
+      fireEvent.click(await screen.findByTestId('select-p1'));
+      const card = await screen.findByTestId('developer-card-stub');
+      expect(card.getAttribute('data-partner')).toBe('dev-1');
+      expect(card.getAttribute('data-current')).toBe('p1');
+      expect(card.textContent).toBe('open-Marina Heightsopen-Sky Towers');
+    });
+
+    it('When a linked project is tapped Then that project becomes selected', async () => {
+      mockGetSettings.mockResolvedValue({ categories: [project, tower, sister, other] });
+      render(<CategoriesPage />);
+      fireEvent.click(await screen.findByTestId('select-p1'));
+      fireEvent.click(await screen.findByText('open-Sky Towers'));
+      await waitFor(() => expect(screen.getByTestId('developer-card-stub').getAttribute('data-current')).toBe('p3'));
+    });
+  });
+
+  describe('Given a project without a developer', () => {
+    it('Then no developer card shows', async () => {
+      mockGetSettings.mockResolvedValue({ categories: [{ ...project, metadata: { handover: 'x' } }] });
+      render(<CategoriesPage />);
+      fireEvent.click(await screen.findByTestId('select-p1'));
+      expect(await screen.findByTestId('project-details')).toBeTruthy();
+      expect(screen.queryByTestId('developer-card-stub')).toBeNull();
+    });
+  });
+
+  describe('Given a tower whose metadata carries a developer id', () => {
+    it('Then no developer card shows for the sub-category', async () => {
+      mockGetSettings.mockResolvedValue({ categories: [project, { ...tower, metadata: { developer_partner_id: 'dev-1' } }] });
+      render(<CategoriesPage />);
+      fireEvent.click(await screen.findByTestId('select-t1'));
+      expect(await screen.findByText('Edit Tower')).toBeTruthy();
+      expect(screen.queryByTestId('developer-card-stub')).toBeNull();
+    });
+  });
+
+  describe('Given the property_units flag is off', () => {
+    it('Then no developer card shows even with a developer id', async () => {
+      mockUseShellBridge.mockReturnValue(shellWith(false));
+      render(<CategoriesPage />);
+      fireEvent.click(await screen.findByTestId('select-p1'));
+      expect(await screen.findByText('Edit Category')).toBeTruthy();
+      expect(screen.queryByTestId('developer-card-stub')).toBeNull();
+    });
+  });
+
+  describe('Given the availability matrix is opened', () => {
+    it('Then a manager may set manual unit status', async () => {
+      render(<CategoriesPage />);
+      fireEvent.click(await screen.findByTestId('select-p1'));
+      fireEvent.click(await screen.findByRole('button', { name: /Availability/ }));
+      expect(screen.getByTestId('availability-matrix').getAttribute('data-can-manage')).toBe('true');
+    });
+
+    it('Then a read-only user may not', async () => {
+      mockCan.mockReturnValue(false);
+      render(<CategoriesPage />);
+      fireEvent.click(await screen.findByTestId('select-p1'));
+      fireEvent.click(await screen.findByRole('button', { name: /Availability/ }));
+      expect(screen.getByTestId('availability-matrix').getAttribute('data-can-manage')).toBe('false');
     });
   });
 });

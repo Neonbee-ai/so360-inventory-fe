@@ -98,8 +98,9 @@ describe('inventoryService property units', () => {
         }));
         const res = await inventoryService.getCategoryAvailability('proj-1');
         expect(res).toEqual({
-          towers: [{ category_id: 't1', name: 'Tower A', total: 2, available: 1, on_hold: 0, sold: 1 }],
+          towers: [{ category_id: 't1', name: 'Tower A', total: 2, available: 1, on_hold: 0, sold: 1, blocked: 0, cancelled: 0, unavailable: 0 }],
           units: [{ item_id: 'i1', unit_number: '101', floor: 1, stack: '1', status: 'sold' }],
+          totals: { total: 2, available: 1, on_hold: 0, sold: 1, blocked: 0, cancelled: 0, unavailable: 0 },
         });
         const [url, init] = mockFetch.mock.calls[0];
         expect(url).toMatch(/\/property\/org-1\/projects\/proj-1\/availability$/);
@@ -192,8 +193,8 @@ describe('inventoryService property units edge branches', () => {
       }));
       const res = await inventoryService.getCategoryAvailability('proj-1');
       expect(res.towers).toEqual([
-        { category_id: 't1', name: 'Flat', total: 4, available: 3, on_hold: 0, sold: 0 },
-        { category_id: undefined, name: undefined, total: 0, available: 0, on_hold: 0, sold: 0 },
+        { category_id: 't1', name: 'Flat', total: 4, available: 3, on_hold: 0, sold: 0, blocked: 0, cancelled: 0, unavailable: 0 },
+        { category_id: undefined, name: undefined, total: 0, available: 0, on_hold: 0, sold: 0, blocked: 0, cancelled: 0, unavailable: 0 },
       ]);
       expect(res.units.map((u) => u.stack)).toEqual(['', '', '0']);
     });
@@ -235,6 +236,149 @@ describe('inventoryService property units edge branches', () => {
     it('Then nulls are dropped and the id is used as the name', async () => {
       mockFetch.mockReturnValue(jsonOk({ data: [null, { id: 42 }] }));
       await expect(inventoryService.searchDevelopers()).resolves.toEqual([{ id: '42', name: '42' }]);
+    });
+  });
+});
+
+describe('inventoryService RE unit status and developer (G1/G3)', () => {
+  describe('Given availability with manual-status buckets and totals', () => {
+    describe('When getCategoryAvailability is called', () => {
+      it('Then blocked/cancelled/unavailable counts and totals are carried through', async () => {
+        const counts = { total: 6, available: 1, on_hold: 1, sold: 1, blocked: 1, cancelled: 1, unavailable: 1 };
+        mockFetch.mockReturnValue(jsonOk({
+          totals: counts,
+          towers: [{ category_id: 't1', name: 'A', counts }],
+          units: [{ item_id: 'u1', stack: '01', status: 'blocked', status_override: 'blocked', currency: 'AED' }],
+        }));
+        const res = await inventoryService.getCategoryAvailability('proj-1');
+        expect(res.totals).toEqual(counts);
+        expect(res.towers[0]).toEqual({ category_id: 't1', name: 'A', ...counts });
+        expect(res.units[0]).toMatchObject({ status: 'blocked', status_override: 'blocked', currency: 'AED' });
+      });
+    });
+
+    describe('When totals is not an object', () => {
+      it('Then totals is left out', async () => {
+        mockFetch.mockReturnValue(jsonOk({ totals: 5, towers: [], units: [] }));
+        const res = await inventoryService.getCategoryAvailability('proj-1');
+        expect(res).not.toHaveProperty('totals');
+      });
+    });
+  });
+
+  describe('Given a unit and a manual status', () => {
+    describe('When setUnitStatusOverride is called with a reason', () => {
+      it('Then it PATCHes the unit status route with the trimmed reason and returns the result', async () => {
+        const result = { item_id: 'u1', status_override: 'blocked', status_override_reason: 'Owner hold', status_override_at: '2026-09-28T00:00:00Z' };
+        mockFetch.mockReturnValue(jsonOk(result));
+        await expect(inventoryService.setUnitStatusOverride('u1', 'blocked', '  Owner hold  ')).resolves.toEqual(result);
+        const [url, init] = mockFetch.mock.calls[0];
+        expect(url).toMatch(/\/property\/org-1\/units\/u1\/status$/);
+        expect(init.method).toBe('PATCH');
+        expect(JSON.parse(init.body)).toEqual({ override: 'blocked', reason: 'Owner hold' });
+      });
+    });
+
+    describe('When the reason is blank or missing', () => {
+      it('Then only the override is sent', async () => {
+        mockFetch.mockReturnValue(jsonOk({}));
+        await inventoryService.setUnitStatusOverride('u1', 'cancelled', '   ');
+        await inventoryService.setUnitStatusOverride('u1', 'unavailable');
+        expect(JSON.parse(mockFetch.mock.calls[0][1].body)).toEqual({ override: 'cancelled' });
+        expect(JSON.parse(mockFetch.mock.calls[1][1].body)).toEqual({ override: 'unavailable' });
+      });
+    });
+
+    describe('When the override is cleared with null', () => {
+      it('Then override null is sent and any reason is dropped', async () => {
+        mockFetch.mockReturnValue(jsonOk({ item_id: 'u1', status_override: null }));
+        await inventoryService.setUnitStatusOverride('u1', null, 'ignored');
+        expect(JSON.parse(mockFetch.mock.calls[0][1].body)).toEqual({ override: null });
+      });
+    });
+
+    describe('When the catalog was cached before the override', () => {
+      it('Then the next catalog read goes back to the network', async () => {
+        mockFetch.mockReturnValue(jsonOk({ data: [] }));
+        await inventoryService.getItems();
+        await inventoryService.getItems();
+        expect(mockFetch).toHaveBeenCalledTimes(1);
+        await inventoryService.setUnitStatusOverride('u1', 'blocked');
+        await inventoryService.getItems();
+        expect(mockFetch).toHaveBeenCalledTimes(3);
+      });
+    });
+
+    describe('When the backend rejects it', () => {
+      it('Then the backend message is thrown', async () => {
+        mockFetch.mockReturnValue(jsonFail(409, { message: 'Unit is sold' }));
+        await expect(inventoryService.setUnitStatusOverride('u1', 'blocked')).rejects.toThrow('Unit is sold');
+      });
+    });
+  });
+
+  describe('Given a developer partner id', () => {
+    const partner = {
+      id: 'p1', name: 'Emaar', business_name: 'Emaar Properties PJSC', email: 'info@emaar.ae',
+      metadata: { website: 'https://emaar.com', logo_url: 'https://cdn/x.png', account_manager_name: 'Sara' },
+      is_active: true,
+    };
+
+    describe('When getDeveloper is called and contacts are readable', () => {
+      it('Then it reads the partner and picks the primary contact', async () => {
+        mockFetch.mockImplementation((url: string) =>
+          url.includes('/contacts')
+            ? jsonOk([{ contact_name: 'Other' }, { contact_name: 'Ali', contact_phone: '+971', is_primary: true }])
+            : jsonOk(partner),
+        );
+        const dev = await inventoryService.getDeveloper('p 1');
+        expect(dev).toMatchObject({
+          id: 'p1', name: 'Emaar', company: 'Emaar Properties PJSC', contact_name: 'Ali', phone: '+971',
+          website: 'https://emaar.com', logo_url: 'https://cdn/x.png', account_manager: 'Sara', status: 'active',
+        });
+        const urls = mockFetch.mock.calls.map((c) => c[0]);
+        expect(urls.some((u: string) => u.endsWith('/v1/partners/details/p%201'))).toBe(true);
+        expect(urls.some((u: string) => u.endsWith('/v1/partners/p%201/contacts?org_id=org-1'))).toBe(true);
+        const init = mockFetch.mock.calls[0][1];
+        expect(init.headers).toMatchObject({ Authorization: 'Bearer tok', 'X-Org-Id': 'org-1', 'X-Tenant-Id': 't-1' });
+      });
+    });
+
+    describe('When contacts come in a data envelope without a primary', () => {
+      it('Then the first contact is used', async () => {
+        mockFetch.mockImplementation((url: string) =>
+          url.includes('/contacts') ? jsonOk({ data: [{ contact_name: 'First' }] }) : jsonOk(partner),
+        );
+        await expect(inventoryService.getDeveloper('p1')).resolves.toMatchObject({ contact_name: 'First' });
+      });
+    });
+
+    describe('When the contacts read fails or is not a list', () => {
+      it('Then the developer still loads without a contact', async () => {
+        mockFetch.mockImplementation((url: string) =>
+          url.includes('/contacts') ? jsonFail(403, {}) : jsonOk(partner),
+        );
+        await expect(inventoryService.getDeveloper('p1')).resolves.toMatchObject({ name: 'Emaar', contact_name: null });
+        mockFetch.mockImplementation((url: string) =>
+          url.includes('/contacts') ? jsonOk({ data: 'nope' }) : jsonOk(partner),
+        );
+        await expect(inventoryService.getDeveloper('p1')).resolves.toMatchObject({ contact_name: null });
+      });
+    });
+
+    describe('When the partner read fails', () => {
+      it('Then the error propagates', async () => {
+        mockFetch.mockImplementation((url: string) => (url.includes('/contacts') ? jsonOk([]) : jsonFail(404, {})));
+        await expect(inventoryService.getDeveloper('p1')).rejects.toThrow('Request failed (404)');
+      });
+    });
+
+    describe('When no org is set', () => {
+      it('Then it throws without calling Core', async () => {
+        inventoryService.setOrgId('');
+        await expect(inventoryService.getDeveloper('p1')).rejects.toThrow('OrgId not set');
+        expect(mockFetch).not.toHaveBeenCalled();
+      });
     });
   });
 });

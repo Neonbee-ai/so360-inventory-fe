@@ -13,6 +13,8 @@ import { usePropertyUnits } from '../hooks/usePropertyUnits';
 import ProjectDetailsSection from '../components/categories/ProjectDetailsSection';
 import GenerateUnitsDialog from '../components/categories/GenerateUnitsDialog';
 import AvailabilityMatrix from '../components/categories/AvailabilityMatrix';
+import DeveloperCard from '../components/categories/DeveloperCard';
+import { projectsOfDeveloper } from '../utils/developerProfile';
 import { renderCategoryIcon, isPresetUrl } from '../constants/categoryIcons';
 import {
     assessImageForSlot,
@@ -309,6 +311,15 @@ const CategoriesPage = () => {
     useEffect(() => { fetchCategories(); }, []);
 
     const selectedCategory = useMemo(() => categories.find(c => c.id === selectedId) || null, [categories, selectedId]);
+    // The saved developer of the selected project (root category); drafts are not looked up.
+    const selectedDeveloperId =
+        propertyUnits && selectedCategory && !selectedCategory.parent_id
+            ? selectedCategory.metadata?.developer_partner_id || null
+            : null;
+    const developerProjects = useMemo(
+        () => projectsOfDeveloper(categories, selectedDeveloperId),
+        [categories, selectedDeveloperId],
+    );
 
     const itemsCountMap = useMemo(() => {
         // placeholder — item count per category not fetched here
@@ -521,6 +532,15 @@ const CategoriesPage = () => {
                             {/* Real estate: project details, unit generation and availability */}
                             {propertyUnits && (
                                 <div className="space-y-4" data-testid="property-units-panel">
+                                    {selectedDeveloperId && (
+                                        <DeveloperCard
+                                            key={selectedDeveloperId}
+                                            partnerId={selectedDeveloperId}
+                                            projects={developerProjects}
+                                            currentProjectId={selectedCategory.id}
+                                            onSelectProject={setSelectedId}
+                                        />
+                                    )}
                                     {!selectedCategory.parent_id && (
                                         <ProjectDetailsSection
                                             value={editMetadata}
@@ -552,6 +572,7 @@ const CategoriesPage = () => {
                                             key={selectedCategory.id}
                                             categoryId={selectedCategory.id}
                                             refreshKey={availabilityKey}
+                                            canManage={canManage}
                                         />
                                     )}
                                     {selectedCategory.parent_id && (
