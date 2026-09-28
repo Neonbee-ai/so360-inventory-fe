@@ -6,7 +6,10 @@ import {
   productImageNeedsAttention,
   CATEGORY_IMAGE_SLOT,
   CATEGORY_BANNER_SLOT,
+  CATEGORY_ICON_SLOT,
+  PRODUCT_RECOMMENDED_PX,
 } from './imageRatio';
+import { IMAGE_FIT_SLOTS } from './imageFit';
 
 describe('ratioLabel', () => {
   describe('Given a photo close to a common shape', () => {
@@ -76,6 +79,11 @@ describe('assessProductImage', () => {
     it('When exactly 800px / Then it is not flagged', () => {
       expect(assessProductImage(800, 800).ok).toBe(true);
     });
+
+    it('When flagged / Then it recommends the stored product size, 2000×2000', () => {
+      expect(assessProductImage(600, 600).issues[0]).toMatch(/Aim for 2000×2000/);
+      expect(assessProductImage(600, 600).issues[0]).not.toMatch(/1200×1200/);
+    });
   });
 
   describe('Given a small and very tall photo', () => {
@@ -132,6 +140,18 @@ describe('assessImageForSlot', () => {
 
     it('When a 3:1 image (within 15% of 16:5) / Then the shape is accepted', () => {
       expect(assessImageForSlot(2400, 800, CATEGORY_BANNER_SLOT).ok).toBe(true);
+    });
+  });
+});
+
+describe('slot sizes stay in step with the upload auto-fit table', () => {
+  describe('Given the imageFit slot table', () => {
+    it('When the badge constants are read / Then they match the stored sizes the uploader fits to', () => {
+      expect(PRODUCT_RECOMMENDED_PX).toBe(IMAGE_FIT_SLOTS.product.width);
+      expect(PRODUCT_RECOMMENDED_PX).toBe(2000);
+      expect(CATEGORY_IMAGE_SLOT).toMatchObject({ ratio: 1, recommendedWidth: 1600, recommendedHeight: 1600 });
+      expect(CATEGORY_BANNER_SLOT).toMatchObject({ ratio: 16 / 5, recommendedWidth: 2400, recommendedHeight: 750 });
+      expect(CATEGORY_ICON_SLOT).toMatchObject({ ratio: 1, recommendedWidth: 800, recommendedHeight: 800 });
     });
   });
 });
