@@ -4,6 +4,7 @@ import { inventoryService } from '../../services/inventoryService';
 import { mediaService } from '../../services/mediaService';
 import { PROJECT_STATUSES, type CategoryMetadata, type DeveloperOption, type DeveloperRole, type ProjectStatus } from '../../types/inventory';
 import { PaymentPlanTemplatesEditor } from './PaymentPlanTemplatesEditor';
+import { TeamAgentPicker, UserAgentPicker } from './AgentPickers';
 
 const BROCHURE_MAX_BYTES = 10 * 1024 * 1024;
 const BROCHURE_TYPES = ['application/pdf', 'image/png', 'image/jpeg', 'image/webp'];
@@ -299,8 +300,8 @@ export const ProjectDetailsSection: React.FC<ProjectDetailsSectionProps> = ({ va
                 <ListInput label="Video URLs" value={value.videos} disabled={disabled} onCommit={(v) => set({ videos: v })} />
                 <ListInput label="Floor plan URLs" value={value.floor_plans} disabled={disabled} onCommit={(v) => set({ floor_plans: v })} />
                 <ListInput label="Document URLs" value={value.documents} disabled={disabled} onCommit={(v) => set({ documents: v })} />
-                <ListInput label="Assigned user IDs" value={value.assigned_user_ids} disabled={disabled} onCommit={(v) => set({ assigned_user_ids: v })} />
-                <ListInput label="Assigned team IDs" value={value.assigned_team_ids} disabled={disabled} onCommit={(v) => set({ assigned_team_ids: v })} />
+                <UserAgentPicker value={value.assigned_user_ids} disabled={disabled} onChange={(v) => set({ assigned_user_ids: v })} />
+                <TeamAgentPicker value={value.assigned_team_ids} disabled={disabled} onChange={(v) => set({ assigned_team_ids: v })} />
                 <Field label="Map latitude">
                     <input aria-label="Map latitude" type="number" step="any" className={inputCls} value={value.map?.lat ?? ''} disabled={disabled}
                         onChange={(e) => set({ map: compact({ ...(value.map || {}), lat: numberOrNull(e.target.value) }) })} />

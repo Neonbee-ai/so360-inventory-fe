@@ -209,6 +209,13 @@ export interface UnitAllocation {
 /** Partner roles offered by the project Developer picker. */
 export type DeveloperRole = 'developer' | 'property_owner';
 
+/** A user or team offered by the agent pickers. */
+export interface AgentOption {
+    id: string;
+    name: string;
+    detail?: string;
+}
+
 export interface DeveloperOption {
     id: string;
     name: string;

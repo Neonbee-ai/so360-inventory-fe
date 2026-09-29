@@ -7,11 +7,15 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const mockGet = vi.fn();
 const mockSet = vi.fn();
+const mockSearchUsers = vi.fn();
+const mockListTeams = vi.fn();
 vi.mock('../../services/mediaService', () => ({ mediaService: {} }));
 vi.mock('../../services/inventoryService', () => ({
   inventoryService: {
     getUnitAllocation: (...a: any[]) => mockGet(...a),
     setUnitAllocation: (...a: any[]) => mockSet(...a),
+    searchOrgUsers: (...a: any[]) => mockSearchUsers(...a),
+    listTeams: (...a: any[]) => mockListTeams(...a),
   },
 }));
 
@@ -26,11 +30,20 @@ const categories: ItemCategory[] = [
 beforeEach(() => {
   mockGet.mockReset();
   mockSet.mockReset();
+  mockSearchUsers.mockReset();
+  mockListTeams.mockReset();
+  mockSearchUsers.mockResolvedValue([
+    { id: 'u1', name: 'Aisha Khan' },
+    { id: 'u3', name: 'Omar Three' },
+    { id: 'u5', name: 'Uma Five' },
+  ]);
+  mockListTeams.mockResolvedValue([{ id: 't7', name: 'Sales' }, { id: 't8', name: 'Leasing' }]);
 });
 
-const typeUsers = (v: string) => {
-  const input = screen.getByLabelText('Assigned user IDs');
-  fireEvent.change(input, { target: { value: v } });
+const pickUser = async (name: string) => {
+  const input = screen.getByLabelText('Search Assigned users');
+  fireEvent.focus(input);
+  fireEvent.click(await screen.findByRole('option', { name: new RegExp(name) }));
   fireEvent.blur(input);
 };
 
@@ -54,7 +67,7 @@ describe('Given a unit with no own agents', () => {
       mockSet.mockResolvedValue(undefined);
       render(<UnitAllocationSection itemId="i1" towerId="tw" categories={categories} canManage />);
       await screen.findByTestId('unit-allocation');
-      typeUsers('u5');
+      await pickUser('Uma Five');
       const save = screen.getByRole('button', { name: 'Save agents' }) as HTMLButtonElement;
       expect(save.disabled).toBe(false);
       fireEvent.click(save);
@@ -70,7 +83,7 @@ describe('Given a unit with no own agents', () => {
       mockSet.mockReturnValueOnce(new Promise((_, rej) => { fail = rej; }));
       render(<UnitAllocationSection itemId="i1" towerId="tw" categories={categories} canManage />);
       await screen.findByTestId('unit-allocation');
-      typeUsers('u5');
+      await pickUser('Uma Five');
       fireEvent.click(screen.getByRole('button', { name: 'Save agents' }));
       expect(await screen.findByText('Saving…')).toBeTruthy();
       fail(new Error('Request failed (500)'));
@@ -82,7 +95,7 @@ describe('Given a unit with no own agents', () => {
       mockSet.mockRejectedValueOnce({});
       render(<UnitAllocationSection itemId="i1" towerId="tw" categories={categories} canManage />);
       await screen.findByTestId('unit-allocation');
-      typeUsers('u5');
+      await pickUser('Uma Five');
       fireEvent.click(screen.getByRole('button', { name: 'Save agents' }));
       expect(await screen.findByText('Failed to save agents')).toBeTruthy();
     });
@@ -95,12 +108,11 @@ describe('Given a unit with its own teams', () => {
     render(<UnitAllocationSection itemId="i1" towerId="tw" categories={categories} canManage />);
     await screen.findByTestId('unit-allocation');
     expect(screen.queryByTestId('inherited-teams')).toBeNull();
-    const teams = screen.getByLabelText('Assigned team IDs');
-    fireEvent.change(teams, { target: { value: 't8' } });
-    fireEvent.blur(teams);
+    fireEvent.focus(screen.getByLabelText('Search Assigned teams'));
+    fireEvent.click(await screen.findByRole('option', { name: /Leasing/ }));
     expect((screen.getByRole('button', { name: 'Save agents' }) as HTMLButtonElement).disabled).toBe(false);
-    fireEvent.change(teams, { target: { value: 't7' } });
-    fireEvent.blur(teams);
+    fireEvent.click(screen.getByRole('button', { name: 'Remove Leasing' }));
+    expect(screen.getByText('Sales')).toBeTruthy();
     expect((screen.getByRole('button', { name: 'Save agents' }) as HTMLButtonElement).disabled).toBe(true);
   });
 });
@@ -110,7 +122,9 @@ describe('Given a viewer without manage rights', () => {
     mockGet.mockResolvedValue({ assigned_user_ids: ['u1'], assigned_team_ids: null });
     render(<UnitAllocationSection itemId="i1" towerId={null} categories={categories} canManage={false} />);
     await screen.findByTestId('unit-allocation');
-    expect((screen.getByLabelText('Assigned user IDs') as HTMLInputElement).disabled).toBe(true);
+    expect(await screen.findByText('Aisha Khan')).toBeTruthy();
+    expect(screen.queryByLabelText('Search Assigned users')).toBeNull();
+    expect(screen.queryByRole('button', { name: /Remove/ })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Save agents' })).toBeNull();
     expect(screen.getByTestId('inherited-teams').textContent).toBe('Not assigned');
   });
@@ -143,7 +157,8 @@ describe('Given the unit changes or unmounts mid-load', () => {
     rerender(<UnitAllocationSection itemId="i3" towerId="tw" categories={categories} canManage />);
     rejectSecond(new Error('late'));
     await screen.findByTestId('unit-allocation');
-    expect((screen.getByLabelText('Assigned user IDs') as HTMLInputElement).value).toBe('u3');
+    expect(await screen.findByText('Omar Three')).toBeTruthy();
+    expect(screen.queryByText('u-late')).toBeNull();
     expect(screen.queryByText('late')).toBeNull();
     unmount();
   });

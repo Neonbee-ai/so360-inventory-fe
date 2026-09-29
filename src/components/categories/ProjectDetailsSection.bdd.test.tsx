@@ -6,7 +6,11 @@ const mockSearchDevelopers = vi.fn();
 const mockUploadFile = vi.fn();
 
 vi.mock('../../services/inventoryService', () => ({
-  inventoryService: { searchDevelopers: (...a: any[]) => mockSearchDevelopers(...a) },
+  inventoryService: {
+    searchDevelopers: (...a: any[]) => mockSearchDevelopers(...a),
+    searchOrgUsers: () => Promise.resolve([]),
+    listTeams: () => Promise.resolve([]),
+  },
 }));
 vi.mock('../../services/mediaService', () => ({
   mediaService: { uploadFile: (...a: any[]) => mockUploadFile(...a) },

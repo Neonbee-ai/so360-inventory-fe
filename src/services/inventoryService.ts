@@ -2,6 +2,7 @@ import { createRequestCache } from './requestCache';
 import { notifyQuotaExceeded } from './quotaExceeded';
 import type {
     CategoryMetadata,
+    AgentOption,
     DeveloperOption,
     DeveloperProfile,
     DeveloperRole,
@@ -43,6 +44,7 @@ const CLOSED_PROJECT_STATUSES = new Set([
 const CROSS_SERVICE_BUILD_ENV: Record<string, string | undefined> = {
     VITE_SO360_PROJECTS_API: (import.meta as any).env.VITE_SO360_PROJECTS_API,
     VITE_SO360_MANUFACTURING_API: (import.meta as any).env.VITE_SO360_MANUFACTURING_API,
+    VITE_SO360_PEOPLE_API: (import.meta as any).env.VITE_SO360_PEOPLE_API,
 };
 
 const CLOSED_WORK_ORDER_STATUSES = new Set([
@@ -662,6 +664,46 @@ class InventoryService {
         ]);
         const seen = new Set(developers.map((d) => d.id));
         return [...developers, ...owners.filter((o) => !seen.has(o.id))];
+    }
+
+    /**
+     * Org users who can be assigned as agents on a project, tower or unit.
+     * Reads Core's directory search and keeps only Core users: People Connect
+     * entries in the same response carry person ids, which are not user ids.
+     */
+    async searchOrgUsers(search?: string): Promise<AgentOption[]> {
+        if (!this.orgId) throw new Error('OrgId not set');
+        const qs = new URLSearchParams({ org_id: this.orgId, limit: '50' });
+        const q = (search || '').trim();
+        if (q) qs.set('q', q);
+        const res = await this.crossServiceGet(`${this.coreOrigin}/v1/directory/search?${qs.toString()}`);
+        const list = res?.data || (Array.isArray(res) ? res : []);
+        return (Array.isArray(list) ? list : [])
+            .filter((e: any) => e && e.id && (!e.source || e.source === 'core_user'))
+            .map((e: any): AgentOption => ({
+                id: String(e.id),
+                name: String(e.full_name || e.email || e.id),
+                detail: e.email ? String(e.email) : undefined,
+            }));
+    }
+
+    /**
+     * Teams for agent assignment. CRM's lead-assignment engine resolves
+     * assigned_team_ids as People Connect department ids, so that is the
+     * source. Errors propagate (e.g. 403 without departments.read) so the
+     * caller can fall back to entering ids.
+     */
+    async listTeams(): Promise<AgentOption[]> {
+        const origin = this.crossServiceOrigin('VITE_SO360_PEOPLE_API', 'people', 3015);
+        const res = await this.crossServiceGet(`${origin}/departments?limit=100`);
+        const list = res?.data || (Array.isArray(res) ? res : []);
+        return (Array.isArray(list) ? list : [])
+            .filter((d: any) => d && d.id)
+            .map((d: any): AgentOption => ({
+                id: String(d.id),
+                name: String(d.name || d.code || d.id),
+                detail: d.code ? String(d.code) : undefined,
+            }));
     }
 
     /**

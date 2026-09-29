@@ -1,6 +1,6 @@
 import React from 'react';
 import { Users } from 'lucide-react';
-import { ListInput } from './ProjectDetailsSection';
+import { TeamAgentPicker, UserAgentPicker } from './AgentPickers';
 import type { UnitAllocation } from '../../types/inventory';
 import type { InheritedAllocation, InheritedList } from '../../utils/unitAllocation';
 
@@ -34,13 +34,13 @@ export const AssignedAgentsPanel: React.FC<AssignedAgentsPanelProps> = ({ value,
         <p className="text-[11px] text-slate-500">Leave empty to use the parent&apos;s agents for this {scope}.</p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-                <ListInput label="Assigned user IDs" value={value.assigned_user_ids} disabled={disabled}
-                    onCommit={(v) => onChange({ ...value, assigned_user_ids: v })} />
+                <UserAgentPicker value={value.assigned_user_ids} disabled={disabled}
+                    onChange={(v) => onChange({ ...value, assigned_user_ids: v })} />
                 <Hint own={value.assigned_user_ids} inherited={inherited.users} testId="inherited-users" />
             </div>
             <div>
-                <ListInput label="Assigned team IDs" value={value.assigned_team_ids} disabled={disabled}
-                    onCommit={(v) => onChange({ ...value, assigned_team_ids: v })} />
+                <TeamAgentPicker value={value.assigned_team_ids} disabled={disabled}
+                    onChange={(v) => onChange({ ...value, assigned_team_ids: v })} />
                 <Hint own={value.assigned_team_ids} inherited={inherited.teams} testId="inherited-teams" />
             </div>
         </div>
