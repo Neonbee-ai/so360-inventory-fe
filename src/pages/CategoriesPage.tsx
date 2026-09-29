@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Tag, Plus, Upload, X, Loader2, AlertCircle, ImageIcon, Save, Building2, LayoutGrid, Sparkles } from 'lucide-react';
+import { Tag, Plus, Upload, X, Loader2, AlertCircle, ImageIcon, Save, ChevronDown, ChevronRight, Building2, LayoutGrid, Sparkles } from 'lucide-react';
 import { inventoryService } from '../services/inventoryService';
 import { mediaService } from '../services/mediaService';
 import { useAuth } from '../hooks/useAuth';
@@ -38,6 +38,23 @@ const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 const IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/svg+xml', 'image/webp'];
 const IMAGE_ACCEPT = IMAGE_TYPES.join(',');
 
+/** Limits enforced by inventory-be (CategoryFieldsDto) and migration 057. */
+export const CATEGORY_SEO_LIMITS = { metaTitle: 70, metaDescription: 160, bannerAlt: 200, slug: 100 } as const;
+const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+/** Same shape the DB trigger derives when the slug is left blank. */
+const slugFromName = (name: string) =>
+    name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'category';
+
+const CharCount: React.FC<{ value: string; max: number; testId: string }> = ({ value, max, testId }) => (
+    <span
+        data-testid={testId}
+        className={`text-[11px] tabular-nums ${value.length > max ? 'text-rose-400' : value.length > max * 0.9 ? 'text-amber-400' : 'text-slate-500'}`}
+    >
+        {value.length}/{max}
+    </span>
+);
+
 const ImageUploadZone: React.FC<{
     label: string;
     subLabel?: string;
@@ -49,7 +66,9 @@ const ImageUploadZone: React.FC<{
     slot?: ImageSlotSpec;
     /** Stored size + cap: files are auto-fitted to it before upload and the chip shows it. */
     fitSlot: ImageFitSlot;
-}> = ({ label, subLabel, currentUrl, aspectClass = 'aspect-[3/1]', onUpload, onRemove, slot, fitSlot }) => {
+    /** Alt text for the preview image. */
+    alt?: string;
+}> = ({ label, subLabel, currentUrl, aspectClass = 'aspect-[3/1]', onUpload, onRemove, slot, fitSlot, alt = '' }) => {
     const fileRef = useRef<HTMLInputElement>(null);
     const [uploading, setUploading] = useState(false);
     const [uploadError, setUploadError] = useState<string | null>(null);
@@ -101,7 +120,7 @@ const ImageUploadZone: React.FC<{
                 <div className={`relative ${aspectClass} rounded-xl overflow-hidden bg-slate-800 border border-slate-700`}>
                     <img
                         src={currentUrl}
-                        alt=""
+                        alt={alt}
                         className="w-full h-full object-cover"
                         onLoad={e => {
                             const { naturalWidth: w, naturalHeight: h } = e.currentTarget;
@@ -292,6 +311,11 @@ const CategoriesPage = () => {
     const [editImageUrl, setEditImageUrl] = useState<string | null>(null);
     const [editBannerUrl, setEditBannerUrl] = useState<string | null>(null);
     const [editSortOrder, setEditSortOrder] = useState(0);
+    const [editSlug, setEditSlug] = useState('');
+    const [editMetaTitle, setEditMetaTitle] = useState('');
+    const [editMetaDesc, setEditMetaDesc] = useState('');
+    const [editBannerAlt, setEditBannerAlt] = useState('');
+    const [seoOpen, setSeoOpen] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [saveError, setSaveError] = useState<string | null>(null);
     const [saveSuccess, setSaveSuccess] = useState(false);
@@ -340,6 +364,10 @@ const CategoriesPage = () => {
         setEditImageUrl(selectedCategory.image_url || null);
         setEditBannerUrl(selectedCategory.banner_url || null);
         setEditSortOrder(selectedCategory.sort_order ?? 0);
+        setEditSlug(selectedCategory.slug || '');
+        setEditMetaTitle(selectedCategory.meta_title || '');
+        setEditMetaDesc(selectedCategory.meta_description || '');
+        setEditBannerAlt(selectedCategory.banner_alt || '');
         setEditMetadata({ ...(selectedCategory.metadata || {}) });
         setShowGenerate(false);
         setShowAvailability(false);
@@ -384,8 +412,39 @@ const CategoriesPage = () => {
         }
     };
 
+    const slugValue = editSlug.trim();
+    const slugError = slugValue && !SLUG_PATTERN.test(slugValue)
+        ? 'Use lowercase letters, numbers and single hyphens (e.g. summer-shoes)'
+        : null;
+    const previewSlug = slugValue || selectedCategory?.slug || slugFromName(editName);
+
+    /**
+     * SEO fields that differ from the saved category. Untouched fields are left
+     * out so plain edits never name columns that may not exist before migration 057.
+     */
+    const changedSeoFields = () => {
+        const out: { slug?: string; meta_title?: string | null; meta_description?: string | null; banner_alt?: string | null } = {};
+        if (slugValue !== (selectedCategory?.slug ?? '')) out.slug = slugValue; // '' → DB regenerates from name
+        const fields: Array<['meta_title' | 'meta_description' | 'banner_alt', string]> = [
+            ['meta_title', editMetaTitle],
+            ['meta_description', editMetaDesc],
+            ['banner_alt', editBannerAlt],
+        ];
+        for (const [key, value] of fields) {
+            const saved = selectedCategory?.[key];
+            const next = value.trim();
+            if (next !== (saved ?? '')) out[key] = next || null;
+        }
+        return out;
+    };
+
     const handleSaveDetail = async () => {
         if (!selectedId || !editName.trim()) return;
+        if (slugError) {
+            setSeoOpen(true);
+            setSaveError(slugError);
+            return;
+        }
         const isProject = propertyUnits && !selectedCategory?.parent_id;
         const isTower = unitAllocation && !!selectedCategory?.parent_id;
         const planError = isProject ? templatesError(editMetadata.payment_plan_templates) : null;
@@ -405,6 +464,7 @@ const CategoriesPage = () => {
                     ? { banner_url: editBannerUrl }
                     : {}),
                 sort_order: editSortOrder,
+                ...changedSeoFields(),
                 // Project details live on the root category only, and only in real-estate mode.
                 ...(isProject
                     ? {
@@ -547,7 +607,7 @@ const CategoriesPage = () => {
                                     {saveError && <span className="text-xs text-rose-400">{saveError}</span>}
                                     <button
                                         onClick={handleSaveDetail}
-                                        disabled={isSaving || !editName.trim()}
+                                        disabled={isSaving || !editName.trim() || !!slugError}
                                         className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                                     >
                                         {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
@@ -647,7 +707,24 @@ const CategoriesPage = () => {
                                 fitSlot={IMAGE_FIT_SLOTS.categoryBanner}
                                 onUpload={url => setEditBannerUrl(url)}
                                 onRemove={() => setEditBannerUrl(null)}
+                                alt={editBannerAlt}
                             />
+                            <div className="-mt-3">
+                                <div className="flex items-center justify-between mb-1">
+                                    <label htmlFor="category-banner-alt" className="text-xs font-medium text-slate-400">Banner alt text</label>
+                                    <CharCount value={editBannerAlt} max={CATEGORY_SEO_LIMITS.bannerAlt} testId="banner-alt-count" />
+                                </div>
+                                <input
+                                    id="category-banner-alt"
+                                    type="text"
+                                    value={editBannerAlt}
+                                    maxLength={CATEGORY_SEO_LIMITS.bannerAlt}
+                                    onChange={e => setEditBannerAlt(e.target.value)}
+                                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-50 focus:outline-none focus:border-blue-500 placeholder:text-slate-600"
+                                    placeholder={`Describe the banner, e.g. "${editName || 'Category'} collection on display"`}
+                                />
+                                <p className="text-[11px] text-slate-600 mt-1">Read by screen readers and search engines. Blank uses the category name.</p>
+                            </div>
                             <div className="w-48">
                                 <ImageUploadZone
                                     label="Category image"
@@ -766,6 +843,93 @@ const CategoriesPage = () => {
                                     />
                                     <p className="text-xs text-slate-600 mt-1">Lower = appears first</p>
                                 </div>
+                            </div>
+
+                            {/* Search engine listing (storefront /c/<slug>) */}
+                            <div className="border-t border-slate-800 pt-5">
+                                <button
+                                    type="button"
+                                    onClick={() => setSeoOpen(o => !o)}
+                                    aria-expanded={seoOpen}
+                                    aria-controls="category-seo-section"
+                                    className="flex w-full items-center gap-2 text-left"
+                                >
+                                    {seoOpen ? <ChevronDown size={14} className="text-slate-400" /> : <ChevronRight size={14} className="text-slate-400" />}
+                                    <span className="text-sm font-semibold text-slate-200">Search engine listing</span>
+                                    {!seoOpen && (
+                                        <span className="ml-auto truncate text-xs text-slate-500">/c/{previewSlug}</span>
+                                    )}
+                                </button>
+                                {seoOpen && (
+                                    <div id="category-seo-section" className="mt-4 space-y-4">
+                                        {/* Google-style preview */}
+                                        <div data-testid="seo-snippet-preview" className="rounded-lg border border-slate-700 bg-slate-800/40 px-4 py-3">
+                                            <p className="text-xs text-slate-400 truncate">
+                                                <span data-testid="seo-snippet-url">/c/{previewSlug}</span>
+                                            </p>
+                                            <p data-testid="seo-snippet-title" className="text-base text-blue-400 truncate">
+                                                {editMetaTitle.trim() || editName.trim() || 'Category'}
+                                            </p>
+                                            <p data-testid="seo-snippet-description" className="text-xs text-slate-400 line-clamp-2">
+                                                {editMetaDesc.trim() || editDesc.trim() || 'Add a meta description to control the text shown under the title in search results.'}
+                                            </p>
+                                        </div>
+
+                                        <div>
+                                            <label htmlFor="category-slug" className="text-xs font-medium text-slate-400 mb-1 block">URL slug</label>
+                                            <div className="flex items-center rounded-lg border border-slate-700 bg-slate-800 focus-within:border-blue-500">
+                                                <span className="pl-3 text-sm text-slate-500">/c/</span>
+                                                <input
+                                                    id="category-slug"
+                                                    type="text"
+                                                    value={editSlug}
+                                                    maxLength={CATEGORY_SEO_LIMITS.slug}
+                                                    onChange={e => setEditSlug(e.target.value)}
+                                                    aria-invalid={!!slugError}
+                                                    className="w-full bg-transparent px-1 py-2 text-sm text-slate-50 focus:outline-none placeholder:text-slate-600"
+                                                    placeholder={slugFromName(editName)}
+                                                />
+                                            </div>
+                                            {slugError ? (
+                                                <p data-testid="slug-error" className="text-[11px] text-rose-400 mt-1">{slugError}</p>
+                                            ) : (
+                                                <p className="text-[11px] text-slate-600 mt-1">Leave blank to generate it from the name. Changing it changes the page address.</p>
+                                            )}
+                                        </div>
+
+                                        <div>
+                                            <div className="flex items-center justify-between mb-1">
+                                                <label htmlFor="category-meta-title" className="text-xs font-medium text-slate-400">Meta title</label>
+                                                <CharCount value={editMetaTitle} max={CATEGORY_SEO_LIMITS.metaTitle} testId="meta-title-count" />
+                                            </div>
+                                            <input
+                                                id="category-meta-title"
+                                                type="text"
+                                                value={editMetaTitle}
+                                                maxLength={CATEGORY_SEO_LIMITS.metaTitle}
+                                                onChange={e => setEditMetaTitle(e.target.value)}
+                                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-50 focus:outline-none focus:border-blue-500 placeholder:text-slate-600"
+                                                placeholder={editName || 'Category name'}
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <div className="flex items-center justify-between mb-1">
+                                                <label htmlFor="category-meta-description" className="text-xs font-medium text-slate-400">Meta description</label>
+                                                <CharCount value={editMetaDesc} max={CATEGORY_SEO_LIMITS.metaDescription} testId="meta-description-count" />
+                                            </div>
+                                            <textarea
+                                                id="category-meta-description"
+                                                value={editMetaDesc}
+                                                maxLength={CATEGORY_SEO_LIMITS.metaDescription}
+                                                onChange={e => setEditMetaDesc(e.target.value)}
+                                                rows={3}
+                                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-50 focus:outline-none focus:border-blue-500 placeholder:text-slate-600 resize-none"
+                                                placeholder="A one- or two-sentence summary shown under the title in search results"
+                                            />
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Sales channel visibility */}

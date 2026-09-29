@@ -541,7 +541,7 @@ class InventoryService {
         });
     }
 
-    async updateCategory(id: string, data: { name?: string; description?: string; parent_id?: string | null; icon_url?: string | null; image_url?: string | null; banner_url?: string | null; color?: string | null; sort_order?: number; metadata?: CategoryMetadata | null }) {
+    async updateCategory(id: string, data: { name?: string; description?: string; parent_id?: string | null; icon_url?: string | null; image_url?: string | null; banner_url?: string | null; color?: string | null; sort_order?: number; slug?: string; meta_title?: string | null; meta_description?: string | null; banner_alt?: string | null; metadata?: CategoryMetadata | null }) {
         return this.request(`/settings/${this.orgId}/categories/${id}`, {
             method: 'PATCH',
             body: JSON.stringify(data),
