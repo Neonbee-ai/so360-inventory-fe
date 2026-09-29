@@ -17,6 +17,14 @@ export interface ItemCategory {
     banner_url?: string | null;
     color?: string | null;
     sort_order?: number;
+    /** Storefront URL segment (`/c/<slug>`); the DB derives one from the name when blank. */
+    slug?: string | null;
+    /** Search-result headline, ≤70 chars (absent until migration 057). */
+    meta_title?: string | null;
+    /** Search-result snippet, ≤160 chars (absent until migration 057). */
+    meta_description?: string | null;
+    /** Alt text for banner_url, ≤200 chars (absent until migration 057). */
+    banner_alt?: string | null;
     /** Real-estate project details (submodule:inventory:property_units). */
     metadata?: CategoryMetadata | null;
 }
