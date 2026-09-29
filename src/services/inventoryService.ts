@@ -1,5 +1,16 @@
 import { createRequestCache } from './requestCache';
 import { notifyQuotaExceeded } from './quotaExceeded';
+import type {
+    CategoryMetadata,
+    DeveloperProfile,
+    GenerateUnitsDto,
+    GenerateUnitsResult,
+    ProjectAvailability,
+    UnitStatusOverride,
+    UnitStatusOverrideResult,
+} from '../types/inventory';
+import { toCounts } from '../utils/unitGrid';
+import { toDeveloperProfile } from '../utils/developerProfile';
 
 /**
  * Statuses that mean "this can no longer receive material". Kept as exclusion
@@ -524,7 +535,7 @@ class InventoryService {
         });
     }
 
-    async updateCategory(id: string, data: { name?: string; description?: string; parent_id?: string | null; icon_url?: string | null; image_url?: string | null; banner_url?: string | null; color?: string | null; sort_order?: number; slug?: string; meta_title?: string | null; meta_description?: string | null; banner_alt?: string | null }) {
+    async updateCategory(id: string, data: { name?: string; description?: string; parent_id?: string | null; icon_url?: string | null; image_url?: string | null; banner_url?: string | null; color?: string | null; sort_order?: number; slug?: string; meta_title?: string | null; meta_description?: string | null; banner_alt?: string | null; metadata?: CategoryMetadata | null }) {
         return this.request(`/settings/${this.orgId}/categories/${id}`, {
             method: 'PATCH',
             body: JSON.stringify(data),
@@ -535,6 +546,109 @@ class InventoryService {
         return this.request(`/settings/${this.orgId}/categories/${id}`, {
             method: 'DELETE',
         });
+    }
+
+    // ==================== Property Units (submodule:inventory:property_units) ====================
+
+    /** Bulk-create unit items on a tower (child category). */
+    async generateUnits(categoryId: string, dto: GenerateUnitsDto): Promise<GenerateUnitsResult> {
+        // Backend contract: `pattern` (not numbering_pattern), integer stacks,
+        // and absent (not null) optional stack attributes.
+        const stacks = dto.stacks.map((s) => {
+            const out: Record<string, any> = { stack: Number.parseInt(String(s.stack), 10) };
+            for (const key of ['bedrooms', 'area_sqft', 'view', 'price'] as const) {
+                if (s[key] !== null && s[key] !== undefined && s[key] !== '') out[key] = s[key];
+            }
+            return out;
+        });
+        const body: Record<string, any> = {
+            floor_from: dto.floor_from,
+            floor_to: dto.floor_to,
+            stacks,
+        };
+        if (dto.units_per_floor) body.units_per_floor = dto.units_per_floor;
+        if (dto.numbering_pattern) body.pattern = dto.numbering_pattern;
+        if (dto.sku_prefix) body.sku_prefix = dto.sku_prefix;
+        const res = await this.request(`/property/${this.orgId}/towers/${categoryId}/units/generate`, {
+            method: 'POST',
+            body: JSON.stringify(body),
+        });
+        // Units are items — the cached reference catalog is now stale too.
+        this.orgStaticCache.invalidate(`items|${this.orgId}`);
+        return { created: Number(res?.created) || 0, skipped: Number(res?.skipped) || 0 };
+    }
+
+    /** Tower counts + unit grid for a project (root) or a single tower. */
+    async getCategoryAvailability(categoryId: string): Promise<ProjectAvailability> {
+        const res = await this.request(`/property/${this.orgId}/projects/${categoryId}/availability`);
+        // Backend nests tower counts under `counts`; the UI reads them flat.
+        const towers = (Array.isArray(res?.towers) ? res.towers : []).map((t: any) => ({
+            category_id: t?.category_id,
+            name: t?.name,
+            ...toCounts(t?.counts ?? t),
+        }));
+        const units = (Array.isArray(res?.units) ? res.units : []).map((u: any) => ({
+            ...u,
+            stack: u?.stack === null || u?.stack === undefined ? '' : String(u.stack),
+        }));
+        const out: ProjectAvailability = { towers, units };
+        if (res?.totals && typeof res.totals === 'object') out.totals = toCounts(res.totals);
+        return out;
+    }
+
+    /**
+     * Set (or clear with null) a unit's manual status. Blocked / cancelled /
+     * unavailable win over the stock- and reservation-derived status.
+     */
+    async setUnitStatusOverride(
+        itemId: string,
+        override: UnitStatusOverride | null,
+        reason?: string | null,
+    ): Promise<UnitStatusOverrideResult> {
+        const body: Record<string, any> = { override };
+        const trimmed = typeof reason === 'string' ? reason.trim() : '';
+        if (override && trimmed) body.reason = trimmed;
+        const res = await this.request(`/property/${this.orgId}/units/${itemId}/status`, {
+            method: 'PATCH',
+            body: JSON.stringify(body),
+        });
+        // The override lives on the item's attributes — the cached catalog is stale.
+        this.orgStaticCache.invalidate(`items|${this.orgId}`);
+        return res;
+    }
+
+    /**
+     * A developer (Core partner) shaped for the project views. The primary
+     * contact comes from the partner's contacts; if that list is not readable
+     * the card still renders without it.
+     */
+    async getDeveloper(partnerId: string): Promise<DeveloperProfile> {
+        if (!this.orgId) throw new Error('OrgId not set');
+        const id = encodeURIComponent(partnerId);
+        const [p, contacts] = await Promise.all([
+            this.crossServiceGet(`${this.coreOrigin}/v1/partners/details/${id}`),
+            this.crossServiceGet(`${this.coreOrigin}/v1/partners/${id}/contacts?org_id=${encodeURIComponent(this.orgId)}`)
+                .catch(() => null),
+        ]);
+        const list: any[] = Array.isArray(contacts) ? contacts : Array.isArray(contacts?.data) ? contacts.data : [];
+        const primary = list.find((c) => c?.is_primary) || list[0] || null;
+        return toDeveloperProfile(p, primary);
+    }
+
+    /**
+     * Core partners playing the developer role. Relies on Core honouring
+     * `type=developer`; an unknown type is ignored there, so an older Core
+     * returns every partner rather than none.
+     */
+    async searchDevelopers(search?: string): Promise<{ id: string; name: string }[]> {
+        if (!this.orgId) throw new Error('OrgId not set');
+        const qs = new URLSearchParams({ type: 'developer', limit: '100' });
+        if (search) qs.set('search', search);
+        const res = await this.crossServiceGet(`${this.coreOrigin}/v1/partners/${this.orgId}?${qs.toString()}`);
+        const list = res?.data || (Array.isArray(res) ? res : []);
+        return (Array.isArray(list) ? list : [])
+            .filter((p: any) => p && p.id)
+            .map((p: any) => ({ id: String(p.id), name: String(p.name || p.display_name || p.id) }));
     }
 
     // ==================== Category Channel Visibility ====================
