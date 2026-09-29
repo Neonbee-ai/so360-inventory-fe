@@ -36,7 +36,10 @@ export interface CategoryMetadata {
     country?: string | null;
     property_types?: string[] | null;
     price_range?: { min?: number | null; max?: number | null } | null;
+    /** Legacy free text — read-only once structured templates exist. */
     payment_plan?: string | null;
+    /** Structured instalment templates (RE Phase C, max 10). */
+    payment_plan_templates?: PaymentPlanTemplate[] | null;
     commission_percent?: number | null;
     description?: string | null;
     amenities?: string[] | null;
@@ -47,6 +50,51 @@ export interface CategoryMetadata {
     map?: { lat?: number | null; lng?: number | null; url?: string | null } | null;
     assigned_user_ids?: string[] | null;
     assigned_team_ids?: string[] | null;
+}
+
+export const INSTALMENT_TRIGGERS = [
+    'booking',
+    'fixed_date',
+    'days_after_booking',
+    'milestone',
+    'handover',
+    'months_after_handover',
+] as const;
+export type InstalmentTrigger = (typeof INSTALMENT_TRIGGERS)[number];
+
+export const PAYMENT_PLAN_LINE_TYPES = ['percent', 'fixed'] as const;
+export type PaymentPlanLineType = (typeof PAYMENT_PLAN_LINE_TYPES)[number];
+
+export const BILLING_MODES = ['full_invoice', 'invoice_per_instalment', 'schedule_only'] as const;
+export type BillingMode = (typeof BILLING_MODES)[number];
+
+export const PAYMENT_MODES = ['cash', 'cheque', 'pdc', 'bank_transfer', 'mortgage', 'card', 'escrow'] as const;
+export type PaymentMode = (typeof PAYMENT_MODES)[number];
+
+/**
+ * One instalment. `offset` is days (days_after_booking) or months
+ * (months_after_handover); `date` is an ISO date (fixed_date); `milestone`
+ * is free text (milestone). Each is null for any other trigger.
+ */
+export interface PaymentPlanLine {
+    label: string;
+    type: PaymentPlanLineType;
+    value: number;
+    trigger: InstalmentTrigger;
+    offset: number | null;
+    date: string | null;
+    milestone: string | null;
+}
+
+export interface PaymentPlanTemplate {
+    id: string;
+    name: string;
+    is_default: boolean;
+    /** null = the org default. */
+    billing_mode: BillingMode | null;
+    /** null = every mode the org allows. */
+    allowed_modes: PaymentMode[] | null;
+    lines: PaymentPlanLine[];
 }
 
 export const PROJECT_STATUSES = ['planned', 'launched', 'under_construction', 'ready', 'completed', 'on_hold'] as const;
@@ -66,6 +114,8 @@ export interface DeveloperProfile {
     description: string | null;
     logo_url: string | null;
     account_manager: string | null;
+    /** User id of the account manager (Core partners.account_manager_user_id). */
+    account_manager_user_id: string | null;
     status: string | null;
     notes: string | null;
     created_at: string | null;
@@ -148,6 +198,29 @@ export interface AvailabilityUnit {
     status_override?: UnitStatusOverride | null;
     status_override_reason?: string | null;
     deal_ref?: UnitDealRef | null;
+}
+
+/** A unit's own agent / team override (items.custom_attributes). */
+export interface UnitAllocation {
+    assigned_user_ids: string[] | null;
+    assigned_team_ids: string[] | null;
+}
+
+/** Partner roles offered by the project Developer picker. */
+export type DeveloperRole = 'developer' | 'property_owner';
+
+export interface DeveloperOption {
+    id: string;
+    name: string;
+    role: DeveloperRole;
+}
+
+/** Fields the developer card may change on the Core partner. */
+export interface DeveloperUpdate {
+    website?: string;
+    logo_url?: string;
+    status?: 'active' | 'inactive';
+    account_manager_user_id?: string;
 }
 
 export interface ProjectAvailability {

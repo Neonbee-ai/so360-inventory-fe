@@ -65,6 +65,7 @@ describe('Given a Core partner row for a developer', () => {
         description: 'Master developer',
         logo_url: 'https://cdn/logo.png',
         account_manager: 'Sara',
+        account_manager_user_id: null,
         status: 'active',
         notes: 'Key account',
         created_at: '2026-01-01T00:00:00Z',
@@ -83,6 +84,16 @@ describe('Given a Core partner row for a developer', () => {
         website: 'https://col', logo_url: 'https://col/logo', status: 'prospect', notes: 'col note',
         description: 'col desc', country: 'SA', account_manager: 'Omar', address: 'Riyadh',
       });
+    });
+  });
+
+  describe('When the account manager user id is a column or only in metadata', () => {
+    it('Then the column wins and metadata is the fallback', () => {
+      expect(toDeveloperProfile({ id: 'x', account_manager_user_id: 'u-col', metadata: { account_manager_user_id: 'u-meta' } }))
+        .toMatchObject({ account_manager_user_id: 'u-col' });
+      expect(toDeveloperProfile({ id: 'x', metadata: { account_manager_user_id: 'u-meta' } }))
+        .toMatchObject({ account_manager_user_id: 'u-meta' });
+      expect(toDeveloperProfile({ id: 'x', account_manager_user_id: '  ' })).toMatchObject({ account_manager_user_id: null });
     });
   });
 

@@ -43,6 +43,18 @@ export function isPropertyUnitsEnabled(shell: any): boolean {
     }
 }
 
+/** Action flag for per-tower / per-unit agent & team allocation overrides. */
+export const UNIT_ALLOCATION_FLAG = 'action:crm:unit_allocation';
+
+/** Same explicit-`true` rule as the property_units flag. */
+export function isUnitAllocationEnabled(shell: any): boolean {
+    try {
+        return shell?.isFeatureEnabled?.(UNIT_ALLOCATION_FLAG) === true;
+    } catch {
+        return false;
+    }
+}
+
 export function usePropertyUnits(): { enabled: boolean; labels: PropertyUnitLabels } {
     const shell = useShellBridge() as any;
     const enabled = isPropertyUnitsEnabled(shell);

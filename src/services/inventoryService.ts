@@ -2,10 +2,14 @@ import { createRequestCache } from './requestCache';
 import { notifyQuotaExceeded } from './quotaExceeded';
 import type {
     CategoryMetadata,
+    DeveloperOption,
     DeveloperProfile,
+    DeveloperRole,
+    DeveloperUpdate,
     GenerateUnitsDto,
     GenerateUnitsResult,
     ProjectAvailability,
+    UnitAllocation,
     UnitStatusOverride,
     UnitStatusOverrideResult,
 } from '../types/inventory';
@@ -636,19 +640,71 @@ class InventoryService {
     }
 
     /**
-     * Core partners playing the developer role. Relies on Core honouring
-     * `type=developer`; an unknown type is ignored there, so an older Core
-     * returns every partner rather than none.
+     * Core partners playing the developer or property-owner role, each tagged
+     * with its role. Developers are required (errors propagate); the
+     * property-owner lookup is best-effort so an older Core that rejects the
+     * type still lists developers. A partner returned by both is a developer.
      */
-    async searchDevelopers(search?: string): Promise<{ id: string; name: string }[]> {
+    async searchDevelopers(search?: string): Promise<DeveloperOption[]> {
         if (!this.orgId) throw new Error('OrgId not set');
-        const qs = new URLSearchParams({ type: 'developer', limit: '100' });
-        if (search) qs.set('search', search);
-        const res = await this.crossServiceGet(`${this.coreOrigin}/v1/partners/${this.orgId}?${qs.toString()}`);
-        const list = res?.data || (Array.isArray(res) ? res : []);
-        return (Array.isArray(list) ? list : [])
-            .filter((p: any) => p && p.id)
-            .map((p: any) => ({ id: String(p.id), name: String(p.name || p.display_name || p.id) }));
+        const fetchRole = async (role: DeveloperRole) => {
+            const qs = new URLSearchParams({ type: role, limit: '100' });
+            if (search) qs.set('search', search);
+            const res = await this.crossServiceGet(`${this.coreOrigin}/v1/partners/${this.orgId}?${qs.toString()}`);
+            const list = res?.data || (Array.isArray(res) ? res : []);
+            return (Array.isArray(list) ? list : [])
+                .filter((p: any) => p && p.id)
+                .map((p: any): DeveloperOption => ({ id: String(p.id), name: String(p.name || p.display_name || p.id), role }));
+        };
+        const [developers, owners] = await Promise.all([
+            fetchRole('developer'),
+            fetchRole('property_owner').catch((): DeveloperOption[] => []),
+        ]);
+        const seen = new Set(developers.map((d) => d.id));
+        return [...developers, ...owners.filter((o) => !seen.has(o.id))];
+    }
+
+    /**
+     * Update a developer's G1 profile fields on the Core partner. Only fields
+     * with a non-blank value are sent, so an untouched field is left as is.
+     */
+    async updateDeveloper(partnerId: string, patch: DeveloperUpdate) {
+        if (!this.orgId) throw new Error('OrgId not set');
+        const body: Record<string, string> = {};
+        (['website', 'logo_url', 'status', 'account_manager_user_id'] as const).forEach((k) => {
+            const v = patch[k];
+            if (typeof v === 'string' && v.trim()) body[k] = v.trim();
+        });
+        return this.crossServicePatch(`${this.coreOrigin}/v1/partners/${encodeURIComponent(partnerId)}`, body);
+    }
+
+    /** A unit's own agent/team override (item custom_attributes). */
+    async getUnitAllocation(itemId: string): Promise<UnitAllocation> {
+        const res = await this.getItem(itemId);
+        const item = res?.data || res || {};
+        const attrs = item?.custom_attributes || {};
+        const ids = (v: unknown): string[] | null =>
+            Array.isArray(v) && v.length ? v.filter((x): x is string => typeof x === 'string' && !!x) : null;
+        return { assigned_user_ids: ids(attrs.assigned_user_ids), assigned_team_ids: ids(attrs.assigned_team_ids) };
+    }
+
+    /**
+     * Save a unit's agent/team override. PATCH /items replaces
+     * custom_attributes, so the current attributes are re-read and merged.
+     */
+    async setUnitAllocation(itemId: string, alloc: UnitAllocation) {
+        const res = await this.getItem(itemId);
+        const item = res?.data || res || {};
+        const attrs = item?.custom_attributes && typeof item.custom_attributes === 'object' ? item.custom_attributes : {};
+        const out = await this.updateItem(itemId, {
+            custom_attributes: {
+                ...attrs,
+                assigned_user_ids: alloc.assigned_user_ids?.length ? alloc.assigned_user_ids : null,
+                assigned_team_ids: alloc.assigned_team_ids?.length ? alloc.assigned_team_ids : null,
+            },
+        });
+        this.orgStaticCache.invalidate(`items|${this.orgId}`);
+        return out;
     }
 
     // ==================== Category Channel Visibility ====================
@@ -813,6 +869,22 @@ class InventoryService {
             CROSS_SERVICE_BUILD_ENV[winKey] ||
             (isNeonbeeHost ? `https://api.neonbee.app/${prodPath}` : `http://localhost:${devPort}`);
         return String(origin).replace(/\/$/, '');
+    }
+
+    private async crossServicePatch(url: string, body: unknown) {
+        const response = await fetch(url, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${this.accessToken}`,
+                'X-Tenant-Id': this.tenantId || '',
+                'X-Org-Id': this.orgId || '',
+            },
+            body: JSON.stringify(body),
+        });
+        await notifyQuotaExceeded(response);
+        if (!response.ok) throw new Error(`Request failed (${response.status})`);
+        return response.json().catch(() => null);
     }
 
     private async crossServiceGet(url: string) {

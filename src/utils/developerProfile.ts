@@ -52,6 +52,7 @@ export function toDeveloperProfile(p: any, primaryContact?: any): DeveloperProfi
         description: pick(row.description, meta.description),
         logo_url: pick(row.logo_url, meta.logo_url),
         account_manager: pick(row.account_manager_name, meta.account_manager_name, meta.account_manager),
+        account_manager_user_id: pick(row.account_manager_user_id, meta.account_manager_user_id),
         status: pick(row.status, meta.status) || (row.is_active === false ? 'inactive' : row.is_active === true ? 'active' : null),
         notes: pick(row.notes, meta.notes),
         created_at: pick(row.created_at),

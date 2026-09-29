@@ -54,7 +54,6 @@ describe('Given an empty project draft', () => {
       ['Project code', 'project_code', 'SKY-01'],
       ['City', 'city', 'Dubai'],
       ['Country', 'country', 'AE'],
-      ['Payment plan', 'payment_plan', '20/80'],
       ['Description', 'description', 'Waterfront towers'],
     ])('Then %s writes %s and a blank clears it', async (label, key, text) => {
       render(<Harness />);
