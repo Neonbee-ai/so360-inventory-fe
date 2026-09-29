@@ -79,10 +79,11 @@ describe('Given percent totals', () => {
     expect(isAllPercent([line(), line({ type: 'fixed' })])).toBe(false);
     expect(isAllPercent([line()])).toBe(true);
   });
-  it('Then the total ignores fixed lines, rounds to 2dp and tolerates 0.01', () => {
+  it('Then the total ignores fixed lines, rounds to 2dp and tolerates under 0.01 like the backend', () => {
     expect(percentTotal([line({ value: 33.333 }), line({ value: 33.333 }), line({ value: 33.334 }), line({ type: 'fixed', value: 5000 })])).toBe(100);
     expect(percentTotal([line({ value: NaN })])).toBe(0);
-    expect(isPercentTotalValid([line({ value: 99.99 })])).toBe(true);
+    expect(isPercentTotalValid([line({ value: 99.995 })])).toBe(true);
+    expect(isPercentTotalValid([line({ value: 100.004 })])).toBe(true);
     expect(isPercentTotalValid([line({ value: 99.9 })])).toBe(false);
   });
 });
