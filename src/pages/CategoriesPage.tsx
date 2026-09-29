@@ -9,11 +9,14 @@ import CategoryIconLibrary from '../components/categories/CategoryIconLibrary';
 import CategoryChannelsPanel from '../components/categories/CategoryChannelsPanel';
 import { buildCategoryTree } from '../utils/categoryTree';
 import { ItemCategory, CategoryMetadata } from '../types/inventory';
-import { usePropertyUnits } from '../hooks/usePropertyUnits';
+import { isUnitAllocationEnabled, usePropertyUnits } from '../hooks/usePropertyUnits';
 import ProjectDetailsSection from '../components/categories/ProjectDetailsSection';
 import GenerateUnitsDialog from '../components/categories/GenerateUnitsDialog';
 import AvailabilityMatrix from '../components/categories/AvailabilityMatrix';
 import DeveloperCard from '../components/categories/DeveloperCard';
+import AssignedAgentsPanel from '../components/categories/AssignedAgentsPanel';
+import { inheritedAllocation } from '../utils/unitAllocation';
+import { cleanTemplates, templatesError } from '../utils/paymentPlanTemplates';
 import { projectsOfDeveloper } from '../utils/developerProfile';
 import { renderCategoryIcon, isPresetUrl } from '../constants/categoryIcons';
 import {
@@ -290,6 +293,8 @@ const CategoriesPage = () => {
     const canDelete = (shell?.permissionsLoaded === true) && (shell?.hasPermission?.('items.delete') ?? false) && (shell?.effectiveFlagsLoaded !== false) && deleteState === 'enabled';
     // Real-estate mode: categories become Projects (root) / Towers (child).
     const { enabled: propertyUnits, labels } = usePropertyUnits();
+    // Per-tower / per-unit agent overrides (action:crm:unit_allocation).
+    const unitAllocation = propertyUnits && isUnitAllocationEnabled(shell);
 
     const [categories, setCategories] = useState<ItemCategory[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -440,6 +445,10 @@ const CategoriesPage = () => {
             setSaveError(slugError);
             return;
         }
+        const isProject = propertyUnits && !selectedCategory?.parent_id;
+        const isTower = unitAllocation && !!selectedCategory?.parent_id;
+        const planError = isProject ? templatesError(editMetadata.payment_plan_templates) : null;
+        if (planError) { setSaveError(planError); return; }
         setIsSaving(true);
         setSaveError(null);
         try {
@@ -457,8 +466,26 @@ const CategoriesPage = () => {
                 sort_order: editSortOrder,
                 ...changedSeoFields(),
                 // Project details live on the root category only, and only in real-estate mode.
-                ...(propertyUnits && !selectedCategory?.parent_id
-                    ? { metadata: { ...(selectedCategory?.metadata || {}), ...editMetadata } }
+                ...(isProject
+                    ? {
+                        metadata: {
+                            ...(selectedCategory?.metadata || {}),
+                            ...editMetadata,
+                            ...(editMetadata.payment_plan_templates !== undefined
+                                ? { payment_plan_templates: cleanTemplates(editMetadata.payment_plan_templates) }
+                                : {}),
+                        },
+                    }
+                    : {}),
+                // A tower only carries its agent/team override.
+                ...(isTower
+                    ? {
+                        metadata: {
+                            ...(selectedCategory?.metadata || {}),
+                            assigned_user_ids: editMetadata.assigned_user_ids ?? null,
+                            assigned_team_ids: editMetadata.assigned_team_ids ?? null,
+                        },
+                    }
                     : {}),
             });
             recordActivity({ eventType: 'inventory.category.updated', eventCategory: 'data', description: `Updated category "${editName.trim()}"`, resourceType: 'category', resourceId: selectedId }).catch(() => {});
@@ -599,12 +626,25 @@ const CategoriesPage = () => {
                                             projects={developerProjects}
                                             currentProjectId={selectedCategory.id}
                                             onSelectProject={setSelectedId}
+                                            canEdit={canManage}
                                         />
                                     )}
                                     {!selectedCategory.parent_id && (
                                         <ProjectDetailsSection
                                             value={editMetadata}
                                             onChange={setEditMetadata}
+                                            disabled={!canManage}
+                                        />
+                                    )}
+                                    {unitAllocation && selectedCategory.parent_id && (
+                                        <AssignedAgentsPanel
+                                            scope="tower"
+                                            value={{
+                                                assigned_user_ids: editMetadata.assigned_user_ids ?? null,
+                                                assigned_team_ids: editMetadata.assigned_team_ids ?? null,
+                                            }}
+                                            onChange={next => setEditMetadata(m => ({ ...m, ...next }))}
+                                            inherited={inheritedAllocation(categories, selectedCategory.parent_id)}
                                             disabled={!canManage}
                                         />
                                     )}
@@ -633,6 +673,8 @@ const CategoriesPage = () => {
                                             categoryId={selectedCategory.id}
                                             refreshKey={availabilityKey}
                                             canManage={canManage}
+                                            allocationEnabled={unitAllocation}
+                                            categories={categories}
                                         />
                                     )}
                                     {selectedCategory.parent_id && (
