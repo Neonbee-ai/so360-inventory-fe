@@ -6,7 +6,8 @@ import React from 'react';
  * Data Layer Class B on Item Detail (inventory.item).
  * Shell renderers are hosted in named regions behind
  * submodule:data_layer:custom_fields. Values are saved by Inventory through the
- * native PATCH /items/:id (inventoryService.updateItem) with merged custom_fields.
+ * native PATCH /items/:id (inventoryService.updateItem) with only the changed
+ * custom_fields plus the row's custom_fields_version.
  */
 
 // One mutable state object, read lazily by the mock factories (vi.mock hoisting).
@@ -297,13 +298,24 @@ describe('Given the data-layer flag is ON', () => {
     expect(screen.queryByTestId('probe-secret')).toBeNull();
   });
 
-  it('When a renderer saves / Then the module PATCHes /items/:id with merged custom_fields only and the page reflects it', async () => {
+  it('When a renderer saves / Then the module PATCHes /items/:id with only the changed custom_fields and the page reflects it', async () => {
     mockUpdateItem.mockResolvedValueOnce({ data: { ...item, custom_fields: { region: 'south', grade: 'A' } } });
     dl.regs = [reg({ id: 'sec' })];
     await renderLoaded();
     fireEvent.click(screen.getByText('save-sec'));
-    await waitFor(() => expect(mockUpdateItem).toHaveBeenCalledWith('item-1', { custom_fields: { region: 'south', grade: 'A' } }));
+    await waitFor(() => expect(mockUpdateItem).toHaveBeenCalledWith('item-1', { custom_fields: { grade: 'A' } }));
     await waitFor(() => expect(screen.getByTestId('probe-sec-value').textContent).toBe('A'));
+  });
+
+  it('When the row carries custom_fields_version / Then it is the slot version, sent on save, and advanced from the response', async () => {
+    mockGetItem.mockResolvedValue({ ...item, custom_fields_version: 3 });
+    mockUpdateItem.mockResolvedValueOnce({ data: { ...item, custom_fields: { region: 'south', grade: 'A' }, custom_fields_version: 4 } });
+    dl.regs = [reg({ id: 'sec' })];
+    await renderLoaded();
+    expect(screen.getByTestId('probe-sec').getAttribute('data-version')).toBe('3');
+    fireEvent.click(screen.getByText('save-sec'));
+    await waitFor(() => expect(mockUpdateItem).toHaveBeenCalledWith('item-1', { custom_fields: { grade: 'A' }, version: 3 }));
+    await waitFor(() => expect(screen.getByTestId('probe-sec').getAttribute('data-version')).toBe('4'));
   });
 
 });

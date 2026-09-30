@@ -134,7 +134,13 @@ class InventoryService {
 
         if (!response.ok) {
             const error = await response.json().catch(() => ({ message: 'API Request failed' }));
-            throw new Error(error.message || 'API Request failed');
+            // Carry status/code/body so callers can branch on e.g. 409
+            // DATASET_VERSION_CONFLICT without parsing the message.
+            throw Object.assign(new Error(error.message || 'API Request failed'), {
+                status: response.status,
+                body: error,
+                code: typeof error?.code === 'string' ? error.code : undefined,
+            });
         }
 
         // A successful settings write (UoMs, categories, …) makes the cached

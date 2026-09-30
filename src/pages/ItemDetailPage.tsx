@@ -31,7 +31,7 @@ import { useActivity } from '@so360/shell-context';
 import {
     useInventoryDataLayer, useInventoryInjectedTabs, InventoryRecordScope, InventorySlotRegion, INVENTORY_DATA_LAYER_ENTITIES,
 } from '../dataLayer/inventoryDataLayer';
-import { useInventoryRecordContext } from '../dataLayer/useInventoryRecordContext';
+import { useInventoryRecordContext, type ClassBRowRefresh } from '../dataLayer/useInventoryRecordContext';
 
 // ── Types ─────────────────────────────────────────────
 /** `dl:*` ids are Data Layer injected tabs (detail.tab renderers). */
@@ -369,10 +369,21 @@ const ItemDetailPage = () => {
     // Everything below renders nothing unless submodule:data_layer:custom_fields
     // is on AND the Shell registered a renderer for the slot.
     const dataLayer = useInventoryDataLayer(INVENTORY_DATA_LAYER_ENTITIES.ITEM);
-    const onItemClassBSaved = useCallback((values: Record<string, unknown>) => {
-        setItem((prev) => (prev ? { ...prev, custom_fields: values } : prev));
+    const onItemClassBSaved = useCallback((values: Record<string, unknown>, refresh: ClassBRowRefresh) => {
+        setItem((prev) => (prev ? { ...prev, ...refresh, custom_fields: values } : prev));
     }, []);
-    const dlCtx = useInventoryRecordContext(dataLayer, item?.id, item, { canEdit: can('items.update'), onSaved: onItemClassBSaved });
+    // Refetch the item row (conflict reload, or a save that returned no new
+    // custom_fields_version) without the full-page loading state.
+    const refetchItem = useCallback(async () => {
+        if (!id) return;
+        try {
+            const fresh = await inventoryService.getItem(id);
+            if (fresh) setItem((prev) => (prev ? { ...prev, ...fresh } : fresh));
+        } catch {
+            /* keep the current row; the next save will surface any conflict */
+        }
+    }, [id]);
+    const dlCtx = useInventoryRecordContext(dataLayer, item?.id, item, { canEdit: can('items.update'), onChanged: refetchItem, onSaved: onItemClassBSaved });
     const dlTabs = useInventoryInjectedTabs(dataLayer, dlCtx);
     const activeDlTab = dlTabs.find((t) => t.id === viewTab);
 

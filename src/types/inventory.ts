@@ -309,6 +309,8 @@ export interface Item {
     custom_fields?: Record<string, unknown>;
     /** Optimistic-concurrency version when the backend exposes one (else updated_at). */
     version?: number;
+    /** Class B optimistic-concurrency token (bumped on every custom_fields write). */
+    custom_fields_version?: number;
     created_at?: string;
     updated_at?: string;
 }

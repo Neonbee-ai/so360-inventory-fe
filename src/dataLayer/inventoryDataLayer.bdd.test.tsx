@@ -64,7 +64,7 @@ import {
     useInventoryCustomColumns, InventorySlotRegion, InventoryRecordScope, InventoryCreateSection, useInventoryInjectedTabs,
     missingRequiredCustomFields, formatCustomFieldValue, isDataLayerAvailable, DATA_LAYER_CUSTOM_FIELDS_FLAG,
 } from './inventoryDataLayer';
-import { saveClassBCustomFields, currentClassBValues, recordVersion } from './classBSave';
+import { saveClassBCustomFields, currentClassBValues, recordVersion, wireVersion, isVersionConflict } from './classBSave';
 
 beforeEach(() => {
     dl.flag = true;
@@ -313,22 +313,25 @@ describe('Given list custom-field columns', () => {
 });
 
 describe('Given the Class B native save path', () => {
-    test('When an item saves / Then changed keys are merged over custom_fields and PATCHed via inventoryService.updateItem', async () => {
-        api.inventory.updateItem.mockResolvedValue({ id: 'item-1', custom_fields: { a: 1, b: 2 }, version: 4 });
-        const res = await saveClassBCustomFields('item-1', { id: 'item-1', custom_fields: { a: 1 } }, { b: 2 });
-        expect(api.inventory.updateItem).toHaveBeenCalledWith('item-1', { custom_fields: { a: 1, b: 2 } });
+    const httpError = (status: number, body: any) => Object.assign(new Error(body?.message ?? `HTTP ${status}`), { status, body, code: body?.code });
+
+    test('When an item saves / Then only the changed keys are PATCHed via inventoryService.updateItem (backend merges)', async () => {
+        api.inventory.updateItem.mockResolvedValue({ id: 'item-1', custom_fields: { a: 1, b: 2 }, custom_fields_version: 2 });
+        const res = await saveClassBCustomFields('item-1', { id: 'item-1', custom_fields: { a: 1 }, custom_fields_version: 1 }, { b: 2 });
+        expect(api.inventory.updateItem).toHaveBeenCalledWith('item-1', { custom_fields: { b: 2 }, version: 1 });
         expect(res.ok).toBe(true);
         expect(res.record?.custom_fields).toEqual({ a: 1, b: 2 });
+        expect(res.record?.custom_fields_version).toBe(2);
     });
     test('When the API wraps the row in { data } / Then the saved row is unwrapped', async () => {
-        api.inventory.updateItem.mockResolvedValue({ data: { id: 'item-1', custom_fields: { a: 9 }, version: 5 } });
+        api.inventory.updateItem.mockResolvedValue({ data: { id: 'item-1', custom_fields: { a: 9 }, custom_fields_version: 5 } });
         const res = await saveClassBCustomFields('item-1', { id: 'item-1', custom_fields: { a: 1 } }, { a: 9 });
-        expect(res.record).toMatchObject({ id: 'item-1', custom_fields: { a: 9 }, version: 5 });
+        expect(res.record).toMatchObject({ id: 'item-1', custom_fields: { a: 9 }, custom_fields_version: 5 });
     });
-    test('When the saved row omits custom_fields / Then the merged values are kept', async () => {
-        api.inventory.updateItem.mockResolvedValue({ id: 'item-1', version: 6 });
+    test('When the saved row omits custom_fields / Then the locally merged values are kept', async () => {
+        api.inventory.updateItem.mockResolvedValue({ id: 'item-1', custom_fields_version: 6 });
         const res = await saveClassBCustomFields('item-1', { id: 'item-1', custom_fields: { a: 1 } }, { b: 2 });
-        expect(res.record).toMatchObject({ version: 6, custom_fields: { a: 1, b: 2 } });
+        expect(res.record).toMatchObject({ custom_fields_version: 6, custom_fields: { a: 1, b: 2 } });
     });
     test('When the item has no custom_fields yet / Then only the changed keys are sent', async () => {
         api.inventory.updateItem.mockResolvedValue(null);
@@ -341,6 +344,32 @@ describe('Given the Class B native save path', () => {
         await saveClassBCustomFields('item-1', { id: 'item-1', custom_attributes: { size: 'L' }, custom_fields: {} }, { z: 3 });
         expect(api.inventory.updateItem.mock.calls[0][1]).toEqual({ custom_fields: { z: 3 } });
     });
+    test('When an explicit version is passed / Then it wins over the row version', async () => {
+        api.inventory.updateItem.mockResolvedValue({ id: 'item-1', custom_fields: { b: 2 } });
+        await saveClassBCustomFields('item-1', { custom_fields: {}, custom_fields_version: 4 }, { b: 2 }, 8);
+        expect(api.inventory.updateItem).toHaveBeenCalledWith('item-1', { custom_fields: { b: 2 }, version: 8 });
+    });
+    test('When only updated_at is available / Then no version is sent', async () => {
+        api.inventory.updateItem.mockResolvedValue({ id: 'item-1', custom_fields: { b: 2 } });
+        await saveClassBCustomFields('item-1', { custom_fields: {}, updated_at: '2026-09-30T08:00:00Z' }, { b: 2 });
+        expect(api.inventory.updateItem).toHaveBeenCalledWith('item-1', { custom_fields: { b: 2 } });
+    });
+    test('When a value is cleared / Then null is sent and the key is dropped locally', async () => {
+        api.inventory.updateItem.mockResolvedValue({ id: 'item-1' });
+        const res = await saveClassBCustomFields('item-1', { custom_fields: { a: 1, b: 2 } }, { b: null });
+        expect(api.inventory.updateItem).toHaveBeenCalledWith('item-1', { custom_fields: { b: null } });
+        expect(res.record?.custom_fields).toEqual({ a: 1 });
+    });
+    test('When the backend answers 409 DATASET_VERSION_CONFLICT / Then the result is a conflict, not a thrown error', async () => {
+        api.inventory.updateItem.mockRejectedValue(httpError(409, { code: 'DATASET_VERSION_CONFLICT', message: 'Record changed' }));
+        const res = await saveClassBCustomFields('item-1', { custom_fields: {}, custom_fields_version: 3 }, { b: 2 });
+        expect(res).toMatchObject({ ok: false, conflict: true });
+    });
+    test('When the backend answers 400 DATASET_FIELD_UNKNOWN / Then its message is returned verbatim', async () => {
+        api.inventory.updateItem.mockRejectedValue(httpError(400, { code: 'DATASET_FIELD_UNKNOWN', message: 'Unknown custom field "colour"' }));
+        const res = await saveClassBCustomFields('item-1', {}, { colour: 'red' });
+        expect(res).toEqual({ ok: false, error: 'Unknown custom field "colour"' });
+    });
     test('When the native API fails / Then the result is not ok with the error message', async () => {
         api.inventory.updateItem.mockRejectedValue(new Error('boom'));
         const res = await saveClassBCustomFields('item-1', {}, { y: 2 });
@@ -351,9 +380,20 @@ describe('Given the Class B native save path', () => {
         expect(currentClassBValues({ custom_fields: [1] })).toEqual({});
         expect(currentClassBValues(null)).toEqual({});
     });
-    test('When deriving the version / Then version wins over updated_at', () => {
-        expect(recordVersion({ version: 3, updated_at: 't' })).toBe(3);
+    test('When deriving the version / Then custom_fields_version wins over updated_at', () => {
+        expect(recordVersion({ custom_fields_version: 3, updated_at: 't' })).toBe(3);
         expect(recordVersion({ updated_at: 't' })).toBe('t');
         expect(recordVersion(null)).toBeNull();
+    });
+    test('When deriving the wire version / Then only integers (or digit strings) are sent', () => {
+        expect(wireVersion(4)).toBe(4);
+        expect(wireVersion('4')).toBe(4);
+        expect(wireVersion('2026-09-30T08:00:00Z')).toBeUndefined();
+        expect(wireVersion(null)).toBeUndefined();
+    });
+    test('When classifying errors / Then 409 or the conflict code is a version conflict', () => {
+        expect(isVersionConflict({ status: 409 })).toBe(true);
+        expect(isVersionConflict({ code: 'DATASET_VERSION_CONFLICT' })).toBe(true);
+        expect(isVersionConflict({ status: 400, body: { code: 'DATASET_FIELD_UNKNOWN' } })).toBe(false);
     });
 });
