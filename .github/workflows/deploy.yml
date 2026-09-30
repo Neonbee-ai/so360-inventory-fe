@@ -2,15 +2,17 @@ name: Deploy Inventory Frontend
 
 on:
   push:
-    branches: [develop, qa]
+    branches: [develop, qa, 'feat/**', 'fix/**']
   workflow_dispatch:
+  delete:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event_name == 'delete' && format('delete-{0}', github.event.ref) || github.ref }}
   cancel-in-progress: true
 
 jobs:
   deploy:
+    if: github.event_name != 'delete' && !startsWith(github.ref, 'refs/heads/feat/') && !startsWith(github.ref, 'refs/heads/fix/')
     uses: Neonbee-ai/neonbee-devops/.github/workflows/neonbee-deploy-vite-mfe.yml@main
     with:
       service_name: inventory-fe
@@ -26,4 +28,24 @@ jobs:
         VITE_SO360_CORE_API=https://staging.api.skyoffice360.com/core
         VITE_SO360_INVENTORY_API=https://staging.api.skyoffice360.com/inventory
       needs_shell_packages: true
+    secrets: inherit
+
+  # Feature-branch preview at https://pr-<branch-slug>.skyoffice360.com
+  preview:
+    if: github.event_name != 'delete' && (startsWith(github.ref, 'refs/heads/feat/') || startsWith(github.ref, 'refs/heads/fix/'))
+    permissions: { contents: read, pull-requests: write }
+    uses: Neonbee-ai/neonbee-devops/.github/workflows/neonbee-deploy-preview.yml@main
+    with:
+      kind: fe
+      name: inventory
+      vite_base_url: https://dev-cdn.skyoffice360.com/inventory/
+      needs_shell_packages: true
+      vite_env: |
+        VITE_SO360_CORE_API=https://dev-api.skyoffice360.com/core
+        VITE_SO360_INVENTORY_API=https://dev-api.skyoffice360.com/inventory
+    secrets: inherit
+
+  preview-teardown:
+    if: github.event_name == 'delete' && github.event.ref_type == 'branch'
+    uses: Neonbee-ai/neonbee-devops/.github/workflows/neonbee-preview-teardown.yml@main
     secrets: inherit
