@@ -8,6 +8,7 @@ import PhotoAttentionIndicator from '../components/media/PhotoAttentionIndicator
 import { useAuth } from '../hooks/useAuth';
 import { useShellBridge, useQuota, useSandboxLimit } from '@so360/shell-context';
 import { QuotaBar, QuotaGate, FeatureGate } from '@so360/design-system';
+import { useInventoryDataLayer, useInventoryCustomColumns, formatCustomFieldValue, INVENTORY_DATA_LAYER_ENTITIES } from '../dataLayer/inventoryDataLayer';
 
 const ItemsPage = () => {
     const navigate = useNavigate();
@@ -26,6 +27,11 @@ const ItemsPage = () => {
     const [typeFilter, setTypeFilter] = useState<'All' | 'product' | 'service' | 'raw_material' | 'finished_good' | 'consumable' | 'fixed_asset'>('All');
     const [attentionOnly, setAttentionOnly] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    // Data Layer (Class B): one extra column per custom field, gated behind
+    // submodule:data_layer:custom_fields. Empty when off or unavailable, so
+    // the grid renders exactly as before.
+    const itemDataLayer = useInventoryDataLayer(INVENTORY_DATA_LAYER_ENTITIES.ITEM);
+    const dataLayerColumns = useInventoryCustomColumns(itemDataLayer);
 
     const fetchItems = async () => {
         setIsLoading(true);
@@ -62,7 +68,16 @@ const ItemsPage = () => {
         return matchesSearch && matchesType && matchesAttention;
     });
 
-    const columns = [
+    const customColumns = dataLayerColumns.map((c) => ({
+        header: c.label,
+        accessor: (item: Item) => (
+            <span className="text-slate-400" data-dl-column={c.key}>
+                {formatCustomFieldValue(item.custom_fields?.[c.key])}
+            </span>
+        ),
+    }));
+
+    const baseColumns = [
         {
             header: 'Item & SKU',
             accessor: (item: Item) => (
@@ -135,6 +150,10 @@ const ItemsPage = () => {
             )
         }
     ];
+    // Custom columns sit before Status so the status pill stays last.
+    const columns = customColumns.length === 0
+        ? baseColumns
+        : [...baseColumns.slice(0, -1), ...customColumns, baseColumns[baseColumns.length - 1]];
 
     return (
         <div className="p-8">

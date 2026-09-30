@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
     ArrowLeft, Package, Info, AlertCircle,
@@ -28,9 +28,14 @@ import LifecycleStatusPanel from '../components/lifecycle/LifecycleStatusPanel';
 import { useInventoryFormatters, useInventoryCurrencySymbol } from '../utils/formatters';
 import { parseUtcDate } from '../utils/datetime';
 import { useActivity } from '@so360/shell-context';
+import {
+    useInventoryDataLayer, useInventoryInjectedTabs, InventoryRecordScope, InventorySlotRegion, INVENTORY_DATA_LAYER_ENTITIES,
+} from '../dataLayer/inventoryDataLayer';
+import { useInventoryRecordContext } from '../dataLayer/useInventoryRecordContext';
 
 // ── Types ─────────────────────────────────────────────
-type ViewTabId = TabId | 'ledger' | 'sales';
+/** `dl:*` ids are Data Layer injected tabs (detail.tab renderers). */
+type ViewTabId = TabId | 'ledger' | 'sales' | `dl:${string}`;
 
 interface ItemSalesHistory {
     item_id: string;
@@ -164,7 +169,7 @@ const ItemDetailPage = () => {
     const handleEditClick = async () => {
         if (!item) return;
         setEditForm(initEditForm(item));
-        setEditTab(viewTab !== 'ledger' && viewTab !== 'sales' ? viewTab : 'basic');
+        setEditTab(viewTab !== 'ledger' && viewTab !== 'sales' && !viewTab.startsWith('dl:') ? (viewTab as TabId) : 'basic');
         setTabErrors({});
         setIsEditing(true);
 
@@ -360,6 +365,17 @@ const ItemDetailPage = () => {
         }
     };
 
+    // ── Data Layer (Class B, inventory.item) — hooks stay above the early returns.
+    // Everything below renders nothing unless submodule:data_layer:custom_fields
+    // is on AND the Shell registered a renderer for the slot.
+    const dataLayer = useInventoryDataLayer(INVENTORY_DATA_LAYER_ENTITIES.ITEM);
+    const onItemClassBSaved = useCallback((values: Record<string, unknown>) => {
+        setItem((prev) => (prev ? { ...prev, custom_fields: values } : prev));
+    }, []);
+    const dlCtx = useInventoryRecordContext(dataLayer, item?.id, item, { canEdit: can('items.update'), onSaved: onItemClassBSaved });
+    const dlTabs = useInventoryInjectedTabs(dataLayer, dlCtx);
+    const activeDlTab = dlTabs.find((t) => t.id === viewTab);
+
     // ── Loading / Error States ────────────────────────
     if (isLoading) return <div className="p-8"><TableSkeleton /></div>;
     if (error && !item) return (
@@ -439,6 +455,7 @@ const ItemDetailPage = () => {
 
     // ── Render ────────────────────────────────────────
     return (
+        <InventoryRecordScope dl={dataLayer} recordId={item.id}>
         <div className="min-h-screen">
             {/* Error Banner */}
             {error && (
@@ -495,6 +512,7 @@ const ItemDetailPage = () => {
                                 Back to Catalog
                             </button>
                             <div className="flex items-center gap-3">
+                                <InventorySlotRegion dl={dataLayer} slot="detail.actions" region="actions" ctx={dlCtx} className="flex items-center gap-3" />
                                 {can('items.update') && (
                                     <button
                                         onClick={handleEditClick}
@@ -600,6 +618,8 @@ const ItemDetailPage = () => {
                             </div>
                         </div>
 
+                        {/* Data Layer: sidebar renderers */}
+                        <InventorySlotRegion dl={dataLayer} slot="detail.sidebar" region="sidebar" ctx={dlCtx} className="space-y-6" />
                     </div>
 
                     {/* ═══ RIGHT COLUMN ═══ */}
@@ -740,6 +760,8 @@ const ItemDetailPage = () => {
                                     />
                                 </div>
                             </div>
+                            {/* Data Layer: custom fields (main region) */}
+                            <InventorySlotRegion dl={dataLayer} slot="detail.section" region="main" ctx={dlCtx} className="space-y-4" />
                             <div className="bg-slate-900/50 border border-slate-800 rounded-xl">
                                 {/* View Tab Bar — 8 tabs */}
                                 <div className="flex gap-1 border-b border-slate-800 overflow-x-auto overflow-y-hidden rounded-t-xl">
@@ -764,6 +786,20 @@ const ItemDetailPage = () => {
                                             }`}
                                         >
                                             {tab.icon} {tab.label}
+                                        </button>
+                                    ))}
+                                    {dlTabs.map(t => (
+                                        <button
+                                            key={t.id}
+                                            data-dl-tab={t.id}
+                                            onClick={() => setViewTab(t.id as ViewTabId)}
+                                            className={`flex items-center gap-1.5 px-4 py-3 text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all border-b-2 ${
+                                                viewTab === t.id
+                                                    ? 'text-blue-400 border-blue-500 bg-blue-500/5'
+                                                    : 'text-slate-500 hover:text-slate-300 border-transparent'
+                                            }`}
+                                        >
+                                            {t.label}
                                         </button>
                                     ))}
                                 </div>
@@ -1081,6 +1117,9 @@ const ItemDetailPage = () => {
                                             )}
                                         </div>
                                     )}
+
+                                    {/* Data Layer injected tabs (e.g. field history) */}
+                                    {activeDlTab && activeDlTab.render()}
                                 </div>
                             </div>
                         </div>
@@ -1130,6 +1169,7 @@ const ItemDetailPage = () => {
                 </div>
             )}
         </div>
+        </InventoryRecordScope>
     );
 };
 

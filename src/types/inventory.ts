@@ -305,6 +305,10 @@ export interface Item {
     lifecycle_flow_instance_id?: string;
     tax_code_id?: string;
     product_status?: string;
+    /** Data Layer Class B values (org-defined custom fields for inventory.item). */
+    custom_fields?: Record<string, unknown>;
+    /** Optimistic-concurrency version when the backend exposes one (else updated_at). */
+    version?: number;
     created_at?: string;
     updated_at?: string;
 }

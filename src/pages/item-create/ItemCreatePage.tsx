@@ -17,6 +17,7 @@ import { useInventoryCurrencySymbol } from '../../utils/formatters';
 import { useActivity } from '@so360/shell-context';
 import { optional, validateBarcode, validateName, validateSku } from '../../utils/validators';
 import { generateSkuFromName } from '../../utils/skuGenerator';
+import { useInventoryDataLayer, InventoryCreateSection, missingRequiredCustomFields, INVENTORY_DATA_LAYER_ENTITIES } from '../../dataLayer/inventoryDataLayer';
 
 export interface FormData {
     name: string;
@@ -95,6 +96,10 @@ const ItemCreatePage = () => {
     const currencySymbol = useInventoryCurrencySymbol();
     const { recordActivity } = useActivity();
     const [form, setForm] = useState<FormData>(createFreshItemForm);
+    // Data Layer (Class B): custom-field values ride the native create payload
+    // as `custom_fields`. Separate from product-type `custom_attributes`.
+    const itemDataLayer = useInventoryDataLayer(INVENTORY_DATA_LAYER_ENTITIES.ITEM);
+    const [classBValues, setClassBValues] = useState<Record<string, unknown>>({});
     const [activeTab, setActiveTab] = useState<TabId>('basic');
     const [categories, setCategories] = useState<ItemCategory[]>([]);
     const [uoms, setUoms] = useState<Unit[]>([]);
@@ -376,6 +381,12 @@ const ItemCreatePage = () => {
     const handleSubmit = async (e?: React.FormEvent) => {
         e?.preventDefault();
         if (!validate()) return;
+        const missingClassB = missingRequiredCustomFields(itemDataLayer, classBValues);
+        if (missingClassB.length > 0) {
+            const labels = missingClassB.map(k => itemDataLayer.fields.find(f => f.field_key === k)?.label ?? k);
+            setError(`Please fill in: ${labels.join(', ')}`);
+            return;
+        }
 
         setIsSubmitting(true);
         setError(null);
@@ -425,6 +436,10 @@ const ItemCreatePage = () => {
                     ...(hasHeight && { height: parseFloat(form.dimensions_height) }),
                     unit: form.dimensions_unit,
                 };
+            }
+
+            if (itemDataLayer.enabled && Object.keys(classBValues).length > 0) {
+                dto.custom_fields = classBValues;
             }
 
             const created = await inventoryService.createItem(dto);
@@ -606,6 +621,15 @@ const ItemCreatePage = () => {
                         {renderTab()}
                     </div>
                 </div>
+
+                {/* Data Layer custom fields: always visible below the tabs, no extra tap */}
+                <InventoryCreateSection
+                    dl={itemDataLayer}
+                    mode="create"
+                    values={classBValues}
+                    onValuesChange={setClassBValues}
+                    className="mt-6 bg-slate-900/50 border border-slate-800 rounded-xl p-6"
+                />
             </div>
 
             {/* Sticky footer for mobile */}
