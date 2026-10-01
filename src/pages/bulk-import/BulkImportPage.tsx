@@ -8,6 +8,7 @@ import CsvUploadStep from './components/CsvUploadStep';
 import ImageUploadStep from './components/ImageUploadStep';
 import PreviewTableStep from './components/PreviewTableStep';
 import ImportResultStep from './components/ImportResultStep';
+import { classifyImage, countKeys, importableRowKeyCounts, nameKeyFromFilename, rowNameKey } from './nameKey';
 
 const STEPS = [
     { label: 'Upload CSV' },
@@ -16,9 +17,6 @@ const STEPS = [
     { label: 'Result' },
 ];
 
-function slugify(s: string): string {
-    return s.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-}
 
 const BulkImportPage: React.FC = () => {
     const navigate = useNavigate();
@@ -38,20 +36,41 @@ const BulkImportPage: React.FC = () => {
         setStep(1);
     };
 
-    const handleImagesUploaded = (uploaded: { filename: string; sku: string; cdn_url: string }[]) => {
-        const skuToCdn = new Map(uploaded.map(u => [u.sku, u.cdn_url]));
-        setRows(prev =>
-            prev.map(row => {
-                const sku = row.data.sku ? slugify(row.data.sku) : null;
-                const cdnUrl = sku ? skuToCdn.get(sku) : undefined;
-                if (!cdnUrl) return row;
-                return {
-                    ...row,
-                    status: row.status === 'warning' ? 'valid' : row.status,
-                    data: { ...row.data, image_urls: [cdnUrl] },
-                };
-            }),
-        );
+    // Images map to products by product name. A name that is ambiguous (several
+    // products) or duplicated (several images) is never guessed — the row keeps
+    // no image and says why.
+    const handleImagesUploaded = (uploaded: { filename: string; name_key?: string; cdn_url: string }[]) => {
+        const keyed = uploaded.map(u => ({ key: u.name_key ?? nameKeyFromFilename(u.filename), cdn_url: u.cdn_url }));
+        const fileKeyCounts = countKeys(keyed.map(k => k.key));
+        const cdnByKey = new Map(keyed.map(k => [k.key, k.cdn_url]));
+        setRows(prev => {
+            const rowKeyCounts = importableRowKeyCounts(prev);
+            return prev.map(row => {
+                if (row.status === 'error') return row;
+                const key = rowNameKey(row);
+                // Nothing was uploaded under this product's name.
+                if (!cdnByKey.has(key)) return { ...row, image_status: 'not_found' };
+                const match = classifyImage(key, rowKeyCounts, fileKeyCounts);
+                if (match === 'matched') {
+                    return {
+                        ...row,
+                        status: row.status === 'warning' ? 'valid' : row.status,
+                        image_status: 'mapped',
+                        data: { ...row.data, image_urls: [cdnByKey.get(key)] },
+                    };
+                }
+                if (match === 'ambiguous') return { ...row, image_status: 'ambiguous' };
+                if (match === 'duplicate_image') {
+                    return {
+                        ...row,
+                        status: 'warning',
+                        image_status: 'duplicate_image',
+                        warnings: [...row.warnings, `more than one image is named "${row.data.name}" — none mapped`],
+                    };
+                }
+                return { ...row, image_status: 'not_found' };
+            });
+        });
     };
 
     const handleCommit = async (validRows: any[]) => {

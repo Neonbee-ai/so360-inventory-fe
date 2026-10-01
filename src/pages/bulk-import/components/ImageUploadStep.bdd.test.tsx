@@ -22,8 +22,8 @@ const sizedFile = (name: string, bytes: number, type = 'image/jpeg') => {
     return f;
 };
 
-function makeRow(sku: string, status: 'valid' | 'error' | 'warning' = 'valid') {
-    return { row_index: 1, status, errors: [], warnings: [], data: { sku, image_urls: [] } };
+function makeRow(name: string, status: 'valid' | 'error' | 'warning' = 'valid') {
+    return { row_index: 1, status, errors: [], warnings: [], data: { name, image_urls: [] } };
 }
 
 function makeFile(name: string) {
@@ -57,7 +57,7 @@ describe('ImageUploadStep', () => {
         });
     });
 
-    describe('GIVEN a file matching a valid SKU is added', () => {
+    describe('GIVEN a file named after a valid product is added', () => {
         it('WHEN file selected THEN the file appears in the list with MATCHED badge', async () => {
             render(<ImageUploadStep parsedRows={rows} onImagesUploaded={onImagesUploaded} onUpload={onUpload} onSkip={onSkip} />);
             const input = document.querySelector('input[type="file"]') as HTMLInputElement;
@@ -67,7 +67,7 @@ describe('ImageUploadStep', () => {
         });
     });
 
-    describe('GIVEN a file with a name not matching any SKU is added', () => {
+    describe('GIVEN a file with a name not matching any product is added', () => {
         it('WHEN file selected THEN the file appears with NO MATCH badge', async () => {
             render(<ImageUploadStep parsedRows={rows} onImagesUploaded={onImagesUploaded} onUpload={onUpload} onSkip={onSkip} />);
             const input = document.querySelector('input[type="file"]') as HTMLInputElement;
@@ -77,8 +77,8 @@ describe('ImageUploadStep', () => {
         });
     });
 
-    describe('GIVEN a file matching an error row SKU is added', () => {
-        it('WHEN file selected THEN it shows NO MATCH (error rows are excluded from valid SKU set)', async () => {
+    describe('GIVEN a file named after an error row is added', () => {
+        it('WHEN file selected THEN it shows NO MATCH (error rows are excluded from the product set)', async () => {
             render(<ImageUploadStep parsedRows={rows} onImagesUploaded={onImagesUploaded} onUpload={onUpload} onSkip={onSkip} />);
             const input = document.querySelector('input[type="file"]') as HTMLInputElement;
             fireEvent.change(input, { target: { files: [makeFile('DUPE-001.jpg')] } });
@@ -87,9 +87,58 @@ describe('ImageUploadStep', () => {
         });
     });
 
+    describe('GIVEN every CSV row has an error', () => {
+        it('WHEN rendered THEN a banner explains no image can match until the CSV is fixed', () => {
+            const bad = [makeRow('Namur Sofa', 'error'), makeRow('Oak Table', 'error')];
+            render(<ImageUploadStep parsedRows={bad} onImagesUploaded={onImagesUploaded} onUpload={onUpload} onSkip={onSkip} />);
+            expect(screen.getByRole('alert')).toHaveTextContent('None of the 2 CSV rows can be imported (2 with errors)');
+        });
+
+        it('WHEN at least one row is importable THEN no banner is shown', () => {
+            render(<ImageUploadStep parsedRows={[makeRow('Namur Sofa'), makeRow('Oak Table', 'error')]} onImagesUploaded={onImagesUploaded} onUpload={onUpload} onSkip={onSkip} />);
+            expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+        });
+    });
+
+    describe('GIVEN product names are matched loosely', () => {
+        const pick = async (names: string[], parsedRows: any[]) => {
+            render(<ImageUploadStep parsedRows={parsedRows} onImagesUploaded={onImagesUploaded} onUpload={onUpload} onSkip={onSkip} />);
+            const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+            fireEvent.change(input, { target: { files: names.map(makeFile) } });
+            await waitFor(() => expect(screen.getByText(names[0])).toBeInTheDocument());
+        };
+
+        it('WHEN the filename differs only by case and spacing THEN it is MATCHED', async () => {
+            await pick(['NAMUR sofa.JPG'], [makeRow('Namur Sofa')]);
+            expect(screen.getByText('MATCHED')).toBeInTheDocument();
+        });
+
+        it('WHEN the filename is only part of a product name THEN it is NO MATCH (no partial matching)', async () => {
+            await pick(['Namur.jpg'], [makeRow('Namur Sofa')]);
+            expect(screen.getByText('NO MATCH')).toBeInTheDocument();
+        });
+
+        it('WHEN two products share the name THEN the image is AMBIGUOUS', async () => {
+            await pick(['Namur Sofa.jpg'], [makeRow('Namur Sofa'), makeRow('namur sofa')]);
+            expect(screen.getByText('AMBIGUOUS')).toBeInTheDocument();
+            expect(screen.queryByText('MATCHED')).not.toBeInTheDocument();
+        });
+
+        it('WHEN two images resolve to the same product name THEN both are DUPLICATE IMAGE', async () => {
+            await pick(['Namur Sofa.jpg', 'namur sofa.png'], [makeRow('Namur Sofa')]);
+            expect(screen.getAllByText('DUPLICATE IMAGE')).toHaveLength(2);
+        });
+
+        it('WHEN the CSV row carries a backend name_key THEN it is used for matching', async () => {
+            const row = { row_index: 1, status: 'valid', errors: [], warnings: [], data: { name: 'Namur Sofa', name_key: 'namur sofa', image_urls: [] } };
+            await pick(['Namur Sofa.jpg'], [row]);
+            expect(screen.getByText('MATCHED')).toBeInTheDocument();
+        });
+    });
+
     describe('GIVEN files are selected and Upload Images is clicked', () => {
         it('WHEN upload completes THEN onImagesUploaded is called with uploaded list', async () => {
-            const uploaded = [{ filename: 'WA-001.jpg', sku: 'wa-001', cdn_url: 'https://cdn.neonbee.app/WA-001.jpg' }];
+            const uploaded = [{ filename: 'WA-001.jpg', name_key: 'wa-001', cdn_url: 'https://cdn.neonbee.app/WA-001.jpg' }];
             onUpload.mockResolvedValue({ uploaded, failed: [] });
             render(<ImageUploadStep parsedRows={rows} onImagesUploaded={onImagesUploaded} onUpload={onUpload} onSkip={onSkip} />);
             const input = document.querySelector('input[type="file"]') as HTMLInputElement;
@@ -126,7 +175,7 @@ describe('ImageUploadStep', () => {
         });
     });
 
-    describe('GIVEN an oversize photo matching a SKU', () => {
+    describe('GIVEN an oversize photo matching a product name', () => {
         it('WHEN uploaded THEN it is auto-fitted first, the fitted file is sent, and the row shows the size result', async () => {
             const fitted = new File([new Uint8Array(640 * 1024)], 'WA-001.webp', { type: 'image/webp' });
             mockFit.mockImplementation(async (file: File) => ({
@@ -135,7 +184,7 @@ describe('ImageUploadStep', () => {
             }));
             // The API echoes the name it received (the fitted one).
             onUpload.mockResolvedValue({
-                uploaded: [{ filename: 'WA-001.webp', sku: 'wa-001', cdn_url: 'https://cdn.neonbee.app/WA-001.webp' }],
+                uploaded: [{ filename: 'WA-001.webp', name_key: 'wa-001', cdn_url: 'https://cdn.neonbee.app/WA-001.webp' }],
                 failed: [],
             });
             render(<ImageUploadStep parsedRows={rows} onImagesUploaded={onImagesUploaded} onUpload={onUpload} onSkip={onSkip} />);
@@ -148,7 +197,7 @@ describe('ImageUploadStep', () => {
             expect(onUpload).toHaveBeenCalledWith([fitted]);
             // Mapped back to the merchant's file name.
             expect(onImagesUploaded).toHaveBeenCalledWith([
-                { filename: 'WA-001.jpg', sku: 'wa-001', cdn_url: 'https://cdn.neonbee.app/WA-001.webp' },
+                { filename: 'WA-001.jpg', name_key: 'wa-001', cdn_url: 'https://cdn.neonbee.app/WA-001.webp' },
             ]);
             expect(screen.getByTestId('bulk-fit-note')).toHaveTextContent('6.1 MB → 640 KB (resized to 2000×2000)');
         });

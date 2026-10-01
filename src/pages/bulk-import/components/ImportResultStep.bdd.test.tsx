@@ -44,6 +44,21 @@ describe('ImportResultStep', () => {
         });
     });
 
+    describe('GIVEN the backend generated SKUs', () => {
+        it('WHEN a success row has a sku THEN it is shown; otherwise the item id', () => {
+            const result = {
+                total: 2, succeeded: 2, failed: 0,
+                results: [
+                    { row_index: 1, status: 'success' as const, item_id: 'item-1', sku: 'SKU-000123' },
+                    { row_index: 2, status: 'success' as const, item_id: 'abcdef1234' },
+                ],
+            };
+            render(<ImportResultStep result={result} loading={false} submittedRows={SUBMITTED} onGoToItems={onGoToItems} onReset={onReset} onNavigateToItem={onNavigateToItem} />);
+            expect(screen.getByText('SKU SKU-000123')).toBeInTheDocument();
+            expect(screen.getByText('abcdef12…')).toBeInTheDocument();
+        });
+    });
+
     describe('GIVEN all rows succeeded', () => {
         const result = makeResult(2, 0);
 

@@ -7,7 +7,15 @@ interface ParsedRow {
     errors: string[];
     warnings: string[];
     data: Record<string, any>;
+    /** Set after the image step: how this row's image was (not) mapped. */
+    image_status?: 'mapped' | 'not_found' | 'ambiguous' | 'duplicate_image';
 }
+
+const IMAGE_STATUS_LABEL: Record<string, { label: string; className: string }> = {
+    not_found: { label: 'Not found', className: 'text-amber-400' },
+    ambiguous: { label: 'Ambiguous name', className: 'text-rose-400' },
+    duplicate_image: { label: 'Duplicate image', className: 'text-rose-400' },
+};
 
 interface Props {
     rows: ParsedRow[];
@@ -76,7 +84,7 @@ const PreviewTableStep: React.FC<Props> = ({ rows, onConfirm, onBack }) => {
                             <tr key={row.row_index} className={`border-b border-slate-800/50 ${rowColor(row.status)}`}>
                                 <td className="px-3 py-2 text-slate-500">{row.row_index}</td>
                                 <td className="px-3 py-2 text-slate-200 font-medium max-w-[150px] truncate">{row.data.name || '—'}</td>
-                                <td className="px-3 py-2 font-mono text-slate-400">{row.data.sku || '—'}</td>
+                                <td className="px-3 py-2 text-slate-500 italic">Auto-generated</td>
                                 <td className="px-3 py-2 text-slate-400 capitalize">{row.data.type || '—'}</td>
                                 <td className="px-3 py-2 text-slate-400 max-w-[100px] truncate">{row.data.category_name || '—'}</td>
                                 <td className="px-3 py-2 text-slate-400">{row.data.price != null ? `${row.data.price}` : '—'}</td>
@@ -84,8 +92,13 @@ const PreviewTableStep: React.FC<Props> = ({ rows, onConfirm, onBack }) => {
                                 <td className="px-3 py-2 capitalize text-slate-400">{row.data.product_status || '—'}</td>
                                 <td className="px-3 py-2">
                                     {row.data.image_urls?.length > 0
-                                        ? <ImageIcon size={13} className="text-emerald-400" />
-                                        : <span className="text-slate-700">—</span>
+                                        ? <span className="flex items-center gap-1 text-emerald-400" title="Image mapped by product name">
+                                            <ImageIcon size={13} />
+                                            <span className="text-[10px]">Mapped</span>
+                                        </span>
+                                        : row.image_status && IMAGE_STATUS_LABEL[row.image_status]
+                                            ? <span className={`text-[10px] ${IMAGE_STATUS_LABEL[row.image_status].className}`}>{IMAGE_STATUS_LABEL[row.image_status].label}</span>
+                                            : <span className="text-slate-700">—</span>
                                     }
                                 </td>
                                 <td className="px-3 py-2 max-w-[200px]">
