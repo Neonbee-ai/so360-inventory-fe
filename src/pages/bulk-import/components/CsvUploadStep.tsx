@@ -85,6 +85,7 @@ const CsvUploadStep: React.FC<Props> = ({ onParsed, onParse }) => {
                         ['category_name', 'Matches existing category'],
                         ['unit_name', 'Matches existing unit of measure'],
                         ['product_status', 'draft / active / archived'],
+                        ['description', 'Product description (optional)'],
                     ].map(([col, desc]) => (
                         <div key={col} className="flex gap-2">
                             <span className="font-mono text-blue-400 text-xs mt-0.5">{col}</span>
@@ -92,10 +93,14 @@ const CsvUploadStep: React.FC<Props> = ({ onParsed, onParse }) => {
                         </div>
                     ))}
                 </div>
+                <p className="mt-3 text-slate-500 text-xs">
+                    <span className="font-semibold text-slate-400">Description:</span> add the product description in the{' '}
+                    <span className="font-mono text-blue-400">description</span> column. It will be automatically saved to the product.
+                </p>
                 <div className="mt-4 flex items-center gap-2">
                     <Upload size={13} className="text-slate-500" />
                     <a
-                        href="data:text/csv;charset=utf-8,name,sku,type,price,cost,category_name,unit_name,is_batch_tracked,is_serial_tracked,is_online_visible,product_status,barcode,brand,weight,weight_unit"
+                        href="data:text/csv;charset=utf-8,name,sku,type,price,cost,category_name,unit_name,is_batch_tracked,is_serial_tracked,is_online_visible,product_status,barcode,brand,weight,weight_unit,description"
                         download="bulk-import-template.csv"
                         onClick={(e) => e.stopPropagation()}
                         className="text-blue-400 hover:text-blue-300 text-xs underline"

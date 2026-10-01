@@ -26,6 +26,24 @@ const IMAGE_ROW     = makeRow(2, 'valid',   'Widget B', 'WA-002', [], [], true);
 const WARNING_ROW   = makeRow(3, 'warning', 'Widget C', 'WA-003', [], ['category not found']);
 const ERROR_ROW     = makeRow(4, 'error',   'Bad Item', '',       ['name is required']);
 
+describe('PreviewTableStep descriptions', () => {
+    const withDescription = (description?: string) => ({
+        ...makeRow(1, 'valid', 'Chair', 'CH-001'),
+        data: { ...makeRow(1, 'valid', 'Chair', 'CH-001').data, description },
+    });
+
+    it('GIVEN a row with a description WHEN rendered THEN the Description column and text are shown', () => {
+        render(<PreviewTableStep rows={[withDescription('Ergonomic wooden chair')]} onConfirm={vi.fn()} onBack={vi.fn()} />);
+        expect(screen.getByText('Description')).toBeInTheDocument();
+        expect(screen.getByText('Ergonomic wooden chair')).toHaveAttribute('title', 'Ergonomic wooden chair');
+    });
+
+    it('GIVEN a row without a description WHEN rendered THEN a dash is shown, never undefined/null', () => {
+        const { container } = render(<PreviewTableStep rows={[withDescription(undefined)]} onConfirm={vi.fn()} onBack={vi.fn()} />);
+        expect(container.textContent).not.toMatch(/undefined|null/);
+    });
+});
+
 describe('PreviewTableStep', () => {
     let onConfirm: ReturnType<typeof vi.fn>;
     let onBack: ReturnType<typeof vi.fn>;
