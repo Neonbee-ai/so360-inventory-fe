@@ -27,6 +27,18 @@ describe('CsvUploadStep', () => {
             expect(screen.getByText('Required CSV columns')).toBeInTheDocument();
         });
 
+        it('WHEN rendered THEN the description column is documented with its instruction', () => {
+            render(<CsvUploadStep onParsed={onParsed} onParse={onParse} />);
+            expect(screen.getByText('Product description (optional)')).toBeInTheDocument();
+            expect(screen.getByText(/automatically saved to the product/)).toBeInTheDocument();
+        });
+
+        it('WHEN rendered THEN the downloadable template includes the description header', () => {
+            render(<CsvUploadStep onParsed={onParsed} onParse={onParse} />);
+            const href = screen.getByText('Download CSV template').getAttribute('href') ?? '';
+            expect(href.split(',').pop()).toBe('description');
+        });
+
         it('WHEN rendered THEN the template download link is present', () => {
             render(<CsvUploadStep onParsed={onParsed} onParse={onParse} />);
             expect(screen.getByText('Download CSV template')).toBeInTheDocument();

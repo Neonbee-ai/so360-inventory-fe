@@ -65,6 +65,7 @@ const PreviewTableStep: React.FC<Props> = ({ rows, onConfirm, onBack }) => {
                             <th className="px-3 py-2.5 text-left text-slate-500 font-semibold">Type</th>
                             <th className="px-3 py-2.5 text-left text-slate-500 font-semibold">Category</th>
                             <th className="px-3 py-2.5 text-left text-slate-500 font-semibold">Price</th>
+                            <th className="px-3 py-2.5 text-left text-slate-500 font-semibold">Description</th>
                             <th className="px-3 py-2.5 text-left text-slate-500 font-semibold">Status</th>
                             <th className="px-3 py-2.5 text-left text-slate-500 font-semibold">Image</th>
                             <th className="px-3 py-2.5 text-left text-slate-500 font-semibold">Issues</th>
@@ -79,6 +80,7 @@ const PreviewTableStep: React.FC<Props> = ({ rows, onConfirm, onBack }) => {
                                 <td className="px-3 py-2 text-slate-400 capitalize">{row.data.type || '—'}</td>
                                 <td className="px-3 py-2 text-slate-400 max-w-[100px] truncate">{row.data.category_name || '—'}</td>
                                 <td className="px-3 py-2 text-slate-400">{row.data.price != null ? `${row.data.price}` : '—'}</td>
+                                <td className="px-3 py-2 text-slate-400 max-w-[220px] truncate" title={row.data.description || undefined}>{row.data.description || '—'}</td>
                                 <td className="px-3 py-2 capitalize text-slate-400">{row.data.product_status || '—'}</td>
                                 <td className="px-3 py-2">
                                     {row.data.image_urls?.length > 0
