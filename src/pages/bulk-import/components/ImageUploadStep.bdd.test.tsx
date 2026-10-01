@@ -87,6 +87,19 @@ describe('ImageUploadStep', () => {
         });
     });
 
+    describe('GIVEN every CSV row has an error', () => {
+        it('WHEN rendered THEN a banner explains no image can match until the CSV is fixed', () => {
+            const bad = [makeRow('Namur Sofa', 'error'), makeRow('Oak Table', 'error')];
+            render(<ImageUploadStep parsedRows={bad} onImagesUploaded={onImagesUploaded} onUpload={onUpload} onSkip={onSkip} />);
+            expect(screen.getByRole('alert')).toHaveTextContent('None of the 2 CSV rows can be imported (2 with errors)');
+        });
+
+        it('WHEN at least one row is importable THEN no banner is shown', () => {
+            render(<ImageUploadStep parsedRows={[makeRow('Namur Sofa'), makeRow('Oak Table', 'error')]} onImagesUploaded={onImagesUploaded} onUpload={onUpload} onSkip={onSkip} />);
+            expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+        });
+    });
+
     describe('GIVEN product names are matched loosely', () => {
         const pick = async (names: string[], parsedRows: any[]) => {
             render(<ImageUploadStep parsedRows={parsedRows} onImagesUploaded={onImagesUploaded} onUpload={onUpload} onSkip={onSkip} />);

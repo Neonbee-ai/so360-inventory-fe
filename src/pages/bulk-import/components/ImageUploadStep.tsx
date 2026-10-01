@@ -95,6 +95,10 @@ const ImageUploadStep: React.FC<Props> = ({ parsedRows, onImagesUploaded, onUplo
         }
     };
 
+    // With no importable CSV rows nothing can match, whatever the files are
+    // called — say so instead of showing every file as NO MATCH.
+    const importableCount = parsedRows.filter(r => r.status !== 'error').length;
+    const errorCount = parsedRows.length - importableCount;
     const matchedCount = files.filter(f => matchOf(f) === 'matched').length;
     const attentionCount = files.length - matchedCount;
 
@@ -120,6 +124,14 @@ const ImageUploadStep: React.FC<Props> = ({ parsedRows, onImagesUploaded, onUplo
                 </div>
                 <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/jpg,image/webp" multiple className="hidden" onChange={(e) => addFiles(e.target.files)} />
             </div>
+
+            {importableCount === 0 && (
+                <div role="alert" className="rounded-lg border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">
+                    None of the {parsedRows.length} CSV row{parsedRows.length !== 1 ? 's' : ''} can be imported
+                    {errorCount > 0 ? ` (${errorCount} with errors)` : ''}, so no image can be matched to a product.
+                    Go back and fix the CSV first — for example, check the <span className="font-mono">name</span> column header.
+                </div>
+            )}
 
             {files.length > 0 && (
                 <div className="space-y-2">
