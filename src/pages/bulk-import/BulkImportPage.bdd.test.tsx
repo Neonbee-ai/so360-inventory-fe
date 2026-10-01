@@ -342,6 +342,12 @@ describe('BulkImportPage', () => {
             expect(screen.getByTestId('row-0').dataset.warnings).toBe('1');
         });
 
+        it('WHEN several numbers are skipped THEN the warning lists them and images still map in order', async () => {
+            await previewAfterUpload([row(1, 'Chair')], [up('Chair.jpg'), up('Chair_4.jpg')]);
+            expect(screen.getByTestId('row-0').dataset.images).toBe('https://cdn/Chair.jpg,https://cdn/Chair_4.jpg');
+            expect(screen.getByTestId('row-0').dataset.status).toBe('warning');
+        });
+
         it('WHEN two files claim the same position (Chair.jpg and Chair_1.png) THEN none are mapped (duplicate_image)', async () => {
             await previewAfterUpload([row(1, 'Chair')], [up('Chair.jpg'), up('Chair_1.png')]);
             expect(screen.getByTestId('row-0').dataset.imageStatus).toBe('duplicate_image');

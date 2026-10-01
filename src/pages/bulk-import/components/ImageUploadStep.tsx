@@ -46,7 +46,7 @@ const ImageUploadStep: React.FC<Props> = ({ parsedRows, onImagesUploaded, onUplo
     const rowKeyCounts = importableRowKeyCounts(parsedRows);
     const plan = planImages(files.map(f => f.name), rowKeyCounts);
     const entryOf = (f: File) => plan.entries.find(e => e.filename === f.name);
-    const matchOf = (f: File): ImageMatch => entryOf(f)?.match ?? 'no_match';
+    const matchOf = (f: File): ImageMatch => entryOf(f)!.match;
 
     const addFiles = (incoming: FileList | null) => {
         if (!incoming) return;
@@ -165,7 +165,7 @@ const ImageUploadStep: React.FC<Props> = ({ parsedRows, onImagesUploaded, onUplo
                                         : <div className="w-3.5 h-3.5 rounded-full border border-amber-500/50 shrink-0" />
                                     )}
                                     <span className="text-slate-300 text-xs font-mono flex-1 truncate">{f.name}</span>
-                                    {isMatch && entryOf(f) && (
+                                    {isMatch && (
                                         <span data-testid="image-position" className="text-slate-500 text-[10px] shrink-0">{entryOf(f)!.seq === 1 ? 'Primary' : `Image ${entryOf(f)!.seq}`}</span>
                                     )}
                                     {fitNotes[f.name] && (

@@ -61,10 +61,7 @@ export function parseImageName(
     const stem = nameKeyFromFilename(filename);
     if ((rowKeyCounts.get(stem) ?? 0) > 0) return { key: stem, seq: 1 };
     const m = /^(.+?)\s*[_-]\s*([1-9]\d{0,2})$/.exec(stem);
-    if (m) {
-        const base = nameKey(m[1]);
-        if (base) return { key: base, seq: parseInt(m[2], 10) };
-    }
+    if (m) return { key: nameKey(m[1]), seq: parseInt(m[2], 10) };
     return { key: stem, seq: 1 };
 }
 
@@ -101,7 +98,7 @@ export function planImages(
         const seqCounts = countKeys(files.map(f => String(f.seq)));
         const ordered = [...files].sort((a, b) => a.seq - b.seq || a.filename.localeCompare(b.filename)).map(f => f.filename);
         let status: ImageMatch = 'matched';
-        if (!key || rows === 0) status = 'no_match';
+        if (rows === 0) status = 'no_match';
         else if (rows > 1) status = 'ambiguous';
         else if ([...seqCounts.values()].some(c => c > 1)) status = 'duplicate_image';
         else if (!seqCounts.has('1')) status = 'missing_primary';

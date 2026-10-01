@@ -66,7 +66,6 @@ const BulkImportPage: React.FC = () => {
                         warnings: [...row.warnings, `numbered images found for "${row.data.name}" but no primary image — upload "${row.data.name}.jpg" first; none mapped`],
                     };
                 }
-                if (group.status !== 'matched') return { ...row, image_status: 'not_found' };
                 const gapWarning = group.gaps.length > 0
                     ? [`image number${group.gaps.length > 1 ? 's' : ''} ${group.gaps.join(', ')} missing for "${row.data.name}" — images mapped in order`]
                     : [];
