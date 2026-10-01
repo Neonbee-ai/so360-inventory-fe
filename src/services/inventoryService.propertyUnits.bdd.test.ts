@@ -119,7 +119,7 @@ describe('inventoryService property units', () => {
       it('Then it asks Core partners for type=developer and maps id/name', async () => {
         mockFetch.mockReturnValue(jsonOk({ data: [{ id: 'p1', name: 'Emaar' }, { id: 'p2', display_name: 'Nakheel' }, { name: 'no id' }] }));
         const res = await inventoryService.searchDevelopers('ema');
-        expect(res).toEqual([{ id: 'p1', name: 'Emaar' }, { id: 'p2', name: 'Nakheel' }]);
+        expect(res).toEqual([{ id: 'p1', name: 'Emaar', role: 'developer' }, { id: 'p2', name: 'Nakheel', role: 'developer' }]);
         const [url, init] = mockFetch.mock.calls[0];
         expect(url).toContain('/v1/partners/org-1?');
         expect(url).toContain('type=developer');
@@ -132,7 +132,7 @@ describe('inventoryService property units', () => {
     describe('When Core returns a bare array', () => {
       it('Then it still maps the partners', async () => {
         mockFetch.mockReturnValue(jsonOk([{ id: 'p9', name: 'Sobha' }]));
-        await expect(inventoryService.searchDevelopers()).resolves.toEqual([{ id: 'p9', name: 'Sobha' }]);
+        await expect(inventoryService.searchDevelopers()).resolves.toEqual([{ id: 'p9', name: 'Sobha', role: 'developer' }]);
         expect(mockFetch.mock.calls[0][0]).not.toContain('search=');
       });
     });
@@ -235,7 +235,7 @@ describe('inventoryService property units edge branches', () => {
   describe('Given partner entries that are null or have no name', () => {
     it('Then nulls are dropped and the id is used as the name', async () => {
       mockFetch.mockReturnValue(jsonOk({ data: [null, { id: 42 }] }));
-      await expect(inventoryService.searchDevelopers()).resolves.toEqual([{ id: '42', name: '42' }]);
+      await expect(inventoryService.searchDevelopers()).resolves.toEqual([{ id: '42', name: '42', role: 'developer' }]);
     });
   });
 });
@@ -378,6 +378,153 @@ describe('inventoryService RE unit status and developer (G1/G3)', () => {
         inventoryService.setOrgId('');
         await expect(inventoryService.getDeveloper('p1')).rejects.toThrow('OrgId not set');
         expect(mockFetch).not.toHaveBeenCalled();
+      });
+    });
+  });
+});
+
+describe('inventoryService developer roles, developer edit and unit allocation (G1/RE)', () => {
+  describe('Given developers and property owners in Core', () => {
+    describe('When searchDevelopers is called', () => {
+      it('Then both roles are fetched, tagged, and a partner in both is kept as a developer', async () => {
+        mockFetch.mockImplementation((url: string) =>
+          url.includes('type=property_owner')
+            ? jsonOk({ data: [{ id: 'p1', name: 'Emaar' }, { id: 'o1', name: 'Mr Khan' }] })
+            : jsonOk({ data: [{ id: 'p1', name: 'Emaar' }] }),
+        );
+        const res = await inventoryService.searchDevelopers('k');
+        expect(res).toEqual([
+          { id: 'p1', name: 'Emaar', role: 'developer' },
+          { id: 'o1', name: 'Mr Khan', role: 'property_owner' },
+        ]);
+        expect(mockFetch).toHaveBeenCalledTimes(2);
+        expect(mockFetch.mock.calls[1][0]).toContain('search=k');
+      });
+    });
+
+    describe('When the property-owner lookup fails', () => {
+      it('Then developers are still returned', async () => {
+        mockFetch.mockImplementation((url: string) =>
+          url.includes('type=property_owner') ? jsonFail(400, {}) : jsonOk([{ id: 'p1', name: 'Emaar' }]),
+        );
+        await expect(inventoryService.searchDevelopers()).resolves.toEqual([{ id: 'p1', name: 'Emaar', role: 'developer' }]);
+      });
+    });
+  });
+
+  describe('Given a developer edit', () => {
+    describe('When updateDeveloper is called with some blank fields', () => {
+      it('Then only trimmed non-blank fields are PATCHed to the Core partner', async () => {
+        mockFetch.mockReturnValue(jsonOk({ id: 'p 1' }));
+        const res = await inventoryService.updateDeveloper('p 1', {
+          website: ' https://emaar.com ', logo_url: '  ', status: 'inactive', account_manager_user_id: undefined,
+        });
+        expect(res).toEqual({ id: 'p 1' });
+        const [url, init] = mockFetch.mock.calls[0];
+        expect(url).toMatch(/\/v1\/partners\/p%201$/);
+        expect(init.method).toBe('PATCH');
+        expect(init.headers).toMatchObject({ Authorization: 'Bearer tok', 'X-Org-Id': 'org-1', 'X-Tenant-Id': 't-1', 'Content-Type': 'application/json' });
+        expect(JSON.parse(init.body)).toEqual({ website: 'https://emaar.com', status: 'inactive' });
+      });
+    });
+
+    describe('When Core refuses the write', () => {
+      it('Then the status is surfaced as an error', async () => {
+        mockFetch.mockReturnValue(jsonFail(403, {}));
+        await expect(inventoryService.updateDeveloper('p1', { website: 'x' })).rejects.toThrow('Request failed (403)');
+      });
+    });
+
+    describe('When Core replies with no JSON body', () => {
+      it('Then the result is null', async () => {
+        mockFetch.mockReturnValue(Promise.resolve({ ok: true, status: 204, json: () => Promise.reject(new Error('empty')) } as any));
+        await expect(inventoryService.updateDeveloper('p1', { account_manager_user_id: 'u1' })).resolves.toBeNull();
+      });
+    });
+
+    describe('When Core answers 402 quota exceeded', () => {
+      it('Then the shell quota event fires and the call fails', async () => {
+        const heard = vi.fn();
+        window.addEventListener('__so360_quota_exceeded', heard);
+        mockFetch.mockReturnValue(Promise.resolve({
+          ok: false, status: 402, json: () => Promise.resolve({}), clone: () => ({ json: () => Promise.resolve({}) }),
+        } as any));
+        await expect(inventoryService.updateDeveloper('p1', { website: 'x' })).rejects.toThrow('Request failed (402)');
+        window.removeEventListener('__so360_quota_exceeded', heard);
+        expect(heard).toHaveBeenCalled();
+      });
+    });
+
+    describe('When no org is set', () => {
+      it('Then it throws without calling Core', async () => {
+        inventoryService.setOrgId('');
+        await expect(inventoryService.updateDeveloper('p1', { website: 'x' })).rejects.toThrow('OrgId not set');
+        expect(mockFetch).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe('Given a unit with an agent override in custom_attributes', () => {
+    describe('When getUnitAllocation is called', () => {
+      it('Then ids are read from a data envelope and junk entries are dropped', async () => {
+        mockFetch.mockReturnValue(jsonOk({ data: { custom_attributes: { assigned_user_ids: ['u1', '', 3], assigned_team_ids: [] } } }));
+        await expect(inventoryService.getUnitAllocation('i1')).resolves.toEqual({ assigned_user_ids: ['u1'], assigned_team_ids: null });
+        expect(mockFetch.mock.calls[0][0]).toMatch(/\/items\/detail\/i1$/);
+      });
+
+      it('Then a bare item and a missing custom_attributes both read as no override', async () => {
+        mockFetch.mockReturnValue(jsonOk({ custom_attributes: { assigned_team_ids: ['t1'], assigned_user_ids: 'x' } }));
+        await expect(inventoryService.getUnitAllocation('i1')).resolves.toEqual({ assigned_user_ids: null, assigned_team_ids: ['t1'] });
+        mockFetch.mockReturnValue(jsonOk({ id: 'i1' }));
+        await expect(inventoryService.getUnitAllocation('i1')).resolves.toEqual({ assigned_user_ids: null, assigned_team_ids: null });
+        mockFetch.mockReturnValue(jsonOk(null));
+        await expect(inventoryService.getUnitAllocation('i1')).resolves.toEqual({ assigned_user_ids: null, assigned_team_ids: null });
+      });
+    });
+
+    describe('When setUnitAllocation is called', () => {
+      it('Then the current attributes are merged and empty lists are stored as null', async () => {
+        mockFetch
+          .mockReturnValueOnce(jsonOk({ data: { custom_attributes: { bedrooms: 2, assigned_team_ids: ['old'] } } }))
+          .mockReturnValueOnce(jsonOk({ id: 'i1' }));
+        const out = await inventoryService.setUnitAllocation('i1', { assigned_user_ids: ['u1'], assigned_team_ids: [] });
+        expect(out).toEqual({ id: 'i1' });
+        const [url, init] = mockFetch.mock.calls[1];
+        expect(url).toMatch(/\/items\/i1$/);
+        expect(init.method).toBe('PATCH');
+        expect(JSON.parse(init.body)).toEqual({
+          custom_attributes: { bedrooms: 2, assigned_user_ids: ['u1'], assigned_team_ids: null },
+        });
+      });
+
+      it('Then an item without attributes gets only the override keys, and null lists clear it', async () => {
+        mockFetch
+          .mockReturnValueOnce(jsonOk({ custom_attributes: 'bad' }))
+          .mockReturnValueOnce(jsonOk({}));
+        await inventoryService.setUnitAllocation('i1', { assigned_user_ids: null, assigned_team_ids: ['t1'] });
+        expect(JSON.parse(mockFetch.mock.calls[1][1].body)).toEqual({
+          custom_attributes: { assigned_user_ids: null, assigned_team_ids: ['t1'] },
+        });
+        mockFetch.mockReset();
+        mockFetch
+          .mockReturnValueOnce(jsonOk(null))
+          .mockReturnValueOnce(jsonOk({}));
+        await inventoryService.setUnitAllocation('i1', { assigned_user_ids: null, assigned_team_ids: null });
+        expect(JSON.parse(mockFetch.mock.calls[1][1].body)).toEqual({
+          custom_attributes: { assigned_user_ids: null, assigned_team_ids: null },
+        });
+      });
+
+      it('Then the cached item catalogue is dropped so the next read is fresh', async () => {
+        mockFetch.mockReturnValue(jsonOk({ data: [] }));
+        await inventoryService.getItems();
+        await inventoryService.getItems();
+        expect(mockFetch).toHaveBeenCalledTimes(1);
+        mockFetch.mockReturnValueOnce(jsonOk({})).mockReturnValueOnce(jsonOk({}));
+        await inventoryService.setUnitAllocation('i1', { assigned_user_ids: ['u1'], assigned_team_ids: null });
+        mockFetch.mockReturnValue(jsonOk({ data: [] }));
+        await inventoryService.getItems();
+        expect(mockFetch).toHaveBeenCalledTimes(4);
       });
     });
   });

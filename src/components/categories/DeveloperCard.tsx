@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Building2, Globe, Mail, Phone, MapPin, User, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
+import { Building2, Globe, Mail, Phone, MapPin, User, Loader2, AlertCircle, RefreshCw, Pencil } from 'lucide-react';
 import { inventoryService } from '../../services/inventoryService';
-import type { DeveloperProfile } from '../../types/inventory';
+import type { DeveloperProfile, DeveloperUpdate } from '../../types/inventory';
 
 interface DeveloperCardProps {
     /** Core partner id (role developer) from the project's metadata. */
@@ -11,7 +11,39 @@ interface DeveloperCardProps {
     /** The project currently open, highlighted in the list. */
     currentProjectId?: string | null;
     onSelectProject?: (id: string) => void;
+    /** May edit website / logo / status / account manager on the Core partner. */
+    canEdit?: boolean;
 }
+
+interface EditDraft {
+    website: string;
+    logo_url: string;
+    status: '' | 'active' | 'inactive';
+    account_manager_user_id: string;
+}
+
+const inputCls =
+    'w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500';
+
+const toDraft = (d: DeveloperProfile): EditDraft => {
+    const st = (d.status || '').toLowerCase();
+    return {
+        website: d.website || '',
+        logo_url: d.logo_url || '',
+        status: st === 'active' || st === 'inactive' ? st : '',
+        account_manager_user_id: d.account_manager_user_id || '',
+    };
+};
+
+/** Only fields with a value are sent; blanks leave the partner untouched. */
+export const toDeveloperUpdate = (d: EditDraft): DeveloperUpdate => {
+    const out: DeveloperUpdate = {};
+    if (d.website.trim()) out.website = d.website.trim();
+    if (d.logo_url.trim()) out.logo_url = d.logo_url.trim();
+    if (d.status) out.status = d.status;
+    if (d.account_manager_user_id.trim()) out.account_manager_user_id = d.account_manager_user_id.trim();
+    return out;
+};
 
 const fmtDate = (v: string | null): string | null => {
     if (!v) return null;
@@ -42,12 +74,15 @@ const Line: React.FC<{ icon?: React.ReactNode; label: string; children: React.Re
  * partner; this card reads it through Core's partner APIs and lists the
  * projects that point at it via `metadata.developer_partner_id`.
  */
-export const DeveloperCard: React.FC<DeveloperCardProps> = ({ partnerId, projects, currentProjectId, onSelectProject }) => {
+export const DeveloperCard: React.FC<DeveloperCardProps> = ({ partnerId, projects, currentProjectId, onSelectProject, canEdit = false }) => {
     const [dev, setDev] = useState<DeveloperProfile | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [logoFailed, setLogoFailed] = useState(false);
     const [attempt, setAttempt] = useState(0);
+    const [draft, setDraft] = useState<EditDraft | null>(null);
+    const [saving, setSaving] = useState(false);
+    const [saveError, setSaveError] = useState<string | null>(null);
 
     const retry = useCallback(() => setAttempt((n) => n + 1), []);
 
@@ -83,6 +118,23 @@ export const DeveloperCard: React.FC<DeveloperCardProps> = ({ partnerId, project
         );
     }
 
+    const saveEdit = async () => {
+        if (!draft) return;
+        const patch = toDeveloperUpdate(draft);
+        if (!Object.keys(patch).length) { setDraft(null); return; }
+        setSaving(true);
+        setSaveError(null);
+        try {
+            await inventoryService.updateDeveloper(partnerId, patch);
+            setDraft(null);
+            retry();
+        } catch (err: any) {
+            setSaveError(err?.message || 'Failed to save developer');
+        } finally {
+            setSaving(false);
+        }
+    };
+
     const website = dev.website ? safeHref(dev.website) : null;
     const status = (dev.status || '').toLowerCase();
     const statusCls = status === 'active'
@@ -113,7 +165,60 @@ export const DeveloperCard: React.FC<DeveloperCardProps> = ({ partnerId, project
                 {dev.status && (
                     <span className={`ml-auto px-2 py-0.5 rounded-md capitalize ${statusCls}`} data-testid="developer-status">{dev.status}</span>
                 )}
+                {canEdit && !draft && (
+                    <button
+                        type="button"
+                        aria-label="Edit developer"
+                        onClick={() => { setSaveError(null); setDraft(toDraft(dev)); }}
+                        className={`${dev.status ? '' : 'ml-auto '}p-1 text-slate-500 hover:text-slate-200`}
+                    >
+                        <Pencil size={12} />
+                    </button>
+                )}
             </div>
+
+            {draft && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 border border-slate-800 rounded-lg p-3" data-testid="developer-edit">
+                    <label className="block text-slate-400">
+                        Website
+                        <input aria-label="Developer website" className={inputCls} value={draft.website} placeholder="https://"
+                            onChange={(e) => setDraft({ ...draft, website: e.target.value })} />
+                    </label>
+                    <label className="block text-slate-400">
+                        Logo URL
+                        <input aria-label="Developer logo URL" className={inputCls} value={draft.logo_url} placeholder="https://"
+                            onChange={(e) => setDraft({ ...draft, logo_url: e.target.value })} />
+                    </label>
+                    <label className="block text-slate-400">
+                        Status
+                        <select aria-label="Developer status" className={inputCls} value={draft.status}
+                            onChange={(e) => {
+                                const v = e.target.value;
+                                setDraft({ ...draft, status: v === 'active' || v === 'inactive' ? v : '' });
+                            }}>
+                            <option value="">Not set</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                    </label>
+                    <label className="block text-slate-400">
+                        Account manager (user ID)
+                        <input aria-label="Account manager user ID" className={inputCls} value={draft.account_manager_user_id}
+                            onChange={(e) => setDraft({ ...draft, account_manager_user_id: e.target.value })} />
+                    </label>
+                    {saveError && <p className="text-rose-400 md:col-span-2">{saveError}</p>}
+                    <div className="flex gap-2 md:col-span-2">
+                        <button type="button" onClick={saveEdit} disabled={saving}
+                            className="px-3 py-1.5 rounded-lg bg-blue-600 text-white disabled:opacity-50">
+                            {saving ? 'Saving…' : 'Save developer'}
+                        </button>
+                        <button type="button" onClick={() => setDraft(null)} disabled={saving}
+                            className="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {dev.description && <p className="text-slate-300">{dev.description}</p>}
 
@@ -128,7 +233,9 @@ export const DeveloperCard: React.FC<DeveloperCardProps> = ({ partnerId, project
                 )}
                 {dev.address && <Line icon={<MapPin size={12} />} label="Address">{dev.address}</Line>}
                 {dev.country && <Line label="Country">{dev.country}</Line>}
-                {dev.account_manager && <Line label="Account manager">{dev.account_manager}</Line>}
+                {(dev.account_manager || dev.account_manager_user_id) && (
+                    <Line label="Account manager">{dev.account_manager || dev.account_manager_user_id}</Line>
+                )}
                 {dev.notes && <Line label="Notes">{dev.notes}</Line>}
                 {fmtDate(dev.created_at) && <Line label="Created">{fmtDate(dev.created_at)}</Line>}
                 {fmtDate(dev.updated_at) && <Line label="Modified">{fmtDate(dev.updated_at)}</Line>}

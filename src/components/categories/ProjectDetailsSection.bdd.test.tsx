@@ -6,7 +6,11 @@ const mockSearchDevelopers = vi.fn();
 const mockUploadFile = vi.fn();
 
 vi.mock('../../services/inventoryService', () => ({
-  inventoryService: { searchDevelopers: (...a: any[]) => mockSearchDevelopers(...a) },
+  inventoryService: {
+    searchDevelopers: (...a: any[]) => mockSearchDevelopers(...a),
+    searchOrgUsers: () => Promise.resolve([]),
+    listTeams: () => Promise.resolve([]),
+  },
 }));
 vi.mock('../../services/mediaService', () => ({
   mediaService: { uploadFile: (...a: any[]) => mockUploadFile(...a) },
@@ -38,7 +42,7 @@ beforeEach(() => {
   mockSearchDevelopers.mockReset();
   mockUploadFile.mockReset();
   onChangeSpy.mockReset();
-  mockSearchDevelopers.mockResolvedValue([{ id: 'd1', name: 'Emaar' }, { id: 'd2', name: 'Sobha' }]);
+  mockSearchDevelopers.mockResolvedValue([{ id: 'd1', name: 'Emaar', role: 'developer' }, { id: 'd2', name: 'Sobha', role: 'developer' }]);
 });
 
 describe('ProjectDetailsSection', () => {
@@ -282,6 +286,83 @@ describe('ProjectDetailsSection edge branches', () => {
       render(<Harness disabled />);
       expect(screen.getByTestId('brochure-input')).toBeDisabled();
       expect(screen.getByLabelText('Handover')).toBeDisabled();
+      await waitFor(() => expect(mockSearchDevelopers).toHaveBeenCalled());
+    });
+  });
+});
+
+describe('ProjectDetailsSection developer roles (G1)', () => {
+  const mixed = [
+    { id: 'd1', name: 'Emaar', role: 'developer' },
+    { id: 'o1', name: 'Ali Hassan', role: 'property_owner' },
+  ];
+
+  describe('Given only developers load', () => {
+    it('Then no filter chips are shown', async () => {
+      render(<Harness />);
+      await waitFor(() => expect(screen.getByRole('option', { name: 'Emaar' })).toBeInTheDocument());
+      expect(screen.queryByRole('group', { name: 'Developer filter' })).toBeNull();
+    });
+  });
+
+  describe('Given developers and property owners load', () => {
+    it('Then owners are labelled and the chips filter the list', async () => {
+      mockSearchDevelopers.mockResolvedValue(mixed);
+      render(<Harness />);
+      await waitFor(() => expect(screen.getByRole('option', { name: 'Ali Hassan (Property owner)' })).toBeInTheDocument());
+      const group = screen.getByRole('group', { name: 'Developer filter' });
+      expect(group).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'All' }).getAttribute('aria-pressed')).toBe('true');
+
+      fireEvent.click(screen.getByRole('button', { name: 'Property owners' }));
+      expect(screen.getByRole('button', { name: 'Property owners' }).getAttribute('aria-pressed')).toBe('true');
+      expect(screen.queryByRole('option', { name: 'Emaar' })).toBeNull();
+      expect(screen.getByRole('option', { name: 'Ali Hassan (Property owner)' })).toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Developers' }));
+      expect(screen.getByRole('option', { name: 'Emaar' })).toBeInTheDocument();
+      expect(screen.queryByRole('option', { name: 'Ali Hassan (Property owner)' })).toBeNull();
+    });
+
+    it('When the saved developer is filtered out Then it stays selectable', async () => {
+      mockSearchDevelopers.mockResolvedValue(mixed);
+      render(<Harness initial={{ developer_partner_id: 'o1' }} />);
+      await waitFor(() => expect(screen.getByRole('group', { name: 'Developer filter' })).toBeInTheDocument());
+      fireEvent.click(screen.getByRole('button', { name: 'Developers' }));
+      expect(screen.getByRole('option', { name: 'Ali Hassan (Property owner)' })).toBeInTheDocument();
+      expect((screen.getByLabelText('Developer') as HTMLSelectElement).value).toBe('o1');
+    });
+  });
+});
+
+describe('ProjectDetailsSection payment plans', () => {
+  describe('Given a legacy free-text payment plan', () => {
+    it('Then it shows read-only', async () => {
+      render(<Harness initial={{ payment_plan: '20/80' }} />);
+      const input = screen.getByLabelText('Payment plan') as HTMLInputElement;
+      expect(input.value).toBe('20/80');
+      expect(input.readOnly).toBe(true);
+      expect(screen.getByText('Payment plan (legacy)')).toBeInTheDocument();
+      await waitFor(() => expect(mockSearchDevelopers).toHaveBeenCalled());
+    });
+  });
+
+  describe('Given no legacy plan', () => {
+    it('Then the legacy field is hidden and the templates editor is shown', async () => {
+      render(<Harness />);
+      expect(screen.queryByLabelText('Payment plan')).toBeNull();
+      expect(screen.getByRole('region', { name: 'Payment plan templates' })).toBeInTheDocument();
+      await waitFor(() => expect(mockSearchDevelopers).toHaveBeenCalled());
+    });
+  });
+
+  describe('When a payment plan is added', () => {
+    it('Then payment_plan_templates is emitted with one default template', async () => {
+      render(<Harness />);
+      fireEvent.click(screen.getByRole('button', { name: /Add payment plan/ }));
+      const last = onChangeSpy.mock.calls[onChangeSpy.mock.calls.length - 1][0];
+      expect(last.payment_plan_templates).toHaveLength(1);
+      expect(last.payment_plan_templates[0].is_default).toBe(true);
       await waitFor(() => expect(mockSearchDevelopers).toHaveBeenCalled());
     });
   });

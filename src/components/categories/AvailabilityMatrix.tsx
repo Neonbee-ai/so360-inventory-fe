@@ -7,6 +7,7 @@ import {
     UNIT_STATUS_OVERRIDES,
     type AvailabilityTower,
     type AvailabilityUnit,
+    type ItemCategory,
     type UnitStatus,
     type UnitStatusOverride,
 } from '../../types/inventory';
@@ -21,6 +22,7 @@ import {
     toCounts,
     type AvailabilityCounts,
 } from '../../utils/unitGrid';
+import { UnitAllocationSection } from './UnitAllocationSection';
 
 interface AvailabilityMatrixProps {
     /** Project (root category) or a single tower. */
@@ -29,6 +31,10 @@ interface AvailabilityMatrixProps {
     refreshKey?: number;
     /** May set or clear a unit's manual status (Blocked / Cancelled / Unavailable). */
     canManage?: boolean;
+    /** action:crm:unit_allocation — show the unit's agents/teams override. */
+    allocationEnabled?: boolean;
+    /** All categories, for the "Inherited from" tower/project lookup. */
+    categories?: ItemCategory[];
 }
 
 export const STATUS_STYLE: Record<UnitStatus, { label: string; short: string; cls: string }> = {
@@ -87,13 +93,15 @@ interface UnitPanelProps {
     onClose: () => void;
     onOpen: () => void;
     onSaved: () => void;
+    /** Present when the allocation override is on; `towerId` starts the inheritance walk. */
+    allocation?: { towerId: string | null; categories: ItemCategory[] } | null;
 }
 
 /**
  * One unit's RFP §5 fields. Buyer / agent / dates are not stored in inventory:
  * the reservation reference points at the CRM record that owns them.
  */
-const UnitPanel: React.FC<UnitPanelProps> = ({ unit, orgCurrency, canManage, onClose, onOpen, onSaved }) => {
+const UnitPanel: React.FC<UnitPanelProps> = ({ unit, orgCurrency, canManage, onClose, onOpen, onSaved, allocation }) => {
     const [override, setOverride] = useState<string>(unit.status_override || '');
     const [reason, setReason] = useState<string>(unit.status_override_reason || '');
     const [saving, setSaving] = useState(false);
@@ -190,6 +198,14 @@ const UnitPanel: React.FC<UnitPanelProps> = ({ unit, orgCurrency, canManage, onC
                     </button>
                 </div>
             )}
+            {allocation && (
+                <UnitAllocationSection
+                    itemId={unit.item_id}
+                    towerId={allocation.towerId}
+                    categories={allocation.categories}
+                    canManage={canManage}
+                />
+            )}
             <button onClick={onOpen} className="flex items-center gap-1 text-blue-400 hover:text-blue-300">
                 <ExternalLink size={12} /> Open unit
             </button>
@@ -202,7 +218,13 @@ const UnitPanel: React.FC<UnitPanelProps> = ({ unit, orgCurrency, canManage, onC
  * the grid; a chip opens the unit's details (and its manual status), from
  * which "Open unit" goes to the item page.
  */
-export const AvailabilityMatrix: React.FC<AvailabilityMatrixProps> = ({ categoryId, refreshKey = 0, canManage = false }) => {
+export const AvailabilityMatrix: React.FC<AvailabilityMatrixProps> = ({
+    categoryId,
+    refreshKey = 0,
+    canManage = false,
+    allocationEnabled = false,
+    categories = [],
+}) => {
     const navigate = useNavigate();
     const { settings } = useBusinessSettings();
     const orgCurrency: string | null = settings?.base_currency || null;
@@ -364,6 +386,11 @@ export const AvailabilityMatrix: React.FC<AvailabilityMatrixProps> = ({ category
                     onClose={() => setSelectedUnitId(null)}
                     onOpen={() => navigate(`/inventory/items/${selectedUnit.item_id}`)}
                     onSaved={load}
+                    allocation={
+                        allocationEnabled
+                            ? { towerId: selectedUnit.category_id || activeTower || categoryId, categories }
+                            : null
+                    }
                 />
             )}
 

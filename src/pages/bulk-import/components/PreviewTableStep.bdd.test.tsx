@@ -26,6 +26,59 @@ const IMAGE_ROW     = makeRow(2, 'valid',   'Widget B', 'WA-002', [], [], true);
 const WARNING_ROW   = makeRow(3, 'warning', 'Widget C', 'WA-003', [], ['category not found']);
 const ERROR_ROW     = makeRow(4, 'error',   'Bad Item', '',       ['name is required']);
 
+describe('PreviewTableStep SKU and image mapping', () => {
+    const base = makeRow(1, 'valid', 'Namur Sofa', '');
+    const withStatus = (image_status?: string, hasImage = false) => ({
+        ...base,
+        image_status,
+        data: { ...base.data, image_urls: hasImage ? ['https://cdn.example.com/s.jpg'] : [] },
+    }) as any;
+
+    it('GIVEN any row WHEN rendered THEN the SKU shows as auto-generated', () => {
+        render(<PreviewTableStep rows={[withStatus()]} onConfirm={vi.fn()} onBack={vi.fn()} />);
+        expect(screen.getByText('Auto-generated')).toBeInTheDocument();
+    });
+
+    it('GIVEN a mapped image WHEN rendered THEN it reads Mapped', () => {
+        render(<PreviewTableStep rows={[withStatus('mapped', true)]} onConfirm={vi.fn()} onBack={vi.fn()} />);
+        expect(screen.getByText('Mapped')).toBeInTheDocument();
+    });
+
+    it.each([
+        ['not_found', 'Not found'],
+        ['ambiguous', 'Ambiguous name'],
+        ['duplicate_image', 'Duplicate image'],
+        ['missing_primary', 'Missing primary'],
+    ])('GIVEN image status %s WHEN rendered THEN it reads %s', (status, label) => {
+        render(<PreviewTableStep rows={[withStatus(status)]} onConfirm={vi.fn()} onBack={vi.fn()} />);
+        expect(screen.getByText(label)).toBeInTheDocument();
+    });
+
+    it('GIVEN images were skipped WHEN rendered THEN the image cell is a dash', () => {
+        render(<PreviewTableStep rows={[withStatus()]} onConfirm={vi.fn()} onBack={vi.fn()} />);
+        expect(screen.queryByText('Not found')).not.toBeInTheDocument();
+        expect(screen.queryByText('Mapped')).not.toBeInTheDocument();
+    });
+});
+
+describe('PreviewTableStep descriptions', () => {
+    const withDescription = (description?: string) => ({
+        ...makeRow(1, 'valid', 'Chair', 'CH-001'),
+        data: { ...makeRow(1, 'valid', 'Chair', 'CH-001').data, description },
+    });
+
+    it('GIVEN a row with a description WHEN rendered THEN the Description column and text are shown', () => {
+        render(<PreviewTableStep rows={[withDescription('Ergonomic wooden chair')]} onConfirm={vi.fn()} onBack={vi.fn()} />);
+        expect(screen.getByText('Description')).toBeInTheDocument();
+        expect(screen.getByText('Ergonomic wooden chair')).toHaveAttribute('title', 'Ergonomic wooden chair');
+    });
+
+    it('GIVEN a row without a description WHEN rendered THEN a dash is shown, never undefined/null', () => {
+        const { container } = render(<PreviewTableStep rows={[withDescription(undefined)]} onConfirm={vi.fn()} onBack={vi.fn()} />);
+        expect(container.textContent).not.toMatch(/undefined|null/);
+    });
+});
+
 describe('PreviewTableStep', () => {
     let onConfirm: ReturnType<typeof vi.fn>;
     let onBack: ReturnType<typeof vi.fn>;
@@ -118,5 +171,13 @@ describe('PreviewTableStep', () => {
             fireEvent.click(screen.getByText(/Import 1 valid row/));
             expect(onConfirm).toHaveBeenCalledWith([WARNING_ROW.data]);
         });
+    });
+
+    it('GIVEN a product with three images WHEN rendered THEN the image cell reads Primary + 2 more', () => {
+        const base = makeRow(1, 'valid', 'Namur Sofa', '');
+        const r = { ...base, image_status: 'mapped', data: { ...base.data, image_urls: ['a.jpg', 'b.jpg', 'c.jpg'] } } as any;
+        render(<PreviewTableStep rows={[r]} onConfirm={vi.fn()} onBack={vi.fn()} />);
+        expect(screen.getByText('Primary + 2 more')).toBeInTheDocument();
+        expect(screen.queryByText('Mapped')).not.toBeInTheDocument();
     });
 });

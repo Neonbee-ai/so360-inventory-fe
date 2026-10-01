@@ -8,6 +8,7 @@ import CsvUploadStep from './components/CsvUploadStep';
 import ImageUploadStep from './components/ImageUploadStep';
 import PreviewTableStep from './components/PreviewTableStep';
 import ImportResultStep from './components/ImportResultStep';
+import { importableRowKeyCounts, planImages, rowNameKey } from './nameKey';
 
 const STEPS = [
     { label: 'Upload CSV' },
@@ -16,9 +17,6 @@ const STEPS = [
     { label: 'Result' },
 ];
 
-function slugify(s: string): string {
-    return s.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-}
 
 const BulkImportPage: React.FC = () => {
     const navigate = useNavigate();
@@ -38,20 +36,48 @@ const BulkImportPage: React.FC = () => {
         setStep(1);
     };
 
-    const handleImagesUploaded = (uploaded: { filename: string; sku: string; cdn_url: string }[]) => {
-        const skuToCdn = new Map(uploaded.map(u => [u.sku, u.cdn_url]));
-        setRows(prev =>
-            prev.map(row => {
-                const sku = row.data.sku ? slugify(row.data.sku) : null;
-                const cdnUrl = sku ? skuToCdn.get(sku) : undefined;
-                if (!cdnUrl) return row;
+    // Images map to products by product name; `Name.jpg` is the primary image and
+    // `Name_2.jpg`, `Name_3.jpg`… follow in order. A name that is ambiguous (several
+    // products), a position claimed twice, or numbered images with no primary are
+    // never guessed — the row keeps no image and says why.
+    const handleImagesUploaded = (uploaded: { filename: string; name_key?: string; cdn_url: string }[]) => {
+        const cdnByFile = new Map(uploaded.map(u => [u.filename, u.cdn_url]));
+        setRows(prev => {
+            const { groups } = planImages(uploaded.map(u => u.filename), importableRowKeyCounts(prev));
+            return prev.map(row => {
+                if (row.status === 'error') return row;
+                const group = groups.get(rowNameKey(row));
+                // Nothing was uploaded under this product's name.
+                if (!group) return { ...row, image_status: 'not_found' };
+                if (group.status === 'ambiguous') return { ...row, image_status: 'ambiguous' };
+                if (group.status === 'duplicate_image') {
+                    return {
+                        ...row,
+                        status: 'warning',
+                        image_status: 'duplicate_image',
+                        warnings: [...row.warnings, `more than one image is named for the same position of "${row.data.name}" — none mapped`],
+                    };
+                }
+                if (group.status === 'missing_primary') {
+                    return {
+                        ...row,
+                        status: 'warning',
+                        image_status: 'missing_primary',
+                        warnings: [...row.warnings, `numbered images found for "${row.data.name}" but no primary image — upload "${row.data.name}.jpg" first; none mapped`],
+                    };
+                }
+                const gapWarning = group.gaps.length > 0
+                    ? [`image number${group.gaps.length > 1 ? 's' : ''} ${group.gaps.join(', ')} missing for "${row.data.name}" — images mapped in order`]
+                    : [];
                 return {
                     ...row,
-                    status: row.status === 'warning' ? 'valid' : row.status,
-                    data: { ...row.data, image_urls: [cdnUrl] },
+                    status: group.gaps.length > 0 ? 'warning' : row.status === 'warning' ? 'valid' : row.status,
+                    image_status: 'mapped',
+                    warnings: [...row.warnings, ...gapWarning],
+                    data: { ...row.data, image_urls: group.ordered.map(f => cdnByFile.get(f)).filter(Boolean) },
                 };
-            }),
-        );
+            });
+        });
     };
 
     const handleCommit = async (validRows: any[]) => {

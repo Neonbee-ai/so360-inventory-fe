@@ -3,12 +3,18 @@
  * Every field writes into the controlled metadata draft; blanks become null.
  */
 import React, { useState } from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const mockSearchDevelopers = vi.fn();
+const mockSearchUsers = vi.fn();
+const mockListTeams = vi.fn();
 vi.mock('../../services/inventoryService', () => ({
-  inventoryService: { searchDevelopers: (...a: any[]) => mockSearchDevelopers(...a) },
+  inventoryService: {
+    searchDevelopers: (...a: any[]) => mockSearchDevelopers(...a),
+    searchOrgUsers: (...a: any[]) => mockSearchUsers(...a),
+    listTeams: (...a: any[]) => mockListTeams(...a),
+  },
 }));
 vi.mock('../../services/mediaService', () => ({ mediaService: { uploadFile: vi.fn() } }));
 
@@ -30,6 +36,10 @@ const type = (label: string, value: string) => fireEvent.change(screen.getByLabe
 beforeEach(() => {
   mockSearchDevelopers.mockReset();
   mockSearchDevelopers.mockResolvedValue([]);
+  mockSearchUsers.mockReset();
+  mockListTeams.mockReset();
+  mockSearchUsers.mockResolvedValue([{ id: 'u-1', name: 'Aisha Khan' }, { id: 'u-2', name: 'Bilal Rao' }]);
+  mockListTeams.mockResolvedValue([{ id: 't-1', name: 'Sales' }]);
   onChangeSpy.mockReset();
 });
 
@@ -54,7 +64,6 @@ describe('Given an empty project draft', () => {
       ['Project code', 'project_code', 'SKY-01'],
       ['City', 'city', 'Dubai'],
       ['Country', 'country', 'AE'],
-      ['Payment plan', 'payment_plan', '20/80'],
       ['Description', 'description', 'Waterfront towers'],
     ])('Then %s writes %s and a blank clears it', async (label, key, text) => {
       render(<Harness />);
@@ -136,8 +145,6 @@ describe('Given an empty project draft', () => {
       ['Video URLs', 'videos', 'https://v/1, https://v/2', ['https://v/1', 'https://v/2']],
       ['Floor plan URLs', 'floor_plans', 'https://cdn/fp.pdf', ['https://cdn/fp.pdf']],
       ['Document URLs', 'documents', 'https://cdn/spa.pdf', ['https://cdn/spa.pdf']],
-      ['Assigned user IDs', 'assigned_user_ids', 'u-1, u-2', ['u-1', 'u-2']],
-      ['Assigned team IDs', 'assigned_team_ids', 't-1', ['t-1']],
     ])('Then %s commits the parsed %s only on blur', (label, key, text, list) => {
       render(<Harness />);
       type(label, `${text}, `);
@@ -146,6 +153,59 @@ describe('Given an empty project draft', () => {
       fireEvent.blur(screen.getByLabelText(label));
       expect(last()).toEqual({ [key]: list });
       expect((screen.getByLabelText(label) as HTMLInputElement).value).toBe(list.join(', '));
+    });
+  });
+});
+
+describe('Given the project agent pickers', () => {
+  describe('When users and a team are picked', () => {
+    it('Then the metadata stores their ids and removing the last clears to null', async () => {
+      render(<Harness />);
+      const users = screen.getByLabelText('Search Assigned users');
+      fireEvent.focus(users);
+      fireEvent.click(await screen.findByRole('option', { name: /Aisha Khan/ }));
+      expect(last()).toEqual({ assigned_user_ids: ['u-1'] });
+      fireEvent.click(screen.getByRole('option', { name: /Bilal Rao/ }));
+      expect(last()).toEqual({ assigned_user_ids: ['u-1', 'u-2'] });
+      fireEvent.blur(users);
+      fireEvent.focus(screen.getByLabelText('Search Assigned teams'));
+      fireEvent.click(await screen.findByRole('option', { name: /Sales/ }));
+      expect(last()).toEqual({ assigned_user_ids: ['u-1', 'u-2'], assigned_team_ids: ['t-1'] });
+      fireEvent.click(screen.getByRole('button', { name: 'Remove Sales' }));
+      expect(last()).toEqual({ assigned_user_ids: ['u-1', 'u-2'], assigned_team_ids: null });
+    });
+  });
+
+  describe('When a saved project lists an id no user matches', () => {
+    it('Then it shows a removable truncated chip', async () => {
+      render(<Harness initial={{ assigned_user_ids: ['u-1', 'deadbeef-0000-1111'] }} />);
+      expect(await screen.findByText('Aisha Khan')).toBeTruthy();
+      const chip = screen.getByText('deadbeef…');
+      expect(chip.getAttribute('title')).toBe('deadbeef-0000-1111');
+      fireEvent.click(screen.getByRole('button', { name: 'Remove deadbeef…' }));
+      expect(last()).toEqual({ assigned_user_ids: ['u-1'] });
+    });
+  });
+
+  describe('When teams cannot be listed', () => {
+    it('Then team ids can still be entered and commit on blur', async () => {
+      mockListTeams.mockRejectedValue(new Error('Request failed (403)'));
+      render(<Harness />);
+      const teams = await screen.findByLabelText('Assigned team IDs');
+      fireEvent.change(teams, { target: { value: 't-1, t-2' } });
+      fireEvent.blur(teams);
+      expect(last()).toEqual({ assigned_team_ids: ['t-1', 't-2'] });
+    });
+  });
+
+  describe('When the form is read-only', () => {
+    it('Then the pickers show names without search or remove controls', async () => {
+      render(<Harness initial={{ assigned_user_ids: ['u-1'] }} disabled />);
+      expect(await screen.findByText('Aisha Khan')).toBeTruthy();
+      expect(screen.queryByLabelText('Search Assigned users')).toBeNull();
+      expect(screen.queryByLabelText('Search Assigned teams')).toBeNull();
+      expect(screen.queryByRole('button', { name: 'Remove Aisha Khan' })).toBeNull();
+      expect(within(screen.getByRole('group', { name: 'Assigned teams' })).getByText('None')).toBeTruthy();
     });
   });
 });

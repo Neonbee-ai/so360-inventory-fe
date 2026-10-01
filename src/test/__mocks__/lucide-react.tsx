@@ -66,6 +66,7 @@ export const Truck = createIcon('Truck');
 export const Tv = createIcon('Tv');
 export const Upload = createIcon('Upload');
 export const UtensilsCrossed = createIcon('UtensilsCrossed');
+export const Wallet = createIcon('Wallet');
 export const Wrench = createIcon('Wrench');
 export const X = createIcon('X');
 export const Info = createIcon('Info');

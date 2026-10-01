@@ -12,6 +12,8 @@ import {
   PROPERTY_UNITS_FLAG,
   PROPERTY_UNIT_LABELS,
   DEFAULT_LABELS,
+  UNIT_ALLOCATION_FLAG,
+  isUnitAllocationEnabled,
 } from './usePropertyUnits';
 
 beforeEach(() => {
@@ -73,6 +75,28 @@ describe('isPropertyUnitsEnabled', () => {
   describe('Given isFeatureEnabled throws', () => {
     it('Then it returns false', () => {
       expect(isPropertyUnitsEnabled({ isFeatureEnabled: () => { throw new Error('x'); } })).toBe(false);
+    });
+  });
+});
+
+describe('isUnitAllocationEnabled', () => {
+  describe('Given the unit_allocation flag is on', () => {
+    it('Then it returns true and asks for the action flag', () => {
+      const isFeatureEnabled = vi.fn((k: string) => k === UNIT_ALLOCATION_FLAG);
+      expect(isUnitAllocationEnabled({ isFeatureEnabled })).toBe(true);
+      expect(isFeatureEnabled).toHaveBeenCalledWith('action:crm:unit_allocation');
+    });
+  });
+
+  describe('Given the flag is off, missing, or the check throws', () => {
+    it.each([
+      ['off', { isFeatureEnabled: () => false }],
+      ['truthy but not true', { isFeatureEnabled: () => 'yes' }],
+      ['no function', {}],
+      ['no shell', undefined],
+      ['throws', { isFeatureEnabled: () => { throw new Error('boom'); } }],
+    ])('When %s, Then it returns false', (_l, shell) => {
+      expect(isUnitAllocationEnabled(shell)).toBe(false);
     });
   });
 });

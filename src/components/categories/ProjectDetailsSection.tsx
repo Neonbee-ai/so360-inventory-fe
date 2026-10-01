@@ -2,7 +2,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Building2, MapPin, Calendar, FileText, Upload, Loader2, X } from 'lucide-react';
 import { inventoryService } from '../../services/inventoryService';
 import { mediaService } from '../../services/mediaService';
-import { PROJECT_STATUSES, type CategoryMetadata, type ProjectStatus } from '../../types/inventory';
+import { PROJECT_STATUSES, type CategoryMetadata, type DeveloperOption, type DeveloperRole, type ProjectStatus } from '../../types/inventory';
+import { PaymentPlanTemplatesEditor } from './PaymentPlanTemplatesEditor';
+import { TeamAgentPicker, UserAgentPicker } from './AgentPickers';
 
 const BROCHURE_MAX_BYTES = 10 * 1024 * 1024;
 const BROCHURE_TYPES = ['application/pdf', 'image/png', 'image/jpeg', 'image/webp'];
@@ -24,6 +26,12 @@ const PROJECT_STATUS_LABEL: Record<ProjectStatus, string> = {
     completed: 'Completed',
     on_hold: 'On hold',
 };
+
+const DEV_FILTERS: { key: DeveloperRole | 'all'; label: string }[] = [
+    { key: 'all', label: 'All' },
+    { key: 'developer', label: 'Developers' },
+    { key: 'property_owner', label: 'Property owners' },
+];
 
 /** Blank text is stored as null so the backend clears the key. */
 const textOrNull = (v: string): string | null => (v.trim() ? v : null);
@@ -56,7 +64,7 @@ const Field: React.FC<{ label: string; children: React.ReactNode }> = ({ label, 
  * Comma-separated list. Keeps its own text while typing (so "a, " is not
  * rewritten mid-entry) and commits the parsed list on blur.
  */
-const ListInput: React.FC<{
+export const ListInput: React.FC<{
     label: string;
     value: string[] | null | undefined;
     onCommit: (next: string[] | null) => void;
@@ -86,7 +94,8 @@ const ListInput: React.FC<{
  * the draft and sends it as `metadata` on Save.
  */
 export const ProjectDetailsSection: React.FC<ProjectDetailsSectionProps> = ({ value, onChange, disabled }) => {
-    const [developers, setDevelopers] = useState<{ id: string; name: string }[]>([]);
+    const [developers, setDevelopers] = useState<DeveloperOption[]>([]);
+    const [devFilter, setDevFilter] = useState<DeveloperRole | 'all'>('all');
     const [devLoading, setDevLoading] = useState(true);
     const [devError, setDevError] = useState<string | null>(null);
     const [uploading, setUploading] = useState(false);
@@ -108,10 +117,12 @@ export const ProjectDetailsSection: React.FC<ProjectDetailsSectionProps> = ({ va
 
     const currentDev = value.developer_partner_id || '';
     // Keep a saved developer selectable even when the lookup did not return it.
-    const devOptions =
-        currentDev && !developers.some((d) => d.id === currentDev)
-            ? [{ id: currentDev, name: 'Current developer' }, ...developers]
-            : developers;
+    const filtered = devFilter === 'all' ? developers : developers.filter((d) => d.role === devFilter);
+    const savedDev = developers.find((d) => d.id === currentDev);
+    const devOptions: DeveloperOption[] = !currentDev || filtered.some((d) => d.id === currentDev)
+        ? filtered
+        : [savedDev || { id: currentDev, name: 'Current developer', role: 'developer' }, ...filtered];
+    const hasOwners = developers.some((d) => d.role === 'property_owner');
 
     const handleBrochure = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -149,9 +160,26 @@ export const ProjectDetailsSection: React.FC<ProjectDetailsSectionProps> = ({ va
                     >
                         <option value="">{devLoading ? 'Loading…' : 'No developer'}</option>
                         {devOptions.map((d) => (
-                            <option key={d.id} value={d.id}>{d.name}</option>
+                            <option key={d.id} value={d.id}>
+                                {d.role === 'property_owner' ? `${d.name} (Property owner)` : d.name}
+                            </option>
                         ))}
                     </select>
+                    {hasOwners && (
+                        <div className="flex gap-1 mt-1" role="group" aria-label="Developer filter">
+                            {DEV_FILTERS.map((f) => (
+                                <button
+                                    key={f.key}
+                                    type="button"
+                                    aria-pressed={devFilter === f.key}
+                                    onClick={() => setDevFilter(f.key)}
+                                    className={`px-2 py-0.5 rounded-full text-[11px] border ${devFilter === f.key ? 'bg-blue-500/20 border-blue-500 text-blue-300' : 'border-slate-700 text-slate-400 hover:border-slate-500'}`}
+                                >
+                                    {f.label}
+                                </button>
+                            ))}
+                        </div>
+                    )}
                     {devError && <span className="block text-[11px] text-rose-400 mt-1">{devError}</span>}
                 </label>
 
@@ -254,10 +282,12 @@ export const ProjectDetailsSection: React.FC<ProjectDetailsSectionProps> = ({ va
                     <input aria-label="Price to" type="number" min={0} className={inputCls} value={value.price_range?.max ?? ''} disabled={disabled}
                         onChange={(e) => set({ price_range: compact({ ...(value.price_range || {}), max: numberOrNull(e.target.value) }) })} />
                 </Field>
-                <Field label="Payment plan">
-                    <input aria-label="Payment plan" className={inputCls} value={value.payment_plan || ''} disabled={disabled} placeholder="e.g. 20/80"
-                        onChange={(e) => set({ payment_plan: textOrNull(e.target.value) })} />
-                </Field>
+                {value.payment_plan && (
+                    <Field label="Payment plan (legacy)">
+                        <input aria-label="Payment plan" className={`${inputCls} cursor-default`} value={value.payment_plan} readOnly
+                            title="Legacy free-text plan. Use the payment plans below instead." />
+                    </Field>
+                )}
                 <Field label="Commission %">
                     <input aria-label="Commission %" type="number" min={0} max={100} step="0.01" className={inputCls} value={value.commission_percent ?? ''} disabled={disabled}
                         onChange={(e) => set({ commission_percent: numberOrNull(e.target.value) })} />
@@ -270,8 +300,8 @@ export const ProjectDetailsSection: React.FC<ProjectDetailsSectionProps> = ({ va
                 <ListInput label="Video URLs" value={value.videos} disabled={disabled} onCommit={(v) => set({ videos: v })} />
                 <ListInput label="Floor plan URLs" value={value.floor_plans} disabled={disabled} onCommit={(v) => set({ floor_plans: v })} />
                 <ListInput label="Document URLs" value={value.documents} disabled={disabled} onCommit={(v) => set({ documents: v })} />
-                <ListInput label="Assigned user IDs" value={value.assigned_user_ids} disabled={disabled} onCommit={(v) => set({ assigned_user_ids: v })} />
-                <ListInput label="Assigned team IDs" value={value.assigned_team_ids} disabled={disabled} onCommit={(v) => set({ assigned_team_ids: v })} />
+                <UserAgentPicker value={value.assigned_user_ids} disabled={disabled} onChange={(v) => set({ assigned_user_ids: v })} />
+                <TeamAgentPicker value={value.assigned_team_ids} disabled={disabled} onChange={(v) => set({ assigned_team_ids: v })} />
                 <Field label="Map latitude">
                     <input aria-label="Map latitude" type="number" step="any" className={inputCls} value={value.map?.lat ?? ''} disabled={disabled}
                         onChange={(e) => set({ map: compact({ ...(value.map || {}), lat: numberOrNull(e.target.value) }) })} />
@@ -285,6 +315,12 @@ export const ProjectDetailsSection: React.FC<ProjectDetailsSectionProps> = ({ va
                         onChange={(e) => set({ map: compact({ ...(value.map || {}), url: e.target.value.trim() || null }) })} />
                 </Field>
             </div>
+
+            <PaymentPlanTemplatesEditor
+                value={value.payment_plan_templates}
+                disabled={disabled}
+                onChange={(next) => set({ payment_plan_templates: next })}
+            />
 
             <Field label="Description">
                 <textarea aria-label="Description" rows={3} className={inputCls} value={value.description || ''} disabled={disabled}
