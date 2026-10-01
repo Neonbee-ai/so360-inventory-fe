@@ -105,7 +105,7 @@ describe('ImageUploadStep', () => {
             render(<ImageUploadStep parsedRows={parsedRows} onImagesUploaded={onImagesUploaded} onUpload={onUpload} onSkip={onSkip} />);
             const input = document.querySelector('input[type="file"]') as HTMLInputElement;
             fireEvent.change(input, { target: { files: names.map(makeFile) } });
-            await waitFor(() => expect(screen.getByText(names[0])).toBeInTheDocument());
+            await waitFor(() => expect(screen.getAllByText(names[0]).length).toBeGreaterThan(0));
         };
 
         it('WHEN the filename differs only by case and spacing THEN it is MATCHED', async () => {
