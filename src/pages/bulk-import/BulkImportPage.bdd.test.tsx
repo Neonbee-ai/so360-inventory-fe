@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import React from 'react';
 
@@ -28,12 +28,15 @@ vi.mock('./components/StepIndicator', () => ({
     default: ({ current }: { current: number }) => <div data-testid="step-indicator" data-step={current} />,
 }));
 
+// Per-test overrides for what the stubbed CSV / image steps emit.
+const fixtures = vi.hoisted(() => ({ csvRows: null as any[] | null, uploaded: null as any[] | null }));
+
 vi.mock('./components/CsvUploadStep', () => ({
     default: ({ onParsed }: { onParsed: (r: any) => void }) => (
         <div data-testid="csv-upload-step">
-            <button onClick={() => onParsed({ total: 3, valid: 2, invalid: 1, rows: [
-                { row_index: 1, status: 'valid',   errors: [], warnings: [], data: { name: 'Widget A', sku: 'WA-001', image_urls: [] } },
-                { row_index: 2, status: 'valid',   errors: [], warnings: [], data: { name: 'Widget B', sku: 'WA-002', image_urls: [] } },
+            <button onClick={() => onParsed({ total: 3, valid: 2, invalid: 1, rows: fixtures.csvRows ?? [
+                { row_index: 1, status: 'valid',   errors: [], warnings: [], data: { name: 'Widget A', name_key: 'widget a', image_urls: [] } },
+                { row_index: 2, status: 'valid',   errors: [], warnings: [], data: { name: 'Widget B', name_key: 'widget b', image_urls: [] } },
                 { row_index: 3, status: 'error',   errors: ['name required'], warnings: [], data: {} },
             ] })}>simulate-csv-parsed</button>
         </div>
@@ -43,8 +46,8 @@ vi.mock('./components/CsvUploadStep', () => ({
 vi.mock('./components/ImageUploadStep', () => ({
     default: ({ onImagesUploaded, onSkip }: { onImagesUploaded: (u: any[]) => void; onSkip: () => void }) => (
         <div data-testid="image-upload-step">
-            <button onClick={() => onImagesUploaded([
-                { filename: 'WA-001.jpg', sku: 'wa-001', cdn_url: 'https://cdn.example.com/WA-001.jpg' },
+            <button onClick={() => onImagesUploaded(fixtures.uploaded ?? [
+                { filename: 'Widget A.jpg', name_key: 'widget a', cdn_url: 'https://cdn.example.com/Widget-A.jpg' },
             ])}>simulate-images-uploaded</button>
             <button onClick={onSkip}>simulate-skip</button>
         </div>
@@ -54,6 +57,9 @@ vi.mock('./components/ImageUploadStep', () => ({
 vi.mock('./components/PreviewTableStep', () => ({
     default: ({ rows, onConfirm, onBack }: { rows: any[]; onConfirm: (r: any[]) => void; onBack: () => void }) => (
         <div data-testid="preview-table-step">
+            {rows.map((r, i) => (
+                <span key={i} data-testid={`row-${i}`} data-image-status={r.image_status ?? ''} data-image={r.data.image_urls?.[0] ?? ''} data-warnings={r.warnings?.length ?? 0} />
+            ))}
             <button onClick={() => onConfirm(rows.filter(r => r.status !== 'error').map(r => r.data))}>simulate-confirm</button>
             <button onClick={onBack}>simulate-back</button>
         </div>
@@ -208,8 +214,66 @@ describe('BulkImportPage', () => {
         });
     });
 
-    describe('GIVEN image CDN URL merging', () => {
-        it('WHEN WA-001 image uploaded THEN row for WA-001 gets the CDN URL', async () => {
+    describe('GIVEN image mapping is safe and deterministic', () => {
+        const row = (i: number, name: string, status = 'valid') =>
+            ({ row_index: i, status, errors: [], warnings: [], data: { name, name_key: name.toLowerCase(), image_urls: [] } });
+
+        async function previewAfterUpload(csvRows: any[], uploaded: any[]) {
+            fixtures.csvRows = csvRows;
+            fixtures.uploaded = uploaded;
+            renderPage();
+            fireEvent.click(screen.getByText('simulate-csv-parsed'));
+            await waitFor(() => screen.getByTestId('image-upload-step'));
+            fireEvent.click(screen.getByText('simulate-images-uploaded'));
+            fireEvent.click(screen.getByText('simulate-skip'));
+            await waitFor(() => screen.getByTestId('preview-table-step'));
+        }
+
+        afterEach(() => { fixtures.csvRows = null; fixtures.uploaded = null; });
+
+        it('WHEN the image name matches one product THEN the row is mapped', async () => {
+            await previewAfterUpload([row(1, 'Sofa')], [{ filename: 'sofa.jpg', name_key: 'sofa', cdn_url: 'https://cdn/sofa.jpg' }]);
+            expect(screen.getByTestId('row-0').dataset.imageStatus).toBe('mapped');
+            expect(screen.getByTestId('row-0').dataset.image).toBe('https://cdn/sofa.jpg');
+        });
+
+        it('WHEN no image has the product name THEN the row is flagged not_found', async () => {
+            await previewAfterUpload([row(1, 'Sofa')], [{ filename: 'chair.jpg', name_key: 'chair', cdn_url: 'https://cdn/chair.jpg' }]);
+            expect(screen.getByTestId('row-0').dataset.imageStatus).toBe('not_found');
+            expect(screen.getByTestId('row-0').dataset.image).toBe('');
+        });
+
+        it('WHEN two products share the name THEN neither gets the image (ambiguous)', async () => {
+            await previewAfterUpload([row(1, 'Sofa'), row(2, 'Sofa')], [{ filename: 'Sofa.jpg', name_key: 'sofa', cdn_url: 'https://cdn/sofa.jpg' }]);
+            for (const id of ['row-0', 'row-1']) {
+                expect(screen.getByTestId(id).dataset.imageStatus).toBe('ambiguous');
+                expect(screen.getByTestId(id).dataset.image).toBe('');
+            }
+        });
+
+        it('WHEN two images share the name THEN the row gets none and a warning (duplicate_image)', async () => {
+            await previewAfterUpload([row(1, 'Sofa')], [
+                { filename: 'Sofa.jpg', name_key: 'sofa', cdn_url: 'https://cdn/a.jpg' },
+                { filename: 'Sofa.png', name_key: 'sofa', cdn_url: 'https://cdn/b.png' },
+            ]);
+            expect(screen.getByTestId('row-0').dataset.imageStatus).toBe('duplicate_image');
+            expect(screen.getByTestId('row-0').dataset.image).toBe('');
+            expect(screen.getByTestId('row-0').dataset.warnings).toBe('1');
+        });
+
+        it('WHEN a row is an error THEN it is left untouched', async () => {
+            await previewAfterUpload([row(1, 'Sofa', 'error')], [{ filename: 'Sofa.jpg', name_key: 'sofa', cdn_url: 'https://cdn/sofa.jpg' }]);
+            expect(screen.getByTestId('row-0').dataset.imageStatus).toBe('');
+        });
+
+        it('WHEN the upload response has no name_key THEN the filename is used', async () => {
+            await previewAfterUpload([row(1, 'Namur Sofa')], [{ filename: ' namur  SOFA.webp', cdn_url: 'https://cdn/n.webp' }]);
+            expect(screen.getByTestId('row-0').dataset.imageStatus).toBe('mapped');
+        });
+    });
+
+    describe('GIVEN image CDN URL merging by product name', () => {
+        it('WHEN the Widget A image is uploaded THEN the Widget A row gets the CDN URL', async () => {
             renderPage();
             fireEvent.click(screen.getByText('simulate-csv-parsed'));
             await waitFor(() => screen.getByTestId('image-upload-step'));
@@ -219,8 +283,8 @@ describe('BulkImportPage', () => {
             fireEvent.click(screen.getByText('simulate-confirm'));
             await waitFor(() => expect(mockService.bulkImportCommit).toHaveBeenCalled());
             const rows = mockService.bulkImportCommit.mock.calls[0][1];
-            const wa001 = rows.find((r: any) => r.sku === 'WA-001');
-            expect(wa001?.image_urls).toContain('https://cdn.example.com/WA-001.jpg');
+            const widgetA = rows.find((r: any) => r.name === 'Widget A');
+            expect(widgetA?.image_urls).toContain('https://cdn.example.com/Widget-A.jpg');
         });
     });
 });

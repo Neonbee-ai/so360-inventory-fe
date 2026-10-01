@@ -78,7 +78,6 @@ const CsvUploadStep: React.FC<Props> = ({ onParsed, onParse }) => {
                 <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 text-sm">
                     {[
                         ['name', 'Item name (required)'],
-                        ['sku', 'Unique SKU code'],
                         ['type', 'product / service / raw_material…'],
                         ['price', 'Selling price'],
                         ['cost', 'Cost price'],
@@ -94,13 +93,17 @@ const CsvUploadStep: React.FC<Props> = ({ onParsed, onParse }) => {
                     ))}
                 </div>
                 <p className="mt-3 text-slate-500 text-xs">
+                    <span className="font-semibold text-slate-400">SKU:</span> not needed — each item gets its SKU automatically.
+                    In the next step, name each image after its product (e.g. <span className="font-mono text-blue-400">Namur Sofa.jpg</span>).
+                </p>
+                <p className="mt-3 text-slate-500 text-xs">
                     <span className="font-semibold text-slate-400">Description:</span> add the product description in the{' '}
                     <span className="font-mono text-blue-400">description</span> column. It will be automatically saved to the product.
                 </p>
                 <div className="mt-4 flex items-center gap-2">
                     <Upload size={13} className="text-slate-500" />
                     <a
-                        href="data:text/csv;charset=utf-8,name,sku,type,price,cost,category_name,unit_name,is_batch_tracked,is_serial_tracked,is_online_visible,product_status,barcode,brand,weight,weight_unit,description"
+                        href="data:text/csv;charset=utf-8,name,type,price,cost,category_name,unit_name,is_batch_tracked,is_serial_tracked,is_online_visible,product_status,barcode,brand,weight,weight_unit,description"
                         download="bulk-import-template.csv"
                         onClick={(e) => e.stopPropagation()}
                         className="text-blue-400 hover:text-blue-300 text-xs underline"

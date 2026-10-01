@@ -33,6 +33,19 @@ describe('CsvUploadStep', () => {
             expect(screen.getByText(/automatically saved to the product/)).toBeInTheDocument();
         });
 
+        it('WHEN rendered THEN sku is not a documented column or a template header', () => {
+            render(<CsvUploadStep onParsed={onParsed} onParse={onParse} />);
+            expect(screen.queryByText('Unique SKU code')).not.toBeInTheDocument();
+            const href = screen.getByText('Download CSV template').getAttribute('href') ?? '';
+            expect(href.split(',')).not.toContain('sku');
+        });
+
+        it('WHEN rendered THEN the SKU is explained as automatic and images are named after products', () => {
+            render(<CsvUploadStep onParsed={onParsed} onParse={onParse} />);
+            expect(screen.getByText(/each item gets its SKU automatically/)).toBeInTheDocument();
+            expect(screen.getByText('Namur Sofa.jpg')).toBeInTheDocument();
+        });
+
         it('WHEN rendered THEN the downloadable template includes the description header', () => {
             render(<CsvUploadStep onParsed={onParsed} onParse={onParse} />);
             const href = screen.getByText('Download CSV template').getAttribute('href') ?? '';

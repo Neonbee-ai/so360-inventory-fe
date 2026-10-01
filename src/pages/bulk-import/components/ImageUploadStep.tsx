@@ -2,8 +2,9 @@ import React, { useRef, useState } from 'react';
 import { Image, CheckCircle2, XCircle, Loader2, ArrowRight } from 'lucide-react';
 import { fitImageFile, describeFitChange, IMAGE_FIT_SLOTS } from '../../../utils/imageFit';
 import ImageSpecChip from '../../../components/media/ImageSpecChip';
+import { classifyImage, countKeys, importableRowKeyCounts, nameKeyFromFilename, type ImageMatch } from '../nameKey';
 
-interface UploadedImage { filename: string; sku: string; cdn_url: string; }
+interface UploadedImage { filename: string; name_key: string; cdn_url: string; }
 interface FailedImage { filename: string; reason: string; }
 
 interface Props {
@@ -17,12 +18,18 @@ interface Props {
 export const BULK_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
 const PRODUCT_SLOT = IMAGE_FIT_SLOTS.product;
 
-function slugify(s: string): string {
-    return s.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-}
-function slugifyFilename(name: string): string {
-    return slugify(name.replace(/\.[^.]+$/, ''));
-}
+const MATCH_BADGE: Record<ImageMatch, { label: string; className: string }> = {
+    matched: { label: 'MATCHED', className: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
+    no_match: { label: 'NO MATCH', className: 'text-amber-400 bg-amber-500/10 border-amber-500/20' },
+    ambiguous: { label: 'AMBIGUOUS', className: 'text-rose-400 bg-rose-500/10 border-rose-500/20' },
+    duplicate_image: { label: 'DUPLICATE IMAGE', className: 'text-rose-400 bg-rose-500/10 border-rose-500/20' },
+};
+const MATCH_HINT: Record<ImageMatch, string> = {
+    matched: 'Maps to the product with this name',
+    no_match: 'No product in the CSV has this name',
+    ambiguous: 'More than one product in the CSV has this name — it will not be mapped',
+    duplicate_image: 'More than one image has this name — it will not be mapped',
+};
 
 const ImageUploadStep: React.FC<Props> = ({ parsedRows, onImagesUploaded, onUpload, onSkip }) => {
     const inputRef = useRef<HTMLInputElement>(null);
@@ -34,9 +41,9 @@ const ImageUploadStep: React.FC<Props> = ({ parsedRows, onImagesUploaded, onUplo
     const [failed, setFailed] = useState<FailedImage[]>([]);
     const [dragging, setDragging] = useState(false);
 
-    const validSkus = new Set(
-        parsedRows.filter(r => r.status !== 'error').map(r => slugify(r.data.sku || ''))
-    );
+    const rowKeyCounts = importableRowKeyCounts(parsedRows);
+    const fileKeyCounts = countKeys(files.map(f => nameKeyFromFilename(f.name)));
+    const matchOf = (f: File): ImageMatch => classifyImage(nameKeyFromFilename(f.name), rowKeyCounts, fileKeyCounts);
 
     const addFiles = (incoming: FileList | null) => {
         if (!incoming) return;
@@ -49,7 +56,7 @@ const ImageUploadStep: React.FC<Props> = ({ parsedRows, onImagesUploaded, onUplo
     const doUpload = async () => {
         setStatus('optimising');
         // Auto-fit each photo to the product slot (2000 px, ≤1 MB) before upload.
-        // The fitted file may be renamed (photo.jpg → photo.webp); the SKU match
+        // The fitted file may be renamed (photo.jpg → photo.webp); the name match
         // ignores the extension, and results are mapped back to the original name.
         const originalByName = new Map<string, string>();
         const toSend: File[] = [];
@@ -88,8 +95,8 @@ const ImageUploadStep: React.FC<Props> = ({ parsedRows, onImagesUploaded, onUplo
         }
     };
 
-    const matched = files.filter(f => validSkus.has(slugifyFilename(f.name)));
-    const unmatched = files.filter(f => !validSkus.has(slugifyFilename(f.name)));
+    const matchedCount = files.filter(f => matchOf(f) === 'matched').length;
+    const attentionCount = files.length - matchedCount;
 
     return (
         <div className="max-w-2xl mx-auto space-y-6">
@@ -109,7 +116,7 @@ const ImageUploadStep: React.FC<Props> = ({ parsedRows, onImagesUploaded, onUplo
                 <Image size={32} className="text-slate-500" />
                 <div className="text-center">
                     <p className="text-slate-200 font-semibold">Drop images here</p>
-                    <p className="text-slate-500 text-sm mt-1">JPG, PNG, WebP — big photos are shrunk automatically · name files to match SKU (e.g. WA-001.jpg)</p>
+                    <p className="text-slate-500 text-sm mt-1">JPG, PNG, WebP — big photos are shrunk automatically · name each file after its product (e.g. Namur Sofa.jpg)</p>
                 </div>
                 <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/jpg,image/webp" multiple className="hidden" onChange={(e) => addFiles(e.target.files)} />
             </div>
@@ -117,11 +124,12 @@ const ImageUploadStep: React.FC<Props> = ({ parsedRows, onImagesUploaded, onUplo
             {files.length > 0 && (
                 <div className="space-y-2">
                     <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider">
-                        {files.length} file{files.length !== 1 ? 's' : ''} selected · {matched.length} match SKUs · {unmatched.length} no match
+                        {files.length} file{files.length !== 1 ? 's' : ''} selected · {matchedCount} match products · {attentionCount} need attention
                     </p>
                     <div className="max-h-48 overflow-y-auto space-y-1 pr-1">
                         {files.map(f => {
-                            const isMatch = validSkus.has(slugifyFilename(f.name));
+                            const match = matchOf(f);
+                            const isMatch = match === 'matched';
                             const uploadedEntry = uploaded.find(u => u.filename === f.name);
                             const failedEntry = failed.find(u => u.filename === f.name);
                             return (
@@ -138,11 +146,10 @@ const ImageUploadStep: React.FC<Props> = ({ parsedRows, onImagesUploaded, onUplo
                                         <span data-testid="bulk-fit-note" className="text-slate-500 text-[10px] shrink-0">{fitNotes[f.name]}</span>
                                     )}
                                     {status === 'idle' && (
-                                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${
-                                            isMatch
-                                                ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20'
-                                                : 'text-amber-400 bg-amber-500/10 border-amber-500/20'
-                                        }`}>{isMatch ? 'MATCHED' : 'NO MATCH'}</span>
+                                        <span
+                                            title={MATCH_HINT[match]}
+                                            className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${MATCH_BADGE[match].className}`}
+                                        >{MATCH_BADGE[match].label}</span>
                                     )}
                                     {failedEntry && <span className="text-rose-400 text-[10px]">{failedEntry.reason}</span>}
                                 </div>

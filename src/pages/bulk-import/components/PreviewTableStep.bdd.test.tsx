@@ -26,6 +26,40 @@ const IMAGE_ROW     = makeRow(2, 'valid',   'Widget B', 'WA-002', [], [], true);
 const WARNING_ROW   = makeRow(3, 'warning', 'Widget C', 'WA-003', [], ['category not found']);
 const ERROR_ROW     = makeRow(4, 'error',   'Bad Item', '',       ['name is required']);
 
+describe('PreviewTableStep SKU and image mapping', () => {
+    const base = makeRow(1, 'valid', 'Namur Sofa', '');
+    const withStatus = (image_status?: string, hasImage = false) => ({
+        ...base,
+        image_status,
+        data: { ...base.data, image_urls: hasImage ? ['https://cdn.example.com/s.jpg'] : [] },
+    }) as any;
+
+    it('GIVEN any row WHEN rendered THEN the SKU shows as auto-generated', () => {
+        render(<PreviewTableStep rows={[withStatus()]} onConfirm={vi.fn()} onBack={vi.fn()} />);
+        expect(screen.getByText('Auto-generated')).toBeInTheDocument();
+    });
+
+    it('GIVEN a mapped image WHEN rendered THEN it reads Mapped', () => {
+        render(<PreviewTableStep rows={[withStatus('mapped', true)]} onConfirm={vi.fn()} onBack={vi.fn()} />);
+        expect(screen.getByText('Mapped')).toBeInTheDocument();
+    });
+
+    it.each([
+        ['not_found', 'Not found'],
+        ['ambiguous', 'Ambiguous name'],
+        ['duplicate_image', 'Duplicate image'],
+    ])('GIVEN image status %s WHEN rendered THEN it reads %s', (status, label) => {
+        render(<PreviewTableStep rows={[withStatus(status)]} onConfirm={vi.fn()} onBack={vi.fn()} />);
+        expect(screen.getByText(label)).toBeInTheDocument();
+    });
+
+    it('GIVEN images were skipped WHEN rendered THEN the image cell is a dash', () => {
+        render(<PreviewTableStep rows={[withStatus()]} onConfirm={vi.fn()} onBack={vi.fn()} />);
+        expect(screen.queryByText('Not found')).not.toBeInTheDocument();
+        expect(screen.queryByText('Mapped')).not.toBeInTheDocument();
+    });
+});
+
 describe('PreviewTableStep descriptions', () => {
     const withDescription = (description?: string) => ({
         ...makeRow(1, 'valid', 'Chair', 'CH-001'),

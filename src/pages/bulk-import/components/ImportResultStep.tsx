@@ -5,6 +5,7 @@ interface RowResult {
     row_index: number;
     status: 'success' | 'error';
     item_id?: string;
+    sku?: string;
     reason?: string;
 }
 
@@ -71,7 +72,9 @@ const ImportResultStep: React.FC<Props> = ({ result, loading, submittedRows, onG
                                 >
                                     <CheckCircle2 size={13} className="text-emerald-400 shrink-0" />
                                     <span className="text-slate-200 text-xs flex-1 truncate">{name}</span>
-                                    <span className="text-slate-600 text-[10px] font-mono">{r.item_id?.slice(0, 8)}…</span>
+                                    <span className="text-slate-500 text-[10px] font-mono">
+                                        {r.sku ? `SKU ${r.sku}` : `${r.item_id?.slice(0, 8)}…`}
+                                    </span>
                                 </button>
                             );
                         })}
