@@ -174,7 +174,8 @@ describe('PreviewTableStep', () => {
     });
 
     it('GIVEN a product with three images WHEN rendered THEN the image cell reads Primary + 2 more', () => {
-        const r = { ...withStatus('mapped', true), data: { ...base.data, image_urls: ['a.jpg', 'b.jpg', 'c.jpg'] } } as any;
+        const base = makeRow(1, 'valid', 'Namur Sofa', '');
+        const r = { ...base, image_status: 'mapped', data: { ...base.data, image_urls: ['a.jpg', 'b.jpg', 'c.jpg'] } } as any;
         render(<PreviewTableStep rows={[r]} onConfirm={vi.fn()} onBack={vi.fn()} />);
         expect(screen.getByText('Primary + 2 more')).toBeInTheDocument();
         expect(screen.queryByText('Mapped')).not.toBeInTheDocument();
