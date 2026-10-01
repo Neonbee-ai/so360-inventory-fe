@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import { Image, CheckCircle2, XCircle, Loader2, ArrowRight } from 'lucide-react';
 import { fitImageFile, describeFitChange, IMAGE_FIT_SLOTS } from '../../../utils/imageFit';
 import ImageSpecChip from '../../../components/media/ImageSpecChip';
-import { classifyImage, countKeys, importableRowKeyCounts, nameKeyFromFilename, type ImageMatch } from '../nameKey';
+import { importableRowKeyCounts, planImages, type ImageMatch } from '../nameKey';
 
 interface UploadedImage { filename: string; name_key: string; cdn_url: string; }
 interface FailedImage { filename: string; reason: string; }
@@ -23,12 +23,14 @@ const MATCH_BADGE: Record<ImageMatch, { label: string; className: string }> = {
     no_match: { label: 'NO MATCH', className: 'text-amber-400 bg-amber-500/10 border-amber-500/20' },
     ambiguous: { label: 'AMBIGUOUS', className: 'text-rose-400 bg-rose-500/10 border-rose-500/20' },
     duplicate_image: { label: 'DUPLICATE IMAGE', className: 'text-rose-400 bg-rose-500/10 border-rose-500/20' },
+    missing_primary: { label: 'MISSING PRIMARY', className: 'text-rose-400 bg-rose-500/10 border-rose-500/20' },
 };
 const MATCH_HINT: Record<ImageMatch, string> = {
     matched: 'Maps to the product with this name',
     no_match: 'No product in the CSV has this name',
     ambiguous: 'More than one product in the CSV has this name — it will not be mapped',
-    duplicate_image: 'More than one image has this name — it will not be mapped',
+    duplicate_image: 'More than one image has this name and number — it will not be mapped',
+    missing_primary: 'Numbered images need a primary image named exactly like the product — it will not be mapped',
 };
 
 const ImageUploadStep: React.FC<Props> = ({ parsedRows, onImagesUploaded, onUpload, onSkip }) => {
@@ -42,8 +44,9 @@ const ImageUploadStep: React.FC<Props> = ({ parsedRows, onImagesUploaded, onUplo
     const [dragging, setDragging] = useState(false);
 
     const rowKeyCounts = importableRowKeyCounts(parsedRows);
-    const fileKeyCounts = countKeys(files.map(f => nameKeyFromFilename(f.name)));
-    const matchOf = (f: File): ImageMatch => classifyImage(nameKeyFromFilename(f.name), rowKeyCounts, fileKeyCounts);
+    const plan = planImages(files.map(f => f.name), rowKeyCounts);
+    const entryOf = (f: File) => plan.entries.find(e => e.filename === f.name);
+    const matchOf = (f: File): ImageMatch => entryOf(f)!.match;
 
     const addFiles = (incoming: FileList | null) => {
         if (!incoming) return;
@@ -120,9 +123,17 @@ const ImageUploadStep: React.FC<Props> = ({ parsedRows, onImagesUploaded, onUplo
                 <Image size={32} className="text-slate-500" />
                 <div className="text-center">
                     <p className="text-slate-200 font-semibold">Drop images here</p>
-                    <p className="text-slate-500 text-sm mt-1">JPG, PNG, WebP — big photos are shrunk automatically · name each file after its product (e.g. Namur Sofa.jpg)</p>
+                    <p className="text-slate-500 text-sm mt-1">JPG, PNG, WebP — big photos are shrunk automatically · name each file after its product (e.g. Namur Sofa.jpg, Namur Sofa_2.jpg)</p>
                 </div>
                 <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/jpg,image/webp" multiple className="hidden" onChange={(e) => addFiles(e.target.files)} />
+            </div>
+
+            <div data-testid="image-naming-guide" className="rounded-lg border border-slate-800 bg-slate-900/40 px-4 py-3 text-xs text-slate-400 space-y-1.5">
+                <p className="font-semibold text-slate-300">How to Upload Product Images</p>
+                <p>Name each image after its product — use the exact Product Name from your CSV.</p>
+                <p>One image: <span className="font-mono text-blue-400">Chair.jpg</span></p>
+                <p>Several images: <span className="font-mono text-blue-400">Chair.jpg</span>, <span className="font-mono text-blue-400">Chair_2.jpg</span>, <span className="font-mono text-blue-400">Chair_3.jpg</span></p>
+                <p>The first image (<span className="font-mono">Chair.jpg</span>) is the primary image shown first in the store.</p>
             </div>
 
             {importableCount === 0 && (
@@ -154,6 +165,9 @@ const ImageUploadStep: React.FC<Props> = ({ parsedRows, onImagesUploaded, onUplo
                                         : <div className="w-3.5 h-3.5 rounded-full border border-amber-500/50 shrink-0" />
                                     )}
                                     <span className="text-slate-300 text-xs font-mono flex-1 truncate">{f.name}</span>
+                                    {isMatch && (
+                                        <span data-testid="image-position" className="text-slate-500 text-[10px] shrink-0">{entryOf(f)!.seq === 1 ? 'Primary' : `Image ${entryOf(f)!.seq}`}</span>
+                                    )}
                                     {fitNotes[f.name] && (
                                         <span data-testid="bulk-fit-note" className="text-slate-500 text-[10px] shrink-0">{fitNotes[f.name]}</span>
                                     )}

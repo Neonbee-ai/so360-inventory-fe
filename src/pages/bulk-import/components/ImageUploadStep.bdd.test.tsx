@@ -105,7 +105,7 @@ describe('ImageUploadStep', () => {
             render(<ImageUploadStep parsedRows={parsedRows} onImagesUploaded={onImagesUploaded} onUpload={onUpload} onSkip={onSkip} />);
             const input = document.querySelector('input[type="file"]') as HTMLInputElement;
             fireEvent.change(input, { target: { files: names.map(makeFile) } });
-            await waitFor(() => expect(screen.getByText(names[0])).toBeInTheDocument());
+            await waitFor(() => expect(screen.getAllByText(names[0]).length).toBeGreaterThan(0));
         };
 
         it('WHEN the filename differs only by case and spacing THEN it is MATCHED', async () => {
@@ -127,6 +127,27 @@ describe('ImageUploadStep', () => {
         it('WHEN two images resolve to the same product name THEN both are DUPLICATE IMAGE', async () => {
             await pick(['Namur Sofa.jpg', 'namur sofa.png'], [makeRow('Namur Sofa')]);
             expect(screen.getAllByText('DUPLICATE IMAGE')).toHaveLength(2);
+        });
+
+        it('WHEN Chair.jpg, Chair_2.jpg and Chair_3.jpg are added THEN all are MATCHED and positioned Primary / Image 2 / Image 3', async () => {
+            await pick(['Chair.jpg', 'Chair_2.jpg', 'Chair_3.jpg'], [makeRow('Chair')]);
+            expect(screen.getAllByText('MATCHED')).toHaveLength(3);
+            expect(screen.getAllByTestId('image-position').map(e => e.textContent)).toEqual(['Primary', 'Image 2', 'Image 3']);
+        });
+
+        it('WHEN only Chair_2.jpg is added THEN it is MISSING PRIMARY', async () => {
+            await pick(['Chair_2.jpg'], [makeRow('Chair')]);
+            expect(screen.getByText('MISSING PRIMARY')).toBeInTheDocument();
+        });
+
+        it('WHEN rendered THEN the "How to Upload Product Images" guide shows the single and multiple examples', () => {
+            render(<ImageUploadStep parsedRows={[makeRow('Chair')]} onImagesUploaded={onImagesUploaded} onUpload={onUpload} onSkip={onSkip} />);
+            const guide = screen.getByTestId('image-naming-guide');
+            expect(guide).toHaveTextContent('How to Upload Product Images');
+            expect(guide).toHaveTextContent('Chair.jpg');
+            expect(guide).toHaveTextContent('Chair_2.jpg');
+            expect(guide).toHaveTextContent('Chair_3.jpg');
+            expect(guide).toHaveTextContent('primary');
         });
 
         it('WHEN the CSV row carries a backend name_key THEN it is used for matching', async () => {

@@ -8,7 +8,7 @@ import CsvUploadStep from './components/CsvUploadStep';
 import ImageUploadStep from './components/ImageUploadStep';
 import PreviewTableStep from './components/PreviewTableStep';
 import ImportResultStep from './components/ImportResultStep';
-import { classifyImage, countKeys, importableRowKeyCounts, nameKeyFromFilename, rowNameKey } from './nameKey';
+import { importableRowKeyCounts, planImages, rowNameKey } from './nameKey';
 
 const STEPS = [
     { label: 'Upload CSV' },
@@ -36,39 +36,46 @@ const BulkImportPage: React.FC = () => {
         setStep(1);
     };
 
-    // Images map to products by product name. A name that is ambiguous (several
-    // products) or duplicated (several images) is never guessed — the row keeps
-    // no image and says why.
+    // Images map to products by product name; `Name.jpg` is the primary image and
+    // `Name_2.jpg`, `Name_3.jpg`… follow in order. A name that is ambiguous (several
+    // products), a position claimed twice, or numbered images with no primary are
+    // never guessed — the row keeps no image and says why.
     const handleImagesUploaded = (uploaded: { filename: string; name_key?: string; cdn_url: string }[]) => {
-        const keyed = uploaded.map(u => ({ key: u.name_key ?? nameKeyFromFilename(u.filename), cdn_url: u.cdn_url }));
-        const fileKeyCounts = countKeys(keyed.map(k => k.key));
-        const cdnByKey = new Map(keyed.map(k => [k.key, k.cdn_url]));
+        const cdnByFile = new Map(uploaded.map(u => [u.filename, u.cdn_url]));
         setRows(prev => {
-            const rowKeyCounts = importableRowKeyCounts(prev);
+            const { groups } = planImages(uploaded.map(u => u.filename), importableRowKeyCounts(prev));
             return prev.map(row => {
                 if (row.status === 'error') return row;
-                const key = rowNameKey(row);
+                const group = groups.get(rowNameKey(row));
                 // Nothing was uploaded under this product's name.
-                if (!cdnByKey.has(key)) return { ...row, image_status: 'not_found' };
-                const match = classifyImage(key, rowKeyCounts, fileKeyCounts);
-                if (match === 'matched') {
-                    return {
-                        ...row,
-                        status: row.status === 'warning' ? 'valid' : row.status,
-                        image_status: 'mapped',
-                        data: { ...row.data, image_urls: [cdnByKey.get(key)] },
-                    };
-                }
-                if (match === 'ambiguous') return { ...row, image_status: 'ambiguous' };
-                if (match === 'duplicate_image') {
+                if (!group) return { ...row, image_status: 'not_found' };
+                if (group.status === 'ambiguous') return { ...row, image_status: 'ambiguous' };
+                if (group.status === 'duplicate_image') {
                     return {
                         ...row,
                         status: 'warning',
                         image_status: 'duplicate_image',
-                        warnings: [...row.warnings, `more than one image is named "${row.data.name}" — none mapped`],
+                        warnings: [...row.warnings, `more than one image is named for the same position of "${row.data.name}" — none mapped`],
                     };
                 }
-                return { ...row, image_status: 'not_found' };
+                if (group.status === 'missing_primary') {
+                    return {
+                        ...row,
+                        status: 'warning',
+                        image_status: 'missing_primary',
+                        warnings: [...row.warnings, `numbered images found for "${row.data.name}" but no primary image — upload "${row.data.name}.jpg" first; none mapped`],
+                    };
+                }
+                const gapWarning = group.gaps.length > 0
+                    ? [`image number${group.gaps.length > 1 ? 's' : ''} ${group.gaps.join(', ')} missing for "${row.data.name}" — images mapped in order`]
+                    : [];
+                return {
+                    ...row,
+                    status: group.gaps.length > 0 ? 'warning' : row.status === 'warning' ? 'valid' : row.status,
+                    image_status: 'mapped',
+                    warnings: [...row.warnings, ...gapWarning],
+                    data: { ...row.data, image_urls: group.ordered.map(f => cdnByFile.get(f)).filter(Boolean) },
+                };
             });
         });
     };
