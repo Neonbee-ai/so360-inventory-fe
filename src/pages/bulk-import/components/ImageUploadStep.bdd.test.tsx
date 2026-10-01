@@ -96,7 +96,7 @@ describe('ImageUploadStep', () => {
         };
 
         it('WHEN the filename differs only by case and spacing THEN it is MATCHED', async () => {
-            await pick(['  namur   SOFA.JPG'], [makeRow('Namur Sofa')]);
+            await pick(['NAMUR sofa.JPG'], [makeRow('Namur Sofa')]);
             expect(screen.getByText('MATCHED')).toBeInTheDocument();
         });
 

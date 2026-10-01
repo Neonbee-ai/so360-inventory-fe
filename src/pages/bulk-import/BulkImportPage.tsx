@@ -48,6 +48,8 @@ const BulkImportPage: React.FC = () => {
             return prev.map(row => {
                 if (row.status === 'error') return row;
                 const key = rowNameKey(row);
+                // Nothing was uploaded under this product's name.
+                if (!cdnByKey.has(key)) return { ...row, image_status: 'not_found' };
                 const match = classifyImage(key, rowKeyCounts, fileKeyCounts);
                 if (match === 'matched') {
                     return {
