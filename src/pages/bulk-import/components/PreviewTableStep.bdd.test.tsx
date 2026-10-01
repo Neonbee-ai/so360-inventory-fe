@@ -48,6 +48,7 @@ describe('PreviewTableStep SKU and image mapping', () => {
         ['not_found', 'Not found'],
         ['ambiguous', 'Ambiguous name'],
         ['duplicate_image', 'Duplicate image'],
+        ['missing_primary', 'Missing primary'],
     ])('GIVEN image status %s WHEN rendered THEN it reads %s', (status, label) => {
         render(<PreviewTableStep rows={[withStatus(status)]} onConfirm={vi.fn()} onBack={vi.fn()} />);
         expect(screen.getByText(label)).toBeInTheDocument();
@@ -170,5 +171,12 @@ describe('PreviewTableStep', () => {
             fireEvent.click(screen.getByText(/Import 1 valid row/));
             expect(onConfirm).toHaveBeenCalledWith([WARNING_ROW.data]);
         });
+    });
+
+    it('GIVEN a product with three images WHEN rendered THEN the image cell reads Primary + 2 more', () => {
+        const r = { ...withStatus('mapped', true), data: { ...base.data, image_urls: ['a.jpg', 'b.jpg', 'c.jpg'] } } as any;
+        render(<PreviewTableStep rows={[r]} onConfirm={vi.fn()} onBack={vi.fn()} />);
+        expect(screen.getByText('Primary + 2 more')).toBeInTheDocument();
+        expect(screen.queryByText('Mapped')).not.toBeInTheDocument();
     });
 });

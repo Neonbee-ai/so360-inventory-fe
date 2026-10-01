@@ -58,7 +58,7 @@ vi.mock('./components/PreviewTableStep', () => ({
     default: ({ rows, onConfirm, onBack }: { rows: any[]; onConfirm: (r: any[]) => void; onBack: () => void }) => (
         <div data-testid="preview-table-step">
             {rows.map((r, i) => (
-                <span key={i} data-testid={`row-${i}`} data-image-status={r.image_status ?? ''} data-image={r.data.image_urls?.[0] ?? ''} data-warnings={r.warnings?.length ?? 0} />
+                <span key={i} data-testid={`row-${i}`} data-image-status={r.image_status ?? ''} data-image={r.data.image_urls?.[0] ?? ''} data-images={(r.data.image_urls ?? []).join(',')} data-status={r.status} data-warnings={r.warnings?.length ?? 0} />
             ))}
             <button onClick={() => onConfirm(rows.filter(r => r.status !== 'error').map(r => r.data))}>simulate-confirm</button>
             <button onClick={onBack}>simulate-back</button>
@@ -285,6 +285,81 @@ describe('BulkImportPage', () => {
             const rows = mockService.bulkImportCommit.mock.calls[0][1];
             const widgetA = rows.find((r: any) => r.name === 'Widget A');
             expect(widgetA?.image_urls).toContain('https://cdn.example.com/Widget-A.jpg');
+        });
+    });
+
+    describe('GIVEN several images per product (Name.jpg, Name_2.jpg, Name_3.jpg)', () => {
+        const row = (i: number, name: string) =>
+            ({ row_index: i, status: 'valid', errors: [], warnings: [], data: { name, name_key: name.toLowerCase(), image_urls: [] } });
+        const up = (filename: string) => ({ filename, name_key: filename.replace(/\.[^.]+$/, '').toLowerCase(), cdn_url: `https://cdn/${filename}` });
+
+        async function previewAfterUpload(csvRows: any[], uploaded: any[]) {
+            fixtures.csvRows = csvRows;
+            fixtures.uploaded = uploaded;
+            renderPage();
+            fireEvent.click(screen.getByText('simulate-csv-parsed'));
+            await waitFor(() => screen.getByTestId('image-upload-step'));
+            fireEvent.click(screen.getByText('simulate-images-uploaded'));
+            fireEvent.click(screen.getByText('simulate-skip'));
+            await waitFor(() => screen.getByTestId('preview-table-step'));
+        }
+
+        afterEach(() => { fixtures.csvRows = null; fixtures.uploaded = null; });
+
+        it('WHEN Chair.jpg, Chair_2.jpg and Chair_3.jpg are uploaded THEN all three are mapped in order, primary first', async () => {
+            await previewAfterUpload([row(1, 'Chair')], [up('Chair_3.jpg'), up('Chair.jpg'), up('Chair_2.jpg')]);
+            expect(screen.getByTestId('row-0').dataset.imageStatus).toBe('mapped');
+            expect(screen.getByTestId('row-0').dataset.images).toBe('https://cdn/Chair.jpg,https://cdn/Chair_2.jpg,https://cdn/Chair_3.jpg');
+        });
+
+        it('WHEN a dash suffix is used (Chair-2.jpg) THEN it is also treated as image 2', async () => {
+            await previewAfterUpload([row(1, 'Chair')], [up('Chair.jpg'), up('Chair-2.jpg')]);
+            expect(screen.getByTestId('row-0').dataset.images).toBe('https://cdn/Chair.jpg,https://cdn/Chair-2.jpg');
+        });
+
+        it('WHEN two products have images THEN each gets only its own gallery', async () => {
+            await previewAfterUpload([row(1, 'Chair'), row(2, 'Table')], [up('Chair.jpg'), up('Table.jpg'), up('Chair_2.jpg')]);
+            expect(screen.getByTestId('row-0').dataset.images).toBe('https://cdn/Chair.jpg,https://cdn/Chair_2.jpg');
+            expect(screen.getByTestId('row-1').dataset.images).toBe('https://cdn/Table.jpg');
+        });
+
+        it('WHEN a product is literally named "Chair 2" THEN Chair 2.jpg is its primary, not image 2 of Chair', async () => {
+            await previewAfterUpload([row(1, 'Chair'), row(2, 'Chair 2')], [up('Chair.jpg'), up('Chair 2.jpg')]);
+            expect(screen.getByTestId('row-0').dataset.images).toBe('https://cdn/Chair.jpg');
+            expect(screen.getByTestId('row-1').dataset.images).toBe('https://cdn/Chair 2.jpg');
+        });
+
+        it('WHEN numbered images exist but no primary THEN nothing is mapped and the row is warned (missing_primary)', async () => {
+            await previewAfterUpload([row(1, 'Chair')], [up('Chair_2.jpg'), up('Chair_3.jpg')]);
+            expect(screen.getByTestId('row-0').dataset.imageStatus).toBe('missing_primary');
+            expect(screen.getByTestId('row-0').dataset.images).toBe('');
+            expect(screen.getByTestId('row-0').dataset.status).toBe('warning');
+        });
+
+        it('WHEN a number is skipped (Chair.jpg, Chair_3.jpg) THEN images map in order with a warning about the gap', async () => {
+            await previewAfterUpload([row(1, 'Chair')], [up('Chair.jpg'), up('Chair_3.jpg')]);
+            expect(screen.getByTestId('row-0').dataset.images).toBe('https://cdn/Chair.jpg,https://cdn/Chair_3.jpg');
+            expect(screen.getByTestId('row-0').dataset.warnings).toBe('1');
+        });
+
+        it('WHEN two files claim the same position (Chair.jpg and Chair_1.png) THEN none are mapped (duplicate_image)', async () => {
+            await previewAfterUpload([row(1, 'Chair')], [up('Chair.jpg'), up('Chair_1.png')]);
+            expect(screen.getByTestId('row-0').dataset.imageStatus).toBe('duplicate_image');
+            expect(screen.getByTestId('row-0').dataset.images).toBe('');
+        });
+
+        it('WHEN two CSV products share the name THEN the whole gallery is withheld (ambiguous)', async () => {
+            await previewAfterUpload([row(1, 'Chair'), row(2, 'Chair')], [up('Chair.jpg'), up('Chair_2.jpg')]);
+            expect(screen.getByTestId('row-0').dataset.imageStatus).toBe('ambiguous');
+            expect(screen.getByTestId('row-1').dataset.images).toBe('');
+        });
+
+        it('WHEN the multi-image product is committed THEN the commit payload carries every URL in order', async () => {
+            await previewAfterUpload([row(1, 'Chair')], [up('Chair.jpg'), up('Chair_2.jpg')]);
+            fireEvent.click(screen.getByText('simulate-confirm'));
+            await waitFor(() => expect(mockService.bulkImportCommit).toHaveBeenCalled());
+            const sent = mockService.bulkImportCommit.mock.calls.at(-1)![1];
+            expect(sent[0].image_urls).toEqual(['https://cdn/Chair.jpg', 'https://cdn/Chair_2.jpg']);
         });
     });
 });

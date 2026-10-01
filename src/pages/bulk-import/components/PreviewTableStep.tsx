@@ -8,13 +8,14 @@ interface ParsedRow {
     warnings: string[];
     data: Record<string, any>;
     /** Set after the image step: how this row's image was (not) mapped. */
-    image_status?: 'mapped' | 'not_found' | 'ambiguous' | 'duplicate_image';
+    image_status?: 'mapped' | 'not_found' | 'ambiguous' | 'duplicate_image' | 'missing_primary';
 }
 
 const IMAGE_STATUS_LABEL: Record<string, { label: string; className: string }> = {
     not_found: { label: 'Not found', className: 'text-amber-400' },
     ambiguous: { label: 'Ambiguous name', className: 'text-rose-400' },
     duplicate_image: { label: 'Duplicate image', className: 'text-rose-400' },
+    missing_primary: { label: 'Missing primary', className: 'text-rose-400' },
 };
 
 interface Props {
@@ -92,9 +93,9 @@ const PreviewTableStep: React.FC<Props> = ({ rows, onConfirm, onBack }) => {
                                 <td className="px-3 py-2 capitalize text-slate-400">{row.data.product_status || '—'}</td>
                                 <td className="px-3 py-2">
                                     {row.data.image_urls?.length > 0
-                                        ? <span className="flex items-center gap-1 text-emerald-400" title="Image mapped by product name">
+                                        ? <span className="flex items-center gap-1 text-emerald-400" title={row.data.image_urls.length > 1 ? `${row.data.image_urls.length} images mapped by product name — first is primary` : 'Image mapped by product name'}>
                                             <ImageIcon size={13} />
-                                            <span className="text-[10px]">Mapped</span>
+                                            <span className="text-[10px]">{row.data.image_urls.length > 1 ? `Primary + ${row.data.image_urls.length - 1} more` : 'Mapped'}</span>
                                         </span>
                                         : row.image_status && IMAGE_STATUS_LABEL[row.image_status]
                                             ? <span className={`text-[10px] ${IMAGE_STATUS_LABEL[row.image_status].className}`}>{IMAGE_STATUS_LABEL[row.image_status].label}</span>

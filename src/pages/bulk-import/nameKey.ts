@@ -17,7 +17,7 @@ export function rowNameKey(row: { data: Record<string, any> }): string {
     return row.data.name_key ?? nameKey(row.data.name);
 }
 
-export type ImageMatch = 'matched' | 'no_match' | 'ambiguous' | 'duplicate_image';
+export type ImageMatch = 'matched' | 'no_match' | 'ambiguous' | 'duplicate_image' | 'missing_primary';
 
 export function countKeys(keys: string[]): Map<string, number> {
     const counts = new Map<string, number>();
@@ -46,4 +46,73 @@ export function classifyImage(
 /** Counts of name keys over the rows that can actually be imported. */
 export function importableRowKeyCounts(rows: { status: string; data: Record<string, any> }[]): Map<string, number> {
     return countKeys(rows.filter(r => r.status !== 'error').map(rowNameKey).filter(Boolean));
+}
+
+/**
+ * Multi-image naming: `Chair.jpg` is the primary image, `Chair_2.jpg`,
+ * `Chair_3.jpg`… are the following ones (`Chair-2.jpg` is tolerated too).
+ * A filename that is exactly a product name always wins over the suffix reading,
+ * so products literally called "Chair 2" / "Model-3" keep working.
+ */
+export function parseImageName(
+    filename: string,
+    rowKeyCounts: Map<string, number>,
+): { key: string; seq: number } {
+    const stem = nameKeyFromFilename(filename);
+    if ((rowKeyCounts.get(stem) ?? 0) > 0) return { key: stem, seq: 1 };
+    const m = /^(.+?)\s*[_-]\s*([1-9]\d{0,2})$/.exec(stem);
+    if (m) {
+        const base = nameKey(m[1]);
+        if (base) return { key: base, seq: parseInt(m[2], 10) };
+    }
+    return { key: stem, seq: 1 };
+}
+
+export interface ImagePlanEntry { filename: string; key: string; seq: number; match: ImageMatch }
+export interface ProductImageGroup {
+    key: string;
+    status: ImageMatch;
+    /** Filenames in position order — only meaningful when status is 'matched'. */
+    ordered: string[];
+    /** Positions missing between 1 and the highest number (e.g. [2] for 1,3). */
+    gaps: number[];
+}
+
+/**
+ * Decides, per product name, which uploaded files form its gallery.
+ *  - no importable row with that name            → no_match
+ *  - several rows share the name                 → ambiguous (never guess)
+ *  - two files claim the same position           → duplicate_image (none mapped)
+ *  - numbered files but no primary (`Chair.jpg`) → missing_primary (none mapped)
+ *  - otherwise                                   → matched, ordered by number
+ */
+export function planImages(
+    filenames: string[],
+    rowKeyCounts: Map<string, number>,
+): { entries: ImagePlanEntry[]; groups: Map<string, ProductImageGroup> } {
+    const parsed = filenames.map(filename => ({ filename, ...parseImageName(filename, rowKeyCounts) }));
+    const byKey = new Map<string, typeof parsed>();
+    for (const p of parsed) byKey.set(p.key, [...(byKey.get(p.key) ?? []), p]);
+
+    const groups = new Map<string, ProductImageGroup>();
+    const matchByFile = new Map<string, ImageMatch>();
+    for (const [key, files] of byKey) {
+        const rows = rowKeyCounts.get(key) ?? 0;
+        const seqCounts = countKeys(files.map(f => String(f.seq)));
+        const ordered = [...files].sort((a, b) => a.seq - b.seq || a.filename.localeCompare(b.filename)).map(f => f.filename);
+        let status: ImageMatch = 'matched';
+        if (!key || rows === 0) status = 'no_match';
+        else if (rows > 1) status = 'ambiguous';
+        else if ([...seqCounts.values()].some(c => c > 1)) status = 'duplicate_image';
+        else if (!seqCounts.has('1')) status = 'missing_primary';
+        const max = Math.max(...files.map(f => f.seq));
+        const gaps: number[] = [];
+        for (let n = 1; n <= max; n++) if (!seqCounts.has(String(n))) gaps.push(n);
+        groups.set(key, { key, status, ordered, gaps: status === 'matched' ? gaps : [] });
+        for (const f of files) matchByFile.set(f.filename, status);
+    }
+    return {
+        entries: parsed.map(p => ({ filename: p.filename, key: p.key, seq: p.seq, match: matchByFile.get(p.filename)! })),
+        groups,
+    };
 }

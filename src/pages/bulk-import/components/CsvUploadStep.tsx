@@ -94,7 +94,7 @@ const CsvUploadStep: React.FC<Props> = ({ onParsed, onParse }) => {
                 </div>
                 <p className="mt-3 text-slate-500 text-xs">
                     <span className="font-semibold text-slate-400">SKU:</span> not needed — each item gets its SKU automatically.
-                    In the next step, name each image after its product (e.g. <span className="font-mono text-blue-400">Namur Sofa.jpg</span>).
+                    In the next step, name each image after its product (e.g. <span className="font-mono text-blue-400">Namur Sofa.jpg</span>); for several images add _2, _3… (<span className="font-mono text-blue-400">Namur Sofa_2.jpg</span>).
                 </p>
                 <p className="mt-3 text-slate-500 text-xs">
                     <span className="font-semibold text-slate-400">Description:</span> add the product description in the{' '}
