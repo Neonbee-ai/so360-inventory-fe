@@ -74,17 +74,21 @@ export interface StockCountLine {
     reason_code?: string | null;
     unit_cost?: number | null;
     variance_value?: number | null;
+    movement_id?: string | null;
 }
 
+/** GET /stock-counts/:id (and POST/PATCH/post) return the header plus lines. */
 export interface StockCount {
     id: string;
     warehouse_id: string;
+    /** Not returned by the server; resolved client-side from locations. */
     warehouse_name?: string | null;
     count_date: string;
     status: 'draft' | 'posted';
     counted_by?: string | null;
     posted_at?: string | null;
     notes?: string | null;
+    total_variance_value?: number | null;
     lines?: StockCountLine[];
 }
 
@@ -95,14 +99,19 @@ export interface StockCountLineInput {
     reason_code?: string | null;
 }
 
+/** Output line: `item_id` is the parent item, `variant_id` the variant stock row. */
 export interface StockConversionOutput {
     item_id: string;
+    variant_id?: string | null;
     qty: number;
 }
 
 export interface StockConversionInput {
+    /** UUID that becomes the conversion id; a retry with the same ref returns the prior record. */
+    client_ref?: string;
     warehouse_id: string;
     conversion_date: string;
+    /** Stock-row id: the variant id when the input is a variant. */
     input_item_id: string;
     input_qty: number;
     outputs: StockConversionOutput[];
@@ -114,6 +123,9 @@ export interface StockConversionInput {
 export interface StockConversion extends StockConversionInput {
     id: string;
     yield_pct?: number | null;
+    loss_value?: number | null;
+    input_unit_cost?: number | null;
+    /** Not returned by the server; resolved client-side when known. */
     input_item_name?: string | null;
     created_at?: string;
 }
@@ -135,13 +147,17 @@ export interface ScannedItem {
     barcode?: string | null;
     unit?: string | null;
     variant_id?: string | null;
+    matched_on?: 'barcode' | 'sku' | null;
 }
 
 /** Accepts a bare list or a `{ data }` envelope. */
 const unwrapList = <T,>(res: any): T[] =>
     Array.isArray(res) ? res : Array.isArray(res?.data) ? res.data : [];
 
-/** Normalises the by-code payload: a flat item, or `{ item, variant }`. */
+/**
+ * Normalises the by-code payload `{ item, variant, matched_on }` (or a flat
+ * item). `id` is the parent item; `variant_id` is the variant stock row.
+ */
 export const toScannedItem = (res: any): ScannedItem | null => {
     const item = res?.item ?? res;
     if (!item?.id) return null;
@@ -153,6 +169,7 @@ export const toScannedItem = (res: any): ScannedItem | null => {
         barcode: variant?.barcode ?? item.barcode ?? null,
         unit: item.unit ?? item.base_unit ?? item.uom ?? null,
         variant_id: variant?.id ?? item.variant_id ?? null,
+        matched_on: res?.matched_on ?? null,
     };
 };
 
@@ -1283,7 +1300,7 @@ class InventoryService {
     }
 
     /** Opens a draft count; expected quantities are snapshotted server-side. */
-    async createStockCount(dto: { warehouse_id: string; count_date: string; notes?: string }): Promise<StockCount> {
+    async createStockCount(dto: { warehouse_id: string; count_date?: string; notes?: string; item_ids?: string[] }): Promise<StockCount> {
         return this.v1Fetch('/stock-counts', { method: 'POST', json: dto }, 'Failed to start stock count');
     }
 

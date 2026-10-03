@@ -14,6 +14,7 @@ import React from 'react';
 const h = vi.hoisted(() => ({
     count: null as any,
     getStockCount: null as any,
+    getLocations: null as any,
     getLossReasons: null as any,
     updateStockCount: null as any,
     postStockCount: null as any,
@@ -25,6 +26,7 @@ const h = vi.hoisted(() => ({
 vi.mock('../services/inventoryService', () => ({
     inventoryService: {
         getStockCount: (...a: any[]) => h.getStockCount(...a),
+        getLocations: (...a: any[]) => h.getLocations(...a),
         getLossReasons: (...a: any[]) => h.getLossReasons(...a),
         updateStockCount: (...a: any[]) => h.updateStockCount(...a),
         postStockCount: (...a: any[]) => h.postStockCount(...a),
@@ -44,10 +46,11 @@ vi.mock('react-router-dom', () => ({
 import StockCountSheetPage from './StockCountSheetPage';
 
 const draftCount = () => ({
-    id: 'c-1', warehouse_id: 'w-1', warehouse_name: 'Main Store', count_date: '2026-10-03', status: 'draft',
+    // Server shape: header has warehouse_id only; lines carry no unit.
+    id: 'c-1', warehouse_id: 'w-1', count_date: '2026-10-03', status: 'draft', total_variance_value: 0,
     lines: [
-        { item_id: 'i-1', item_name: 'Widget A', sku: 'WA', unit: 'kg', expected_qty: 10, actual_qty: null },
-        { item_id: 'i-2', variant_id: 'v-1', item_name: 'Widget B', expected_qty: 4, actual_qty: null },
+        { id: 'l-1', count_id: 'c-1', item_id: 'i-1', variant_id: null, item_name: 'Widget A', sku: 'WA', expected_qty: 10, actual_qty: null, variance_qty: null, reason_code: null, unit_cost: 2, variance_value: null, movement_id: null },
+        { id: 'l-2', count_id: 'c-1', item_id: 'i-2', variant_id: 'v-1', item_name: 'Widget B', sku: null, expected_qty: 4, actual_qty: null, variance_qty: null, reason_code: null, unit_cost: 1, variance_value: null, movement_id: null },
     ],
 });
 
@@ -56,6 +59,7 @@ beforeEach(() => {
     h.navigate = vi.fn();
     h.count = draftCount();
     h.getStockCount = vi.fn(() => Promise.resolve(h.count));
+    h.getLocations = vi.fn(() => Promise.resolve([{ id: 'w-1', name: 'Main Store' }]));
     h.getLossReasons = vi.fn(() => Promise.resolve([
         { id: 'r1', code: 'SPOIL', label: 'Spoiled', category: 'spoilage' },
         { id: 'r2', code: 'DOA', label: 'Dead on arrival', category: 'mortality' },
@@ -74,6 +78,18 @@ beforeEach(() => {
 const actual = (name: string) => screen.findByLabelText(`Actual for ${name}`);
 
 describe('StockCountSheetPage', () => {
+    describe('Given a count that carries only warehouse_id', () => {
+        it('When locations load Then the header shows the warehouse name', async () => {
+            render(<StockCountSheetPage />);
+            expect(await screen.findByText(/Count — Main Store/)).toBeTruthy();
+        });
+        it('When locations fail Then a generic label is shown', async () => {
+            h.getLocations = vi.fn(() => Promise.reject(new Error('x')));
+            render(<StockCountSheetPage />);
+            expect(await screen.findByText(/Count — Warehouse/)).toBeTruthy();
+        });
+    });
+
     describe('Given a draft count', () => {
         it('When an actual is typed Then the variance updates and a reason picker appears', async () => {
             render(<StockCountSheetPage />);

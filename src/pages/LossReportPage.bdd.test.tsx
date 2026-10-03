@@ -5,15 +5,32 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import React from 'react';
 
-const h = vi.hoisted(() => ({ getLossSummary: null as any }));
+const h = vi.hoisted(() => ({
+    getLossSummary: null as any,
+    getLossReasons: null as any,
+    flags: {} as Record<string, boolean>,
+}));
 
 vi.mock('../services/inventoryService', () => ({
-    inventoryService: { getLossSummary: (...a: any[]) => h.getLossSummary(...a) },
+    inventoryService: {
+        getLossSummary: (...a: any[]) => h.getLossSummary(...a),
+        getLossReasons: (...a: any[]) => h.getLossReasons(...a),
+    },
+}));
+
+vi.mock('@so360/shell-context', () => ({
+    useShellBridge: () => ({ isFeatureEnabled: (f: string) => h.flags[f] === true }),
 }));
 
 import LossReportPage from './LossReportPage';
 
 beforeEach(() => {
+    h.flags = {};
+    h.getLossReasons = vi.fn(() => Promise.resolve([
+        { id: 'r0', code: 'DOA', label: 'Dead on arrival', category: 'mortality' },
+        { id: 'r1', code: 'SPOIL', label: 'Spoiled', category: 'spoilage' },
+        { id: 'r2', code: 'TRIM', label: 'Trim loss', category: 'process' },
+    ]));
     h.getLossSummary = vi.fn(() => Promise.resolve({
         total_value: 1234.5,
         total_qty: 42,
@@ -63,6 +80,50 @@ describe('LossReportPage', () => {
             await screen.findByTestId('loss-row-TRIM');
             fireEvent.change(screen.getByLabelText('From'), { target: { value: '2026-09-01' } });
             await waitFor(() => expect(h.getLossSummary).toHaveBeenLastCalledWith(expect.objectContaining({ from: '2026-09-01' })));
+        });
+    });
+
+    describe('Given mortality losses in the summary', () => {
+        const withMortality = (rows: any[]) => () => Promise.resolve({
+            total_value: 1300, total_qty: 50, rows, trend: [],
+        });
+
+        it('When mortality tracking is off and grouped by reason Then mortality rows are hidden and totals exclude them', async () => {
+            h.getLossSummary = vi.fn(withMortality([
+                { key: 'DOA', label: 'Dead on arrival', qty: 8, value: 900 },
+                { key: 'SPOIL', label: 'Spoiled', qty: 42, value: 400 },
+            ]));
+            render(<LossReportPage />);
+            await screen.findByTestId('loss-row-SPOIL');
+            await waitFor(() => expect(screen.queryByTestId('loss-row-DOA')).toBeNull());
+            expect(screen.getByTestId('top-row').textContent).toBe('Spoiled');
+            expect(screen.getByTestId('total-qty').textContent).toBe('42');
+            expect(screen.getByTestId('total-value').textContent).toBe((400).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+        });
+
+        it('When mortality tracking is off and grouped by category Then the mortality category is hidden', async () => {
+            h.getLossSummary = vi.fn((q: any) => q.group_by === 'category'
+                ? withMortality([
+                    { key: 'mortality', label: 'Mortality', qty: 8, value: 900 },
+                    { key: 'spoilage', label: 'Spoilage', qty: 42, value: 400 },
+                ])()
+                : withMortality([])());
+            render(<LossReportPage />);
+            fireEvent.click(await screen.findByRole('button', { name: 'Category' }));
+            await screen.findByTestId('loss-row-spoilage');
+            expect(screen.queryByTestId('loss-row-mortality')).toBeNull();
+        });
+
+        it('When mortality tracking is on Then mortality rows show and reasons are not fetched', async () => {
+            h.flags['action:inventory:loss:mortality_tracking'] = true;
+            h.getLossSummary = vi.fn(withMortality([
+                { key: 'DOA', label: 'Dead on arrival', qty: 8, value: 900 },
+                { key: 'SPOIL', label: 'Spoiled', qty: 42, value: 400 },
+            ]));
+            render(<LossReportPage />);
+            expect(await screen.findByTestId('loss-row-DOA')).toBeTruthy();
+            expect(screen.getByTestId('total-qty').textContent).toBe('50');
+            expect(h.getLossReasons).not.toHaveBeenCalled();
         });
     });
 

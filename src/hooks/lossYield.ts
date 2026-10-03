@@ -1,4 +1,4 @@
-import type { LossReason, StockCountLine, StockCountLineInput } from '../services/inventoryService';
+import type { LossGroupBy, LossReason, LossSummary, StockCountLine, StockCountLineInput } from '../services/inventoryService';
 
 /** Feature flags for the loss & yield pages. */
 export const STOCK_COUNT_FLAG = 'submodule:inventory:stock_count';
@@ -13,6 +13,38 @@ export const isFlagOn = (shell: any, flag: string): boolean =>
 /** Active reasons, dropping 'mortality' ones unless that tracking is enabled. */
 export const visibleReasons = (reasons: LossReason[], mortalityEnabled: boolean): LossReason[] =>
     reasons.filter((r) => r.is_active !== false && (mortalityEnabled || r.category !== 'mortality'));
+
+/**
+ * Drops mortality-category rows from a loss summary when mortality tracking
+ * is off, and takes them out of the totals. `reason` rows match by reason
+ * code, `category` rows by key; `item` rows carry no reason so stay as-is.
+ * The daily trend has no per-reason split, so it cannot be adjusted.
+ */
+export const hideMortality = (
+    summary: LossSummary,
+    groupBy: LossGroupBy,
+    reasons: LossReason[],
+): LossSummary => {
+    let isMortality: (key: string) => boolean;
+    if (groupBy === 'category') {
+        isMortality = (key) => key === 'mortality';
+    } else if (groupBy === 'reason') {
+        const codes = new Set(reasons.filter((r) => r.category === 'mortality').map((r) => r.code));
+        isMortality = (key) => codes.has(key);
+    } else {
+        return summary;
+    }
+    const dropped = summary.rows.filter((r) => isMortality(r.key));
+    if (dropped.length === 0) return summary;
+    const sum = (k: 'qty' | 'value') => dropped.reduce((t, r) => t + (Number(r[k]) || 0), 0);
+    const round = (n: number) => Math.round(n * 10000) / 10000;
+    return {
+        ...summary,
+        total_value: round(Math.max(0, (Number(summary.total_value) || 0) - sum('value'))),
+        total_qty: round(Math.max(0, (Number(summary.total_qty) || 0) - sum('qty'))),
+        rows: summary.rows.filter((r) => !isMortality(r.key)),
+    };
+};
 
 /** Stable key for a count line: variant when present, else item. */
 export const lineKey = (l: Pick<StockCountLine, 'item_id' | 'variant_id'>): string =>

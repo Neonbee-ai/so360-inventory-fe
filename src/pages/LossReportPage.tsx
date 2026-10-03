@@ -1,6 +1,7 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { inventoryService, type LossGroupBy, type LossSummary } from '../services/inventoryService';
-import { fmtMoney, fmtQty, isoDate, shiftDays } from '../hooks/lossYield';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useShellBridge } from '@so360/shell-context';
+import { inventoryService, type LossGroupBy, type LossReason, type LossSummary } from '../services/inventoryService';
+import { MORTALITY_TRACKING_FLAG, fmtMoney, fmtQty, hideMortality, isFlagOn, isoDate, shiftDays } from '../hooks/lossYield';
 
 const GROUPS: { key: LossGroupBy; label: string }[] = [
     { key: 'reason', label: 'Reason' },
@@ -44,6 +45,9 @@ const TrendChart: React.FC<{ points: { date: string; value: number }[] }> = ({ p
 
 /** Loss report: totals, breakdown by reason/item/category and a value trend. */
 const LossReportPage: React.FC = () => {
+    const shell = useShellBridge();
+    const mortality = isFlagOn(shell, MORTALITY_TRACKING_FLAG);
+    const [reasons, setReasons] = useState<LossReason[]>([]);
     const [to, setTo] = useState(() => isoDate(new Date()));
     const [from, setFrom] = useState(() => shiftDays(isoDate(new Date()), -29));
     const [groupBy, setGroupBy] = useState<LossGroupBy>('reason');
@@ -66,7 +70,18 @@ const LossReportPage: React.FC = () => {
 
     useEffect(() => { void load(); }, [load]);
 
-    const rows = [...(data?.rows ?? [])].sort((a, b) => (Number(b.value) || 0) - (Number(a.value) || 0));
+    // Reason codes are needed to recognise mortality rows when grouped by reason.
+    useEffect(() => {
+        if (mortality) return;
+        inventoryService.getLossReasons().then(setReasons).catch(() => setReasons([]));
+    }, [mortality]);
+
+    const view = useMemo(
+        () => (data && !mortality ? hideMortality(data, groupBy, reasons) : data),
+        [data, mortality, groupBy, reasons],
+    );
+
+    const rows = [...(view?.rows ?? [])].sort((a, b) => (Number(b.value) || 0) - (Number(a.value) || 0));
     const top = rows[0];
     const maxValue = Math.max(...rows.map((r) => Number(r.value) || 0), 0) || 1;
 
@@ -98,11 +113,11 @@ const LossReportPage: React.FC = () => {
             <div className="mb-6 grid gap-3 sm:grid-cols-3">
                 <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
                     <div className="text-xs uppercase tracking-wider text-slate-500">Loss value</div>
-                    <div className="mt-1 text-2xl font-bold text-rose-300 tabular-nums" data-testid="total-value">{loading ? '…' : fmtMoney(data?.total_value ?? 0)}</div>
+                    <div className="mt-1 text-2xl font-bold text-rose-300 tabular-nums" data-testid="total-value">{loading ? '…' : fmtMoney(view?.total_value ?? 0)}</div>
                 </div>
                 <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
                     <div className="text-xs uppercase tracking-wider text-slate-500">Loss quantity</div>
-                    <div className="mt-1 text-2xl font-bold text-slate-100 tabular-nums" data-testid="total-qty">{loading ? '…' : fmtQty(data?.total_qty ?? 0)}</div>
+                    <div className="mt-1 text-2xl font-bold text-slate-100 tabular-nums" data-testid="total-qty">{loading ? '…' : fmtQty(view?.total_qty ?? 0)}</div>
                 </div>
                 <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
                     <div className="text-xs uppercase tracking-wider text-slate-500">Biggest {GROUPS.find((g) => g.key === groupBy)!.label.toLowerCase()}</div>

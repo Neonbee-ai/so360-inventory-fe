@@ -50,6 +50,7 @@ const StockCountSheetPage: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [notice, setNotice] = useState<string | null>(null);
     const [search, setSearch] = useState('');
+    const [warehouseNames, setWarehouseNames] = useState<Record<string, string>>({});
 
     const apply = (c: StockCount) => {
         setCount(c);
@@ -78,6 +79,14 @@ const StockCountSheetPage: React.FC = () => {
     }, [id]);
 
     useEffect(() => { void load(); }, [load]);
+
+    // The count carries only warehouse_id; resolve its name from locations.
+    useEffect(() => {
+        Promise.resolve()
+            .then(() => inventoryService.getLocations())
+            .then((ws: any) => setWarehouseNames(Object.fromEntries((Array.isArray(ws) ? ws : []).map((w: any) => [w.id, w.name]))))
+            .catch(() => undefined);
+    }, []);
 
     const posted = count?.status === 'posted';
     const editable = !posted && canCount;
@@ -176,7 +185,7 @@ const StockCountSheetPage: React.FC = () => {
                 </button>
                 <div className="min-w-0">
                     <h1 className="text-xl sm:text-2xl font-bold text-slate-50 truncate">
-                        Count — {count?.warehouse_name || 'Warehouse'}
+                        Count — {count?.warehouse_name || (count && warehouseNames[count.warehouse_id]) || 'Warehouse'}
                     </h1>
                     <p className="text-sm text-slate-400">
                         {count?.count_date} · {posted ? 'Posted' : 'Draft'} · {counted}/{lines.length} counted

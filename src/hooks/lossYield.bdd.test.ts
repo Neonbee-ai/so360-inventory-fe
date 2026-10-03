@@ -6,6 +6,7 @@ import {
     changedCountLines,
     conversionYield,
     effectiveLine,
+    hideMortality,
     isFlagOn,
     lineKey,
     linesMissingReason,
@@ -91,6 +92,37 @@ describe('lossYield helpers', () => {
     describe('Given an ISO date', () => {
         it('When shifted Then it crosses month boundaries', () => {
             expect(shiftDays('2026-10-01', -1)).toBe('2026-09-30');
+        });
+    });
+
+    describe('Given a loss summary with mortality rows', () => {
+        const reasons: any[] = [
+            { id: 'r0', code: 'DOA', label: 'Dead on arrival', category: 'mortality' },
+            { id: 'r1', code: 'SPOIL', label: 'Spoiled', category: 'spoilage' },
+        ];
+        const summary = (rows: any[]) => ({ total_value: 130, total_qty: 13, rows, trend: [{ date: '2026-10-01', value: 130 }] });
+
+        it('When grouped by reason Then mortality reason rows and their totals are removed', () => {
+            const out = hideMortality(summary([
+                { key: 'DOA', label: 'Dead on arrival', qty: 3, value: 30.1 },
+                { key: 'SPOIL', label: 'Spoiled', qty: 10, value: 99.9 },
+            ]), 'reason', reasons);
+            expect(out.rows.map((r) => r.key)).toEqual(['SPOIL']);
+            expect(out.total_qty).toBe(10);
+            expect(out.total_value).toBe(99.9);
+            expect(out.trend).toHaveLength(1);
+        });
+        it('When grouped by category Then the mortality key is removed', () => {
+            const out = hideMortality(summary([
+                { key: 'mortality', label: 'Mortality', qty: 3, value: 30 },
+                { key: 'spoilage', label: 'Spoilage', qty: 10, value: 100 },
+            ]), 'category', []);
+            expect(out.rows.map((r) => r.key)).toEqual(['spoilage']);
+            expect(out.total_value).toBe(100);
+        });
+        it('When grouped by item Then the summary is unchanged', () => {
+            const s = summary([{ key: 'i-1', label: 'A', qty: 13, value: 130 }]);
+            expect(hideMortality(s, 'item', reasons)).toBe(s);
         });
     });
 });

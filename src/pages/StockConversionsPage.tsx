@@ -21,11 +21,25 @@ import {
     visibleReasons,
 } from '../hooks/lossYield';
 
-interface Picked { id: string; name: string }
+/** `id` is the item (the parent for a variant); `variant_id` the variant stock row. */
+interface Picked { id: string; name: string; variant_id?: string | null }
 interface OutputRow { uid: number; item: Picked | null; qty: string }
 
 let uidSeq = 0;
 const newRow = (): OutputRow => ({ uid: ++uidSeq, item: null, qty: '' });
+
+/** The items row that carries stock: the variant row when present. */
+const stockRowOf = (p: Picked) => p.variant_id || p.id;
+
+/** Idempotency key for one conversion form; reused on retry, renewed after success. */
+export const newClientRef = (): string => {
+    const c: any = (globalThis as any).crypto;
+    if (c?.randomUUID) return c.randomUUID();
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (ch) => {
+        const r = (Math.random() * 16) | 0;
+        return (ch === 'x' ? r : (r & 0x3) | 0x8).toString(16);
+    });
+};
 
 /**
  * Conversion / yield entry: one input item and quantity becomes one or more
@@ -51,6 +65,8 @@ const StockConversionsPage: React.FC = () => {
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [notice, setNotice] = useState<string | null>(null);
+    const [clientRef, setClientRef] = useState(newClientRef);
+    const [names, setNames] = useState<Record<string, string>>({});
 
     const loadRecent = useCallback(async () => {
         const today = isoDate(new Date());
@@ -91,7 +107,7 @@ const StockConversionsPage: React.FC = () => {
         setOutputs((rows) => rows.map((r) => (r.uid === uid ? { ...r, ...patch } : r)));
 
     const onScan = (item: ScannedItem) => {
-        const picked = { id: item.id, name: item.name };
+        const picked: Picked = { id: item.id, name: item.name, variant_id: item.variant_id ?? null };
         if (!input) { setInput(picked); return; }
         setOutputs((rows) => {
             const blank = rows.find((r) => !r.item);
@@ -112,17 +128,25 @@ const StockConversionsPage: React.FC = () => {
         setError(null);
         setNotice(null);
         try {
+            const inputRow = stockRowOf(input);
             await inventoryService.createStockConversion({
+                client_ref: clientRef,
                 warehouse_id: warehouseId,
                 conversion_date: date,
-                input_item_id: input.id,
+                input_item_id: inputRow,
                 input_qty: inQty,
-                outputs: validOutputs.map((o) => ({ item_id: o.item!.id, qty: parseQty(o.qty)! })),
+                outputs: validOutputs.map((o) => ({
+                    item_id: o.item!.id,
+                    variant_id: o.item!.variant_id ?? null,
+                    qty: parseQty(o.qty)!,
+                })),
                 loss_qty: calc.loss,
                 ...(reason ? { reason_code: reason } : {}),
                 ...(notes.trim() ? { notes: notes.trim() } : {}),
             });
             setNotice(`Recorded — yield ${calc.yieldPct?.toFixed(2)}%`);
+            setNames((m) => ({ ...m, [inputRow]: input.name }));
+            setClientRef(newClientRef());
             reset();
             void loadRecent();
         } catch (e: any) {
@@ -273,7 +297,7 @@ const StockConversionsPage: React.FC = () => {
                         {recent.map((c) => (
                             <li key={c.id} className="flex items-center justify-between gap-4 px-4 py-3 text-sm">
                                 <div className="min-w-0">
-                                    <div className="text-slate-100 truncate">{c.input_item_name || c.input_item_id}</div>
+                                    <div className="text-slate-100 truncate">{c.input_item_name || names[c.input_item_id] || c.input_item_id}</div>
                                     <div className="text-xs text-slate-500">{c.conversion_date} · in {fmtQty(c.input_qty)} · loss {fmtQty(c.loss_qty)}</div>
                                 </div>
                                 <span className="text-emerald-300 tabular-nums">

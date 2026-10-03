@@ -5,6 +5,8 @@
  *   - Yield % and loss update live from input and output quantities
  *   - Reason defaults to the first 'process' reason; mortality hidden without the flag
  *   - Record is blocked when outputs exceed input; payload sends loss_qty, not yield_pct
+ *   - Each form carries a client_ref UUID: reused on retry, renewed after success
+ *   - input_item_id is the stock row (variant id for a variant); outputs carry variant_id
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
@@ -53,11 +55,18 @@ beforeEach(() => {
         { id: 'r2', code: 'TRIM', label: 'Trim loss', category: 'process' },
     ]));
     h.getStockConversions = vi.fn(() => Promise.resolve([
-        { id: 'x-1', warehouse_id: 'w-1', conversion_date: '2026-10-02', input_item_id: 'in-1', input_item_name: 'Whole unit', input_qty: 10, outputs: [], loss_qty: 2, yield_pct: 80 },
+        { id: 'x-1', warehouse_id: 'w-1', conversion_date: '2026-10-02', input_item_id: 'in-1', input_qty: 10, outputs: [], loss_qty: 2, yield_pct: 80, loss_value: 4 },
     ]));
     h.createStockConversion = vi.fn(() => Promise.resolve({ id: 'x-2' }));
-    h.getItemByCode = vi.fn(() => Promise.resolve({ id: 'in-1', name: 'Whole unit' }));
+    h.getItemByCode = vi.fn(() => Promise.resolve({ id: 'in-1', name: 'Whole unit', variant_id: null, matched_on: 'barcode' }));
 });
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+const scan = async (code: string) => {
+    const box = await screen.findByLabelText('Scan barcode');
+    fireEvent.change(box, { target: { value: code } });
+    fireEvent.keyDown(box, { key: 'Enter' });
+};
 
 const fillBasic = async () => {
     const pickers = await screen.findAllByTestId('item-picker');
@@ -79,6 +88,7 @@ describe('StockConversionsPage', () => {
         it('When recent conversions exist Then they are listed with yield', async () => {
             render(<StockConversionsPage />);
             expect(await screen.findByText('80.00%')).toBeTruthy();
+            expect(screen.getByText('in-1')).toBeTruthy(); // server sends no input name
         });
     });
 
@@ -118,8 +128,9 @@ describe('StockConversionsPage', () => {
             const body = h.createStockConversion.mock.calls[0][0];
             expect(body).toMatchObject({
                 warehouse_id: 'w-1', input_item_id: 'in-1', input_qty: 10,
-                outputs: [{ item_id: 'out-1', qty: 7.5 }], loss_qty: 2.5, reason_code: 'TRIM',
+                outputs: [{ item_id: 'out-1', variant_id: null, qty: 7.5 }], loss_qty: 2.5, reason_code: 'TRIM',
             });
+            expect(body.client_ref).toMatch(UUID);
             expect(body).not.toHaveProperty('yield_pct');
             expect(await screen.findByText('Recorded — yield 75.00%')).toBeTruthy();
             expect((screen.getByLabelText('Input quantity') as HTMLInputElement).value).toBe('');
@@ -132,16 +143,64 @@ describe('StockConversionsPage', () => {
             fireEvent.click(screen.getByText('Record conversion'));
             expect((await screen.findByRole('alert')).textContent).toBe('Insufficient stock');
         });
+
+        it('When a failed save is retried Then the same client_ref is resent', async () => {
+            h.createStockConversion = vi.fn()
+                .mockImplementationOnce(() => Promise.reject(new Error('Network down')))
+                .mockImplementation(() => Promise.resolve({ id: 'x-2' }));
+            render(<StockConversionsPage />);
+            await fillBasic();
+            fireEvent.click(screen.getByText('Record conversion'));
+            await screen.findByRole('alert');
+            fireEvent.click(screen.getByText('Record conversion'));
+            await waitFor(() => expect(h.createStockConversion).toHaveBeenCalledTimes(2));
+            const [first, second] = h.createStockConversion.mock.calls.map((c: any[]) => c[0].client_ref);
+            expect(first).toMatch(UUID);
+            expect(second).toBe(first);
+        });
+
+        it('When a save succeeds Then the next conversion gets a fresh client_ref', async () => {
+            h.pick.push({ id: 'in-1', name: 'Whole unit' }, { id: 'out-1', name: 'Part A' });
+            render(<StockConversionsPage />);
+            await fillBasic();
+            fireEvent.click(screen.getByText('Record conversion'));
+            await screen.findByText('Recorded — yield 75.00%');
+            await fillBasic();
+            fireEvent.click(screen.getByText('Record conversion'));
+            await waitFor(() => expect(h.createStockConversion).toHaveBeenCalledTimes(2));
+            const [first, second] = h.createStockConversion.mock.calls.map((c: any[]) => c[0].client_ref);
+            expect(second).toMatch(UUID);
+            expect(second).not.toBe(first);
+        });
     });
 
     describe('Given barcode scanning is enabled', () => {
         it('When the input item is scanned Then it becomes the input', async () => {
             h.flags['submodule:inventory:barcode_scanning'] = true;
             render(<StockConversionsPage />);
-            const scan = await screen.findByLabelText('Scan barcode');
-            fireEvent.change(scan, { target: { value: '555' } });
-            fireEvent.keyDown(scan, { key: 'Enter' });
+            await scan('555');
             await waitFor(() => expect(screen.getAllByTestId('item-picker')[0].textContent).toBe('Whole unit'));
+        });
+
+        it('When variants are scanned Then input uses the variant stock row and outputs carry parent + variant', async () => {
+            h.flags['submodule:inventory:barcode_scanning'] = true;
+            h.getItemByCode = vi.fn()
+                .mockResolvedValueOnce({ id: 'p-in', name: 'Whole unit', variant_id: 'v-in', matched_on: 'barcode' })
+                .mockResolvedValueOnce({ id: 'p-out', name: 'Part A', variant_id: 'v-out', matched_on: 'sku' });
+            render(<StockConversionsPage />);
+            await scan('111');
+            await waitFor(() => expect(screen.getAllByTestId('item-picker')[0].textContent).toBe('Whole unit'));
+            await scan('222');
+            await waitFor(() => expect(screen.getAllByTestId('item-picker')[1].textContent).toBe('Part A'));
+            fireEvent.change(screen.getByLabelText('Input quantity'), { target: { value: '4' } });
+            fireEvent.change(screen.getByLabelText('Output 1 quantity'), { target: { value: '3' } });
+            fireEvent.click(screen.getByText('Record conversion'));
+            await waitFor(() => expect(h.createStockConversion).toHaveBeenCalledTimes(1));
+            expect(h.createStockConversion.mock.calls[0][0]).toMatchObject({
+                input_item_id: 'v-in',
+                outputs: [{ item_id: 'p-out', variant_id: 'v-out', qty: 3 }],
+                loss_qty: 1,
+            });
         });
     });
 });
