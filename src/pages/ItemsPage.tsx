@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Search, Filter, Plus, Package, Layers, AlertCircle, AlertTriangle, Flame, Building2, Factory, Wrench, Upload, Info, Tag } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Search, Filter, Plus, Package, Layers, AlertCircle, AlertTriangle, Flame, Building2, Factory, Wrench, Upload, Info } from 'lucide-react';
 import { inventoryService } from '../services/inventoryService';
 import { Item } from '../types/inventory';
 import { Table } from '../components/common/Table';
@@ -8,12 +8,21 @@ import PhotoAttentionIndicator from '../components/media/PhotoAttentionIndicator
 import { useAuth } from '../hooks/useAuth';
 import { useShellBridge, useQuota, useSandboxLimit } from '@so360/shell-context';
 import { isRateBoardEnabled } from '../hooks/rateBoard';
+import DailyRatesTab from '../components/rates/DailyRatesTab';
 import { QuotaBar, QuotaGate, FeatureGate } from '@so360/design-system';
 
 const ItemsPage = () => {
     const navigate = useNavigate();
     const { can } = useAuth();
     const shell = useShellBridge();
+    const [searchParams, setSearchParams] = useSearchParams();
+    const ratesEnabled = isRateBoardEnabled(shell);
+    const tab: 'items' | 'daily-rates' = ratesEnabled && searchParams.get('tab') === 'daily-rates' ? 'daily-rates' : 'items';
+    const selectTab = (t: 'items' | 'daily-rates') => {
+        const next = new URLSearchParams(searchParams);
+        if (t === 'items') next.delete('tab'); else next.set('tab', t);
+        setSearchParams(next, { replace: true });
+    };
     const createItemState = (shell?.permissionsLoaded === true && (shell?.hasPermission?.('items.create') ?? false)) ? ((shell as any)?.getFeatureState ? (shell as any).getFeatureState('action:inventory:items:create') : 'enabled') : 'hidden';
     const bulkImportState = (shell?.permissionsLoaded === true && (shell?.hasPermission?.('items.import') ?? false)) ? ((shell as any)?.getFeatureState ? (shell as any).getFeatureState('action:inventory:bulk_import') : 'enabled') : 'hidden';
     const quotaChecks = useMemo(() => [{ module_code: 'inventory', quota_key: 'max_skus' }], []);
@@ -145,15 +154,6 @@ const ItemsPage = () => {
                     <p className="text-slate-400 mt-1">Manage physical products and trackable assets</p>
                 </div>
                 <div className="flex items-center gap-3">
-                {isRateBoardEnabled(shell) && (
-                    <button
-                        onClick={() => navigate('/inventory/rate-board')}
-                        className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-slate-100 px-4 py-2.5 rounded-lg font-semibold text-sm transition-all active:scale-95"
-                    >
-                        <Tag size={16} />
-                        Rate Board
-                    </button>
-                )}
                 {can('items.import') && (
                     <FeatureGate state={bulkImportState} loading={(shell?.effectiveFlagsLoaded === false)} onUpgradeClick={() => navigate('/org/billing')}>
                         <div className="relative group/tooltip">
@@ -212,6 +212,23 @@ const ItemsPage = () => {
                 </div>
             </header>
 
+            {ratesEnabled && (
+                <div role="tablist" aria-label="Items view" className="mb-6 flex gap-1 border-b border-slate-800">
+                    {([['items', 'Items'], ['daily-rates', 'Daily rates']] as const).map(([key, label]) => (
+                        <button
+                            key={key}
+                            role="tab"
+                            aria-selected={tab === key}
+                            onClick={() => selectTab(key)}
+                            className={`px-4 py-2 -mb-px border-b-2 text-sm font-semibold ${tab === key ? 'border-blue-500 text-slate-100' : 'border-transparent text-slate-400 hover:text-slate-200'}`}
+                        >
+                            {label}
+                        </button>
+                    ))}
+                </div>
+            )}
+
+            {tab === 'daily-rates' ? <DailyRatesTab /> : (<>
             {quotaData && totalItemCount !== null && (
                 <div className="mb-6">
                     <QuotaBar
@@ -293,6 +310,7 @@ const ItemsPage = () => {
                     ? 'No items with photos that need attention.'
                     : 'No items found. Register your first item to start tracking inventory.'}
             />
+            </>)}
 
         </div>
     );

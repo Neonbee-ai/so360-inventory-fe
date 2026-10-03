@@ -7,11 +7,6 @@ import React from 'react';
 vi.mock('./pages/ItemsPage', () => ({ default: () => <div data-testid="items-page">Items</div> }));
 vi.mock('./pages/item-create/ItemCreatePage', () => ({ default: () => <div>ItemCreate</div> }));
 vi.mock('./pages/ItemDetailPage', () => ({ default: () => <div>ItemDetail</div> }));
-vi.mock('./pages/RateBoardPage', () => ({ default: () => <div data-testid="rate-board-page">RateBoard</div> }));
-vi.mock('./pages/StockCountsPage', () => ({ default: () => <div data-testid="stock-counts-page">StockCounts</div> }));
-vi.mock('./pages/StockCountSheetPage', () => ({ default: () => <div data-testid="stock-count-sheet-page">StockCountSheet</div> }));
-vi.mock('./pages/StockConversionsPage', () => ({ default: () => <div data-testid="stock-conversions-page">StockConversions</div> }));
-vi.mock('./pages/LossReportPage', () => ({ default: () => <div data-testid="loss-report-page">LossReport</div> }));
 vi.mock('./pages/StockLocationsPage', () => ({ default: () => <div>StockLocations</div> }));
 vi.mock('./pages/WarehouseDetailPage', () => ({ default: () => <div>WarehouseDetail</div> }));
 vi.mock('./pages/StockOverviewPage', () => ({ default: () => <div>StockOverview</div> }));
@@ -45,6 +40,7 @@ vi.mock('react-router-dom', () => ({
   Routes: ({ children }: any) => <div data-testid="routes">{children}</div>,
   Route: ({ element }: any) => element || null,
   Navigate: ({ to }: any) => <div data-testid="navigate-to">{to}</div>,
+  useParams: () => ({ id: 'c-9' }),
   useLocation: () => ({ pathname: '/inventory/items' }),
 }));
 
@@ -89,6 +85,30 @@ vi.mock('./services/mediaService', () => ({
 }));
 
 import App from './App';
+
+describe('App — Inventory adds no pages (old standalone routes)', () => {
+  describe('Given the routes that became tabs, a mode and a side panel', () => {
+    it('When the app renders / Then each old route redirects to its new location', async () => {
+      render(<App />);
+      await waitFor(() => expect(screen.getAllByTestId('routes').length).toBeGreaterThan(0));
+      const targets = screen.getAllByTestId('navigate-to').map((n) => n.textContent);
+      expect(targets).toEqual(expect.arrayContaining([
+        '../items?tab=daily-rates',
+        '../overview?mode=count',
+        '/inventory/overview?mode=count&count=c-9',
+        '../movements?panel=conversion',
+        '../movements?tab=losses',
+      ]));
+    });
+    it('When the app renders / Then the standalone pages are no longer mounted', async () => {
+      render(<App />);
+      await waitFor(() => expect(screen.getAllByTestId('routes').length).toBeGreaterThan(0));
+      for (const id of ['rate-board-page', 'stock-counts-page', 'stock-count-sheet-page', 'stock-conversions-page', 'loss-report-page']) {
+        expect(screen.queryByTestId(id)).toBeNull();
+      }
+    });
+  });
+});
 
 describe('App', () => {
   describe('Given the Inventory MFE app is mounted with valid shell context', () => {

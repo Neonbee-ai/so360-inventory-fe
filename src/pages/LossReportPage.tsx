@@ -43,8 +43,32 @@ const TrendChart: React.FC<{ points: { date: string; value: number }[] }> = ({ p
     );
 };
 
+const LossRowBody: React.FC<{ label: string; qty: number; value: number; maxValue: number }> = ({ label, qty, value, maxValue }) => (
+    <>
+        <div className="flex justify-between gap-3 text-sm">
+            <span className="text-slate-200 truncate">{label}</span>
+            <span className="text-slate-400 tabular-nums whitespace-nowrap">
+                {fmtQty(qty)} · <span className="text-rose-300">{fmtMoney(value)}</span>
+            </span>
+        </div>
+        <div className="mt-1 h-1.5 rounded-full bg-slate-800">
+            <div className="h-1.5 rounded-full bg-rose-500/70" style={{ width: `${Math.max(2, ((Number(value) || 0) / maxValue) * 100)}%` }} />
+        </div>
+    </>
+);
+
+/** Range of the report when a row was tapped. */
+export interface LossRange { from: string; to: string }
+
+interface Props {
+    /** Rendered as a tab inside another page: no page padding, h2 title. */
+    embedded?: boolean;
+    /** When set, each breakdown row becomes a button that calls this. */
+    onRowSelect?: (groupBy: LossGroupBy, row: { key: string; label: string }, range: LossRange) => void;
+}
+
 /** Loss report: totals, breakdown by reason/item/category and a value trend. */
-const LossReportPage: React.FC = () => {
+const LossReportPage: React.FC<Props> = ({ embedded = false, onRowSelect }) => {
     const shell = useShellBridge();
     const mortality = isFlagOn(shell, MORTALITY_TRACKING_FLAG);
     const [reasons, setReasons] = useState<LossReason[]>([]);
@@ -86,10 +110,12 @@ const LossReportPage: React.FC = () => {
     const maxValue = Math.max(...rows.map((r) => Number(r.value) || 0), 0) || 1;
 
     return (
-        <div className="p-4 sm:p-8">
+        <div className={embedded ? '' : 'p-4 sm:p-8'}>
             <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl sm:text-3xl font-bold text-slate-50 tracking-tight">Loss Report</h1>
+                    {embedded
+                        ? <h2 className="text-lg font-semibold text-slate-100">Losses</h2>
+                        : <h1 className="text-2xl sm:text-3xl font-bold text-slate-50 tracking-tight">Loss Report</h1>}
                     <p className="text-slate-400 mt-1">Where stock is lost, and how much it costs</p>
                 </div>
                 <div className="flex flex-wrap items-end gap-2">
@@ -154,15 +180,18 @@ const LossReportPage: React.FC = () => {
                     <ul className="space-y-2">
                         {rows.map((r) => (
                             <li key={r.key} data-testid={`loss-row-${r.key}`}>
-                                <div className="flex justify-between gap-3 text-sm">
-                                    <span className="text-slate-200 truncate">{r.label}</span>
-                                    <span className="text-slate-400 tabular-nums whitespace-nowrap">
-                                        {fmtQty(r.qty)} · <span className="text-rose-300">{fmtMoney(r.value)}</span>
-                                    </span>
-                                </div>
-                                <div className="mt-1 h-1.5 rounded-full bg-slate-800">
-                                    <div className="h-1.5 rounded-full bg-rose-500/70" style={{ width: `${Math.max(2, ((Number(r.value) || 0) / maxValue) * 100)}%` }} />
-                                </div>
+                                {onRowSelect ? (
+                                    <button
+                                        type="button"
+                                        onClick={() => onRowSelect(groupBy, { key: r.key, label: r.label }, { from, to })}
+                                        aria-label={`Show movements for ${r.label}`}
+                                        className="block w-full rounded-lg px-1 py-1 text-left hover:bg-slate-800/60"
+                                    >
+                                        <LossRowBody label={r.label} qty={r.qty} value={r.value} maxValue={maxValue} />
+                                    </button>
+                                ) : (
+                                    <LossRowBody label={r.label} qty={r.qty} value={r.value} maxValue={maxValue} />
+                                )}
                             </li>
                         ))}
                     </ul>

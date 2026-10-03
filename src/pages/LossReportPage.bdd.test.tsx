@@ -144,3 +144,32 @@ describe('LossReportPage', () => {
         });
     });
 });
+
+describe('LossReportPage — Losses tab of the Stock Movement Register', () => {
+    describe('Given it is embedded with a row-select handler', () => {
+        it('When rendered Then the title is a section heading and rows are buttons', async () => {
+            render(<LossReportPage embedded onRowSelect={vi.fn()} />);
+            await screen.findByTestId('loss-row-TRIM');
+            expect(screen.queryByRole('heading', { level: 1 })).toBeNull();
+            expect(screen.getByRole('heading', { level: 2, name: 'Losses' })).toBeTruthy();
+            expect(screen.getByRole('button', { name: 'Show movements for Trim loss' })).toBeTruthy();
+        });
+        it('When a row is tapped Then the handler gets the grouping, the row and the range', async () => {
+            const onRowSelect = vi.fn();
+            render(<LossReportPage embedded onRowSelect={onRowSelect} />);
+            fireEvent.click(await screen.findByRole('button', { name: 'Show movements for Spoiled' }));
+            const [groupBy, row, range] = onRowSelect.mock.calls[0];
+            expect(groupBy).toBe('reason');
+            expect(row).toEqual({ key: 'SPOIL', label: 'Spoiled' });
+            expect(range.from).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+            expect(range.to).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+        });
+    });
+    describe('Given no row-select handler', () => {
+        it('When rendered Then rows are not buttons', async () => {
+            render(<LossReportPage />);
+            await screen.findByTestId('loss-row-TRIM');
+            expect(screen.queryByRole('button', { name: /Show movements for/ })).toBeNull();
+        });
+    });
+});

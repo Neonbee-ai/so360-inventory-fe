@@ -52,7 +52,7 @@ describe('StockCountsPage', () => {
         it('When a count is tapped Then it opens the count sheet', async () => {
             render(<StockCountsPage />);
             fireEvent.click(await screen.findByText('Back Room'));
-            expect(h.navigate).toHaveBeenCalledWith('/inventory/stock-counts/c-2');
+            expect(h.navigate).toHaveBeenCalledWith('/inventory/overview?mode=count&count=c-2');
         });
     });
 
@@ -62,7 +62,7 @@ describe('StockCountsPage', () => {
             fireEvent.click(await screen.findByText('New count'));
             expect((screen.getByLabelText('Warehouse') as HTMLSelectElement).value).toBe('w-1');
             fireEvent.click(screen.getByText('Start count'));
-            await waitFor(() => expect(h.navigate).toHaveBeenCalledWith('/inventory/stock-counts/c-9'));
+            await waitFor(() => expect(h.navigate).toHaveBeenCalledWith('/inventory/overview?mode=count&count=c-9'));
             expect(h.createStockCount).toHaveBeenCalledWith({ warehouse_id: 'w-1', count_date: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/) });
         });
     });
@@ -92,6 +92,20 @@ describe('StockCountsPage', () => {
             h.getStockCounts = vi.fn(() => Promise.resolve([]));
             render(<StockCountsPage />);
             expect(await screen.findByText('No stock counts yet')).toBeTruthy();
+        });
+    });
+});
+
+describe('StockCountsPage — inside Stock Overview Count mode', () => {
+    describe('Given the host page handles opening a count', () => {
+        it('When a count is tapped Then the host opens it in place and the title is a section heading', async () => {
+            const onOpen = vi.fn();
+            render(<StockCountsPage embedded onOpen={onOpen} />);
+            fireEvent.click(await screen.findByText('Back Room'));
+            expect(onOpen).toHaveBeenCalledWith('c-2');
+            expect(h.navigate).not.toHaveBeenCalled();
+            expect(screen.getByRole('heading', { level: 2, name: 'Stock counts' })).toBeTruthy();
+            expect(screen.queryByRole('heading', { level: 1 })).toBeNull();
         });
     });
 });

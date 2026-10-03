@@ -1,15 +1,19 @@
 import React, { Suspense, lazy } from 'react';
-import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom';
+
+/**
+ * Old deep link to one stock count: counts now open inside Stock Overview's
+ * Count mode, so the sheet id is carried over as `count`.
+ */
+const StockCountRedirect = () => {
+    const { id } = useParams();
+    return <Navigate to={`/inventory/overview?mode=count&count=${encodeURIComponent(id || '')}`} replace />;
+};
 
 // Lazy load pages for performance
 const ItemsPage = lazy(() => import('./pages/ItemsPage'));
 const ItemCreatePage = lazy(() => import('./pages/item-create/ItemCreatePage'));
 const ItemDetailPage = lazy(() => import('./pages/ItemDetailPage'));
-const RateBoardPage = lazy(() => import('./pages/RateBoardPage'));
-const StockCountsPage = lazy(() => import('./pages/StockCountsPage'));
-const StockCountSheetPage = lazy(() => import('./pages/StockCountSheetPage'));
-const StockConversionsPage = lazy(() => import('./pages/StockConversionsPage'));
-const LossReportPage = lazy(() => import('./pages/LossReportPage'));
 const StockLocationsPage = lazy(() => import('./pages/StockLocationsPage'));
 const WarehouseDetailPage = lazy(() => import('./pages/WarehouseDetailPage'));
 const StockOverviewPage = lazy(() => import('./pages/StockOverviewPage'));
@@ -199,15 +203,16 @@ const App = () => {
                 <Route path="items/bulk-import" element={<PermissionGuard permission="items.import"><FeatureGate flagKey="action:inventory:bulk_import"><BulkImportPage /></FeatureGate></PermissionGuard>} />
                 <Route path="items/new" element={<PermissionGuard permission="items.create"><ItemCreatePage /></PermissionGuard>} />
                 <Route path="items/:id" element={<PermissionGuard permission="items.read"><ItemDetailPage /></PermissionGuard>} />
-                <Route path="rate-board" element={<PermissionGuard permission="items.read"><FeatureGate flagKey="submodule:inventory:rate_board"><RateBoardPage /></FeatureGate></PermissionGuard>} />
+                {/* Inventory adds no pages: these old routes redirect to their tabs. */}
+                <Route path="rate-board" element={<Navigate to="../items?tab=daily-rates" replace />} />
                 <Route path="locations" element={<PermissionGuard permission="warehouses.read"><FeatureGate flagKey="submodule:inventory:warehouses"><StockLocationsPage /></FeatureGate></PermissionGuard>} />
                 <Route path="warehouses/:id" element={<PermissionGuard permission="warehouses.read"><WarehouseDetailPage /></PermissionGuard>} />
                 <Route path="overview" element={<PermissionGuard permission="stock.view"><StockOverviewPage /></PermissionGuard>} />
                 <Route path="movements" element={<PermissionGuard permission="stock.view"><StockMovementRegisterPage /></PermissionGuard>} />
-                <Route path="stock-counts" element={<PermissionGuard permission="stock.view"><FeatureGate flagKey="submodule:inventory:stock_count"><StockCountsPage /></FeatureGate></PermissionGuard>} />
-                <Route path="stock-counts/:id" element={<PermissionGuard permission="stock.view"><FeatureGate flagKey="submodule:inventory:stock_count"><StockCountSheetPage /></FeatureGate></PermissionGuard>} />
-                <Route path="conversions" element={<PermissionGuard permission="stock.view"><FeatureGate flagKey="submodule:inventory:loss_yield"><StockConversionsPage /></FeatureGate></PermissionGuard>} />
-                <Route path="loss-report" element={<PermissionGuard permission="stock.view"><FeatureGate flagKey="submodule:inventory:loss_yield"><LossReportPage /></FeatureGate></PermissionGuard>} />
+                <Route path="stock-counts" element={<Navigate to="../overview?mode=count" replace />} />
+                <Route path="stock-counts/:id" element={<StockCountRedirect />} />
+                <Route path="conversions" element={<Navigate to="../movements?panel=conversion" replace />} />
+                <Route path="loss-report" element={<Navigate to="../movements?tab=losses" replace />} />
                 {/* Legacy paths kept as redirects — notification actionUrls and
                     bookmarks still point at /adjustments and /transfers. */}
                 <Route path="adjustments" element={<Navigate to="../movements?type=adjustment" replace />} />

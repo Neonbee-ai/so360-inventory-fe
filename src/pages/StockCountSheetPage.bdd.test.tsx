@@ -193,3 +193,49 @@ describe('StockCountSheetPage', () => {
         });
     });
 });
+
+describe('StockCountSheetPage — inside Stock Overview Count mode', () => {
+    describe('Given a count id passed by the host page', () => {
+        it('When rendered Then that count is loaded instead of the route param', async () => {
+            render(<StockCountSheetPage countId="c-7" embedded />);
+            await screen.findByText(/Count — Main Store/);
+            expect(h.getStockCount).toHaveBeenCalledWith('c-7');
+        });
+        it('When Back is tapped Then the host back action runs', async () => {
+            const onBack = vi.fn();
+            render(<StockCountSheetPage countId="c-7" onBack={onBack} embedded />);
+            fireEvent.click(await screen.findByLabelText('Back to stock counts'));
+            expect(onBack).toHaveBeenCalled();
+            expect(h.navigate).not.toHaveBeenCalled();
+        });
+    });
+    describe('Given no host back action', () => {
+        it('When Back is tapped Then it returns to the Count mode list', async () => {
+            render(<StockCountSheetPage />);
+            fireEvent.click(await screen.findByLabelText('Back to stock counts'));
+            expect(h.navigate).toHaveBeenCalledWith('/inventory/overview?mode=count');
+        });
+    });
+    describe('Given scan mode (design §9a layout switch)', () => {
+        it('When on Then the scan field is large, the filter is hidden and the last scanned line comes first', async () => {
+            h.flags['submodule:inventory:barcode_scanning'] = true;
+            h.getItemByCode = vi.fn(() => Promise.resolve({ id: 'i-2', variant_id: 'v-1', name: 'Widget B' }));
+            const { container } = render(<StockCountSheetPage countId="c-1" embedded scanMode />);
+            const scan = await screen.findByLabelText('Scan barcode');
+            expect(scan.getAttribute('data-size')).toBe('large');
+            expect(screen.queryByLabelText('Filter lines')).toBeNull();
+            fireEvent.change(scan, { target: { value: '222' } });
+            fireEvent.keyDown(scan, { key: 'Enter' });
+            await waitFor(() => {
+                const rows = [...container.querySelectorAll('[data-testid^="count-line-"]')].map((r) => r.getAttribute('data-testid'));
+                expect(rows).toEqual(['count-line-i-2:v-1', 'count-line-i-1']);
+            });
+        });
+        it('When off Then the normal scan field and the filter show', async () => {
+            h.flags['submodule:inventory:barcode_scanning'] = true;
+            render(<StockCountSheetPage countId="c-1" embedded />);
+            expect((await screen.findByLabelText('Scan barcode')).getAttribute('data-size')).toBe('normal');
+            expect(screen.getByLabelText('Filter lines')).toBeTruthy();
+        });
+    });
+});

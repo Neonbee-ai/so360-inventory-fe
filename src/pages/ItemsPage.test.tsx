@@ -11,8 +11,15 @@ vi.mock('../services/inventoryService', () => ({
   },
 }));
 
+const routerState = vi.hoisted(() => ({ params: new URLSearchParams(), setParams: null as any }));
+
 vi.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
+  useSearchParams: () => [routerState.params, routerState.setParams],
+}));
+
+vi.mock('../components/rates/DailyRatesTab', () => ({
+  default: () => <div data-testid="daily-rates-tab" />,
 }));
 
 vi.mock('../hooks/useAuth', () => ({
@@ -60,6 +67,8 @@ const makeItem = (overrides: any = {}) => ({
 
 beforeEach(() => {
   vi.clearAllMocks();
+  routerState.params = new URLSearchParams();
+  routerState.setParams = vi.fn((p: URLSearchParams) => { routerState.params = p; });
   mockGetItems.mockResolvedValue({ data: [] });
   mockUseShellBridge.mockReturnValue({
     isFeatureEnabled: () => true,
@@ -73,7 +82,7 @@ describe('ItemsPage', () => {
   describe('Given the page is loading', () => {
     it('When rendered / Then shows header text', () => {
       render(<ItemsPage />);
-      expect(screen.getByText('Items')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Items' })).toBeInTheDocument();
     });
 
     it('When rendered / Then shows subtitle', () => {
@@ -174,7 +183,7 @@ describe('ItemsPage', () => {
         permissionsLoaded: true, hasPermission: () => true, hasAnyPermission: () => true, getFeatureState: () => 'enabled',
       });
       render(<ItemsPage />);
-      await waitFor(() => expect(screen.getByText('Items')).toBeInTheDocument());
+      await waitFor(() => expect(screen.getByRole('heading', { name: 'Items' })).toBeInTheDocument());
       expect(screen.queryByText('Register Item')).not.toBeInTheDocument();
     });
 
@@ -260,5 +269,42 @@ describe('ItemsPage — Photos need attention filter', () => {
     fireEvent.click(toggle);
     await waitFor(() => expect(toggle).toHaveAttribute('aria-pressed', 'false'));
     await waitFor(() => expect(mockGetItems.mock.calls[mockGetItems.mock.calls.length - 1]).toEqual([]));
+  });
+});
+
+describe('ItemsPage — Daily rates tab', () => {
+  const flags = (on: boolean) => mockUseShellBridge.mockReturnValue({
+    isFeatureEnabled: (k: string) => (k === 'submodule:inventory:rate_board' ? on : true),
+    currentOrg: { id: 'org-1', name: 'Test Org' },
+    permissionsLoaded: true, hasPermission: () => true, effectiveFlagsLoaded: true, getFeatureState: () => 'enabled',
+  });
+
+  it('Given the rate board flag is off / When the page renders / Then there are no tabs even with ?tab=daily-rates', async () => {
+    flags(false);
+    routerState.params = new URLSearchParams('tab=daily-rates');
+    render(<ItemsPage />);
+    await waitFor(() => expect(mockGetItems).toHaveBeenCalled());
+    expect(screen.queryByRole('tab')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('daily-rates-tab')).not.toBeInTheDocument();
+    expect(screen.getByTestId('table')).toBeInTheDocument();
+  });
+
+  it('Given the flag is on / When the Daily rates tab is clicked / Then ?tab=daily-rates is set', async () => {
+    flags(true);
+    render(<ItemsPage />);
+    expect(screen.getByRole('tab', { name: 'Items' })).toHaveAttribute('aria-selected', 'true');
+    fireEvent.click(screen.getByRole('tab', { name: 'Daily rates' }));
+    expect(routerState.setParams).toHaveBeenCalledTimes(1);
+    expect(routerState.setParams.mock.calls[0][0].get('tab')).toBe('daily-rates');
+    expect(screen.queryByRole('button', { name: /Rate Board/ })).not.toBeInTheDocument();
+  });
+
+  it('Given ?tab=daily-rates and the flag on / When the page renders / Then the rates grid replaces the item list', async () => {
+    flags(true);
+    routerState.params = new URLSearchParams('tab=daily-rates');
+    render(<ItemsPage />);
+    expect(screen.getByTestId('daily-rates-tab')).toBeInTheDocument();
+    expect(screen.queryByTestId('table')).not.toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Daily rates' })).toHaveAttribute('aria-selected', 'true');
   });
 });

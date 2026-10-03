@@ -2,7 +2,27 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor, fireEvent, act } from '@testing-library/react';
 import React from 'react';
 
-vi.mock('react-router-dom', () => ({ useNavigate: () => vi.fn() }));
+let mockParams = new URLSearchParams();
+const mockSetParams = vi.fn((next: URLSearchParams) => { mockParams = new URLSearchParams(next); });
+vi.mock('react-router-dom', () => ({
+  useNavigate: () => vi.fn(),
+  useSearchParams: () => [mockParams, mockSetParams],
+}));
+
+vi.mock('./StockCountsPage', () => ({
+  default: ({ onOpen, embedded }: any) => (
+    <div data-testid="counts-list" data-embedded={String(!!embedded)}>
+      <button onClick={() => onOpen('c-7')}>open c-7</button>
+    </div>
+  ),
+}));
+vi.mock('./StockCountSheetPage', () => ({
+  default: ({ countId, onBack, scanMode, embedded }: any) => (
+    <div data-testid="count-sheet" data-count={countId} data-scan={String(!!scanMode)} data-embedded={String(!!embedded)}>
+      <button onClick={onBack}>back</button>
+    </div>
+  ),
+}));
 
 const mockUseShellBridgeOv = vi.fn();
 vi.mock('@so360/shell-context', () => ({
@@ -59,6 +79,7 @@ const makeBalance = (overrides: any = {}) => ({
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mockParams = new URLSearchParams();
   vi.useFakeTimers({ shouldAdvanceTime: true });
   mockGetStockOverview.mockResolvedValue([]);
   mockGetGLInventoryValuation.mockResolvedValue({ gl_balance: 0, source: 'none' });
@@ -257,6 +278,78 @@ describe('StockOverviewPage', () => {
       });
       render(<StockOverviewPage />);
       await waitFor(() => expect(screen.getByText('GL Balance')).toBeInTheDocument());
+    });
+  });
+
+  describe('Given the stock count flag (Count mode, design §8)', () => {
+    const flags = (...on: string[]) => mockUseShellBridgeOv.mockReturnValue({
+      effectiveFlagsLoaded: true,
+      getFeatureState: () => 'enabled',
+      isFeatureEnabled: (f: string) => on.includes(f),
+    });
+    const COUNT = 'submodule:inventory:stock_count';
+    const SCAN = 'submodule:inventory:barcode_scanning';
+
+    it('When the flag is off Then there is no Stock/Count switch and ?mode=count is ignored', async () => {
+      flags();
+      mockParams = new URLSearchParams('mode=count');
+      render(<StockOverviewPage />);
+      expect(screen.queryByRole('tablist', { name: 'Stock view' })).not.toBeInTheDocument();
+      expect(screen.queryByTestId('counts-list')).not.toBeInTheDocument();
+      await waitFor(() => expect(screen.getByTestId('table')).toBeInTheDocument());
+    });
+
+    it('When the Count tab is tapped Then mode=count is set in the URL', async () => {
+      flags(COUNT);
+      render(<StockOverviewPage />);
+      expect(screen.getByRole('tab', { name: 'Stock' })).toHaveAttribute('aria-selected', 'true');
+      fireEvent.click(screen.getByRole('tab', { name: 'Count' }));
+      expect(mockSetParams).toHaveBeenCalledWith(expect.any(URLSearchParams), { replace: true });
+      expect(mockParams.get('mode')).toBe('count');
+    });
+
+    it('When in count mode without a count Then the embedded count list replaces the stock table', async () => {
+      flags(COUNT);
+      mockParams = new URLSearchParams('mode=count');
+      render(<StockOverviewPage />);
+      expect(screen.getByRole('tab', { name: 'Count' })).toHaveAttribute('aria-selected', 'true');
+      expect(screen.getByTestId('counts-list')).toHaveAttribute('data-embedded', 'true');
+      expect(screen.queryByTestId('table')).not.toBeInTheDocument();
+      expect(screen.queryByText('Total Positions')).not.toBeInTheDocument();
+      fireEvent.click(screen.getByText('open c-7'));
+      expect(mockParams.toString()).toBe('mode=count&count=c-7');
+    });
+
+    it('When a count is open Then its sheet is shown and Back clears the count', async () => {
+      flags(COUNT);
+      mockParams = new URLSearchParams('mode=count&count=c-7&scan=1');
+      render(<StockOverviewPage />);
+      const sheet = screen.getByTestId('count-sheet');
+      expect(sheet).toHaveAttribute('data-count', 'c-7');
+      expect(sheet).toHaveAttribute('data-scan', 'false');
+      fireEvent.click(screen.getByText('back'));
+      expect(mockParams.toString()).toBe('mode=count');
+    });
+
+    it('When barcode scanning is on Then the Scan mode switch toggles scan=1 and enlarges the sheet', async () => {
+      flags(COUNT, SCAN);
+      mockParams = new URLSearchParams('mode=count&count=c-7');
+      const { rerender } = render(<StockOverviewPage />);
+      const toggle = screen.getByRole('button', { name: /Scan mode/ });
+      expect(toggle).toHaveAttribute('aria-pressed', 'false');
+      fireEvent.click(toggle);
+      expect(mockParams.get('scan')).toBe('1');
+      rerender(<StockOverviewPage />);
+      expect(screen.getByTestId('count-sheet')).toHaveAttribute('data-scan', 'true');
+      expect(screen.getByRole('button', { name: /Scan mode/ })).toHaveAttribute('aria-pressed', 'true');
+    });
+
+    it('When the Stock tab is tapped from a count Then count params are cleared', async () => {
+      flags(COUNT, SCAN);
+      mockParams = new URLSearchParams('mode=count&count=c-7&scan=1');
+      render(<StockOverviewPage />);
+      fireEvent.click(screen.getByRole('tab', { name: 'Stock' }));
+      expect(mockParams.toString()).toBe('');
     });
   });
 });

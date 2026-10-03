@@ -2,9 +2,9 @@ import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
     Plus, History, MapPin, AlertCircle, Package, Search, X,
-    ArrowDownCircle, ArrowUpCircle, SlidersHorizontal, ArrowRightLeft, CheckCircle2,
+    ArrowDownCircle, ArrowUpCircle, SlidersHorizontal, ArrowRightLeft, CheckCircle2, Shuffle,
 } from 'lucide-react';
-import { inventoryService } from '../services/inventoryService';
+import { inventoryService, type LossGroupBy, type LossReason, type ScannedItem } from '../services/inventoryService';
 import { StockMovement, Item, Warehouse } from '../types/inventory';
 import { Table } from '../components/common/Table';
 import { Modal } from '../components/common/Modal';
@@ -13,6 +13,14 @@ import { useActivity, useShellBridge } from '@so360/shell-context';
 import { useInventoryFormatters } from '../utils/formatters';
 import { optional, validateReference } from '../utils/validators';
 import { FeatureGate } from '@so360/design-system';
+import ScanInput from '../components/ScanInput';
+import LossReportPage, { type LossRange } from './LossReportPage';
+import StockConversionsPage from './StockConversionsPage';
+import { BARCODE_SCANNING_FLAG, LOSS_YIELD_FLAG, isFlagOn } from '../hooks/lossYield';
+import {
+    CONVERSION_TYPE, applyClientFilters, lossFilterParams, movementTypeOf, parseLossFilter,
+    serverFilters, type LossFilter,
+} from '../hooks/movementRegister';
 
 type TransactionType = 'stock_in' | 'stock_out' | 'adjustment' | 'transfer';
 
@@ -40,6 +48,7 @@ const MOVEMENT_BADGES: Record<string, { label: string; className: string }> = {
     production_receipt: { label: 'PRODUCTION', className: 'bg-purple-500/10 text-purple-400 border-purple-500/30' },
     production_consumption: { label: 'PRODUCTION', className: 'bg-purple-500/10 text-purple-400 border-purple-500/30' },
     return: { label: 'RETURN', className: 'bg-teal-500/10 text-teal-400 border-teal-500/30' },
+    [CONVERSION_TYPE]: { label: 'CONVERSION', className: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30' },
 };
 
 const badgeFor = (movementType?: string | null) =>
@@ -217,7 +226,7 @@ const ItemSearchSelect = ({
 
 const StockMovementRegisterPage = () => {
     const navigate = useNavigate();
-    const [searchParams] = useSearchParams();
+    const [searchParams, setSearchParams] = useSearchParams();
     const { can } = useAuth();
     const { recordActivity } = useActivity();
     const shell = useShellBridge();
@@ -263,6 +272,30 @@ const StockMovementRegisterPage = () => {
         date_to: '',
     });
 
+    // Losses tab, loss-row filter, conversion side panel and scan filter all
+    // live in the URL so they survive a reload and can be linked to.
+    const lossYieldOn = isFlagOn(shell, LOSS_YIELD_FLAG);
+    const scanningOn = isFlagOn(shell, BARCODE_SCANNING_FLAG);
+    const tab = lossYieldOn && searchParams.get('tab') === 'losses' ? 'losses' : 'movements';
+    const panelOpen = lossYieldOn && searchParams.get('panel') === 'conversion';
+    const lossFilter = useMemo(
+        () => (lossYieldOn ? parseLossFilter(searchParams) : null),
+        [lossYieldOn, searchParams],
+    );
+    const scanItemId = searchParams.get('scan_item') || '';
+    const scanItemName = searchParams.get('scan_name') || scanItemId;
+    const [lossReasons, setLossReasons] = useState<LossReason[]>([]);
+
+    const updateParams = useCallback((patch: Record<string, string>) => {
+        setSearchParams((prev) => {
+            const next = new URLSearchParams(prev);
+            for (const [k, v] of Object.entries(patch)) {
+                if (v) next.set(k, v); else next.delete(k);
+            }
+            return next;
+        }, { replace: true });
+    }, [setSearchParams]);
+
     const [form, setForm] = useState(emptyForm());
     const [selectedItem, setSelectedItem] = useState<Item | null>(null);
     const [currentBalance, setCurrentBalance] = useState<number | null>(null);
@@ -270,17 +303,38 @@ const StockMovementRegisterPage = () => {
     const fetchMovements = useCallback(async () => {
         setIsLoading(true);
         try {
-            const active = Object.fromEntries(
-                Object.entries(filters).filter(([, v]) => v),
+            const active = serverFilters(
+                scanItemId ? { ...filters, item_id: scanItemId } : filters,
+                lossFilter,
             );
-            const page = await inventoryService.getMovements(active);
+            const page = await inventoryService.getMovements(active as any);
             setMovements(page.data || []);
         } catch {
             setError('Failed to load stock movements');
         } finally {
             setIsLoading(false);
         }
-    }, [filters]);
+    }, [filters, lossFilter, scanItemId]);
+
+    // Category loss rows are matched through the reason catalog.
+    useEffect(() => {
+        if (lossFilter?.groupBy !== 'category' || lossReasons.length) return;
+        inventoryService.getLossReasons().then((r) => setLossReasons(r || [])).catch(() => setLossReasons([]));
+    }, [lossFilter, lossReasons.length]);
+
+    const visibleMovements = useMemo(
+        () => applyClientFilters(movements, filters.movement_type, lossFilter, lossReasons),
+        [movements, filters.movement_type, lossFilter, lossReasons],
+    );
+
+    const onLossRowSelect = (groupBy: LossGroupBy, row: { key: string; label: string }, range: LossRange) => {
+        const lf: LossFilter = { groupBy, key: row.key, label: row.label, from: range.from, to: range.to };
+        updateParams({ tab: '', ...lossFilterParams(lf) });
+    };
+
+    const onScanItem = (item: ScannedItem) => {
+        updateParams({ scan_item: item.id, scan_name: item.name || item.id });
+    };
 
     useEffect(() => { fetchMovements(); }, [fetchMovements]);
 
@@ -573,7 +627,7 @@ const StockMovementRegisterPage = () => {
         {
             header: 'Transaction Type',
             accessor: (m: StockMovement) => {
-                const badge = badgeFor(m.movement_type || (m as any).type);
+                const badge = badgeFor(movementTypeOf(m as any));
                 return (
                     <span
                         data-testid="movement-type-badge"
@@ -729,6 +783,16 @@ const StockMovementRegisterPage = () => {
                     </p>
                 </div>
                 <div className="flex items-center gap-3">
+                    {lossYieldOn && (
+                        <button
+                            onClick={() => updateParams({ panel: 'conversion' })}
+                            aria-expanded={panelOpen}
+                            className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-100 px-4 py-2.5 rounded-lg font-semibold transition-all"
+                        >
+                            <Shuffle size={18} />
+                            + New conversion
+                        </button>
+                    )}
                     <button
                         onClick={() => setShowFilters((s) => !s)}
                         className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-100 px-4 py-2.5 rounded-lg font-semibold transition-all"
@@ -761,6 +825,48 @@ const StockMovementRegisterPage = () => {
                 </div>
             )}
 
+            {lossYieldOn && (
+                <div role="tablist" aria-label="Register view" className="mb-6 inline-flex rounded-lg border border-slate-700 p-0.5">
+                    {(['movements', 'losses'] as const).map((t) => (
+                        <button
+                            key={t}
+                            role="tab"
+                            aria-selected={tab === t}
+                            onClick={() => updateParams({ tab: t === 'losses' ? 'losses' : '' })}
+                            className={`px-4 py-1.5 rounded-md text-sm font-semibold ${tab === t ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-slate-100'}`}
+                        >
+                            {t === 'losses' ? 'Losses' : 'Movements'}
+                        </button>
+                    ))}
+                </div>
+            )}
+
+            {tab === 'losses' ? (
+                <LossReportPage embedded onRowSelect={onLossRowSelect} />
+            ) : (<>
+            {scanningOn && (
+                <div className="mb-4 max-w-md">
+                    <ScanInput onScan={onScanItem} label="Scan to filter by item" />
+                </div>
+            )}
+
+            {(lossFilter || scanItemId) && (
+                <div className="mb-4 flex flex-wrap gap-2">
+                    {lossFilter && (
+                        <span data-testid="loss-filter-chip" className="inline-flex items-center gap-2 rounded-full border border-rose-500/30 bg-rose-500/10 px-3 py-1 text-xs text-rose-300">
+                            Losses: {lossFilter.label}{lossFilter.from ? ` · ${lossFilter.from} – ${lossFilter.to}` : ''}
+                            <button aria-label="Clear loss filter" onClick={() => updateParams(lossFilterParams(null))}><X size={12} /></button>
+                        </span>
+                    )}
+                    {scanItemId && (
+                        <span data-testid="scan-filter-chip" className="inline-flex items-center gap-2 rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-1 text-xs text-blue-300">
+                            Item: {scanItemName}
+                            <button aria-label="Clear item filter" onClick={() => updateParams({ scan_item: '', scan_name: '' })}><X size={12} /></button>
+                        </span>
+                    )}
+                </div>
+            )}
+
             {showFilters && (
                 <div className="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4 border border-slate-800 rounded-xl p-4 bg-slate-900/40">
                     <div>
@@ -776,6 +882,7 @@ const StockMovementRegisterPage = () => {
                             <option value="outbound">Outbound</option>
                             <option value="adjustment">Adjustment</option>
                             <option value="transfer">Transfer</option>
+                            <option value={CONVERSION_TYPE}>Conversion</option>
                         </select>
                     </div>
                     <div>
@@ -868,11 +975,26 @@ const StockMovementRegisterPage = () => {
             )}
 
             <Table
-                data={movements}
+                data={visibleMovements}
                 columns={columns}
                 isLoading={isLoading}
                 emptyMessage="No stock movements found."
             />
+            </>)}
+
+            {panelOpen && (
+                <aside
+                    role="complementary"
+                    aria-label="New conversion"
+                    className="fixed inset-y-0 right-0 z-40 w-full max-w-xl overflow-y-auto border-l border-slate-800 bg-slate-950 p-6 shadow-2xl"
+                >
+                    <StockConversionsPage
+                        embedded
+                        onCancel={() => updateParams({ panel: '' })}
+                        onRecorded={() => { updateParams({ panel: '' }); fetchMovements(); }}
+                    />
+                </aside>
+            )}
 
             <Modal
                 isOpen={isModalOpen}

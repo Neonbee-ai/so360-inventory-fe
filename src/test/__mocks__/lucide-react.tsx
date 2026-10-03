@@ -57,6 +57,7 @@ export const ScanLine = createIcon('ScanLine');
 export const Search = createIcon('Search');
 export const Settings = createIcon('Settings');
 export const Shirt = createIcon('Shirt');
+export const Shuffle = createIcon('Shuffle');
 export const Sliders = createIcon('Sliders');
 export const Smartphone = createIcon('Smartphone');
 export const Tag = createIcon('Tag');

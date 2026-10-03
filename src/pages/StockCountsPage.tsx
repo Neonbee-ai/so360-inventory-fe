@@ -5,12 +5,24 @@ import { useShellBridge } from '@so360/shell-context';
 import { inventoryService, type StockCount } from '../services/inventoryService';
 import { isoDate } from '../hooks/lossYield';
 
+/** URL of a count sheet inside Stock Overview's Count mode. */
+export const countSheetUrl = (id: string): string => `/inventory/overview?mode=count&count=${encodeURIComponent(id)}`;
+
+interface Props {
+    /** Opens a count's sheet; defaults to Stock Overview's Count mode URL. */
+    onOpen?: (id: string) => void;
+    /** Rendered inside another page: no page padding and a smaller title. */
+    embedded?: boolean;
+}
+
 /**
- * Stock count list. "New count" opens an inline form (warehouse + date) that
- * starts a draft and goes straight to its count sheet — three taps, no modal.
+ * Stock count list (Count mode of Stock Overview). "New count" opens an inline
+ * form (warehouse + date) that starts a draft and goes straight to its count
+ * sheet — three taps, no modal.
  */
-const StockCountsPage: React.FC = () => {
+const StockCountsPage: React.FC<Props> = ({ onOpen, embedded = false }) => {
     const navigate = useNavigate();
+    const open = (id: string) => (onOpen ? onOpen(id) : navigate(countSheetUrl(id)));
     const shell = useShellBridge();
     const canCount = (shell as any)?.hasPermission ? (shell as any).hasPermission('stock.adjust') !== false : true;
 
@@ -56,7 +68,7 @@ const StockCountsPage: React.FC = () => {
         setError(null);
         try {
             const created = await inventoryService.createStockCount({ warehouse_id: warehouseId, count_date: countDate });
-            navigate(`/inventory/stock-counts/${created.id}`);
+            open(created.id);
         } catch (e: any) {
             setError(e?.message || 'Failed to start stock count');
         } finally {
@@ -65,10 +77,12 @@ const StockCountsPage: React.FC = () => {
     };
 
     return (
-        <div className="p-4 sm:p-8">
+        <div className={embedded ? '' : 'p-4 sm:p-8'}>
             <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl sm:text-3xl font-bold text-slate-50 tracking-tight">Stock Counts</h1>
+                    {embedded
+                        ? <h2 className="text-lg font-semibold text-slate-50">Stock counts</h2>
+                        : <h1 className="text-2xl sm:text-3xl font-bold text-slate-50 tracking-tight">Stock Counts</h1>}
                     <p className="text-slate-400 mt-1">Count shelves, record variances with a reason, then post</p>
                 </div>
                 {canCount && !creating && (
@@ -141,7 +155,7 @@ const StockCountsPage: React.FC = () => {
                     {counts.map((c) => (
                         <li key={c.id}>
                             <button
-                                onClick={() => navigate(`/inventory/stock-counts/${c.id}`)}
+                                onClick={() => open(c.id)}
                                 className="w-full flex items-center justify-between gap-4 px-4 py-3 text-left hover:bg-slate-800/40"
                             >
                                 <div className="min-w-0">

@@ -46,7 +46,16 @@ export const newClientRef = (): string => {
  * output items. Yield % and loss update live; the loss is what the server
  * books against the chosen reason.
  */
-const StockConversionsPage: React.FC = () => {
+interface Props {
+    /** Rendered inside a side panel of another page: compact, no recent list. */
+    embedded?: boolean;
+    /** Close action of the host panel (shows a Cancel button). */
+    onCancel?: () => void;
+    /** Called after a conversion is recorded. */
+    onRecorded?: (conversion: StockConversion | null) => void;
+}
+
+const StockConversionsPage: React.FC<Props> = ({ embedded = false, onCancel, onRecorded }) => {
     const shell = useShellBridge();
     const scanning = isFlagOn(shell, BARCODE_SCANNING_FLAG);
     const mortality = isFlagOn(shell, MORTALITY_TRACKING_FLAG);
@@ -85,8 +94,8 @@ const StockConversionsPage: React.FC = () => {
             if (whs.length === 1) setWarehouseId(whs[0].id);
             setReasons(rs);
         })();
-        void loadRecent();
-    }, [loadRecent]);
+        if (!embedded) void loadRecent();
+    }, [loadRecent, embedded]);
 
     const reasonOptions = useMemo(() => visibleReasons(reasons, mortality), [reasons, mortality]);
     useEffect(() => {
@@ -129,7 +138,7 @@ const StockConversionsPage: React.FC = () => {
         setNotice(null);
         try {
             const inputRow = stockRowOf(input);
-            await inventoryService.createStockConversion({
+            const created = await inventoryService.createStockConversion({
                 client_ref: clientRef,
                 warehouse_id: warehouseId,
                 conversion_date: date,
@@ -148,7 +157,8 @@ const StockConversionsPage: React.FC = () => {
             setNames((m) => ({ ...m, [inputRow]: input.name }));
             setClientRef(newClientRef());
             reset();
-            void loadRecent();
+            if (!embedded) void loadRecent();
+            onRecorded?.((created as StockConversion) ?? null);
         } catch (e: any) {
             setError(e?.message || 'Failed to record conversion');
         } finally {
@@ -159,9 +169,11 @@ const StockConversionsPage: React.FC = () => {
     const fieldCls = 'w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-100';
 
     return (
-        <div className="p-4 sm:p-8">
-            <header className="mb-6">
-                <h1 className="text-2xl sm:text-3xl font-bold text-slate-50 tracking-tight">Conversion &amp; Yield</h1>
+        <div className={embedded ? '' : 'p-4 sm:p-8'}>
+            <header className={embedded ? 'mb-4' : 'mb-6'}>
+                {embedded
+                    ? <h2 className="text-lg font-semibold text-slate-100">New conversion</h2>
+                    : <h1 className="text-2xl sm:text-3xl font-bold text-slate-50 tracking-tight">Conversion &amp; Yield</h1>}
                 <p className="text-slate-400 mt-1">Turn one item into others and track the loss in between</p>
             </header>
 
@@ -277,18 +289,28 @@ const StockConversionsPage: React.FC = () => {
                     </label>
                 </div>
 
-                {canRecord && (
-                    <button
-                        onClick={save}
-                        disabled={!canSave}
-                        className="w-full sm:w-auto bg-blue-600 hover:bg-blue-500 text-white px-6 py-2.5 rounded-lg font-semibold text-sm disabled:opacity-50"
-                    >
-                        Record conversion
-                    </button>
-                )}
+                <div className="flex flex-col sm:flex-row gap-2">
+                    {canRecord && (
+                        <button
+                            onClick={save}
+                            disabled={!canSave}
+                            className="w-full sm:w-auto bg-blue-600 hover:bg-blue-500 text-white px-6 py-2.5 rounded-lg font-semibold text-sm disabled:opacity-50"
+                        >
+                            Record conversion
+                        </button>
+                    )}
+                    {onCancel && (
+                        <button
+                            onClick={onCancel}
+                            className="w-full sm:w-auto px-6 py-2.5 rounded-lg text-sm text-slate-300 hover:bg-slate-800"
+                        >
+                            Cancel
+                        </button>
+                    )}
+                </div>
             </section>
 
-            <section aria-label="Recent conversions" className="mt-8">
+            {!embedded && <section aria-label="Recent conversions" className="mt-8">
                 <h2 className="mb-2 text-sm font-semibold uppercase tracking-wider text-slate-400">Last 7 days</h2>
                 {recent.length === 0 ? (
                     <p className="text-sm text-slate-500">No conversions recorded</p>
@@ -307,7 +329,7 @@ const StockConversionsPage: React.FC = () => {
                         ))}
                     </ul>
                 )}
-            </section>
+            </section>}
         </div>
     );
 };

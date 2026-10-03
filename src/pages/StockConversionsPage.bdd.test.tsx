@@ -204,3 +204,24 @@ describe('StockConversionsPage', () => {
         });
     });
 });
+
+describe('StockConversionsPage — side panel on the Stock Movement Register', () => {
+    describe('Given it is embedded with host callbacks', () => {
+        it('When opened Then the recent list is not loaded and a Cancel action shows', async () => {
+            const onCancel = vi.fn();
+            render(<StockConversionsPage embedded onCancel={onCancel} />);
+            expect(await screen.findByRole('heading', { name: 'New conversion' })).toBeTruthy();
+            expect(h.getStockConversions).not.toHaveBeenCalled();
+            expect(screen.queryByLabelText('Recent conversions')).toBeNull();
+            fireEvent.click(screen.getByText('Cancel'));
+            expect(onCancel).toHaveBeenCalled();
+        });
+        it('When a conversion is recorded Then the host is told with the created record', async () => {
+            const onRecorded = vi.fn();
+            render(<StockConversionsPage embedded onRecorded={onRecorded} />);
+            await fillBasic();
+            fireEvent.click(screen.getByText('Record conversion'));
+            await waitFor(() => expect(onRecorded).toHaveBeenCalledWith({ id: 'x-2' }));
+        });
+    });
+});

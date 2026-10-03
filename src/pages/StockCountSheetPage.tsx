@@ -32,9 +32,22 @@ const varianceClass = (v: number | null): string =>
  * there is a variance. Save and Post sit in a sticky footer; Post asks for an
  * inline confirmation (no modal).
  */
-const StockCountSheetPage: React.FC = () => {
-    const { id = '' } = useParams<{ id: string }>();
+interface Props {
+    /** Count to show; defaults to the :id route param. */
+    countId?: string;
+    /** Back action; defaults to Stock Overview's Count mode list. */
+    onBack?: () => void;
+    /** Rendered inside another page: no page padding. */
+    embedded?: boolean;
+    /** Scan mode layout: large scan field and inputs, last scanned line first. */
+    scanMode?: boolean;
+}
+
+const StockCountSheetPage: React.FC<Props> = ({ countId, onBack, embedded = false, scanMode = false }) => {
+    const params = useParams<{ id: string }>();
+    const id = countId ?? params.id ?? '';
     const navigate = useNavigate();
+    const back = () => (onBack ? onBack() : navigate('/inventory/overview?mode=count'));
     const shell = useShellBridge();
     const scanning = isFlagOn(shell, BARCODE_SCANNING_FLAG);
     const mortality = isFlagOn(shell, MORTALITY_TRACKING_FLAG);
@@ -51,6 +64,7 @@ const StockCountSheetPage: React.FC = () => {
     const [notice, setNotice] = useState<string | null>(null);
     const [search, setSearch] = useState('');
     const [warehouseNames, setWarehouseNames] = useState<Record<string, string>>({});
+    const [lastScanned, setLastScanned] = useState<string | null>(null);
 
     const apply = (c: StockCount) => {
         setCount(c);
@@ -100,10 +114,14 @@ const StockCountSheetPage: React.FC = () => {
 
     const visible = useMemo(() => {
         const q = search.trim().toLowerCase();
-        if (!q) return lines;
-        return lines.filter((l) =>
-            (l.item_name ?? '').toLowerCase().includes(q) || (l.sku ?? '').toLowerCase().includes(q));
-    }, [lines, search]);
+        const shown = q
+            ? lines.filter((l) => (l.item_name ?? '').toLowerCase().includes(q) || (l.sku ?? '').toLowerCase().includes(q))
+            : lines;
+        if (!scanMode || !lastScanned) return shown;
+        const first = shown.filter((l) => lineKey(l) === lastScanned);
+        return [...first, ...shown.filter((l) => lineKey(l) !== lastScanned)];
+    }, [lines, search, scanMode, lastScanned]);
+    const bigScan = scanMode && scanning && editable;
 
     const setDraft = (key: string, patch: CountDraft) =>
         setDrafts((d) => ({ ...d, [key]: { ...d[key], ...patch } }));
@@ -133,7 +151,9 @@ const StockCountSheetPage: React.FC = () => {
             }]);
         }
         const target = exists ? (lines.find((l) => lineKey(l) === key) ?? lines.find((l) => l.item_id === item.id))! : null;
-        focusLine(target ? lineKey(target) : key);
+        const focusKey = target ? lineKey(target) : key;
+        setLastScanned(focusKey);
+        focusLine(focusKey);
     };
 
     const save = async (): Promise<boolean> => {
@@ -174,10 +194,10 @@ const StockCountSheetPage: React.FC = () => {
     if (loading) return <p className="p-8 text-center text-slate-500">Loading…</p>;
 
     return (
-        <div className="p-4 sm:p-8 pb-32">
+        <div className={embedded ? 'pb-32' : 'p-4 sm:p-8 pb-32'}>
             <header className="mb-4 flex items-center gap-3">
                 <button
-                    onClick={() => navigate('/inventory/stock-counts')}
+                    onClick={back}
                     aria-label="Back to stock counts"
                     className="p-2 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800"
                 >
@@ -196,16 +216,16 @@ const StockCountSheetPage: React.FC = () => {
             {error && <div role="alert" className="mb-3 rounded-lg border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">{error}</div>}
             {notice && <div role="status" className="mb-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">{notice}</div>}
 
-            <div className="mb-4 grid gap-2 sm:grid-cols-2">
-                {scanning && editable && <ScanInput onScan={onScan} autoFocus />}
-                <input
+            <div className={`mb-4 grid gap-2 ${bigScan ? '' : 'sm:grid-cols-2'}`}>
+                {scanning && editable && <ScanInput onScan={onScan} autoFocus large={bigScan} />}
+                {!bigScan && <input
                     type="search"
                     aria-label="Filter lines"
                     placeholder="Filter by item or SKU"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-100 placeholder:text-slate-500"
-                />
+                />}
             </div>
 
             {visible.length === 0 ? (
@@ -241,7 +261,7 @@ const StockCountSheetPage: React.FC = () => {
                                         value={shown}
                                         disabled={!editable}
                                         onChange={(e) => setDraft(key, { actual: e.target.value })}
-                                        className="w-32 text-right text-lg bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 tabular-nums focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        className={`${bigScan ? 'w-40 py-3 text-2xl' : 'w-32 py-2 text-lg'} text-right bg-slate-950 border border-slate-700 rounded-lg px-3 text-slate-100 tabular-nums focus:outline-none focus:ring-2 focus:ring-blue-500`}
                                     />
                                     <span className={`text-sm tabular-nums ${varianceClass(variance)}`} data-testid={`variance-${key}`}>
                                         {variance == null ? '—' : `${variance > 0 ? '+' : ''}${fmtQty(variance)}`}

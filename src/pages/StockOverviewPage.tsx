@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Search, MapPin, Clock, AlertTriangle, Box, X, RefreshCcw, BookOpen } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Search, MapPin, Clock, AlertTriangle, Box, X, RefreshCcw, BookOpen, ScanLine } from 'lucide-react';
 import { inventoryService } from '../services/inventoryService';
 import { StockBalance } from '../types/inventory';
 import { Table } from '../components/common/Table';
 import { useInventoryFormatters } from '../utils/formatters';
 import { useShellBridge } from '@so360/shell-context';
 import { FeatureGate } from '@so360/design-system';
+import StockCountsPage from './StockCountsPage';
+import StockCountSheetPage from './StockCountSheetPage';
+import { BARCODE_SCANNING_FLAG, STOCK_COUNT_FLAG, isFlagOn } from '../hooks/lossYield';
 
 const PAGE_SIZE = 25;
 
@@ -23,6 +26,19 @@ const StockOverviewPage = () => {
     const [error, setError] = useState<string | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [glValuation, setGlValuation] = useState<{ gl_balance: number; source: string } | null>(null);
+
+    // Count mode (?mode=count[&count=<id>][&scan=1]) — physical counts live on this page.
+    const [searchParams, setSearchParams] = useSearchParams();
+    const countEnabled = isFlagOn(shell, STOCK_COUNT_FLAG);
+    const scanEnabled = isFlagOn(shell, BARCODE_SCANNING_FLAG);
+    const countMode = countEnabled && searchParams.get('mode') === 'count';
+    const countId = searchParams.get('count');
+    const scanMode = scanEnabled && searchParams.get('scan') === '1';
+    const setParams = (patch: Record<string, string | null>) => {
+        const next = new URLSearchParams(searchParams);
+        Object.entries(patch).forEach(([k, v]) => (v == null ? next.delete(k) : next.set(k, v)));
+        setSearchParams(next, { replace: true });
+    };
 
     // `showSkeleton` toggles the table-replacing skeleton. It stays true for the
     // first load and manual refresh, but background poll ticks pass false so the
@@ -177,6 +193,37 @@ const StockOverviewPage = () => {
                 </button>
             </header>
 
+            {countEnabled && (
+                <div className="mb-6 flex flex-wrap items-center gap-3">
+                    <div role="tablist" aria-label="Stock view" className="inline-flex rounded-lg border border-slate-800 p-0.5">
+                        {([['stock', 'Stock'], ['count', 'Count']] as const).map(([key, label]) => {
+                            const active = key === 'count' ? countMode : !countMode;
+                            return (
+                                <button key={key} role="tab" aria-selected={active}
+                                    onClick={() => setParams(key === 'count' ? { mode: 'count' } : { mode: null, count: null, scan: null })}
+                                    className={`px-4 py-1.5 rounded-md text-sm font-semibold ${active ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-slate-100'}`}>
+                                    {label}
+                                </button>
+                            );
+                        })}
+                    </div>
+                    {countMode && scanEnabled && countId && (
+                        <button onClick={() => setParams({ scan: scanMode ? null : '1' })} aria-pressed={scanMode}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium ${scanMode ? 'bg-blue-500/10 border-blue-500/50 text-blue-300' : 'bg-slate-900/50 border-slate-800 text-slate-400 hover:border-slate-700'}`}>
+                            <ScanLine size={16} /> Scan mode
+                        </button>
+                    )}
+                </div>
+            )}
+
+            {countMode ? (
+                countId ? (
+                    <StockCountSheetPage key={countId} countId={countId} embedded scanMode={scanMode}
+                        onBack={() => setParams({ count: null, scan: null })} />
+                ) : (
+                    <StockCountsPage embedded onOpen={(id) => setParams({ count: id })} />
+                )
+            ) : (<>
             <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
                 <div className="bg-slate-900/40 border border-slate-800/50 p-4 rounded-xl">
                     <span className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Total Positions</span>
@@ -301,6 +348,7 @@ const StockOverviewPage = () => {
                     </div>
                 </div>
             )}
+            </>)}
         </div>
     );
 };

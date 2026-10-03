@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
     ArrowLeft, Package, Info, AlertCircle,
     ArrowDownLeft, ArrowUpRight, ArrowRightLeft,
@@ -27,10 +27,12 @@ import AttributesTab from './item-create/tabs/AttributesTab';
 import LifecycleStatusPanel from '../components/lifecycle/LifecycleStatusPanel';
 import { useInventoryFormatters, useInventoryCurrencySymbol } from '../utils/formatters';
 import { parseUtcDate } from '../utils/datetime';
-import { useActivity } from '@so360/shell-context';
+import { useActivity, useShellBridge } from '@so360/shell-context';
+import PriceHistoryPanel from '../components/rates/PriceHistoryPanel';
+import { isRateBoardEnabled } from '../hooks/rateBoard';
 
 // ── Types ─────────────────────────────────────────────
-type ViewTabId = TabId | 'ledger' | 'sales';
+type ViewTabId = TabId | 'ledger' | 'sales' | 'price_history';
 
 interface ItemSalesHistory {
     item_id: string;
@@ -86,7 +88,13 @@ const ItemDetailPage = () => {
     const [salesHistory, setSalesHistory] = useState<ItemSalesHistory | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [viewTab, setViewTab] = useState<ViewTabId>('basic');
+    const shell = useShellBridge();
+    const ratesEnabled = isRateBoardEnabled(shell);
+    const [searchParams] = useSearchParams();
+    const historyVariant = searchParams.get('variant');
+    const [viewTab, setViewTab] = useState<ViewTabId>(
+        ratesEnabled && searchParams.get('tab') === 'price-history' ? 'price_history' : 'basic',
+    );
 
     // Inline edit state
     const [isEditing, setIsEditing] = useState(false);
@@ -164,7 +172,7 @@ const ItemDetailPage = () => {
     const handleEditClick = async () => {
         if (!item) return;
         setEditForm(initEditForm(item));
-        setEditTab(viewTab !== 'ledger' && viewTab !== 'sales' ? viewTab : 'basic');
+        setEditTab(viewTab !== 'ledger' && viewTab !== 'sales' && viewTab !== 'price_history' ? viewTab : 'basic');
         setTabErrors({});
         setIsEditing(true);
 
@@ -753,6 +761,7 @@ const ItemDetailPage = () => {
                                         { id: 'attributes' as ViewTabId, label: 'Attributes', icon: <Sliders size={14} /> },
                                         { id: 'ledger' as ViewTabId, label: 'Ledger', icon: <History size={14} /> },
                                         { id: 'sales' as ViewTabId, label: 'Sales History', icon: <TrendingUp size={14} /> },
+                                        ...(ratesEnabled ? [{ id: 'price_history' as ViewTabId, label: 'Price history', icon: <DollarSign size={14} /> }] : []),
                                     ]).map(tab => (
                                         <button
                                             key={tab.id}
@@ -1080,6 +1089,11 @@ const ItemDetailPage = () => {
                                                 </div>
                                             )}
                                         </div>
+                                    )}
+
+                                    {/* ── Price history (daily rates) ── */}
+                                    {viewTab === 'price_history' && ratesEnabled && id && (
+                                        <PriceHistoryPanel itemId={id} variantId={historyVariant} />
                                     )}
                                 </div>
                             </div>

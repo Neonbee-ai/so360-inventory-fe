@@ -11,6 +11,8 @@ export interface ScanInputProps {
     autoFocus?: boolean;
     className?: string;
     label?: string;
+    /** Large-button layout for handheld scanners (Scan mode). */
+    large?: boolean;
 }
 
 /**
@@ -25,6 +27,7 @@ const ScanInput: React.FC<ScanInputProps> = ({
     autoFocus = false,
     className = '',
     label = 'Scan barcode',
+    large = false,
 }) => {
     const [value, setValue] = useState('');
     const [busy, setBusy] = useState(false);
@@ -57,7 +60,7 @@ const ScanInput: React.FC<ScanInputProps> = ({
     return (
         <div className={className}>
             <div className="relative">
-                <ScanLine size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                <ScanLine size={large ? 22 : 16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
                 <input
                     ref={inputRef}
                     type="text"
@@ -75,13 +78,14 @@ const ScanInput: React.FC<ScanInputProps> = ({
                             void submit();
                         }
                     }}
-                    className="w-full bg-slate-950 border border-slate-700 rounded-lg pl-9 pr-3 py-2.5 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className={`w-full bg-slate-950 border border-slate-700 rounded-lg pr-3 text-slate-100 ${large ? 'pl-11 py-4 text-lg' : 'pl-9 py-2.5 text-sm'} placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                    data-size={large ? 'large' : 'normal'}
                 />
             </div>
             {message && (
                 <p
                     role="status"
-                    className={`mt-1 text-xs ${message.tone === 'ok' ? 'text-emerald-400' : 'text-amber-400'}`}
+                    className={`mt-1 ${large ? 'text-base' : 'text-xs'} ${message.tone === 'ok' ? 'text-emerald-400' : 'text-amber-400'}`}
                 >
                     {message.text}
                 </p>
