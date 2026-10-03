@@ -6,7 +6,7 @@ import {
     History, MapPin, DollarSign,
     Edit2, Trash2, Save, Loader2, ScanLine,
     AlertTriangle, RefreshCcw, Truck, Sliders,
-    Image as ImageIcon, Tag, X, BarChart3, TrendingUp, FileText
+    Image as ImageIcon, Tag, X, BarChart3, TrendingUp, FileText, Layers
 } from 'lucide-react';
 import { inventoryService } from '../services/inventoryService';
 import { Item, StockMovement, Unit, ItemCategory, Warehouse } from '../types/inventory';
@@ -29,10 +29,12 @@ import { useInventoryFormatters, useInventoryCurrencySymbol } from '../utils/for
 import { parseUtcDate } from '../utils/datetime';
 import { useActivity, useShellBridge } from '@so360/shell-context';
 import PriceHistoryPanel from '../components/rates/PriceHistoryPanel';
+import ItemOptionsTab from '../components/options/ItemOptionsTab';
+import { isItemOptionsEnabled } from '../hooks/itemOptions';
 import { isRateBoardEnabled } from '../hooks/rateBoard';
 
 // ── Types ─────────────────────────────────────────────
-type ViewTabId = TabId | 'ledger' | 'sales' | 'price_history';
+type ViewTabId = TabId | 'ledger' | 'sales' | 'price_history' | 'options';
 
 interface ItemSalesHistory {
     item_id: string;
@@ -90,10 +92,13 @@ const ItemDetailPage = () => {
     const [error, setError] = useState<string | null>(null);
     const shell = useShellBridge();
     const ratesEnabled = isRateBoardEnabled(shell);
+    const optionsEnabled = isItemOptionsEnabled(shell);
     const [searchParams] = useSearchParams();
     const historyVariant = searchParams.get('variant');
     const [viewTab, setViewTab] = useState<ViewTabId>(
-        ratesEnabled && searchParams.get('tab') === 'price-history' ? 'price_history' : 'basic',
+        ratesEnabled && searchParams.get('tab') === 'price-history' ? 'price_history'
+            : optionsEnabled && searchParams.get('tab') === 'options' ? 'options'
+            : 'basic',
     );
 
     // Inline edit state
@@ -172,7 +177,7 @@ const ItemDetailPage = () => {
     const handleEditClick = async () => {
         if (!item) return;
         setEditForm(initEditForm(item));
-        setEditTab(viewTab !== 'ledger' && viewTab !== 'sales' && viewTab !== 'price_history' ? viewTab : 'basic');
+        setEditTab(viewTab !== 'ledger' && viewTab !== 'sales' && viewTab !== 'price_history' && viewTab !== 'options' ? viewTab : 'basic');
         setTabErrors({});
         setIsEditing(true);
 
@@ -762,6 +767,7 @@ const ItemDetailPage = () => {
                                         { id: 'ledger' as ViewTabId, label: 'Ledger', icon: <History size={14} /> },
                                         { id: 'sales' as ViewTabId, label: 'Sales History', icon: <TrendingUp size={14} /> },
                                         ...(ratesEnabled ? [{ id: 'price_history' as ViewTabId, label: 'Price history', icon: <DollarSign size={14} /> }] : []),
+                                        ...(optionsEnabled ? [{ id: 'options' as ViewTabId, label: 'Options', icon: <Layers size={14} /> }] : []),
                                     ]).map(tab => (
                                         <button
                                             key={tab.id}
@@ -1094,6 +1100,11 @@ const ItemDetailPage = () => {
                                     {/* ── Price history (daily rates) ── */}
                                     {viewTab === 'price_history' && ratesEnabled && id && (
                                         <PriceHistoryPanel itemId={id} variantId={historyVariant} />
+                                    )}
+
+                                    {/* ── Options (option groups that apply to this item) ── */}
+                                    {viewTab === 'options' && optionsEnabled && id && (
+                                        <ItemOptionsTab itemId={id} categoryId={(item as any)?.category_id ?? null} canEdit={can('items.update')} />
                                     )}
                                 </div>
                             </div>

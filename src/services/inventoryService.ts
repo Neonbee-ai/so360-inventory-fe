@@ -201,7 +201,50 @@ const CROSS_SERVICE_BUILD_ENV: Record<string, string | undefined> = {
     VITE_SO360_PROJECTS_API: (import.meta as any).env.VITE_SO360_PROJECTS_API,
     VITE_SO360_MANUFACTURING_API: (import.meta as any).env.VITE_SO360_MANUFACTURING_API,
     VITE_SO360_PEOPLE_API: (import.meta as any).env.VITE_SO360_PEOPLE_API,
+    VITE_SO360_DAILYSTORE_API: (import.meta as any).env.VITE_SO360_DAILYSTORE_API,
 };
+
+// ── Item options (owned by Daily Store, managed from Inventory) ──
+export type OptionPriceMode = 'fixed' | 'per_unit';
+export type OptionSelectionMode = 'single' | 'multi';
+
+export interface OptionAppliesTo {
+    item_ids: string[];
+    category_ids: string[];
+}
+
+export interface ItemOptionValue {
+    id?: string;
+    name: string;
+    price_delta: number;
+    price_mode: OptionPriceMode;
+    is_default: boolean;
+    sort_order: number;
+    is_active: boolean;
+}
+
+export interface OptionGroup {
+    id?: string;
+    name: string;
+    selection: OptionSelectionMode;
+    is_required: boolean;
+    min_select: number;
+    max_select: number | null;
+    applies_to: OptionAppliesTo;
+    sort_order: number;
+    is_active: boolean;
+    options: ItemOptionValue[];
+}
+
+export interface MeasurementDef {
+    id?: string;
+    key: string;
+    label: string;
+    unit: string;
+    applies_to: OptionAppliesTo;
+    is_billing_basis: boolean;
+    sort_order: number;
+}
 
 const CLOSED_WORK_ORDER_STATUSES = new Set([
     'completed',
@@ -1217,6 +1260,69 @@ class InventoryService {
             throw new Error(err.message || 'Import failed');
         }
         return response.json();
+    }
+
+    // ==================== Item Options (Daily Store API) ====================
+    // Option groups and capture fields live in the Daily Store backend
+    // (/v1/dailystore). Inventory manages them from Settings and item detail,
+    // reaching the service the same way as the other cross-module lookups.
+
+    private dailystoreUrl(path: string): string {
+        const origin = this.crossServiceOrigin('VITE_SO360_DAILYSTORE_API', 'dailystore', 3016);
+        return `${origin}/v1/dailystore${path}`;
+    }
+
+    private async dailystoreSend(method: 'POST' | 'PATCH' | 'DELETE', path: string, body?: unknown): Promise<any> {
+        const response = await fetch(this.dailystoreUrl(path), {
+            method,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${this.accessToken}`,
+                'X-Tenant-Id': this.tenantId || '',
+                'X-Org-Id': this.orgId || '',
+            },
+            ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+        });
+        await notifyQuotaExceeded(response);
+        if (!response.ok) {
+            const err = await response.json().catch(() => null);
+            const msg = Array.isArray(err?.message) ? err.message.join(', ') : err?.message;
+            throw new Error(msg || `Request failed (${response.status})`);
+        }
+        return response.json().catch(() => null);
+    }
+
+    async listOptionGroups(): Promise<OptionGroup[]> {
+        return unwrapList<OptionGroup>(await this.crossServiceGet(this.dailystoreUrl('/option-groups')));
+    }
+
+    async createOptionGroup(group: OptionGroup): Promise<OptionGroup> {
+        return this.dailystoreSend('POST', '/option-groups', group);
+    }
+
+    /** Partial update. Sending `options` replaces the group's values wholesale. */
+    async updateOptionGroup(id: string, patch: Partial<OptionGroup>): Promise<OptionGroup> {
+        return this.dailystoreSend('PATCH', `/option-groups/${encodeURIComponent(id)}`, patch);
+    }
+
+    async deleteOptionGroup(id: string): Promise<void> {
+        await this.dailystoreSend('DELETE', `/option-groups/${encodeURIComponent(id)}`);
+    }
+
+    async listMeasurementDefs(): Promise<MeasurementDef[]> {
+        return unwrapList<MeasurementDef>(await this.crossServiceGet(this.dailystoreUrl('/measurement-defs')));
+    }
+
+    async createMeasurementDef(def: MeasurementDef): Promise<MeasurementDef> {
+        return this.dailystoreSend('POST', '/measurement-defs', def);
+    }
+
+    async updateMeasurementDef(id: string, patch: Partial<MeasurementDef>): Promise<MeasurementDef> {
+        return this.dailystoreSend('PATCH', `/measurement-defs/${encodeURIComponent(id)}`, patch);
+    }
+
+    async deleteMeasurementDef(id: string): Promise<void> {
+        await this.dailystoreSend('DELETE', `/measurement-defs/${encodeURIComponent(id)}`);
     }
 
     // ==================== Rate Board ====================

@@ -25,6 +25,7 @@ vi.mock('../services/inventoryService', () => ({
 
 vi.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
+  useSearchParams: () => [new URLSearchParams(), vi.fn()],
 }));
 
 const mockCanSettings = vi.hoisted(() => vi.fn((_action: string) => true));

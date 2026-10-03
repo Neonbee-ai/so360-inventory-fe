@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useShellBridge } from '@so360/shell-context';
 import { Settings, Save, Box, Tag, MapPin, AlertCircle, CheckCircle2, X, Plus, Sliders, ChevronRight, ListFilter } from 'lucide-react';
 import { inventoryService } from '../services/inventoryService';
 import { useAuth } from '../hooks/useAuth';
 import CategoryTreeView from '../components/categories/CategoryTreeView';
 import { buildCategoryTree } from '../utils/categoryTree';
 import ItemAttributeSettingsSection from '../components/settings/ItemAttributeSettingsSection';
+import ItemOptionsSettingsSection from '../components/settings/ItemOptionsSettingsSection';
+import { isCaptureFieldsEnabled, isItemOptionsEnabled } from '../hooks/itemOptions';
 
 interface UomItem {
     id: string;
@@ -31,6 +34,17 @@ interface InventorySettingsData {
 const SettingsPage = () => {
     const navigate = useNavigate();
     const { can } = useAuth();
+    const shell = useShellBridge() as any;
+    const optionsEnabled = isItemOptionsEnabled(shell);
+    const [searchParams, setSearchParams] = useSearchParams();
+    // ?tab=options is honoured only while the item options flag is on.
+    const activeTab: 'general' | 'options' = optionsEnabled && searchParams.get('tab') === 'options' ? 'options' : 'general';
+    const selectTab = (tab: 'general' | 'options') => {
+        const next = new URLSearchParams(searchParams);
+        if (tab === 'general') next.delete('tab');
+        else next.set('tab', tab);
+        setSearchParams(next, { replace: true });
+    };
     const [settings, setSettings] = useState<InventorySettingsData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -180,6 +194,36 @@ const SettingsPage = () => {
                 </div>
             )}
 
+            {optionsEnabled && (
+                <div className="mb-6 flex gap-1 border-b border-slate-800" role="tablist" aria-label="Settings sections">
+                    {([
+                        { id: 'general', label: 'General' },
+                        { id: 'options', label: 'Options & capture fields' },
+                    ] as const).map((t) => {
+                        const active = activeTab === t.id;
+                        return (
+                            <button
+                                key={t.id}
+                                type="button"
+                                role="tab"
+                                aria-selected={active}
+                                onClick={() => selectTab(t.id)}
+                                className={`px-4 py-2 -mb-px border-b-2 text-sm font-semibold ${active ? 'border-blue-500 text-slate-100' : 'border-transparent text-slate-400 hover:text-slate-200'}`}
+                            >
+                                {t.label}
+                            </button>
+                        );
+                    })}
+                </div>
+            )}
+
+            {activeTab === 'options' ? (
+                <ItemOptionsSettingsSection
+                    categories={(settings?.categories || []).map((c) => ({ id: c.id, name: c.name }))}
+                    captureFieldsEnabled={isCaptureFieldsEnabled(shell)}
+                    canEdit={can('items.update')}
+                />
+            ) : (
             <div className="space-y-6">
                 {/* Units of Measure */}
                 <section className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
@@ -354,6 +398,7 @@ const SettingsPage = () => {
                     </div>
                 </section>
             </div>
+            )}
 
             <div className="mt-10 p-4 bg-slate-900/40 border border-slate-800/50 rounded-2xl">
                 <p className="text-xs text-slate-500 leading-relaxed text-center">
