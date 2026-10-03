@@ -17,6 +17,36 @@ import type {
 import { toCounts } from '../utils/unitGrid';
 import { toDeveloperProfile } from '../utils/developerProfile';
 
+export interface RateBoardEntry {
+    item_id: string;
+    variant_id: string | null;
+    item_name: string;
+    sku: string | null;
+    unit: string | null;
+    price: number | null;
+    previous_price: number | null;
+    effective_from: string | null;
+    change_pct: number | null;
+}
+
+export interface RateBoardResponse {
+    date: string;
+    entries: RateBoardEntry[];
+}
+
+export interface RateBoardEntryInput {
+    item_id: string;
+    variant_id?: string | null;
+    price: number;
+    unit?: string;
+}
+
+export interface RateBoardHistoryPoint {
+    effective_date: string;
+    price: number;
+    set_by: string | null;
+}
+
 /**
  * Statuses that mean "this can no longer receive material". Kept as exclusion
  * lists rather than allow-lists so a new in-flight status added by Projects or
@@ -1061,6 +1091,58 @@ class InventoryService {
             throw new Error(err.message || 'Import failed');
         }
         return response.json();
+    }
+
+    // ==================== Rate Board ====================
+
+    private rateBoardHeaders(json = false): Record<string, string> {
+        const h: Record<string, string> = {
+            'Authorization': `Bearer ${this.accessToken}`,
+            'X-Tenant-Id': this.tenantId || '',
+            'X-Org-Id': this.orgId || '',
+        };
+        if (json) h['Content-Type'] = 'application/json';
+        return h;
+    }
+
+    private async rateBoardFetch<T>(path: string, init: RequestInit, fallback: string): Promise<T> {
+        const response = await fetch(`${this.inventoryOrigin}/v1/rate-board${path}`, init);
+        await notifyQuotaExceeded(response);
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({ message: fallback }));
+            throw new Error(err.message || fallback);
+        }
+        return response.json();
+    }
+
+    /** Board for a date (YYYY-MM-DD): effective price, previous price, change %. */
+    async getRateBoard(date: string): Promise<RateBoardResponse> {
+        return this.rateBoardFetch(`/${encodeURIComponent(date)}`, { headers: this.rateBoardHeaders() }, 'Failed to load rate board');
+    }
+
+    /** Bulk upsert prices effective on a date. */
+    async saveRateBoard(date: string, entries: RateBoardEntryInput[]): Promise<any> {
+        return this.rateBoardFetch(`/${encodeURIComponent(date)}`, {
+            method: 'PUT',
+            headers: this.rateBoardHeaders(true),
+            body: JSON.stringify({ entries }),
+        }, 'Failed to save rates');
+    }
+
+    /** Copy the latest earlier prices onto the date (existing entries kept). */
+    async copyPreviousRates(date: string): Promise<any> {
+        return this.rateBoardFetch(`/${encodeURIComponent(date)}/copy-previous`, {
+            method: 'POST',
+            headers: this.rateBoardHeaders(true),
+        }, 'Failed to copy previous rates');
+    }
+
+    /** Price history of one item or variant. */
+    async getRateHistory(itemId: string, from?: string, to?: string): Promise<RateBoardHistoryPoint[]> {
+        const qs = new URLSearchParams({ item_id: itemId });
+        if (from) qs.set('from', from);
+        if (to) qs.set('to', to);
+        return this.rateBoardFetch(`/history?${qs.toString()}`, { headers: this.rateBoardHeaders() }, 'Failed to load price history');
     }
 }
 

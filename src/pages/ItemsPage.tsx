@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Filter, Plus, Package, Layers, AlertCircle, AlertTriangle, Flame, Building2, Factory, Wrench, Upload, Info } from 'lucide-react';
+import { Search, Filter, Plus, Package, Layers, AlertCircle, AlertTriangle, Flame, Building2, Factory, Wrench, Upload, Info, Tag } from 'lucide-react';
 import { inventoryService } from '../services/inventoryService';
 import { Item } from '../types/inventory';
 import { Table } from '../components/common/Table';
 import PhotoAttentionIndicator from '../components/media/PhotoAttentionIndicator';
 import { useAuth } from '../hooks/useAuth';
 import { useShellBridge, useQuota, useSandboxLimit } from '@so360/shell-context';
+import { isRateBoardEnabled } from '../hooks/rateBoard';
 import { QuotaBar, QuotaGate, FeatureGate } from '@so360/design-system';
 
 const ItemsPage = () => {
@@ -144,6 +145,15 @@ const ItemsPage = () => {
                     <p className="text-slate-400 mt-1">Manage physical products and trackable assets</p>
                 </div>
                 <div className="flex items-center gap-3">
+                {isRateBoardEnabled(shell) && (
+                    <button
+                        onClick={() => navigate('/inventory/rate-board')}
+                        className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-slate-100 px-4 py-2.5 rounded-lg font-semibold text-sm transition-all active:scale-95"
+                    >
+                        <Tag size={16} />
+                        Rate Board
+                    </button>
+                )}
                 {can('items.import') && (
                     <FeatureGate state={bulkImportState} loading={(shell?.effectiveFlagsLoaded === false)} onUpgradeClick={() => navigate('/org/billing')}>
                         <div className="relative group/tooltip">

@@ -10,6 +10,7 @@ const h = vi.hoisted(() => ({ loaded: true, granted: [] as string[] }));
 vi.mock('./pages/ItemsPage', () => ({ default: () => <div data-testid="items-page">Items</div> }));
 vi.mock('./pages/item-create/ItemCreatePage', () => ({ default: () => <div>ItemCreate</div> }));
 vi.mock('./pages/ItemDetailPage', () => ({ default: () => <div>ItemDetail</div> }));
+vi.mock('./pages/RateBoardPage', () => ({ default: () => <div data-testid="rate-board-page">RateBoard</div> }));
 vi.mock('./pages/StockLocationsPage', () => ({ default: () => <div>StockLocations</div> }));
 vi.mock('./pages/WarehouseDetailPage', () => ({ default: () => <div>WarehouseDetail</div> }));
 vi.mock('./pages/StockOverviewPage', () => ({ default: () => <div>StockOverview</div> }));
