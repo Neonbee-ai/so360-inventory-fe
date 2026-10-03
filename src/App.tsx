@@ -6,6 +6,10 @@ const ItemsPage = lazy(() => import('./pages/ItemsPage'));
 const ItemCreatePage = lazy(() => import('./pages/item-create/ItemCreatePage'));
 const ItemDetailPage = lazy(() => import('./pages/ItemDetailPage'));
 const RateBoardPage = lazy(() => import('./pages/RateBoardPage'));
+const StockCountsPage = lazy(() => import('./pages/StockCountsPage'));
+const StockCountSheetPage = lazy(() => import('./pages/StockCountSheetPage'));
+const StockConversionsPage = lazy(() => import('./pages/StockConversionsPage'));
+const LossReportPage = lazy(() => import('./pages/LossReportPage'));
 const StockLocationsPage = lazy(() => import('./pages/StockLocationsPage'));
 const WarehouseDetailPage = lazy(() => import('./pages/WarehouseDetailPage'));
 const StockOverviewPage = lazy(() => import('./pages/StockOverviewPage'));
@@ -200,6 +204,10 @@ const App = () => {
                 <Route path="warehouses/:id" element={<PermissionGuard permission="warehouses.read"><WarehouseDetailPage /></PermissionGuard>} />
                 <Route path="overview" element={<PermissionGuard permission="stock.view"><StockOverviewPage /></PermissionGuard>} />
                 <Route path="movements" element={<PermissionGuard permission="stock.view"><StockMovementRegisterPage /></PermissionGuard>} />
+                <Route path="stock-counts" element={<PermissionGuard permission="stock.view"><FeatureGate flagKey="submodule:inventory:stock_count"><StockCountsPage /></FeatureGate></PermissionGuard>} />
+                <Route path="stock-counts/:id" element={<PermissionGuard permission="stock.view"><FeatureGate flagKey="submodule:inventory:stock_count"><StockCountSheetPage /></FeatureGate></PermissionGuard>} />
+                <Route path="conversions" element={<PermissionGuard permission="stock.view"><FeatureGate flagKey="submodule:inventory:loss_yield"><StockConversionsPage /></FeatureGate></PermissionGuard>} />
+                <Route path="loss-report" element={<PermissionGuard permission="stock.view"><FeatureGate flagKey="submodule:inventory:loss_yield"><LossReportPage /></FeatureGate></PermissionGuard>} />
                 {/* Legacy paths kept as redirects — notification actionUrls and
                     bookmarks still point at /adjustments and /transfers. */}
                 <Route path="adjustments" element={<Navigate to="../movements?type=adjustment" replace />} />

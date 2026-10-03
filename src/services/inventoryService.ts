@@ -47,6 +47,115 @@ export interface RateBoardHistoryPoint {
     set_by: string | null;
 }
 
+// ==================== Loss & Yield (stock counts, conversions, loss) ====================
+
+export type LossCategory =
+    | 'process' | 'mortality' | 'spoilage' | 'damage' | 'theft' | 'expiry' | 'shrinkage' | 'other';
+
+export interface LossReason {
+    id: string;
+    code: string;
+    label: string;
+    category: LossCategory;
+    is_system?: boolean;
+    is_active?: boolean;
+}
+
+export interface StockCountLine {
+    id?: string;
+    item_id: string;
+    variant_id?: string | null;
+    item_name?: string | null;
+    sku?: string | null;
+    unit?: string | null;
+    expected_qty: number;
+    actual_qty: number | null;
+    variance_qty?: number | null;
+    reason_code?: string | null;
+    unit_cost?: number | null;
+    variance_value?: number | null;
+}
+
+export interface StockCount {
+    id: string;
+    warehouse_id: string;
+    warehouse_name?: string | null;
+    count_date: string;
+    status: 'draft' | 'posted';
+    counted_by?: string | null;
+    posted_at?: string | null;
+    notes?: string | null;
+    lines?: StockCountLine[];
+}
+
+export interface StockCountLineInput {
+    item_id: string;
+    variant_id?: string | null;
+    actual_qty: number;
+    reason_code?: string | null;
+}
+
+export interface StockConversionOutput {
+    item_id: string;
+    qty: number;
+}
+
+export interface StockConversionInput {
+    warehouse_id: string;
+    conversion_date: string;
+    input_item_id: string;
+    input_qty: number;
+    outputs: StockConversionOutput[];
+    loss_qty: number;
+    reason_code?: string;
+    notes?: string;
+}
+
+export interface StockConversion extends StockConversionInput {
+    id: string;
+    yield_pct?: number | null;
+    input_item_name?: string | null;
+    created_at?: string;
+}
+
+export type LossGroupBy = 'reason' | 'item' | 'category';
+
+export interface LossSummary {
+    total_value: number;
+    total_qty: number;
+    rows: { key: string; label: string; qty: number; value: number }[];
+    trend: { date: string; value: number }[];
+}
+
+/** Item resolved from a scanned barcode or SKU. */
+export interface ScannedItem {
+    id: string;
+    name: string;
+    sku?: string | null;
+    barcode?: string | null;
+    unit?: string | null;
+    variant_id?: string | null;
+}
+
+/** Accepts a bare list or a `{ data }` envelope. */
+const unwrapList = <T,>(res: any): T[] =>
+    Array.isArray(res) ? res : Array.isArray(res?.data) ? res.data : [];
+
+/** Normalises the by-code payload: a flat item, or `{ item, variant }`. */
+export const toScannedItem = (res: any): ScannedItem | null => {
+    const item = res?.item ?? res;
+    if (!item?.id) return null;
+    const variant = res?.variant ?? item?.variant ?? null;
+    return {
+        id: item.id,
+        name: item.name ?? item.item_name ?? '',
+        sku: variant?.sku ?? item.sku ?? null,
+        barcode: variant?.barcode ?? item.barcode ?? null,
+        unit: item.unit ?? item.base_unit ?? item.uom ?? null,
+        variant_id: variant?.id ?? item.variant_id ?? null,
+    };
+};
+
 /**
  * Statuses that mean "this can no longer receive material". Kept as exclusion
  * lists rather than allow-lists so a new in-flight status added by Projects or
@@ -1143,6 +1252,85 @@ class InventoryService {
         if (from) qs.set('from', from);
         if (to) qs.set('to', to);
         return this.rateBoardFetch(`/history?${qs.toString()}`, { headers: this.rateBoardHeaders() }, 'Failed to load price history');
+    }
+
+    // ==================== Loss & Yield ====================
+
+    private async v1Fetch<T>(path: string, init: RequestInit & { json?: unknown } = {}, fallback = 'Request failed'): Promise<T> {
+        const { json, ...rest } = init;
+        const headers = this.rateBoardHeaders(json !== undefined);
+        const response = await fetch(`${this.inventoryOrigin}/v1${path}`, {
+            ...rest,
+            headers,
+            ...(json !== undefined ? { body: JSON.stringify(json) } : {}),
+        });
+        await notifyQuotaExceeded(response);
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({ message: fallback }));
+            const e: any = new Error(err.message || fallback);
+            e.status = response.status;
+            throw e;
+        }
+        return response.json();
+    }
+
+    async getStockCounts(params?: { status?: string; warehouse_id?: string }): Promise<StockCount[]> {
+        const qs = new URLSearchParams();
+        if (params?.status) qs.set('status', params.status);
+        if (params?.warehouse_id) qs.set('warehouse_id', params.warehouse_id);
+        const q = qs.toString();
+        return unwrapList<StockCount>(await this.v1Fetch(`/stock-counts${q ? `?${q}` : ''}`, {}, 'Failed to load stock counts'));
+    }
+
+    /** Opens a draft count; expected quantities are snapshotted server-side. */
+    async createStockCount(dto: { warehouse_id: string; count_date: string; notes?: string }): Promise<StockCount> {
+        return this.v1Fetch('/stock-counts', { method: 'POST', json: dto }, 'Failed to start stock count');
+    }
+
+    async getStockCount(id: string): Promise<StockCount> {
+        return this.v1Fetch(`/stock-counts/${encodeURIComponent(id)}`, {}, 'Failed to load stock count');
+    }
+
+    /** Upserts counted lines while the count is a draft. */
+    async updateStockCount(id: string, dto: { lines?: StockCountLineInput[]; notes?: string }): Promise<StockCount> {
+        return this.v1Fetch(`/stock-counts/${encodeURIComponent(id)}`, { method: 'PATCH', json: dto }, 'Failed to save stock count');
+    }
+
+    /** Posts variances as reason-coded adjustments. 409 when already posted. */
+    async postStockCount(id: string): Promise<StockCount> {
+        return this.v1Fetch(`/stock-counts/${encodeURIComponent(id)}/post`, { method: 'POST' }, 'Failed to post stock count');
+    }
+
+    async getStockConversions(params?: { from?: string; to?: string }): Promise<StockConversion[]> {
+        const qs = new URLSearchParams();
+        if (params?.from) qs.set('from', params.from);
+        if (params?.to) qs.set('to', params.to);
+        const q = qs.toString();
+        return unwrapList<StockConversion>(await this.v1Fetch(`/stock-conversions${q ? `?${q}` : ''}`, {}, 'Failed to load conversions'));
+    }
+
+    async createStockConversion(dto: StockConversionInput): Promise<StockConversion> {
+        return this.v1Fetch('/stock-conversions', { method: 'POST', json: dto }, 'Failed to record conversion');
+    }
+
+    async getLossReasons(): Promise<LossReason[]> {
+        return unwrapList<LossReason>(await this.v1Fetch('/loss-reasons', {}, 'Failed to load loss reasons'));
+    }
+
+    async getLossSummary(params: { from: string; to: string; group_by: LossGroupBy }): Promise<LossSummary> {
+        const qs = new URLSearchParams({ from: params.from, to: params.to, group_by: params.group_by });
+        return this.v1Fetch(`/loss/summary?${qs.toString()}`, {}, 'Failed to load loss summary');
+    }
+
+    /** Exact barcode-or-SKU lookup; resolves null on 404. */
+    async getItemByCode(code: string): Promise<ScannedItem | null> {
+        try {
+            const res = await this.v1Fetch<any>(`/items/by-code/${encodeURIComponent(code)}`, {}, 'Lookup failed');
+            return toScannedItem(res);
+        } catch (e: any) {
+            if (e?.status === 404) return null;
+            throw e;
+        }
     }
 }
 

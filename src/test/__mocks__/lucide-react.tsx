@@ -26,6 +26,7 @@ export const Camera = createIcon('Camera');
 export const Car = createIcon('Car');
 export const Check = createIcon('Check');
 export const CheckCircle2 = createIcon('CheckCircle2');
+export const ClipboardCheck = createIcon('ClipboardCheck');
 export const ChevronDown = createIcon('ChevronDown');
 export const ChevronRight = createIcon('ChevronRight');
 export const ChevronUp = createIcon('ChevronUp');
