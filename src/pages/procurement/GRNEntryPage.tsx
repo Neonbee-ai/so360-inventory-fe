@@ -119,22 +119,22 @@ const GRNEntryPage = () => {
                 <h1 className="text-4xl font-bold bg-gradient-to-r from-violet-400 to-fuchsia-400 bg-clip-text text-transparent">
                     Goods Receipt Entry
                 </h1>
-                <p className="text-slate-400 mt-2 font-medium">Record incoming shipments and update stock levels against Purchase Orders.</p>
+                <p className="text-fg-muted mt-2 font-medium">Record incoming shipments and update stock levels against Purchase Orders.</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 {/* PO Selector */}
                 <div className="md:col-span-1 space-y-6">
-                    <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-6 backdrop-blur-sm">
-                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4 block">1. Select Purchase Order</label>
+                    <div className="bg-surface/50 border border-line rounded-3xl p-6 backdrop-blur-sm">
+                        <label className="text-xs font-bold text-fg-subtle uppercase tracking-wider mb-4 block">1. Select Purchase Order</label>
                         <div className="space-y-2 max-h-[400px] overflow-y-auto custom-scrollbar">
                             {pos.map(po => (
                                 <button
                                     key={po.id}
                                     onClick={() => handleSelectPo(po.id)}
                                     className={`w-full text-left p-4 rounded-2xl border transition-all ${selectedPo?.id === po.id
-                                            ? 'bg-blue-600/10 border-blue-500/50 text-blue-400'
-                                            : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'
+                                            ? 'bg-primary/10 border-primary/50 text-primary'
+                                            : 'bg-bg border-line text-fg-muted hover:border-line-strong'
                                         }`}
                                 >
                                     <div className="font-bold">#PO-{po.po_number || po.id.slice(0, 8).toUpperCase()}</div>
@@ -148,23 +148,23 @@ const GRNEntryPage = () => {
                 {/* Receipt Details */}
                 <div className="md:col-span-2 space-y-6">
                     {selectedPo ? (
-                        <form onSubmit={handleSubmit} className="bg-slate-900/50 border border-slate-800 rounded-3xl p-8 backdrop-blur-sm space-y-8 animate-in slide-in-from-right-4 duration-500">
+                        <form onSubmit={handleSubmit} className="bg-surface/50 border border-line rounded-3xl p-8 backdrop-blur-sm space-y-8 animate-in slide-in-from-right-4 duration-500">
                             <div className="grid grid-cols-2 gap-6">
                                 <div className="space-y-2">
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">GRN Number</label>
+                                    <label className="text-xs font-bold text-fg-subtle uppercase tracking-wider">GRN Number</label>
                                     <input
                                         required
                                         placeholder="e.g. GRN-2024-001"
-                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/50 transition-all font-mono"
+                                        className="w-full bg-bg border border-line rounded-xl px-4 py-3 text-fg focus:outline-none focus:ring-2 focus:ring-violet-500/50 transition-all font-mono"
                                         onChange={e => setGrnData({ ...grnData, grn_number: e.target.value })}
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Receiving Warehouse</label>
+                                    <label className="text-xs font-bold text-fg-subtle uppercase tracking-wider">Receiving Warehouse</label>
                                     <select
                                         required
                                         aria-label="Receiving Warehouse"
-                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/50 transition-all"
+                                        className="w-full bg-bg border border-line rounded-xl px-4 py-3 text-fg focus:outline-none focus:ring-2 focus:ring-violet-500/50 transition-all"
                                         onChange={e => setGrnData({ ...grnData, warehouse_id: e.target.value })}
                                     >
                                         <option value="">Select Warehouse</option>
@@ -172,58 +172,58 @@ const GRNEntryPage = () => {
                                     </select>
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Received Date</label>
+                                    <label className="text-xs font-bold text-fg-subtle uppercase tracking-wider">Received Date</label>
                                     <input
                                         type="date"
                                         value={grnData.received_date}
-                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/50 transition-all"
+                                        className="w-full bg-bg border border-line rounded-xl px-4 py-3 text-fg focus:outline-none focus:ring-2 focus:ring-violet-500/50 transition-all"
                                         onChange={e => setGrnData({ ...grnData, received_date: e.target.value })}
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Supplier Delivery Note</label>
+                                    <label className="text-xs font-bold text-fg-subtle uppercase tracking-wider">Supplier Delivery Note</label>
                                     <input
                                         type="text"
                                         placeholder="Challan / DN number"
                                         value={grnData.supplier_delivery_note}
-                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/50 transition-all"
+                                        className="w-full bg-bg border border-line rounded-xl px-4 py-3 text-fg focus:outline-none focus:ring-2 focus:ring-violet-500/50 transition-all"
                                         onChange={e => setGrnData({ ...grnData, supplier_delivery_note: e.target.value })}
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Vehicle Number</label>
+                                    <label className="text-xs font-bold text-fg-subtle uppercase tracking-wider">Vehicle Number</label>
                                     <input
                                         type="text"
                                         placeholder="e.g. KA-01-AB-1234"
                                         value={grnData.vehicle_number}
-                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/50 transition-all font-mono"
+                                        className="w-full bg-bg border border-line rounded-xl px-4 py-3 text-fg focus:outline-none focus:ring-2 focus:ring-violet-500/50 transition-all font-mono"
                                         onChange={e => setGrnData({ ...grnData, vehicle_number: e.target.value })}
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Transporter</label>
+                                    <label className="text-xs font-bold text-fg-subtle uppercase tracking-wider">Transporter</label>
                                     <input
                                         type="text"
                                         value={grnData.transporter}
-                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/50 transition-all"
+                                        className="w-full bg-bg border border-line rounded-xl px-4 py-3 text-fg focus:outline-none focus:ring-2 focus:ring-violet-500/50 transition-all"
                                         onChange={e => setGrnData({ ...grnData, transporter: e.target.value })}
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Gate Entry No.</label>
+                                    <label className="text-xs font-bold text-fg-subtle uppercase tracking-wider">Gate Entry No.</label>
                                     <input
                                         type="text"
                                         value={grnData.gate_entry_no}
-                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/50 transition-all font-mono"
+                                        className="w-full bg-bg border border-line rounded-xl px-4 py-3 text-fg focus:outline-none focus:ring-2 focus:ring-violet-500/50 transition-all font-mono"
                                         onChange={e => setGrnData({ ...grnData, gate_entry_no: e.target.value })}
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Quality Inspection</label>
+                                    <label className="text-xs font-bold text-fg-subtle uppercase tracking-wider">Quality Inspection</label>
                                     <select
                                         aria-label="Quality Inspection"
                                         value={grnData.inspection_status}
-                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/50 transition-all"
+                                        className="w-full bg-bg border border-line rounded-xl px-4 py-3 text-fg focus:outline-none focus:ring-2 focus:ring-violet-500/50 transition-all"
                                         onChange={e => setGrnData({ ...grnData, inspection_status: e.target.value })}
                                     >
                                         <option value="not_required">Not required</option>
@@ -236,15 +236,15 @@ const GRNEntryPage = () => {
                             </div>
 
                             <div className="space-y-4">
-                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">2. Verify Quantities</label>
+                                <label className="text-xs font-bold text-fg-subtle uppercase tracking-wider block">2. Verify Quantities</label>
                                 <div className="space-y-4">
                                     {receiptLines.map((line, idx) => (
-                                        <div key={idx} className="bg-slate-950 border border-slate-800 rounded-2xl p-4 space-y-4">
+                                        <div key={idx} className="bg-bg border border-line rounded-2xl p-4 space-y-4">
                                             <div className="flex items-center justify-between gap-6">
                                                 <div className="flex-1">
-                                                    <div className="font-semibold text-slate-200 uppercase tracking-tight text-sm">{line.description}</div>
-                                                    <div className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider font-bold">
-                                                        Ordered: {line.ordered} | Already received: {line.already_received} | Accepted now: <span className={acceptedQty(line) < 0 ? 'text-rose-400' : 'text-emerald-400'}>{acceptedQty(line)}</span>
+                                                    <div className="font-semibold text-fg uppercase tracking-tight text-sm">{line.description}</div>
+                                                    <div className="text-[10px] text-fg-subtle mt-1 uppercase tracking-wider font-bold">
+                                                        Ordered: {line.ordered} | Already received: {line.already_received} | Accepted now: <span className={acceptedQty(line) < 0 ? 'text-rose-400' : 'text-success'}>{acceptedQty(line)}</span>
                                                     </div>
                                                 </div>
                                                 <button
@@ -258,82 +258,82 @@ const GRNEntryPage = () => {
 
                                             <div className="grid grid-cols-3 gap-3">
                                                 <div className="space-y-1">
-                                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Received</label>
+                                                    <label className="text-[10px] font-bold text-fg-subtle uppercase tracking-wider">Received</label>
                                                     <input
                                                         type="number"
                                                         min="0"
                                                         aria-label={`Received quantity for ${line.description}`}
                                                         value={line.quantity_received}
                                                         onChange={e => updateLine(idx, 'quantity_received', e.target.value)}
-                                                        className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-center text-emerald-400 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                                                        className="w-full bg-surface border border-line rounded-lg px-3 py-2 text-center text-success font-bold focus:outline-none focus:ring-2 focus:ring-success/30"
                                                     />
                                                 </div>
                                                 <div className="space-y-1">
-                                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Rejected</label>
+                                                    <label className="text-[10px] font-bold text-fg-subtle uppercase tracking-wider">Rejected</label>
                                                     <input
                                                         type="number"
                                                         min="0"
                                                         aria-label={`Rejected quantity for ${line.description}`}
                                                         value={line.rejected_quantity}
                                                         onChange={e => updateLine(idx, 'rejected_quantity', e.target.value)}
-                                                        className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-center text-rose-400 font-bold focus:outline-none focus:ring-2 focus:ring-rose-500/30"
+                                                        className="w-full bg-surface border border-line rounded-lg px-3 py-2 text-center text-rose-400 font-bold focus:outline-none focus:ring-2 focus:ring-rose-500/30"
                                                     />
                                                 </div>
                                                 <div className="space-y-1">
-                                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Damaged</label>
+                                                    <label className="text-[10px] font-bold text-fg-subtle uppercase tracking-wider">Damaged</label>
                                                     <input
                                                         type="number"
                                                         min="0"
                                                         aria-label={`Damaged quantity for ${line.description}`}
                                                         value={line.damaged_quantity}
                                                         onChange={e => updateLine(idx, 'damaged_quantity', e.target.value)}
-                                                        className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-center text-amber-400 font-bold focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                                                        className="w-full bg-surface border border-line rounded-lg px-3 py-2 text-center text-warning font-bold focus:outline-none focus:ring-2 focus:ring-amber-500/30"
                                                     />
                                                 </div>
                                             </div>
 
                                             {line._expanded && (
-                                                <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-800/70 animate-in slide-in-from-top-2 duration-200">
+                                                <div className="grid grid-cols-2 gap-3 pt-2 border-t border-line/70 animate-in slide-in-from-top-2 duration-200">
                                                     <div className="space-y-1">
-                                                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Batch Number</label>
+                                                        <label className="text-[10px] font-bold text-fg-subtle uppercase tracking-wider">Batch Number</label>
                                                         <input
                                                             type="text"
                                                             aria-label={`Batch number for ${line.description}`}
                                                             value={line.batch_number}
                                                             onChange={e => updateLine(idx, 'batch_number', e.target.value)}
-                                                            className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/30 font-mono"
+                                                            className="w-full bg-surface border border-line rounded-lg px-3 py-2 text-sm text-fg focus:outline-none focus:ring-2 focus:ring-violet-500/30 font-mono"
                                                         />
                                                     </div>
                                                     <div className="space-y-1">
-                                                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Expiry Date</label>
+                                                        <label className="text-[10px] font-bold text-fg-subtle uppercase tracking-wider">Expiry Date</label>
                                                         <input
                                                             type="date"
                                                             aria-label={`Expiry date for ${line.description}`}
                                                             value={line.expiry_date}
                                                             onChange={e => updateLine(idx, 'expiry_date', e.target.value)}
-                                                            className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+                                                            className="w-full bg-surface border border-line rounded-lg px-3 py-2 text-sm text-fg focus:outline-none focus:ring-2 focus:ring-violet-500/30"
                                                         />
                                                     </div>
                                                     <div className="space-y-1">
-                                                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Serial Numbers</label>
+                                                        <label className="text-[10px] font-bold text-fg-subtle uppercase tracking-wider">Serial Numbers</label>
                                                         <input
                                                             type="text"
                                                             placeholder="Comma separated"
                                                             aria-label={`Serial numbers for ${line.description}`}
                                                             value={line.serial_numbers}
                                                             onChange={e => updateLine(idx, 'serial_numbers', e.target.value)}
-                                                            className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/30 font-mono"
+                                                            className="w-full bg-surface border border-line rounded-lg px-3 py-2 text-sm text-fg focus:outline-none focus:ring-2 focus:ring-violet-500/30 font-mono"
                                                         />
                                                     </div>
                                                     <div className="space-y-1">
-                                                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Rejection Reason</label>
+                                                        <label className="text-[10px] font-bold text-fg-subtle uppercase tracking-wider">Rejection Reason</label>
                                                         <input
                                                             type="text"
                                                             placeholder="Why units were rejected"
                                                             aria-label={`Rejection reason for ${line.description}`}
                                                             value={line.rejection_reason}
                                                             onChange={e => updateLine(idx, 'rejection_reason', e.target.value)}
-                                                            className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+                                                            className="w-full bg-surface border border-line rounded-lg px-3 py-2 text-sm text-fg focus:outline-none focus:ring-2 focus:ring-violet-500/30"
                                                         />
                                                     </div>
                                                 </div>
@@ -344,21 +344,21 @@ const GRNEntryPage = () => {
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Receipt Notes</label>
+                                <label className="text-xs font-bold text-fg-subtle uppercase tracking-wider">Receipt Notes</label>
                                 <textarea
                                     value={grnData.notes}
                                     placeholder="Condition of the shipment, discrepancies, remarks for the buyer..."
-                                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 h-20 text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/50 transition-all resize-none"
+                                    className="w-full bg-bg border border-line rounded-xl px-4 py-3 h-20 text-fg focus:outline-none focus:ring-2 focus:ring-violet-500/50 transition-all resize-none"
                                     onChange={e => setGrnData({ ...grnData, notes: e.target.value })}
                                 />
                             </div>
 
-                            <button type="submit" className="w-full py-4 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white rounded-2xl font-bold transition-all shadow-xl shadow-fuchsia-900/20 active:scale-[0.98]">
+                            <button type="submit" className="w-full py-4 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-primary-fg rounded-2xl font-bold transition-all shadow-xl shadow-fuchsia-900/20 active:scale-[0.98]">
                                 Post Goods Receipt
                             </button>
                         </form>
                     ) : (
-                        <div className="h-full flex flex-col items-center justify-center text-slate-500 border border-dashed border-slate-800 rounded-3xl p-12 bg-slate-900/10">
+                        <div className="h-full flex flex-col items-center justify-center text-fg-subtle border border-dashed border-line rounded-3xl p-12 bg-surface/10">
                             <span className="text-5xl mb-4 opacity-20">📦</span>
                             <p className="font-medium">Select a Purchase Order to start receiving goods.</p>
                         </div>

@@ -17,25 +17,25 @@ const CategoryIconLibrary: React.FC<CategoryIconLibraryProps> = ({ currentUrl, c
   const currentPresetId = currentUrl && isPresetUrl(currentUrl) ? getPresetId(currentUrl) : null;
 
   return (
-    <div className="border border-slate-800 rounded-xl overflow-hidden">
+    <div className="border border-line rounded-xl overflow-hidden">
       <button
         type="button"
         onClick={() => setOpen(v => !v)}
-        className="w-full flex items-center justify-between px-4 py-2.5 text-left hover:bg-slate-800/50 transition-colors"
+        className="w-full flex items-center justify-between px-4 py-2.5 text-left hover:bg-surface-raised/50 transition-colors"
       >
-        <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">Preset Icons</span>
+        <span className="text-xs font-medium text-fg-muted uppercase tracking-wider">Preset Icons</span>
         {open ? (
-          <ChevronUp size={14} className="text-slate-500" />
+          <ChevronUp size={14} className="text-fg-subtle" />
         ) : (
-          <ChevronDown size={14} className="text-slate-500" />
+          <ChevronDown size={14} className="text-fg-subtle" />
         )}
       </button>
 
       {open && (
-        <div className="px-4 pb-4 pt-1 bg-slate-900/30">
+        <div className="px-4 pb-4 pt-1 bg-surface/30">
           {GROUPS.map(group => (
             <div key={group} className="mb-3">
-              <p className="text-[10px] font-semibold text-slate-600 uppercase tracking-widest mb-2">{group}</p>
+              <p className="text-[10px] font-semibold text-fg-subtle uppercase tracking-widest mb-2">{group}</p>
               <div className="grid grid-cols-4 gap-2">
                 {PRESET_ICONS.filter(icon => icon.group === group).map(icon => {
                   const IconComp = icon.icon;
@@ -46,10 +46,10 @@ const CategoryIconLibrary: React.FC<CategoryIconLibraryProps> = ({ currentUrl, c
                       key={icon.id}
                       type="button"
                       onClick={() => onSelect(buildPresetUrl(icon.id))}
-                      className={`flex flex-col items-center gap-1 p-2 rounded-lg border transition-all hover:border-blue-500/50 hover:bg-slate-800/60 ${
+                      className={`flex flex-col items-center gap-1 p-2 rounded-lg border transition-all hover:border-primary/50 hover:bg-surface-raised/60 ${
                         isActive
-                          ? 'border-blue-500 bg-blue-500/10 ring-1 ring-blue-500'
-                          : 'border-slate-800 bg-slate-800/30'
+                          ? 'border-primary bg-primary/10 ring-1 ring-focus'
+                          : 'border-line bg-surface-raised/30'
                       }`}
                       title={icon.label}
                     >
@@ -57,9 +57,9 @@ const CategoryIconLibrary: React.FC<CategoryIconLibraryProps> = ({ currentUrl, c
                         className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
                         style={{ background: bg }}
                       >
-                        <IconComp size={16} className="text-slate-50" />
+                        <IconComp size={16} className="text-fg" />
                       </div>
-                      <span className="text-[10px] text-slate-500 leading-tight text-center truncate w-full">{icon.label}</span>
+                      <span className="text-[10px] text-fg-subtle leading-tight text-center truncate w-full">{icon.label}</span>
                     </button>
                   );
                 })}
@@ -67,7 +67,7 @@ const CategoryIconLibrary: React.FC<CategoryIconLibraryProps> = ({ currentUrl, c
             </div>
           ))}
 
-          <p className="text-[10px] text-slate-600 mt-2 text-center">
+          <p className="text-[10px] text-fg-subtle mt-2 text-center">
             Or upload a custom image ↑
           </p>
         </div>

@@ -17,10 +17,10 @@ const ImageThumbnail: React.FC<ImageThumbnailProps> = ({ url, isLoading, error, 
     const [assessment, setAssessment] = useState<ProductImageAssessment | null>(null);
 
     return (
-        <div className="relative group w-24 h-24 rounded-lg overflow-hidden border border-slate-700 bg-slate-800">
+        <div className="relative group w-24 h-24 rounded-lg overflow-hidden border border-line-strong bg-surface-raised">
             {isLoading ? (
                 <div className="w-full h-full flex items-center justify-center">
-                    <Loader2 size={20} className="text-blue-400 animate-spin" />
+                    <Loader2 size={20} className="text-primary animate-spin" />
                 </div>
             ) : error ? (
                 <div className="w-full h-full flex flex-col items-center justify-center p-2">
@@ -48,7 +48,7 @@ const ImageThumbnail: React.FC<ImageThumbnailProps> = ({ url, isLoading, error, 
                     data-testid="image-size-badge"
                     title={assessment.ok ? 'Good fit for store product cards' : assessment.issues.join('\n')}
                     className={`absolute bottom-0 inset-x-0 px-1 py-0.5 text-[9px] leading-tight text-center truncate ${
-                        assessment.ok ? 'bg-slate-900/80 text-slate-300' : 'bg-amber-500/90 text-slate-950 font-medium'
+                        assessment.ok ? 'bg-surface/80 text-fg-muted' : 'bg-warning/90 text-primary-fg font-medium'
                     }`}
                 >
                     {assessment.ok ? '' : '⚠ '}{assessment.size} · {assessment.ratio}
@@ -57,7 +57,7 @@ const ImageThumbnail: React.FC<ImageThumbnailProps> = ({ url, isLoading, error, 
             <button
                 type="button"
                 onClick={onRemove}
-                className="absolute top-1 right-1 w-5 h-5 rounded-full bg-slate-900/80 text-slate-300 hover:bg-rose-600 hover:text-slate-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
+                className="absolute top-1 right-1 w-5 h-5 rounded-full bg-surface/80 text-fg-muted hover:bg-rose-600 hover:text-fg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
             >
                 <X size={12} />
             </button>

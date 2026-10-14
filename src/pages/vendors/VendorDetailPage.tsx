@@ -181,8 +181,8 @@ const VendorDetailPage = () => {
     if (error || !vendor) return (
         <div className="p-8 text-center">
             <AlertCircle size={48} className="mx-auto text-rose-500 mb-4" />
-            <h2 className="text-2xl font-bold text-slate-50 mb-2">{error || 'Vendor not found'}</h2>
-            <button onClick={() => navigate('/vendors')} className="text-blue-400 hover:underline">Back to Vendors</button>
+            <h2 className="text-2xl font-bold text-fg mb-2">{error || 'Vendor not found'}</h2>
+            <button onClick={() => navigate('/vendors')} className="text-primary hover:underline">Back to Vendors</button>
         </div>
     );
 
@@ -192,7 +192,7 @@ const VendorDetailPage = () => {
         <div className="p-8">
             <button
                 onClick={() => navigate('/vendors')}
-                className="flex items-center gap-2 text-slate-400 hover:text-slate-50 mb-6 transition-colors group"
+                className="flex items-center gap-2 text-fg-muted hover:text-fg mb-6 transition-colors group"
             >
                 <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
                 Back to Vendors
@@ -201,10 +201,10 @@ const VendorDetailPage = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Vendor Info Card */}
                 <div className="lg:col-span-1 space-y-6">
-                    <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6 relative overflow-hidden">
+                    <div className="bg-surface/50 border border-line rounded-2xl p-6 relative overflow-hidden">
                         <div className="absolute top-0 right-0 p-4 flex items-center gap-2">
                             {profile?.is_preferred && (
-                                <span className="px-2 py-1 rounded text-[10px] uppercase font-bold border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+                                <span className="px-2 py-1 rounded text-[10px] uppercase font-bold border bg-success/10 text-success border-success/20">
                                     Preferred
                                 </span>
                             )}
@@ -212,14 +212,14 @@ const VendorDetailPage = () => {
                                 <>
                                     <button
                                         onClick={handleEditClick}
-                                        className="p-1.5 hover:bg-slate-800 rounded-lg transition-colors text-slate-400 hover:text-blue-400"
+                                        className="p-1.5 hover:bg-surface-raised rounded-lg transition-colors text-fg-muted hover:text-primary"
                                         title="Edit Vendor"
                                     >
                                         <Edit2 size={16} />
                                     </button>
                                     <button
                                         onClick={() => setShowDeleteConfirm(true)}
-                                        className="p-1.5 hover:bg-slate-800 rounded-lg transition-colors text-slate-400 hover:text-rose-400"
+                                        className="p-1.5 hover:bg-surface-raised rounded-lg transition-colors text-fg-muted hover:text-rose-400"
                                         title="Delete Vendor"
                                     >
                                         <Trash2 size={16} />
@@ -229,35 +229,35 @@ const VendorDetailPage = () => {
                         </div>
 
                         <div className="flex items-start gap-4 mb-8 mt-6">
-                            <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shadow-xl">
-                                <Building2 size={32} className="text-emerald-400" />
+                            <div className="w-16 h-16 rounded-2xl bg-success/10 flex items-center justify-center border border-success/20 shadow-xl">
+                                <Building2 size={32} className="text-success" />
                             </div>
                             <div className="pt-1">
-                                <h1 className="text-2xl font-bold text-slate-50 mb-1 leading-tight">{vendor.name}</h1>
-                                <span className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                                <h1 className="text-2xl font-bold text-fg mb-1 leading-tight">{vendor.name}</h1>
+                                <span className="text-xs font-bold uppercase tracking-widest text-fg-subtle">
                                     {profile?.classification || 'Supplier'}
                                 </span>
                             </div>
                         </div>
 
                         <div className="space-y-3">
-                            <div className="flex items-center gap-3 p-3 bg-slate-800/30 rounded-xl border border-slate-700/30">
-                                <Mail size={16} className="text-slate-400" />
-                                <span className="text-sm text-slate-50">{vendor.email || 'No email'}</span>
+                            <div className="flex items-center gap-3 p-3 bg-surface-raised/30 rounded-xl border border-line-strong/30">
+                                <Mail size={16} className="text-fg-muted" />
+                                <span className="text-sm text-fg">{vendor.email || 'No email'}</span>
                             </div>
-                            <div className="flex items-center gap-3 p-3 bg-slate-800/30 rounded-xl border border-slate-700/30">
-                                <Phone size={16} className="text-slate-400" />
-                                <span className="text-sm text-slate-50">{vendor.phone || 'No phone'}</span>
+                            <div className="flex items-center gap-3 p-3 bg-surface-raised/30 rounded-xl border border-line-strong/30">
+                                <Phone size={16} className="text-fg-muted" />
+                                <span className="text-sm text-fg">{vendor.phone || 'No phone'}</span>
                             </div>
-                            <div className="flex items-center gap-3 p-3 bg-slate-800/30 rounded-xl border border-slate-700/30">
-                                <MapPin size={16} className="text-slate-400" />
-                                <span className="text-sm text-slate-50">{vendor.address || 'No address'}</span>
+                            <div className="flex items-center gap-3 p-3 bg-surface-raised/30 rounded-xl border border-line-strong/30">
+                                <MapPin size={16} className="text-fg-muted" />
+                                <span className="text-sm text-fg">{vendor.address || 'No address'}</span>
                             </div>
                         </div>
                     </div>
 
                     {/* Rating Card */}
-                    <div className="bg-emerald-600 rounded-2xl p-6 text-white shadow-lg shadow-emerald-900/40">
+                    <div className="bg-success rounded-2xl p-6 text-primary-fg shadow-lg shadow-emerald-900/40">
                         <div className="flex items-center gap-2 mb-3">
                             <Star size={20} fill="currentColor" className="text-yellow-300" />
                             <span className="text-emerald-100 text-[10px] font-bold uppercase tracking-wider">Performance Rating</span>
@@ -277,7 +277,7 @@ const VendorDetailPage = () => {
                                         } ${
                                             isActive
                                                 ? 'text-yellow-300'
-                                                : 'text-emerald-300/30'
+                                                : 'text-success/30'
                                         } ${ratingLoading ? 'animate-pulse' : ''}`}
                                         onMouseEnter={() => can('suppliers.create') && !ratingLoading && setHoverRating(star)}
                                         onMouseLeave={() => setHoverRating(0)}
@@ -305,16 +305,16 @@ const VendorDetailPage = () => {
                 {/* Purchase Orders & Invoices */}
                 <div className="lg:col-span-2 space-y-6">
                     {/* Purchase Orders */}
-                    <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
+                    <div className="bg-surface/50 border border-line rounded-2xl p-6">
                         <div className="flex items-center gap-2 mb-6">
-                            <Package size={20} className="text-blue-400" />
-                            <h2 className="text-xl font-bold text-slate-50">Purchase Orders</h2>
+                            <Package size={20} className="text-primary" />
+                            <h2 className="text-xl font-bold text-fg">Purchase Orders</h2>
                         </div>
                         {vendor.purchase_orders && vendor.purchase_orders.length > 0 ? (
                             <div className="overflow-x-auto">
                                 <table className="w-full">
                                     <thead>
-                                        <tr className="text-left text-xs font-bold uppercase tracking-wider text-slate-500 border-b border-slate-800">
+                                        <tr className="text-left text-xs font-bold uppercase tracking-wider text-fg-subtle border-b border-line">
                                             <th className="pb-3">PO Number</th>
                                             <th className="pb-3">Status</th>
                                             <th className="pb-3">Date</th>
@@ -323,21 +323,21 @@ const VendorDetailPage = () => {
                                     </thead>
                                     <tbody>
                                         {vendor.purchase_orders.map((po) => (
-                                            <tr key={po.id} className="border-b border-slate-800/50 hover:bg-slate-800/20">
-                                                <td className="py-3 font-mono text-sm text-blue-400">{po.po_number}</td>
+                                            <tr key={po.id} className="border-b border-line/50 hover:bg-surface-raised/20">
+                                                <td className="py-3 font-mono text-sm text-primary">{po.po_number}</td>
                                                 <td className="py-3">
                                                     <span className={`px-2 py-1 rounded text-[10px] uppercase font-bold ${
-                                                        po.status === 'completed' ? 'bg-emerald-500/10 text-emerald-400' :
-                                                        po.status === 'pending' ? 'bg-amber-500/10 text-amber-400' :
-                                                        'bg-slate-500/10 text-slate-400'
+                                                        po.status === 'completed' ? 'bg-success/10 text-success' :
+                                                        po.status === 'pending' ? 'bg-warning/10 text-warning' :
+                                                        'bg-fg-subtle/10 text-fg-muted'
                                                     }`}>
                                                         {po.status}
                                                     </span>
                                                 </td>
-                                                <td className="py-3 text-slate-400 text-sm">
+                                                <td className="py-3 text-fg-muted text-sm">
                                                     {formatters.formatDate(po.created_at)}
                                                 </td>
-                                                <td className="py-3 text-right font-bold text-slate-50">
+                                                <td className="py-3 text-right font-bold text-fg">
                                                     {formatters.formatCurrency(po.total_amount ?? 0)}
                                                 </td>
                                             </tr>
@@ -346,7 +346,7 @@ const VendorDetailPage = () => {
                                 </table>
                             </div>
                         ) : (
-                            <div className="text-center py-8 text-slate-500">
+                            <div className="text-center py-8 text-fg-subtle">
                                 <Package size={48} className="mx-auto mb-4 opacity-50" />
                                 <p>No purchase orders yet</p>
                             </div>
@@ -354,16 +354,16 @@ const VendorDetailPage = () => {
                     </div>
 
                     {/* Invoices */}
-                    <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
+                    <div className="bg-surface/50 border border-line rounded-2xl p-6">
                         <div className="flex items-center justify-between mb-6">
                             <div className="flex items-center gap-2">
                                 <FileText size={20} className="text-purple-400" />
-                                <h2 className="text-xl font-bold text-slate-50">Vendor Invoices</h2>
+                                <h2 className="text-xl font-bold text-fg">Vendor Invoices</h2>
                             </div>
                             {can('suppliers.create') && (
                                 <button
                                     onClick={() => setIsInvoiceModalOpen(true)}
-                                    className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white text-sm font-semibold rounded-lg transition-all"
+                                    className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-primary-fg text-sm font-semibold rounded-lg transition-all"
                                 >
                                     <Plus size={16} /> Create Invoice
                                 </button>
@@ -373,7 +373,7 @@ const VendorDetailPage = () => {
                             <div className="overflow-x-auto">
                                 <table className="w-full">
                                     <thead>
-                                        <tr className="text-left text-xs font-bold uppercase tracking-wider text-slate-500 border-b border-slate-800">
+                                        <tr className="text-left text-xs font-bold uppercase tracking-wider text-fg-subtle border-b border-line">
                                             <th className="pb-3">Invoice</th>
                                             <th className="pb-3">Status</th>
                                             <th className="pb-3">Due Date</th>
@@ -383,22 +383,22 @@ const VendorDetailPage = () => {
                                     </thead>
                                     <tbody>
                                         {vendor.vendor_invoices.map((inv) => (
-                                            <tr key={inv.id} className="border-b border-slate-800/50 hover:bg-slate-800/20">
+                                            <tr key={inv.id} className="border-b border-line/50 hover:bg-surface-raised/20">
                                                 <td className="py-3 font-mono text-sm text-purple-400">{inv.invoice_number}</td>
                                                 <td className="py-3">
                                                     <span className={`px-2 py-1 rounded text-[10px] uppercase font-bold ${
-                                                        inv.status === 'paid' ? 'bg-emerald-500/10 text-emerald-400' :
-                                                        inv.status === 'pending' ? 'bg-amber-500/10 text-amber-400' :
+                                                        inv.status === 'paid' ? 'bg-success/10 text-success' :
+                                                        inv.status === 'pending' ? 'bg-warning/10 text-warning' :
                                                         inv.status === 'overdue' ? 'bg-rose-500/10 text-rose-400' :
-                                                        'bg-slate-500/10 text-slate-400'
+                                                        'bg-fg-subtle/10 text-fg-muted'
                                                     }`}>
                                                         {inv.status}
                                                     </span>
                                                 </td>
-                                                <td className="py-3 text-slate-400 text-sm">
+                                                <td className="py-3 text-fg-muted text-sm">
                                                     {inv.due_date ? formatters.formatDate(inv.due_date) : '--'}
                                                 </td>
-                                                <td className="py-3 text-right font-bold text-slate-50">
+                                                <td className="py-3 text-right font-bold text-fg">
                                                     {formatters.formatCurrency(inv.total_amount ?? 0)}
                                                 </td>
                                                 <td className="py-3 text-center">
@@ -414,7 +414,7 @@ const VendorDetailPage = () => {
                                                             <ExternalLink size={12} />
                                                         </a>
                                                     ) : (
-                                                        <span className="text-slate-600">--</span>
+                                                        <span className="text-fg-subtle">--</span>
                                                     )}
                                                 </td>
                                             </tr>
@@ -423,7 +423,7 @@ const VendorDetailPage = () => {
                                 </table>
                             </div>
                         ) : (
-                            <div className="text-center py-8 text-slate-500">
+                            <div className="text-center py-8 text-fg-subtle">
                                 <FileText size={48} className="mx-auto mb-4 opacity-50" />
                                 <p>No invoices yet</p>
                             </div>
@@ -447,58 +447,58 @@ const VendorDetailPage = () => {
                 onClose={() => setIsEditModalOpen(false)}
                 title="Edit Vendor"
             >
-                <form onSubmit={handleSaveEdit} className="space-y-4 text-slate-200">
+                <form onSubmit={handleSaveEdit} className="space-y-4 text-fg">
                     <div>
-                        <label className="block text-sm font-medium text-slate-400 mb-1.5">Vendor Name *</label>
+                        <label className="block text-sm font-medium text-fg-muted mb-1.5">Vendor Name *</label>
                         <input
                             required
                             type="text"
                             value={editForm.name}
                             onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                            className="w-full bg-surface-raised border border-line-strong rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-success/50"
                         />
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-slate-400 mb-1.5">Email</label>
+                            <label className="block text-sm font-medium text-fg-muted mb-1.5">Email</label>
                             <input
                                 type="email"
                                 value={editForm.email}
                                 onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                                className="w-full bg-surface-raised border border-line-strong rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-success/50"
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-slate-400 mb-1.5">Phone</label>
+                            <label className="block text-sm font-medium text-fg-muted mb-1.5">Phone</label>
                             <input
                                 type="tel"
                                 value={editForm.phone}
                                 onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                                className="w-full bg-surface-raised border border-line-strong rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-success/50"
                             />
                         </div>
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-400 mb-1.5">Address</label>
+                        <label className="block text-sm font-medium text-fg-muted mb-1.5">Address</label>
                         <textarea
                             value={editForm.address}
                             onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
-                            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 h-20 resize-none"
+                            className="w-full bg-surface-raised border border-line-strong rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-success/50 h-20 resize-none"
                         />
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-slate-400 mb-1.5">Classification</label>
+                            <label className="block text-sm font-medium text-fg-muted mb-1.5">Classification</label>
                             <select
                                 value={editForm.vendor_profile.classification}
                                 onChange={(e) => setEditForm({
                                     ...editForm,
                                     vendor_profile: { ...editForm.vendor_profile, classification: e.target.value }
                                 })}
-                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                                className="w-full bg-surface-raised border border-line-strong rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-success/50"
                             >
                                 <option value="supplier">Supplier</option>
                                 <option value="subcontractor">Subcontractor</option>
@@ -506,14 +506,14 @@ const VendorDetailPage = () => {
                             </select>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-slate-400 mb-1.5">Payment Terms</label>
+                            <label className="block text-sm font-medium text-fg-muted mb-1.5">Payment Terms</label>
                             <select
                                 value={editForm.vendor_profile.payment_terms}
                                 onChange={(e) => setEditForm({
                                     ...editForm,
                                     vendor_profile: { ...editForm.vendor_profile, payment_terms: e.target.value }
                                 })}
-                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                                className="w-full bg-surface-raised border border-line-strong rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-success/50"
                             >
                                 <option value="Net 15">Net 15</option>
                                 <option value="Net 30">Net 30</option>
@@ -532,9 +532,9 @@ const VendorDetailPage = () => {
                                 ...editForm,
                                 vendor_profile: { ...editForm.vendor_profile, is_preferred: e.target.checked }
                             })}
-                            className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-emerald-600 focus:ring-emerald-500/50"
+                            className="w-4 h-4 rounded border-line-strong bg-surface-raised text-emerald-600 focus:ring-success/50"
                         />
-                        <span className="text-sm text-slate-300 group-hover:text-slate-50 transition-colors">Mark as Preferred Vendor</span>
+                        <span className="text-sm text-fg-muted group-hover:text-fg transition-colors">Mark as Preferred Vendor</span>
                     </label>
 
                     <div className="flex gap-3 mt-8">
@@ -542,14 +542,14 @@ const VendorDetailPage = () => {
                             type="button"
                             onClick={() => setIsEditModalOpen(false)}
                             disabled={isSaving}
-                            className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-50 font-semibold py-2.5 rounded-lg transition-all"
+                            className="flex-1 bg-surface-raised hover:bg-line-strong text-fg font-semibold py-2.5 rounded-lg transition-all"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
                             disabled={isSaving}
-                            className="flex-1 bg-emerald-600 hover:bg-emerald-500 disabled:bg-emerald-600/50 text-white font-semibold py-2.5 rounded-lg transition-all shadow-lg shadow-emerald-900/20 flex items-center justify-center gap-2"
+                            className="flex-1 bg-success hover:bg-success disabled:bg-success/50 text-primary-fg font-semibold py-2.5 rounded-lg transition-all shadow-lg shadow-emerald-900/20 flex items-center justify-center gap-2"
                         >
                             {isSaving ? <><Loader2 size={18} className="animate-spin" /> Saving...</> : <><Save size={18} /> Save Changes</>}
                         </button>
@@ -559,20 +559,20 @@ const VendorDetailPage = () => {
 
             {/* Delete Confirmation */}
             {showDeleteConfirm && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[600]">
-                    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto shadow-2xl">
+                <div className="fixed inset-0 bg-overlay/60 backdrop-blur-sm flex items-center justify-center z-[600]">
+                    <div className="bg-surface border border-line rounded-2xl p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto shadow-2xl">
                         <div className="flex items-center gap-4 mb-4">
                             <div className="w-12 h-12 rounded-full bg-rose-500/10 flex items-center justify-center">
                                 <Trash2 size={24} className="text-rose-500" />
                             </div>
                             <div>
-                                <h3 className="text-lg font-bold text-slate-50">Delete Vendor</h3>
-                                <p className="text-slate-400 text-sm">This action cannot be undone</p>
+                                <h3 className="text-lg font-bold text-fg">Delete Vendor</h3>
+                                <p className="text-fg-muted text-sm">This action cannot be undone</p>
                             </div>
                         </div>
 
-                        <p className="text-slate-300 mb-6">
-                            Are you sure you want to delete <strong className="text-slate-50">{vendor.name}</strong>?
+                        <p className="text-fg-muted mb-6">
+                            Are you sure you want to delete <strong className="text-fg">{vendor.name}</strong>?
                             Vendors with purchase orders or invoices cannot be deleted.
                         </p>
 
@@ -580,14 +580,14 @@ const VendorDetailPage = () => {
                             <button
                                 onClick={() => setShowDeleteConfirm(false)}
                                 disabled={isDeleting}
-                                className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-50 font-semibold py-2.5 rounded-lg transition-all"
+                                className="flex-1 bg-surface-raised hover:bg-line-strong text-fg font-semibold py-2.5 rounded-lg transition-all"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={handleDeleteVendor}
                                 disabled={isDeleting}
-                                className="flex-1 bg-rose-600 hover:bg-rose-500 disabled:bg-rose-600/50 text-white font-semibold py-2.5 rounded-lg transition-all flex items-center justify-center gap-2"
+                                className="flex-1 bg-rose-600 hover:bg-rose-500 disabled:bg-rose-600/50 text-primary-fg font-semibold py-2.5 rounded-lg transition-all flex items-center justify-center gap-2"
                             >
                                 {isDeleting ? <><Loader2 size={18} className="animate-spin" /> Deleting...</> : <><Trash2 size={18} /> Delete</>}
                             </button>

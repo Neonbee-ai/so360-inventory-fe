@@ -236,8 +236,8 @@ const StockLocationsPage = () => {
         <div className="p-8">
             <header className="mb-8 flex items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-slate-50 tracking-tight">Warehouses</h1>
-                    <p className="text-slate-400 mt-1">Manage physical storage facilities and fulfillment centers</p>
+                    <h1 className="text-3xl font-bold text-fg tracking-tight">Warehouses</h1>
+                    <p className="text-fg-muted mt-1">Manage physical storage facilities and fulfillment centers</p>
                 </div>
                 {can('warehouses.create') && (
                     <FeatureGate state={createWarehouseState} loading={(shell?.effectiveFlagsLoaded === false)} onUpgradeClick={() => navigate('/org/billing')}>
@@ -253,7 +253,7 @@ const StockLocationsPage = () => {
                             onClick={() => !atWarehouseLimit && setIsCreateModalOpen(true)}
                             disabled={atWarehouseLimit}
                             title={atWarehouseLimit ? `Used ${whUsed} of ${whLimit} warehouses — upgrade your plan to add more` : undefined}
-                            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold transition-all shadow-lg active:scale-95 ${atWarehouseLimit ? 'bg-slate-700 text-slate-400 cursor-not-allowed shadow-none' : 'bg-blue-600 hover:bg-blue-500 text-slate-50 shadow-blue-900/20'}`}
+                            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold transition-all shadow-lg active:scale-95 ${atWarehouseLimit ? 'bg-line-strong text-fg-muted cursor-not-allowed shadow-none' : 'bg-primary hover:bg-primary-hover text-fg shadow-blue-900/20'}`}
                         >
                             <Plus size={20} />
                             New Warehouse
@@ -275,7 +275,7 @@ const StockLocationsPage = () => {
             )}
 
             {whLimit !== null && (
-                <p data-testid="warehouse-limit-banner" className="text-xs text-slate-500 mb-4">
+                <p data-testid="warehouse-limit-banner" className="text-xs text-fg-subtle mb-4">
                     {whUsed} of {whLimit} used
                 </p>
             )}
@@ -291,7 +291,7 @@ const StockLocationsPage = () => {
             )}
 
             {successMessage && (
-                <div className="mb-6 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-4 py-3 rounded-lg flex items-center gap-3">
+                <div className="mb-6 bg-success/10 border border-success/20 text-success px-4 py-3 rounded-lg flex items-center gap-3">
                     <span>{successMessage}</span>
                 </div>
             )}
@@ -301,33 +301,33 @@ const StockLocationsPage = () => {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {warehouses.map((wh) => (
-                        <div key={wh.id} className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6 hover:border-slate-700 transition-all group flex flex-col">
+                        <div key={wh.id} className="bg-surface/50 border border-line rounded-2xl p-6 hover:border-line-strong transition-all group flex flex-col">
                             <div className="flex items-start justify-between mb-4">
-                                <div className={`p-3 rounded-xl border bg-slate-800 border-slate-700 text-slate-400 group-hover:text-blue-400 group-hover:border-blue-500/30 transition-colors`}>
+                                <div className={`p-3 rounded-xl border bg-surface-raised border-line-strong text-fg-muted group-hover:text-primary group-hover:border-primary/30 transition-colors`}>
                                     <Home size={24} />
                                 </div>
-                                <span className="text-[10px] font-bold uppercase tracking-wider bg-slate-800 text-slate-500 border border-slate-700 px-2 py-1 rounded">
+                                <span className="text-[10px] font-bold uppercase tracking-wider bg-surface-raised text-fg-subtle border border-line-strong px-2 py-1 rounded">
                                     {wh.code}
                                 </span>
                             </div>
-                            <h3 className="text-xl font-bold text-slate-50 mb-1 uppercase tracking-tight">{wh.name}</h3>
-                            <p className="text-slate-500 text-xs mb-6 flex-grow uppercase font-bold tracking-widest">{wh.address || 'Address not set'}</p>
+                            <h3 className="text-xl font-bold text-fg mb-1 uppercase tracking-tight">{wh.name}</h3>
+                            <p className="text-fg-subtle text-xs mb-6 flex-grow uppercase font-bold tracking-widest">{wh.address || 'Address not set'}</p>
 
                             {/* Locations & Bins Mini View */}
                             <div className="space-y-3 mb-6">
-                                <label className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">Storage Layout</label>
+                                <label className="text-[10px] font-bold text-fg-subtle uppercase tracking-widest">Storage Layout</label>
                                 {(wh as any).warehouse_locations?.length > 0 ? (
                                     <div className="space-y-2">
                                         {(wh as any).warehouse_locations.map((loc: any) => (
-                                            <div key={loc.id} className="bg-slate-950/50 rounded-lg p-2 border border-slate-800/50">
-                                                <div className="text-[11px] font-bold text-slate-400 flex justify-between">
+                                            <div key={loc.id} className="bg-bg/50 rounded-lg p-2 border border-line/50">
+                                                <div className="text-[11px] font-bold text-fg-muted flex justify-between">
                                                     <span>📍 {loc.name}</span>
-                                                    <span className="text-slate-600">{loc.code}</span>
+                                                    <span className="text-fg-subtle">{loc.code}</span>
                                                 </div>
                                                 {loc.warehouse_bins?.length > 0 && (
                                                     <div className="mt-2 flex flex-wrap gap-1">
                                                         {loc.warehouse_bins.map((bin: any) => (
-                                                            <span key={bin.id} className="text-[9px] bg-blue-500/10 text-blue-400 px-1.5 py-0.5 rounded border border-blue-500/20">
+                                                            <span key={bin.id} className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded border border-primary/20">
                                                                 {bin.code}
                                                             </span>
                                                         ))}
@@ -337,18 +337,18 @@ const StockLocationsPage = () => {
                                         ))}
                                     </div>
                                 ) : (
-                                    <div className="text-[10px] text-slate-600 italic">No locations defined</div>
+                                    <div className="text-[10px] text-fg-subtle italic">No locations defined</div>
                                 )}
                             </div>
 
-                            <div className="flex items-center justify-between border-t border-slate-800 pt-4 mt-auto">
-                                <span className={`text-[10px] font-bold uppercase ${wh.is_active ? 'text-emerald-500' : 'text-slate-600'}`}>
+                            <div className="flex items-center justify-between border-t border-line pt-4 mt-auto">
+                                <span className={`text-[10px] font-bold uppercase ${wh.is_active ? 'text-success' : 'text-fg-subtle'}`}>
                                     {wh.is_active ? 'Operational' : 'Inactive'}
                                 </span>
                                 <div className="flex gap-4">
                                     <button
                                         onClick={() => navigate(`/inventory/warehouses/${wh.id}`)}
-                                        className="text-slate-400 hover:text-blue-400 text-[10px] font-bold uppercase tracking-widest transition-colors"
+                                        className="text-fg-muted hover:text-primary text-[10px] font-bold uppercase tracking-widest transition-colors"
                                     >
                                         View
                                     </button>
@@ -356,13 +356,13 @@ const StockLocationsPage = () => {
                                         <>
                                             <button
                                                 onClick={() => handleEditClick(wh)}
-                                                className="text-slate-400 hover:text-slate-50 text-[10px] font-bold uppercase tracking-widest transition-colors"
+                                                className="text-fg-muted hover:text-fg text-[10px] font-bold uppercase tracking-widest transition-colors"
                                             >
                                                 Edit
                                             </button>
                                             <button
                                                 onClick={() => setDeletingWarehouse(wh)}
-                                                className="text-slate-400 hover:text-rose-400 text-[10px] font-bold uppercase tracking-widest transition-colors"
+                                                className="text-fg-muted hover:text-rose-400 text-[10px] font-bold uppercase tracking-widest transition-colors"
                                             >
                                                 Delete
                                             </button>
@@ -383,9 +383,9 @@ const StockLocationsPage = () => {
                             onClick={() => !atWarehouseLimit && setIsCreateModalOpen(true)}
                             disabled={atWarehouseLimit}
                             title={atWarehouseLimit ? `Used ${whUsed} of ${whLimit} warehouses — upgrade your plan to add more` : undefined}
-                            className={`border-2 border-dashed rounded-2xl p-6 flex flex-col items-center justify-center transition-all gap-3 h-full min-h-[200px] ${atWarehouseLimit ? 'border-slate-800 text-slate-600 cursor-not-allowed' : 'border-slate-800 text-slate-500 hover:border-slate-400 hover:bg-slate-900/30'}`}
+                            className={`border-2 border-dashed rounded-2xl p-6 flex flex-col items-center justify-center transition-all gap-3 h-full min-h-[200px] ${atWarehouseLimit ? 'border-line text-fg-subtle cursor-not-allowed' : 'border-line text-fg-subtle hover:border-fg-subtle hover:bg-surface/30'}`}
                         >
-                            <div className="p-3 rounded-full bg-slate-800/50">
+                            <div className="p-3 rounded-full bg-surface-raised/50">
                                 <Plus size={24} />
                             </div>
                             <span className="font-semibold text-sm">Add New Warehouse</span>
@@ -400,38 +400,38 @@ const StockLocationsPage = () => {
                 onClose={() => setIsCreateModalOpen(false)}
                 title="Register New Warehouse"
             >
-                <form onSubmit={handleCreateWarehouse} className="space-y-4 text-slate-200">
+                <form onSubmit={handleCreateWarehouse} className="space-y-4 text-fg">
                     <div className="grid grid-cols-2 gap-4">
                         <div className="col-span-2">
-                            <label className="block text-sm font-medium text-slate-400 mb-1.5">Warehouse Name *</label>
+                            <label className="block text-sm font-medium text-fg-muted mb-1.5">Warehouse Name *</label>
                             <input
                                 type="text"
                                 value={newWarehouse.name}
                                 onChange={(e) => setNewWarehouse({ ...newWarehouse, name: e.target.value })}
-                                className={`w-full bg-slate-800 border ${showCreateErrors && createErrors.name ? 'border-rose-500/60' : 'border-slate-700'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50`}
+                                className={`w-full bg-surface-raised border ${showCreateErrors && createErrors.name ? 'border-rose-500/60' : 'border-line-strong'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-focus/50`}
                                 placeholder="e.g. Dubai South Hub"
                             />
                             <FieldErr show={showCreateErrors} message={createErrors.name} field="name" />
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-slate-400 mb-1.5">Short Code *</label>
+                            <label className="block text-sm font-medium text-fg-muted mb-1.5">Short Code *</label>
                             <input
                                 type="text"
                                 value={newWarehouse.code}
                                 onChange={(e) => setNewWarehouse({ ...newWarehouse, code: e.target.value.toUpperCase() })}
-                                className={`w-full bg-slate-800 border ${showCreateErrors && createErrors.code ? 'border-rose-500/60' : 'border-slate-700'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50 font-mono`}
+                                className={`w-full bg-surface-raised border ${showCreateErrors && createErrors.code ? 'border-rose-500/60' : 'border-line-strong'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-focus/50 font-mono`}
                                 placeholder="e.g. DXB-01"
                             />
                             <FieldErr show={showCreateErrors} message={createErrors.code} field="code" />
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-slate-400 mb-1.5">Warehouse Type</label>
+                            <label className="block text-sm font-medium text-fg-muted mb-1.5">Warehouse Type</label>
                             <select
                                 value={newWarehouse.warehouse_type}
                                 onChange={(e) => setNewWarehouse({ ...newWarehouse, warehouse_type: e.target.value })}
-                                className={`w-full bg-slate-800 border ${showCreateErrors && createErrors.warehouse_type ? 'border-rose-500/60' : 'border-slate-700'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-200`}
+                                className={`w-full bg-surface-raised border ${showCreateErrors && createErrors.warehouse_type ? 'border-rose-500/60' : 'border-line-strong'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-focus/50 text-fg`}
                             >
                                 <option value="general">General</option>
                                 <option value="distribution">Distribution</option>
@@ -443,72 +443,72 @@ const StockLocationsPage = () => {
                         </div>
 
                         <div className="col-span-2">
-                            <label className="block text-sm font-medium text-slate-400 mb-1.5">Street Address</label>
+                            <label className="block text-sm font-medium text-fg-muted mb-1.5">Street Address</label>
                             <input
                                 type="text"
                                 value={newWarehouse.address}
                                 onChange={(e) => setNewWarehouse({ ...newWarehouse, address: e.target.value })}
-                                className={`w-full bg-slate-800 border ${showCreateErrors && createErrors.address ? 'border-rose-500/60' : 'border-slate-700'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50`}
+                                className={`w-full bg-surface-raised border ${showCreateErrors && createErrors.address ? 'border-rose-500/60' : 'border-line-strong'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-focus/50`}
                                 placeholder="Street address"
                             />
                             <FieldErr show={showCreateErrors} message={createErrors.address} field="address" />
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-slate-400 mb-1.5">City</label>
+                            <label className="block text-sm font-medium text-fg-muted mb-1.5">City</label>
                             <input
                                 type="text"
                                 value={newWarehouse.city}
                                 onChange={(e) => setNewWarehouse({ ...newWarehouse, city: e.target.value })}
-                                className={`w-full bg-slate-800 border ${showCreateErrors && createErrors.city ? 'border-rose-500/60' : 'border-slate-700'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50`}
+                                className={`w-full bg-surface-raised border ${showCreateErrors && createErrors.city ? 'border-rose-500/60' : 'border-line-strong'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-focus/50`}
                                 placeholder="City"
                             />
                             <FieldErr show={showCreateErrors} message={createErrors.city} field="city" />
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-slate-400 mb-1.5">State / Region</label>
+                            <label className="block text-sm font-medium text-fg-muted mb-1.5">State / Region</label>
                             <input
                                 type="text"
                                 value={newWarehouse.state}
                                 onChange={(e) => setNewWarehouse({ ...newWarehouse, state: e.target.value })}
-                                className={`w-full bg-slate-800 border ${showCreateErrors && createErrors.state ? 'border-rose-500/60' : 'border-slate-700'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50`}
+                                className={`w-full bg-surface-raised border ${showCreateErrors && createErrors.state ? 'border-rose-500/60' : 'border-line-strong'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-focus/50`}
                                 placeholder="State / Province"
                             />
                             <FieldErr show={showCreateErrors} message={createErrors.state} field="state" />
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-slate-400 mb-1.5">Country</label>
+                            <label className="block text-sm font-medium text-fg-muted mb-1.5">Country</label>
                             <input
                                 type="text"
                                 value={newWarehouse.country}
                                 onChange={(e) => setNewWarehouse({ ...newWarehouse, country: e.target.value })}
-                                className={`w-full bg-slate-800 border ${showCreateErrors && createErrors.country ? 'border-rose-500/60' : 'border-slate-700'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50`}
+                                className={`w-full bg-surface-raised border ${showCreateErrors && createErrors.country ? 'border-rose-500/60' : 'border-line-strong'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-focus/50`}
                                 placeholder="Country"
                             />
                             <FieldErr show={showCreateErrors} message={createErrors.country} field="country" />
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-slate-400 mb-1.5">Contact Person</label>
+                            <label className="block text-sm font-medium text-fg-muted mb-1.5">Contact Person</label>
                             <input
                                 type="text"
                                 value={newWarehouse.contact_person}
                                 onChange={(e) => setNewWarehouse({ ...newWarehouse, contact_person: e.target.value })}
-                                className={`w-full bg-slate-800 border ${showCreateErrors && createErrors.contact_person ? 'border-rose-500/60' : 'border-slate-700'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50`}
+                                className={`w-full bg-surface-raised border ${showCreateErrors && createErrors.contact_person ? 'border-rose-500/60' : 'border-line-strong'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-focus/50`}
                                 placeholder="Manager / Supervisor name"
                             />
                             <FieldErr show={showCreateErrors} message={createErrors.contact_person} field="contact_person" />
                         </div>
 
                         <div className="col-span-2">
-                            <label className="block text-sm font-medium text-slate-400 mb-1.5">Contact Phone</label>
+                            <label className="block text-sm font-medium text-fg-muted mb-1.5">Contact Phone</label>
                             <input
                                 type="tel"
                                 value={newWarehouse.contact_phone}
                                 onChange={(e) => setNewWarehouse({ ...newWarehouse, contact_phone: e.target.value })}
-                                className={`w-full bg-slate-800 border ${showCreateErrors && createErrors.contact_phone ? 'border-rose-500/60' : 'border-slate-700'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50`}
+                                className={`w-full bg-surface-raised border ${showCreateErrors && createErrors.contact_phone ? 'border-rose-500/60' : 'border-line-strong'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-focus/50`}
                                 placeholder="+971 50 000 0000"
                             />
                             <FieldErr show={showCreateErrors} message={createErrors.contact_phone} field="contact_phone" />
@@ -520,14 +520,14 @@ const StockLocationsPage = () => {
                             type="button"
                             onClick={() => setIsCreateModalOpen(false)}
                             disabled={isCreating}
-                            className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-50 font-semibold py-2.5 rounded-lg transition-all"
+                            className="flex-1 bg-surface-raised hover:bg-line-strong text-fg font-semibold py-2.5 rounded-lg transition-all"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
                             disabled={isCreating}
-                            className="flex-1 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-600/50 text-white font-semibold py-2.5 rounded-lg transition-all shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2"
+                            className="flex-1 bg-primary hover:bg-primary-hover disabled:bg-primary/50 text-primary-fg font-semibold py-2.5 rounded-lg transition-all shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2"
                         >
                             {isCreating ? <><Loader2 size={18} className="animate-spin" /> Creating...</> : 'Register Warehouse'}
                         </button>
@@ -541,36 +541,36 @@ const StockLocationsPage = () => {
                 onClose={() => setEditingWarehouse(null)}
                 title="Edit Warehouse"
             >
-                <form onSubmit={handleSaveEdit} className="space-y-4 text-slate-200">
+                <form onSubmit={handleSaveEdit} className="space-y-4 text-fg">
                     <div className="grid grid-cols-2 gap-4">
                         <div className="col-span-2">
-                            <label className="block text-sm font-medium text-slate-400 mb-1.5">Warehouse Name *</label>
+                            <label className="block text-sm font-medium text-fg-muted mb-1.5">Warehouse Name *</label>
                             <input
                                 type="text"
                                 value={editForm.name}
                                 onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                                className={`w-full bg-slate-800 border ${showEditErrors && editErrors.name ? 'border-rose-500/60' : 'border-slate-700'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50`}
+                                className={`w-full bg-surface-raised border ${showEditErrors && editErrors.name ? 'border-rose-500/60' : 'border-line-strong'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-focus/50`}
                             />
                             <FieldErr show={showEditErrors} message={editErrors.name} field="name" />
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-slate-400 mb-1.5">Short Code *</label>
+                            <label className="block text-sm font-medium text-fg-muted mb-1.5">Short Code *</label>
                             <input
                                 type="text"
                                 value={editForm.code}
                                 onChange={(e) => setEditForm({ ...editForm, code: e.target.value.toUpperCase() })}
-                                className={`w-full bg-slate-800 border ${showEditErrors && editErrors.code ? 'border-rose-500/60' : 'border-slate-700'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50 font-mono`}
+                                className={`w-full bg-surface-raised border ${showEditErrors && editErrors.code ? 'border-rose-500/60' : 'border-line-strong'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-focus/50 font-mono`}
                             />
                             <FieldErr show={showEditErrors} message={editErrors.code} field="code" />
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-slate-400 mb-1.5">Warehouse Type</label>
+                            <label className="block text-sm font-medium text-fg-muted mb-1.5">Warehouse Type</label>
                             <select
                                 value={editForm.warehouse_type}
                                 onChange={(e) => setEditForm({ ...editForm, warehouse_type: e.target.value })}
-                                className={`w-full bg-slate-800 border ${showEditErrors && editErrors.warehouse_type ? 'border-rose-500/60' : 'border-slate-700'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-200`}
+                                className={`w-full bg-surface-raised border ${showEditErrors && editErrors.warehouse_type ? 'border-rose-500/60' : 'border-line-strong'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-focus/50 text-fg`}
                             >
                                 <option value="general">General</option>
                                 <option value="distribution">Distribution</option>
@@ -582,67 +582,67 @@ const StockLocationsPage = () => {
                         </div>
 
                         <div className="col-span-2">
-                            <label className="block text-sm font-medium text-slate-400 mb-1.5">Street Address</label>
+                            <label className="block text-sm font-medium text-fg-muted mb-1.5">Street Address</label>
                             <input
                                 type="text"
                                 value={editForm.address}
                                 onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
-                                className={`w-full bg-slate-800 border ${showEditErrors && editErrors.address ? 'border-rose-500/60' : 'border-slate-700'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50`}
+                                className={`w-full bg-surface-raised border ${showEditErrors && editErrors.address ? 'border-rose-500/60' : 'border-line-strong'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-focus/50`}
                             />
                             <FieldErr show={showEditErrors} message={editErrors.address} field="address" />
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-slate-400 mb-1.5">City</label>
+                            <label className="block text-sm font-medium text-fg-muted mb-1.5">City</label>
                             <input
                                 type="text"
                                 value={editForm.city}
                                 onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
-                                className={`w-full bg-slate-800 border ${showEditErrors && editErrors.city ? 'border-rose-500/60' : 'border-slate-700'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50`}
+                                className={`w-full bg-surface-raised border ${showEditErrors && editErrors.city ? 'border-rose-500/60' : 'border-line-strong'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-focus/50`}
                             />
                             <FieldErr show={showEditErrors} message={editErrors.city} field="city" />
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-slate-400 mb-1.5">State / Region</label>
+                            <label className="block text-sm font-medium text-fg-muted mb-1.5">State / Region</label>
                             <input
                                 type="text"
                                 value={editForm.state}
                                 onChange={(e) => setEditForm({ ...editForm, state: e.target.value })}
-                                className={`w-full bg-slate-800 border ${showEditErrors && editErrors.state ? 'border-rose-500/60' : 'border-slate-700'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50`}
+                                className={`w-full bg-surface-raised border ${showEditErrors && editErrors.state ? 'border-rose-500/60' : 'border-line-strong'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-focus/50`}
                             />
                             <FieldErr show={showEditErrors} message={editErrors.state} field="state" />
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-slate-400 mb-1.5">Country</label>
+                            <label className="block text-sm font-medium text-fg-muted mb-1.5">Country</label>
                             <input
                                 type="text"
                                 value={editForm.country}
                                 onChange={(e) => setEditForm({ ...editForm, country: e.target.value })}
-                                className={`w-full bg-slate-800 border ${showEditErrors && editErrors.country ? 'border-rose-500/60' : 'border-slate-700'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50`}
+                                className={`w-full bg-surface-raised border ${showEditErrors && editErrors.country ? 'border-rose-500/60' : 'border-line-strong'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-focus/50`}
                             />
                             <FieldErr show={showEditErrors} message={editErrors.country} field="country" />
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-slate-400 mb-1.5">Contact Person</label>
+                            <label className="block text-sm font-medium text-fg-muted mb-1.5">Contact Person</label>
                             <input
                                 type="text"
                                 value={editForm.contact_person}
                                 onChange={(e) => setEditForm({ ...editForm, contact_person: e.target.value })}
-                                className={`w-full bg-slate-800 border ${showEditErrors && editErrors.contact_person ? 'border-rose-500/60' : 'border-slate-700'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50`}
+                                className={`w-full bg-surface-raised border ${showEditErrors && editErrors.contact_person ? 'border-rose-500/60' : 'border-line-strong'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-focus/50`}
                             />
                             <FieldErr show={showEditErrors} message={editErrors.contact_person} field="contact_person" />
                         </div>
 
                         <div className="col-span-2">
-                            <label className="block text-sm font-medium text-slate-400 mb-1.5">Contact Phone</label>
+                            <label className="block text-sm font-medium text-fg-muted mb-1.5">Contact Phone</label>
                             <input
                                 type="tel"
                                 value={editForm.contact_phone}
                                 onChange={(e) => setEditForm({ ...editForm, contact_phone: e.target.value })}
-                                className={`w-full bg-slate-800 border ${showEditErrors && editErrors.contact_phone ? 'border-rose-500/60' : 'border-slate-700'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50`}
+                                className={`w-full bg-surface-raised border ${showEditErrors && editErrors.contact_phone ? 'border-rose-500/60' : 'border-line-strong'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-focus/50`}
                             />
                             <FieldErr show={showEditErrors} message={editErrors.contact_phone} field="contact_phone" />
                         </div>
@@ -653,9 +653,9 @@ const StockLocationsPage = () => {
                             type="checkbox"
                             checked={editForm.is_active}
                             onChange={(e) => setEditForm({ ...editForm, is_active: e.target.checked })}
-                            className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-blue-600 focus:ring-blue-500/50"
+                            className="w-4 h-4 rounded border-line-strong bg-surface-raised text-primary focus:ring-focus/50"
                         />
-                        <span className="text-sm text-slate-300 group-hover:text-slate-50 transition-colors">Active / Operational</span>
+                        <span className="text-sm text-fg-muted group-hover:text-fg transition-colors">Active / Operational</span>
                     </label>
 
                     <div className="flex gap-3 mt-8">
@@ -663,14 +663,14 @@ const StockLocationsPage = () => {
                             type="button"
                             onClick={() => setEditingWarehouse(null)}
                             disabled={isSaving}
-                            className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-50 font-semibold py-2.5 rounded-lg transition-all"
+                            className="flex-1 bg-surface-raised hover:bg-line-strong text-fg font-semibold py-2.5 rounded-lg transition-all"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
                             disabled={isSaving}
-                            className="flex-1 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-600/50 text-white font-semibold py-2.5 rounded-lg transition-all shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2"
+                            className="flex-1 bg-primary hover:bg-primary-hover disabled:bg-primary/50 text-primary-fg font-semibold py-2.5 rounded-lg transition-all shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2"
                         >
                             {isSaving ? <><Loader2 size={18} className="animate-spin" /> Saving...</> : <><Save size={18} /> Save Changes</>}
                         </button>
@@ -680,20 +680,20 @@ const StockLocationsPage = () => {
 
             {/* Delete Confirmation */}
             {deletingWarehouse && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[600]">
-                    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto shadow-2xl">
+                <div className="fixed inset-0 bg-overlay/60 backdrop-blur-sm flex items-center justify-center z-[600]">
+                    <div className="bg-surface border border-line rounded-2xl p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto shadow-2xl">
                         <div className="flex items-center gap-4 mb-4">
                             <div className="w-12 h-12 rounded-full bg-rose-500/10 flex items-center justify-center">
                                 <Trash2 size={24} className="text-rose-500" />
                             </div>
                             <div>
-                                <h3 className="text-lg font-bold text-slate-50">Delete Warehouse</h3>
-                                <p className="text-slate-400 text-sm">This action cannot be undone</p>
+                                <h3 className="text-lg font-bold text-fg">Delete Warehouse</h3>
+                                <p className="text-fg-muted text-sm">This action cannot be undone</p>
                             </div>
                         </div>
 
-                        <p className="text-slate-300 mb-6">
-                            Are you sure you want to delete <strong className="text-slate-50">{deletingWarehouse.name}</strong>?
+                        <p className="text-fg-muted mb-6">
+                            Are you sure you want to delete <strong className="text-fg">{deletingWarehouse.name}</strong>?
                             Warehouses with stock cannot be deleted.
                         </p>
 
@@ -701,14 +701,14 @@ const StockLocationsPage = () => {
                             <button
                                 onClick={() => setDeletingWarehouse(null)}
                                 disabled={isDeleting}
-                                className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-50 font-semibold py-2.5 rounded-lg transition-all"
+                                className="flex-1 bg-surface-raised hover:bg-line-strong text-fg font-semibold py-2.5 rounded-lg transition-all"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={handleDeleteWarehouse}
                                 disabled={isDeleting}
-                                className="flex-1 bg-rose-600 hover:bg-rose-500 disabled:bg-rose-600/50 text-white font-semibold py-2.5 rounded-lg transition-all flex items-center justify-center gap-2"
+                                className="flex-1 bg-rose-600 hover:bg-rose-500 disabled:bg-rose-600/50 text-primary-fg font-semibold py-2.5 rounded-lg transition-all flex items-center justify-center gap-2"
                             >
                                 {isDeleting ? <><Loader2 size={18} className="animate-spin" /> Deleting...</> : <><Trash2 size={18} /> Delete</>}
                             </button>

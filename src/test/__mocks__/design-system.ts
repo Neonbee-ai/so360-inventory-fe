@@ -70,3 +70,13 @@ export const DepartmentSelector = ({ value, onChange, placeholder = 'Select depa
   },
     React.createElement('option', { value: '' }, placeholder),
     React.createElement('option', { value: 'dept-1' }, 'Operations'));
+
+/**
+ * Test stand-in for the Comb `useConfirm` hook: resolves from window.confirm so
+ * specs can drive confirm / cancel with vi.spyOn(window, 'confirm').
+ */
+export const useConfirm = () =>
+  [
+    async (opts: { title?: string; message?: any }) => window.confirm(String(opts?.message ?? opts?.title ?? '')),
+    null,
+  ] as const;

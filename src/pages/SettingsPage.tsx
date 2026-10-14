@@ -6,6 +6,7 @@ import { useAuth } from '../hooks/useAuth';
 import CategoryTreeView from '../components/categories/CategoryTreeView';
 import { buildCategoryTree } from '../utils/categoryTree';
 import ItemAttributeSettingsSection from '../components/settings/ItemAttributeSettingsSection';
+import { useConfirm } from '@so360/design-system';
 
 interface UomItem {
     id: string;
@@ -29,6 +30,7 @@ interface InventorySettingsData {
 }
 
 const SettingsPage = () => {
+    const [confirm, confirmDialog] = useConfirm();
     const navigate = useNavigate();
     const { can } = useAuth();
     const [settings, setSettings] = useState<InventorySettingsData | null>(null);
@@ -111,7 +113,7 @@ const SettingsPage = () => {
     };
 
     const handleDeleteUom = async (id: string) => {
-        if (!confirm('Are you sure you want to delete this unit of measure?')) return;
+        if (!(await confirm({ title: 'Delete', message: 'Are you sure you want to delete this unit of measure?', intent: 'danger', confirmLabel: 'Delete' }))) return;
         setError(null);
         try {
             await inventoryService.deleteUom(id);
@@ -143,7 +145,7 @@ const SettingsPage = () => {
     };
 
     const handleDeleteCategory = async (id: string) => {
-        if (!confirm('Are you sure you want to delete this category?')) return;
+        if (!(await confirm({ title: 'Delete', message: 'Are you sure you want to delete this category?', intent: 'danger', confirmLabel: 'Delete' }))) return;
         setError(null);
         try {
             await inventoryService.deleteCategory(id);
@@ -155,15 +157,16 @@ const SettingsPage = () => {
         }
     };
 
-    if (isLoading) return <div className="p-8"><div className="animate-pulse text-slate-500">Loading settings...</div></div>;
+    if (isLoading) return <div className="p-8"><div className="animate-pulse text-fg-subtle">Loading settings...</div></div>;
 
     return (
         <div className="p-8">
+            {confirmDialog}
             <header className="mb-8">
-                <h1 className="text-3xl font-bold text-slate-50 tracking-tight flex items-center gap-3">
-                    <Settings className="text-slate-400" /> Inventory Settings
+                <h1 className="text-3xl font-bold text-fg tracking-tight flex items-center gap-3">
+                    <Settings className="text-fg-muted" /> Inventory Settings
                 </h1>
-                <p className="text-slate-400 mt-1">Configure units, categories, and module defaults</p>
+                <p className="text-fg-muted mt-1">Configure units, categories, and module defaults</p>
             </header>
 
             {error && (
@@ -174,7 +177,7 @@ const SettingsPage = () => {
             )}
 
             {success && (
-                <div className="mb-6 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-4 py-3 rounded-lg flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
+                <div className="mb-6 bg-success/10 border border-success/20 text-success px-4 py-3 rounded-lg flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
                     <CheckCircle2 size={18} />
                     <span>Settings updated successfully</span>
                 </div>
@@ -182,13 +185,13 @@ const SettingsPage = () => {
 
             <div className="space-y-6">
                 {/* Units of Measure */}
-                <section className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
-                    <h2 className="text-lg font-bold text-slate-50 mb-4 flex items-center gap-2">
-                        <Box size={20} className="text-blue-500" /> Units of Measure (UoM)
+                <section className="bg-surface/50 border border-line rounded-2xl p-6">
+                    <h2 className="text-lg font-bold text-fg mb-4 flex items-center gap-2">
+                        <Box size={20} className="text-primary" /> Units of Measure (UoM)
                     </h2>
                     <div className="flex flex-wrap gap-2">
                         {settings?.uoms.map((uom: UomItem) => (
-                            <div key={uom.id} className="bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-lg text-sm text-slate-300 flex items-center gap-2 group">
+                            <div key={uom.id} className="bg-surface-raised border border-line-strong px-3 py-1.5 rounded-lg text-sm text-fg-muted flex items-center gap-2 group">
                                 <span>{uom.name} ({uom.abbreviation})</span>
                                 {can('items.update') && (
                                     <button
@@ -207,25 +210,25 @@ const SettingsPage = () => {
                                     placeholder="Name"
                                     value={newUomName}
                                     onChange={(e) => setNewUomName(e.target.value)}
-                                    className="bg-slate-800 border border-slate-600 px-2 py-1 rounded text-sm text-slate-50 w-24"
+                                    className="bg-surface-raised border border-line-strong px-2 py-1 rounded text-sm text-fg w-24"
                                 />
                                 <input
                                     type="text"
                                     placeholder="Abbr"
                                     value={newUomAbbr}
                                     onChange={(e) => setNewUomAbbr(e.target.value)}
-                                    className="bg-slate-800 border border-slate-600 px-2 py-1 rounded text-sm text-slate-50 w-16"
+                                    className="bg-surface-raised border border-line-strong px-2 py-1 rounded text-sm text-fg w-16"
                                 />
                                 <button
                                     onClick={handleAddUom}
                                     disabled={addingUom}
-                                    className="bg-blue-600 hover:bg-blue-500 text-white px-2 py-1 rounded text-sm disabled:opacity-50"
+                                    className="bg-primary hover:bg-primary-hover text-primary-fg px-2 py-1 rounded text-sm disabled:opacity-50"
                                 >
                                     {addingUom ? '...' : 'Add'}
                                 </button>
                                 <button
                                     onClick={() => setShowAddUom(false)}
-                                    className="text-slate-400 hover:text-slate-50"
+                                    className="text-fg-muted hover:text-fg"
                                 >
                                     <X size={16} />
                                 </button>
@@ -233,18 +236,18 @@ const SettingsPage = () => {
                         ) : (
                             <button
                                 onClick={() => setShowAddUom(true)}
-                                className="border border-dashed border-slate-700 px-3 py-1.5 rounded-lg text-sm text-slate-500 hover:text-slate-400 hover:border-slate-500 transition-all flex items-center gap-1"
+                                className="border border-dashed border-line-strong px-3 py-1.5 rounded-lg text-sm text-fg-subtle hover:text-fg-muted hover:border-line-strong transition-all flex items-center gap-1"
                             >
                                 <Plus size={14} /> Add Unit
                             </button>
                         )}
                     </div>
-                    <p className="mt-4 text-xs text-slate-500 italic">Define standard units for stocks and services (e.g., Pcs, KG, Hrs)</p>
+                    <p className="mt-4 text-xs text-fg-subtle italic">Define standard units for stocks and services (e.g., Pcs, KG, Hrs)</p>
                 </section>
 
                 {/* Categories */}
-                <section className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
-                    <h2 className="text-lg font-bold text-slate-50 mb-4 flex items-center gap-2">
+                <section className="bg-surface/50 border border-line rounded-2xl p-6">
+                    <h2 className="text-lg font-bold text-fg mb-4 flex items-center gap-2">
                         <Tag size={20} className="text-purple-500" /> Item Categories
                     </h2>
                     <CategoryTreeView
@@ -288,11 +291,11 @@ const SettingsPage = () => {
                 </section>
 
                 {/* Item Attributes */}
-                <section className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
-                    <h2 className="text-lg font-bold text-slate-50 mb-2 flex items-center gap-2">
-                        <ListFilter size={20} className="text-emerald-500" /> Item Attributes
+                <section className="bg-surface/50 border border-line rounded-2xl p-6">
+                    <h2 className="text-lg font-bold text-fg mb-2 flex items-center gap-2">
+                        <ListFilter size={20} className="text-success" /> Item Attributes
                     </h2>
-                    <p className="text-sm text-slate-500 mb-4">Define custom attributes per category (e.g. Material, Finish, Shelf Life). Values are stored as flexible metadata on each item.</p>
+                    <p className="text-sm text-fg-subtle mb-4">Define custom attributes per category (e.g. Material, Finish, Shelf Life). Values are stored as flexible metadata on each item.</p>
                     <ItemAttributeSettingsSection
                         categories={settings?.categories || []}
                         canManage={can('items.update')}
@@ -300,53 +303,53 @@ const SettingsPage = () => {
                 </section>
 
                 {/* Product Types */}
-                <section className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
-                    <h2 className="text-lg font-bold text-slate-50 mb-2 flex items-center gap-2">
-                        <Sliders size={20} className="text-blue-500" /> Product Types
+                <section className="bg-surface/50 border border-line rounded-2xl p-6">
+                    <h2 className="text-lg font-bold text-fg mb-2 flex items-center gap-2">
+                        <Sliders size={20} className="text-primary" /> Product Types
                     </h2>
-                    <p className="text-sm text-slate-500 mb-4">Define product type templates with custom attribute fields (e.g. Electronics, Clothing)</p>
+                    <p className="text-sm text-fg-subtle mb-4">Define product type templates with custom attribute fields (e.g. Electronics, Clothing)</p>
                     <button
                         onClick={() => navigate('/inventory/settings/product-types')}
-                        className="w-full flex items-center justify-between p-4 bg-slate-800/30 rounded-xl border border-slate-700/50 hover:border-slate-600 hover:bg-slate-800/50 transition-all group"
+                        className="w-full flex items-center justify-between p-4 bg-surface-raised/30 rounded-xl border border-line-strong/50 hover:border-line-strong hover:bg-surface-raised/50 transition-all group"
                     >
                         <div className="text-left">
-                            <p className="text-sm font-semibold text-slate-200">Manage Product Types</p>
-                            <p className="text-xs text-slate-500">View system templates, create custom types, define attribute schemas</p>
+                            <p className="text-sm font-semibold text-fg">Manage Product Types</p>
+                            <p className="text-xs text-fg-subtle">View system templates, create custom types, define attribute schemas</p>
                         </div>
-                        <ChevronRight size={18} className="text-slate-600 group-hover:text-slate-400 transition-colors" />
+                        <ChevronRight size={18} className="text-fg-subtle group-hover:text-fg-muted transition-colors" />
                     </button>
                 </section>
 
                 {/* Integration Rules */}
-                <section className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
-                    <h2 className="text-lg font-bold text-slate-50 mb-4 flex items-center gap-2">
+                <section className="bg-surface/50 border border-line rounded-2xl p-6">
+                    <h2 className="text-lg font-bold text-fg mb-4 flex items-center gap-2">
                         <MapPin size={20} className="text-amber-500" /> Default Logic
                     </h2>
                     <div className="space-y-4">
-                        <div className="flex items-center justify-between p-4 bg-slate-800/30 rounded-xl border border-slate-700/50">
+                        <div className="flex items-center justify-between p-4 bg-surface-raised/30 rounded-xl border border-line-strong/50">
                             <div>
-                                <p className="text-sm font-semibold text-slate-200">Enforce Negative Stock Prevention</p>
-                                <p className="text-xs text-slate-500">Block transactions if available quantity would drop below zero</p>
+                                <p className="text-sm font-semibold text-fg">Enforce Negative Stock Prevention</p>
+                                <p className="text-xs text-fg-subtle">Block transactions if available quantity would drop below zero</p>
                             </div>
                             <button
                                 type="button"
                                 disabled={togglingLogic}
                                 onClick={() => handleToggleLogic('allow_negative_stock', !allowNegativeStock)}
-                                className={`w-12 h-6 rounded-full relative transition-colors disabled:opacity-50 ${allowNegativeStock ? 'bg-blue-600' : 'bg-slate-700'}`}
+                                className={`w-12 h-6 rounded-full relative transition-colors disabled:opacity-50 ${allowNegativeStock ? 'bg-primary' : 'bg-line-strong'}`}
                             >
                                 <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${allowNegativeStock ? 'right-1' : 'left-1'}`} />
                             </button>
                         </div>
-                        <div className="flex items-center justify-between p-4 bg-slate-800/30 rounded-xl border border-slate-700/50">
+                        <div className="flex items-center justify-between p-4 bg-surface-raised/30 rounded-xl border border-line-strong/50">
                             <div>
-                                <p className="text-sm font-semibold text-slate-200">Auto-approve Transfers</p>
-                                <p className="text-xs text-slate-500">Mark transfers as Completed immediately after submission</p>
+                                <p className="text-sm font-semibold text-fg">Auto-approve Transfers</p>
+                                <p className="text-xs text-fg-subtle">Mark transfers as Completed immediately after submission</p>
                             </div>
                             <button
                                 type="button"
                                 disabled={togglingLogic}
                                 onClick={() => handleToggleLogic('auto_approve_transfers', !autoApproveTransfers)}
-                                className={`w-12 h-6 rounded-full relative transition-colors disabled:opacity-50 ${autoApproveTransfers ? 'bg-blue-600' : 'bg-slate-700'}`}
+                                className={`w-12 h-6 rounded-full relative transition-colors disabled:opacity-50 ${autoApproveTransfers ? 'bg-primary' : 'bg-line-strong'}`}
                             >
                                 <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${autoApproveTransfers ? 'right-1' : 'left-1'}`} />
                             </button>
@@ -355,8 +358,8 @@ const SettingsPage = () => {
                 </section>
             </div>
 
-            <div className="mt-10 p-4 bg-slate-900/40 border border-slate-800/50 rounded-2xl">
-                <p className="text-xs text-slate-500 leading-relaxed text-center">
+            <div className="mt-10 p-4 bg-surface/40 border border-line/50 rounded-2xl">
+                <p className="text-xs text-fg-subtle leading-relaxed text-center">
                     Note: These settings apply globally to the <b>{inventoryService ? 'Neonbee' : ''} Inventory</b>.
                     Changes may affect ledger calculations and historical reporting.
                 </p>

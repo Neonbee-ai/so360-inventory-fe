@@ -30,10 +30,10 @@ const PARTY_REQUIRED_SOURCES = new Set(['supplier', 'vendor', 'customer']);
  * distinct colours rather than a shared grey row that has to be read carefully.
  */
 const MOVEMENT_BADGES: Record<string, { label: string; className: string }> = {
-    transfer: { label: 'TRANSFER', className: 'bg-blue-500/10 text-blue-400 border-blue-500/30' },
-    adjustment: { label: 'ADJUSTMENT', className: 'bg-amber-500/10 text-amber-400 border-amber-500/30' },
-    inbound: { label: 'RECEIPT', className: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' },
-    purchase_receipt: { label: 'RECEIPT', className: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' },
+    transfer: { label: 'TRANSFER', className: 'bg-primary/10 text-primary border-primary/30' },
+    adjustment: { label: 'ADJUSTMENT', className: 'bg-warning/10 text-warning border-warning/30' },
+    inbound: { label: 'RECEIPT', className: 'bg-success/10 text-success border-success/30' },
+    purchase_receipt: { label: 'RECEIPT', className: 'bg-success/10 text-success border-success/30' },
     outbound: { label: 'ISSUE', className: 'bg-rose-500/10 text-rose-400 border-rose-500/30' },
     sales_issue: { label: 'ISSUE', className: 'bg-rose-500/10 text-rose-400 border-rose-500/30' },
     production: { label: 'PRODUCTION', className: 'bg-purple-500/10 text-purple-400 border-purple-500/30' },
@@ -45,7 +45,7 @@ const MOVEMENT_BADGES: Record<string, { label: string; className: string }> = {
 const badgeFor = (movementType?: string | null) =>
     MOVEMENT_BADGES[(movementType || '').toLowerCase()] || {
         label: (movementType || 'MOVEMENT').replace(/_/g, ' ').toUpperCase(),
-        className: 'bg-slate-700/40 text-slate-300 border-slate-600',
+        className: 'bg-line-strong/40 text-fg-muted border-line-strong',
     };
 
 /** Human label for a reason code — falls back to the raw code, never blank. */
@@ -163,13 +163,13 @@ const ItemSearchSelect = ({
 
     if (value && !open) {
         return (
-            <div className="flex items-center justify-between w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2">
-                <span className="text-slate-50">{itemName}</span>
+            <div className="flex items-center justify-between w-full bg-surface-raised border border-line-strong rounded-lg px-4 py-2">
+                <span className="text-fg">{itemName}</span>
                 <button
                     type="button"
                     aria-label="Clear item"
                     onClick={() => { onSelect(null); setQuery(''); setOpen(true); }}
-                    className="text-slate-400 hover:text-slate-50"
+                    className="text-fg-muted hover:text-fg"
                 >
                     <X size={16} />
                 </button>
@@ -179,8 +179,8 @@ const ItemSearchSelect = ({
 
     return (
         <div className="relative">
-            <div className="flex items-center gap-2 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 focus-within:ring-2 focus-within:ring-blue-500/50">
-                <Search size={16} className="text-slate-500" />
+            <div className="flex items-center gap-2 bg-surface-raised border border-line-strong rounded-lg px-3 py-2 focus-within:ring-2 focus-within:ring-focus/50">
+                <Search size={16} className="text-fg-subtle" />
                 <input
                     type="text"
                     disabled={disabled}
@@ -189,24 +189,24 @@ const ItemSearchSelect = ({
                     value={query}
                     onFocus={() => setOpen(true)}
                     onChange={(e) => setQuery(e.target.value)}
-                    className="flex-1 bg-transparent focus:outline-none text-slate-50"
+                    className="flex-1 bg-transparent focus:outline-none text-fg"
                 />
             </div>
             {open && (
-                <div className="absolute z-20 mt-1 w-full max-h-56 overflow-y-auto bg-slate-800 border border-slate-700 rounded-lg shadow-xl">
-                    {searching && <div className="px-4 py-2 text-slate-400 text-sm">Searching…</div>}
+                <div className="absolute z-20 mt-1 w-full max-h-56 overflow-y-auto bg-surface-raised border border-line-strong rounded-lg shadow-xl">
+                    {searching && <div className="px-4 py-2 text-fg-muted text-sm">Searching…</div>}
                     {!searching && results.length === 0 && (
-                        <div className="px-4 py-2 text-slate-400 text-sm">No items found</div>
+                        <div className="px-4 py-2 text-fg-muted text-sm">No items found</div>
                     )}
                     {results.map((i) => (
                         <button
                             key={i.id}
                             type="button"
                             onClick={() => { onSelect(i); setOpen(false); }}
-                            className="w-full text-left px-4 py-2 hover:bg-slate-700 text-slate-100"
+                            className="w-full text-left px-4 py-2 hover:bg-line-strong text-fg"
                         >
                             <span className="font-medium">{i.name}</span>
-                            <span className="text-slate-400 text-xs ml-2">{i.sku}</span>
+                            <span className="text-fg-muted text-xs ml-2">{i.sku}</span>
                         </button>
                     ))}
                 </div>
@@ -561,10 +561,10 @@ const StockMovementRegisterPage = () => {
             header: 'Date',
             accessor: (m: StockMovement) => (
                 <div className="flex flex-col">
-                    <span className="text-slate-200">
+                    <span className="text-fg">
                         {formatters.formatDate(m.transaction_date || m.created_at)}
                     </span>
-                    <span className="text-slate-500 text-xs">
+                    <span className="text-fg-subtle text-xs">
                         {formatters.formatDateTime(m.created_at)}
                     </span>
                 </div>
@@ -587,7 +587,7 @@ const StockMovementRegisterPage = () => {
         {
             header: 'Reference',
             accessor: (m: StockMovement) => (
-                <span className="font-mono text-slate-200 text-xs">
+                <span className="font-mono text-fg text-xs">
                     {m.reference_number || '—'}
                 </span>
             ),
@@ -596,8 +596,8 @@ const StockMovementRegisterPage = () => {
             header: 'Item',
             accessor: (m: StockMovement) => (
                 <div className="flex items-center gap-2">
-                    <Package size={14} className="text-slate-500" />
-                    <span className="font-semibold text-slate-50">{m.items?.name || '—'}</span>
+                    <Package size={14} className="text-fg-subtle" />
+                    <span className="font-semibold text-fg">{m.items?.name || '—'}</span>
                 </div>
             ),
         },
@@ -612,15 +612,15 @@ const StockMovementRegisterPage = () => {
                 // other half, so when both legs are on screen we state the route.
                 if (context?.from && context?.to) {
                     return (
-                        <div className="flex items-center gap-1.5 text-slate-300 text-xs">
-                            <ArrowRightLeft size={14} className="text-blue-400 flex-shrink-0" />
+                        <div className="flex items-center gap-1.5 text-fg-muted text-xs">
+                            <ArrowRightLeft size={14} className="text-primary flex-shrink-0" />
                             <span>{context.from} → {context.to}</span>
                         </div>
                     );
                 }
                 return (
-                    <div className="flex items-center gap-1.5 text-slate-300">
-                        <MapPin size={14} className="text-slate-500" />
+                    <div className="flex items-center gap-1.5 text-fg-muted">
+                        <MapPin size={14} className="text-fg-subtle" />
                         <span>{m.warehouses?.name || '—'}</span>
                     </div>
                 );
@@ -630,7 +630,7 @@ const StockMovementRegisterPage = () => {
             header: 'Qty',
             accessor: (m: StockMovement) =>
                 m.quantity > 0 ? (
-                    <span className="text-emerald-400 font-bold">+{m.quantity}</span>
+                    <span className="text-success font-bold">+{m.quantity}</span>
                 ) : (
                     <span className="text-rose-400 font-bold">{m.quantity}</span>
                 ),
@@ -639,18 +639,18 @@ const StockMovementRegisterPage = () => {
             header: 'Balance',
             accessor: (m: StockMovement) =>
                 m.balance_after === null || m.balance_after === undefined ? (
-                    <span className="text-slate-600">—</span>
+                    <span className="text-fg-subtle">—</span>
                 ) : (
                     // before → delta → after, so a correction reads as a
                     // complete arithmetic statement (100 → -5 → 95).
-                    <span data-testid="movement-balance" className="text-slate-300 text-xs whitespace-nowrap">
+                    <span data-testid="movement-balance" className="text-fg-muted text-xs whitespace-nowrap">
                         {m.balance_before ?? '—'}
                         {' → '}
-                        <span className={m.quantity < 0 ? 'text-rose-400' : 'text-emerald-400'}>
+                        <span className={m.quantity < 0 ? 'text-rose-400' : 'text-success'}>
                             {m.quantity > 0 ? `+${m.quantity}` : m.quantity}
                         </span>
                         {' → '}
-                        <span className="font-bold text-slate-50">{m.balance_after}</span>
+                        <span className="font-bold text-fg">{m.balance_after}</span>
                     </span>
                 ),
         },
@@ -659,19 +659,19 @@ const StockMovementRegisterPage = () => {
             accessor: (m: StockMovement) => (
                 <div className="flex flex-col text-xs">
                     {m.project_name_snapshot && (
-                        <span className="text-slate-300">Project: {m.project_name_snapshot}</span>
+                        <span className="text-fg-muted">Project: {m.project_name_snapshot}</span>
                     )}
                     {m.work_order_number_snapshot && (
-                        <span className="text-slate-300">WO: {m.work_order_number_snapshot}</span>
+                        <span className="text-fg-muted">WO: {m.work_order_number_snapshot}</span>
                     )}
                     {m.source_type && (
-                        <span className="text-slate-500 capitalize">
+                        <span className="text-fg-subtle capitalize">
                             {m.source_type.replace(/_/g, ' ')}
                             {m.source_label ? ` · ${m.source_label}` : ''}
                         </span>
                     )}
                     {!m.project_name_snapshot && !m.work_order_number_snapshot && !m.source_type && (
-                        <span className="text-slate-600">—</span>
+                        <span className="text-fg-subtle">—</span>
                     )}
                 </div>
             ),
@@ -683,12 +683,12 @@ const StockMovementRegisterPage = () => {
                 return (
                     <div className="flex flex-col text-xs max-w-[220px]">
                         {reason && (
-                            <span data-testid="movement-reason" className="text-slate-300 font-medium">
+                            <span data-testid="movement-reason" className="text-fg-muted font-medium">
                                 {reason}
                             </span>
                         )}
-                        {m.remarks && <span className="text-slate-500">{m.remarks}</span>}
-                        {!reason && !m.remarks && <span className="text-slate-600">—</span>}
+                        {m.remarks && <span className="text-fg-subtle">{m.remarks}</span>}
+                        {!reason && !m.remarks && <span className="text-fg-subtle">—</span>}
                     </div>
                 );
             },
@@ -697,7 +697,7 @@ const StockMovementRegisterPage = () => {
     ];
 
     const inputClass =
-        'w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-50';
+        'w-full bg-surface-raised border border-line-strong rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-focus/50 text-fg';
     /** Same input, but wearing its error state. */
     const fieldClass = (field: string) =>
         errorFor(field)
@@ -713,25 +713,25 @@ const StockMovementRegisterPage = () => {
             </p>
         );
     };
-    const labelClass = 'block text-sm font-medium text-slate-400 mb-1.5';
-    const sectionClass = 'border border-slate-800 rounded-xl p-4 bg-slate-900/40 space-y-4';
-    const sectionTitle = 'text-xs font-bold uppercase tracking-wide text-slate-400';
+    const labelClass = 'block text-sm font-medium text-fg-muted mb-1.5';
+    const sectionClass = 'border border-line rounded-xl p-4 bg-surface/40 space-y-4';
+    const sectionTitle = 'text-xs font-bold uppercase tracking-wide text-fg-muted';
 
     return (
         <div className="p-8">
             <header className="mb-8 flex items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-slate-50 tracking-tight flex items-center gap-3">
-                        <History className="text-blue-500" /> Stock Transactions
+                    <h1 className="text-3xl font-bold text-fg tracking-tight flex items-center gap-3">
+                        <History className="text-primary" /> Stock Transactions
                     </h1>
-                    <p className="text-slate-400 mt-1">
+                    <p className="text-fg-muted mt-1">
                         Inventory movement register — every movement traceable end to end
                     </p>
                 </div>
                 <div className="flex items-center gap-3">
                     <button
                         onClick={() => setShowFilters((s) => !s)}
-                        className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-100 px-4 py-2.5 rounded-lg font-semibold transition-all"
+                        className="flex items-center gap-2 bg-surface-raised hover:bg-line-strong text-fg px-4 py-2.5 rounded-lg font-semibold transition-all"
                     >
                         <SlidersHorizontal size={18} />
                         Filters
@@ -744,7 +744,7 @@ const StockMovementRegisterPage = () => {
                         >
                             <button
                                 onClick={() => { resetForm(); setIsModalOpen(true); }}
-                                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-lg font-semibold transition-all shadow-lg shadow-blue-900/20 active:scale-95"
+                                className="flex items-center gap-2 bg-primary hover:bg-primary-hover text-primary-fg px-4 py-2.5 rounded-lg font-semibold transition-all shadow-lg shadow-blue-900/20 active:scale-95"
                             >
                                 <Plus size={20} />
                                 New Transaction
@@ -762,7 +762,7 @@ const StockMovementRegisterPage = () => {
             )}
 
             {showFilters && (
-                <div className="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4 border border-slate-800 rounded-xl p-4 bg-slate-900/40">
+                <div className="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4 border border-line rounded-xl p-4 bg-surface/40">
                     <div>
                         <label className={labelClass}>Movement Type</label>
                         <select
@@ -880,7 +880,7 @@ const StockMovementRegisterPage = () => {
                 title="Record Stock Transaction"
                 size="xl"
             >
-                <form onSubmit={handleSubmit} className="space-y-5 text-slate-200">
+                <form onSubmit={handleSubmit} className="space-y-5 text-fg">
                     {error && (
                         <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 px-4 py-3 rounded-lg flex items-center gap-3 text-sm">
                             <AlertCircle size={18} />
@@ -894,7 +894,7 @@ const StockMovementRegisterPage = () => {
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div className="md:col-span-2">
                                 <label className={labelClass}>Transaction Type *</label>
-                                <div className="grid grid-cols-4 gap-1 p-1 bg-slate-800 rounded-lg border border-slate-700">
+                                <div className="grid grid-cols-4 gap-1 p-1 bg-surface-raised rounded-lg border border-line-strong">
                                     {([
                                         ['stock_in', 'Stock In', ArrowDownCircle],
                                         ['stock_out', 'Stock Out', ArrowUpCircle],
@@ -907,8 +907,8 @@ const StockMovementRegisterPage = () => {
                                             onClick={() => setForm({ ...form, transaction_type: val, reason_code: '' })}
                                             className={`flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-bold transition-all ${
                                                 form.transaction_type === val
-                                                    ? 'bg-blue-600 text-white'
-                                                    : 'text-slate-400 hover:text-slate-200'
+                                                    ? 'bg-primary text-primary-fg'
+                                                    : 'text-fg-muted hover:text-fg'
                                             }`}
                                         >
                                             <Icon size={14} /> {label}
@@ -927,7 +927,7 @@ const StockMovementRegisterPage = () => {
                                     className={inputClass}
                                 />
                                 {dateWarning && (
-                                    <p role="alert" data-testid="error-transaction_date" className="text-amber-400 text-xs mt-1">
+                                    <p role="alert" data-testid="error-transaction_date" className="text-warning text-xs mt-1">
                                         {dateWarning}
                                     </p>
                                 )}
@@ -1031,7 +1031,7 @@ const StockMovementRegisterPage = () => {
                                 <label className={labelClass}>
                                     Quantity *
                                     {form.transaction_type === 'adjustment' && (
-                                        <span className="text-slate-500 font-normal"> (signed)</span>
+                                        <span className="text-fg-subtle font-normal"> (signed)</span>
                                     )}
                                 </label>
                                 <input
@@ -1050,15 +1050,15 @@ const StockMovementRegisterPage = () => {
                             </div>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
-                            <div className="bg-slate-800/60 rounded-lg px-4 py-3">
-                                <p className="text-[11px] uppercase tracking-wide text-slate-500">Current Balance</p>
-                                <p className="text-lg font-bold text-slate-100">
+                            <div className="bg-surface-raised/60 rounded-lg px-4 py-3">
+                                <p className="text-[11px] uppercase tracking-wide text-fg-subtle">Current Balance</p>
+                                <p className="text-lg font-bold text-fg">
                                     {currentBalance === null ? '—' : currentBalance}
                                 </p>
                             </div>
-                            <div className={`rounded-lg px-4 py-3 ${insufficientStock ? 'bg-rose-500/10 border border-rose-500/30' : 'bg-slate-800/60'}`}>
-                                <p className="text-[11px] uppercase tracking-wide text-slate-500">Updated Balance</p>
-                                <p className={`text-lg font-bold ${insufficientStock ? 'text-rose-400' : 'text-slate-100'}`}>
+                            <div className={`rounded-lg px-4 py-3 ${insufficientStock ? 'bg-rose-500/10 border border-rose-500/30' : 'bg-surface-raised/60'}`}>
+                                <p className="text-[11px] uppercase tracking-wide text-fg-subtle">Updated Balance</p>
+                                <p className={`text-lg font-bold ${insufficientStock ? 'text-rose-400' : 'text-fg'}`}>
                                     {projectedBalance === null ? '—' : projectedBalance}
                                 </p>
                             </div>
@@ -1143,7 +1143,7 @@ const StockMovementRegisterPage = () => {
                                         Tailwind classes — without this the options render with
                                         the browser's default light popup background and the
                                         same light text colour, making them invisible. */}
-                                    <option value="" className="bg-slate-800 text-slate-50">
+                                    <option value="" className="bg-surface-raised text-fg">
                                         {projectsLoading
                                             ? 'Loading projects…'
                                             : projectsError
@@ -1153,7 +1153,7 @@ const StockMovementRegisterPage = () => {
                                                     : 'Not linked'}
                                     </option>
                                     {projects.map((p) => (
-                                        <option key={p.id} value={p.id} className="bg-slate-800 text-slate-50">{p.title || p.name}</option>
+                                        <option key={p.id} value={p.id} className="bg-surface-raised text-fg">{p.title || p.name}</option>
                                     ))}
                                 </select>
                                 {projectsError && (
@@ -1222,9 +1222,9 @@ const StockMovementRegisterPage = () => {
                         />
                     </section>
 
-                    <div className="bg-blue-500/10 border border-blue-500/20 p-4 rounded-xl flex items-start gap-3">
-                        <CheckCircle2 size={18} className="text-blue-400 mt-0.5 flex-shrink-0" />
-                        <div className="text-[11px] text-blue-300">
+                    <div className="bg-primary/10 border border-primary/20 p-4 rounded-xl flex items-start gap-3">
+                        <CheckCircle2 size={18} className="text-primary mt-0.5 flex-shrink-0" />
+                        <div className="text-[11px] text-primary">
                             <p className="font-bold mb-1 uppercase tracking-tight">Audit Trail</p>
                             <p className="opacity-70">
                                 A reference number and running balance are recorded automatically and cannot be edited.
@@ -1236,14 +1236,14 @@ const StockMovementRegisterPage = () => {
                         <button
                             type="button"
                             onClick={() => setIsModalOpen(false)}
-                            className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-50 font-semibold py-2.5 rounded-lg transition-all"
+                            className="flex-1 bg-surface-raised hover:bg-line-strong text-fg font-semibold py-2.5 rounded-lg transition-all"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
                             disabled={isSubmitting || insufficientStock || !!dateWarning}
-                            className="flex-1 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-2.5 rounded-lg transition-all shadow-lg shadow-blue-900/20"
+                            className="flex-1 bg-primary hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed text-primary-fg font-semibold py-2.5 rounded-lg transition-all shadow-lg shadow-blue-900/20"
                         >
                             {isSubmitting ? 'Recording…' : 'Record Transaction'}
                         </button>

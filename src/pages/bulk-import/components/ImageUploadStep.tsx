@@ -19,8 +19,8 @@ export const BULK_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
 const PRODUCT_SLOT = IMAGE_FIT_SLOTS.product;
 
 const MATCH_BADGE: Record<ImageMatch, { label: string; className: string }> = {
-    matched: { label: 'MATCHED', className: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
-    no_match: { label: 'NO MATCH', className: 'text-amber-400 bg-amber-500/10 border-amber-500/20' },
+    matched: { label: 'MATCHED', className: 'text-success bg-success/10 border-success/20' },
+    no_match: { label: 'NO MATCH', className: 'text-warning bg-warning/10 border-warning/20' },
     ambiguous: { label: 'AMBIGUOUS', className: 'text-rose-400 bg-rose-500/10 border-rose-500/20' },
     duplicate_image: { label: 'DUPLICATE IMAGE', className: 'text-rose-400 bg-rose-500/10 border-rose-500/20' },
     missing_primary: { label: 'MISSING PRIMARY', className: 'text-rose-400 bg-rose-500/10 border-rose-500/20' },
@@ -108,7 +108,7 @@ const ImageUploadStep: React.FC<Props> = ({ parsedRows, onImagesUploaded, onUplo
     return (
         <div className="max-w-2xl mx-auto space-y-6">
             <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs font-medium text-slate-400">Product photos</span>
+                <span className="text-xs font-medium text-fg-muted">Product photos</span>
                 <ImageSpecChip slot={PRODUCT_SLOT} acceptedTypes="JPG, PNG, WebP" />
             </div>
             <div
@@ -117,22 +117,22 @@ const ImageUploadStep: React.FC<Props> = ({ parsedRows, onImagesUploaded, onUplo
                 onDrop={(e) => { e.preventDefault(); setDragging(false); addFiles(e.dataTransfer.files); }}
                 onClick={() => inputRef.current?.click()}
                 className={`border-2 border-dashed rounded-xl p-10 flex flex-col items-center gap-4 cursor-pointer transition-all ${
-                    dragging ? 'border-blue-500 bg-blue-500/5' : 'border-slate-700 bg-slate-900/40 hover:border-slate-600'
+                    dragging ? 'border-primary bg-primary/5' : 'border-line-strong bg-surface/40 hover:border-line-strong'
                 }`}
             >
-                <Image size={32} className="text-slate-500" />
+                <Image size={32} className="text-fg-subtle" />
                 <div className="text-center">
-                    <p className="text-slate-200 font-semibold">Drop images here</p>
-                    <p className="text-slate-500 text-sm mt-1">JPG, PNG, WebP — big photos are shrunk automatically · name each file after its product (e.g. Namur Sofa.jpg, Namur Sofa_2.jpg)</p>
+                    <p className="text-fg font-semibold">Drop images here</p>
+                    <p className="text-fg-subtle text-sm mt-1">JPG, PNG, WebP — big photos are shrunk automatically · name each file after its product (e.g. Namur Sofa.jpg, Namur Sofa_2.jpg)</p>
                 </div>
                 <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/jpg,image/webp" multiple className="hidden" onChange={(e) => addFiles(e.target.files)} />
             </div>
 
-            <div data-testid="image-naming-guide" className="rounded-lg border border-slate-800 bg-slate-900/40 px-4 py-3 text-xs text-slate-400 space-y-1.5">
-                <p className="font-semibold text-slate-300">How to Upload Product Images</p>
+            <div data-testid="image-naming-guide" className="rounded-lg border border-line bg-surface/40 px-4 py-3 text-xs text-fg-muted space-y-1.5">
+                <p className="font-semibold text-fg-muted">How to Upload Product Images</p>
                 <p>Name each image after its product — use the exact Product Name from your CSV.</p>
-                <p>One image: <span className="font-mono text-blue-400">Chair.jpg</span></p>
-                <p>Several images: <span className="font-mono text-blue-400">Chair.jpg</span>, <span className="font-mono text-blue-400">Chair_2.jpg</span>, <span className="font-mono text-blue-400">Chair_3.jpg</span></p>
+                <p>One image: <span className="font-mono text-primary">Chair.jpg</span></p>
+                <p>Several images: <span className="font-mono text-primary">Chair.jpg</span>, <span className="font-mono text-primary">Chair_2.jpg</span>, <span className="font-mono text-primary">Chair_3.jpg</span></p>
                 <p>The first image (<span className="font-mono">Chair.jpg</span>) is the primary image shown first in the store.</p>
             </div>
 
@@ -146,7 +146,7 @@ const ImageUploadStep: React.FC<Props> = ({ parsedRows, onImagesUploaded, onUplo
 
             {files.length > 0 && (
                 <div className="space-y-2">
-                    <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider">
+                    <p className="text-fg-muted text-xs font-semibold uppercase tracking-wider">
                         {files.length} file{files.length !== 1 ? 's' : ''} selected · {matchedCount} match products · {attentionCount} need attention
                     </p>
                     <div className="max-h-48 overflow-y-auto space-y-1 pr-1">
@@ -156,20 +156,20 @@ const ImageUploadStep: React.FC<Props> = ({ parsedRows, onImagesUploaded, onUplo
                             const uploadedEntry = uploaded.find(u => u.filename === f.name);
                             const failedEntry = failed.find(u => u.filename === f.name);
                             return (
-                                <div key={f.name} className="flex items-center gap-3 px-3 py-2 rounded-lg bg-slate-900/60 border border-slate-800">
-                                    {(status === 'uploading' || status === 'optimising') && !uploadedEntry && !failedEntry && <Loader2 size={14} className="text-blue-400 animate-spin shrink-0" />}
-                                    {uploadedEntry && <CheckCircle2 size={14} className="text-emerald-400 shrink-0" />}
+                                <div key={f.name} className="flex items-center gap-3 px-3 py-2 rounded-lg bg-surface/60 border border-line">
+                                    {(status === 'uploading' || status === 'optimising') && !uploadedEntry && !failedEntry && <Loader2 size={14} className="text-primary animate-spin shrink-0" />}
+                                    {uploadedEntry && <CheckCircle2 size={14} className="text-success shrink-0" />}
                                     {failedEntry && <XCircle size={14} className="text-rose-400 shrink-0" />}
                                     {status === 'idle' && (isMatch
-                                        ? <CheckCircle2 size={14} className="text-emerald-500/60 shrink-0" />
-                                        : <div className="w-3.5 h-3.5 rounded-full border border-amber-500/50 shrink-0" />
+                                        ? <CheckCircle2 size={14} className="text-success/60 shrink-0" />
+                                        : <div className="w-3.5 h-3.5 rounded-full border border-warning/50 shrink-0" />
                                     )}
-                                    <span className="text-slate-300 text-xs font-mono flex-1 truncate">{f.name}</span>
+                                    <span className="text-fg-muted text-xs font-mono flex-1 truncate">{f.name}</span>
                                     {isMatch && (
-                                        <span data-testid="image-position" className="text-slate-500 text-[10px] shrink-0">{entryOf(f)!.seq === 1 ? 'Primary' : `Image ${entryOf(f)!.seq}`}</span>
+                                        <span data-testid="image-position" className="text-fg-subtle text-[10px] shrink-0">{entryOf(f)!.seq === 1 ? 'Primary' : `Image ${entryOf(f)!.seq}`}</span>
                                     )}
                                     {fitNotes[f.name] && (
-                                        <span data-testid="bulk-fit-note" className="text-slate-500 text-[10px] shrink-0">{fitNotes[f.name]}</span>
+                                        <span data-testid="bulk-fit-note" className="text-fg-subtle text-[10px] shrink-0">{fitNotes[f.name]}</span>
                                     )}
                                     {status === 'idle' && (
                                         <span
@@ -191,24 +191,24 @@ const ImageUploadStep: React.FC<Props> = ({ parsedRows, onImagesUploaded, onUplo
                         <button
                             onClick={doUpload}
                             disabled={files.length === 0}
-                            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded-lg font-semibold text-sm transition-all"
+                            className="flex items-center gap-2 bg-primary hover:bg-primary-hover disabled:opacity-40 disabled:cursor-not-allowed text-primary-fg px-5 py-2.5 rounded-lg font-semibold text-sm transition-all"
                         >
                             <Image size={16} />
                             Upload {files.length > 0 ? `${files.length} image${files.length !== 1 ? 's' : ''}` : 'Images'}
                         </button>
-                        <button onClick={onSkip} className="text-slate-500 hover:text-slate-300 text-sm transition-colors">
+                        <button onClick={onSkip} className="text-fg-subtle hover:text-fg-muted text-sm transition-colors">
                             Skip images →
                         </button>
                     </>
                 )}
                 {(status === 'uploading' || status === 'optimising') && (
-                    <div className="flex items-center gap-2 text-slate-400 text-sm">
+                    <div className="flex items-center gap-2 text-fg-muted text-sm">
                         <Loader2 size={16} className="animate-spin" />
                         {status === 'optimising' ? 'Optimising photos…' : 'Uploading…'}
                     </div>
                 )}
                 {status === 'done' && (
-                    <button onClick={onSkip} className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-lg font-semibold text-sm transition-all">
+                    <button onClick={onSkip} className="flex items-center gap-2 bg-success hover:bg-success text-primary-fg px-5 py-2.5 rounded-lg font-semibold text-sm transition-all">
                         Next: Preview <ArrowRight size={16} />
                     </button>
                 )}

@@ -6,15 +6,15 @@ import { useInventoryFormatters } from '../../utils/formatters';
 import { toast, getErrorMessage } from '@so360/design-system';
 
 export const QC_STATUS_STYLES: Record<string, string> = {
-    pending: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-    in_progress: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-    completed: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-    cancelled: 'bg-slate-500/10 text-slate-400 border-slate-500/20',
+    pending: 'bg-warning/10 text-warning border-warning/20',
+    in_progress: 'bg-primary/10 text-primary border-primary/20',
+    completed: 'bg-success/10 text-success border-success/20',
+    cancelled: 'bg-fg-subtle/10 text-fg-muted border-line-strong/20',
 };
 
 const RESULT_STYLES: Record<string, string> = {
-    passed: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-    partial: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+    passed: 'bg-success/10 text-success border-success/20',
+    partial: 'bg-warning/10 text-warning border-warning/20',
     failed: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
 };
 
@@ -159,13 +159,13 @@ const QualityInspectionPage = () => {
                     <h1 className="text-4xl font-bold bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent">
                         Quality Inspection
                     </h1>
-                    <p className="text-slate-400 mt-2 font-medium">
+                    <p className="text-fg-muted mt-2 font-medium">
                         Receipts held for inspection. Stock is released only for what passes.
                     </p>
                 </div>
                 <button
                     onClick={() => setShowOpenForm(true)}
-                    className="px-6 py-3 bg-amber-600 hover:bg-amber-500 text-white rounded-xl font-semibold transition-all shadow-lg shadow-amber-900/20 active:scale-95"
+                    className="px-6 py-3 bg-amber-600 hover:bg-amber-500 text-primary-fg rounded-xl font-semibold transition-all shadow-lg shadow-amber-900/20 active:scale-95"
                 >
                     + Open Inspection
                 </button>
@@ -178,23 +178,23 @@ const QualityInspectionPage = () => {
                     { label: 'Failed', value: inspections.filter(i => i.result === 'failed').length, icon: '⛔' },
                     { label: 'Partial', value: inspections.filter(i => i.result === 'partial').length, icon: '⚠️' },
                 ].map((s, i) => (
-                    <div key={i} className="bg-slate-900/50 border border-slate-800 p-6 rounded-2xl">
+                    <div key={i} className="bg-surface/50 border border-line p-6 rounded-2xl">
                         <div className="flex justify-between items-start">
                             <span className="text-2xl">{s.icon}</span>
-                            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{s.label}</span>
+                            <span className="text-xs font-bold uppercase tracking-wider text-fg-subtle">{s.label}</span>
                         </div>
-                        <div className="mt-4 text-3xl font-bold text-slate-100">{s.value}</div>
+                        <div className="mt-4 text-3xl font-bold text-fg">{s.value}</div>
                     </div>
                 ))}
             </div>
 
             <div className="flex items-center gap-3">
-                <label htmlFor="qc-status-filter" className="text-xs font-bold text-slate-500 uppercase tracking-wider">Status</label>
+                <label htmlFor="qc-status-filter" className="text-xs font-bold text-fg-subtle uppercase tracking-wider">Status</label>
                 <select
                     id="qc-status-filter"
                     value={statusFilter}
                     onChange={e => setStatusFilter(e.target.value)}
-                    className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/40"
+                    className="bg-bg border border-line rounded-xl px-4 py-2 text-sm text-fg focus:outline-none focus:ring-2 focus:ring-amber-500/40"
                 >
                     <option value="">All</option>
                     <option value="pending">Pending</option>
@@ -203,30 +203,30 @@ const QualityInspectionPage = () => {
                 </select>
             </div>
 
-            <div className="bg-slate-900/50 border border-slate-800 rounded-2xl overflow-hidden">
+            <div className="bg-surface/50 border border-line rounded-2xl overflow-hidden">
                 <table className="w-full text-left border-collapse">
                     <thead>
-                        <tr className="border-b border-slate-800 bg-slate-800/30">
-                            <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400">Inspection</th>
-                            <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400">Receipt</th>
-                            <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400">Status</th>
-                            <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400">Result</th>
-                            <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400">Lines</th>
-                            <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400">Action</th>
+                        <tr className="border-b border-line bg-surface-raised/30">
+                            <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-fg-muted">Inspection</th>
+                            <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-fg-muted">Receipt</th>
+                            <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-fg-muted">Status</th>
+                            <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-fg-muted">Result</th>
+                            <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-fg-muted">Lines</th>
+                            <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-fg-muted">Action</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-800/50">
+                    <tbody className="divide-y divide-line/50">
                         {loading ? (
-                            <tr><td colSpan={6} className="px-6 py-12 text-center text-slate-500 animate-pulse">Loading inspections...</td></tr>
+                            <tr><td colSpan={6} className="px-6 py-12 text-center text-fg-subtle animate-pulse">Loading inspections...</td></tr>
                         ) : inspections.length === 0 ? (
-                            <tr><td colSpan={6} className="px-6 py-12 text-center text-slate-500">No inspections yet. Post a receipt with "Required — pending" to route it here.</td></tr>
+                            <tr><td colSpan={6} className="px-6 py-12 text-center text-fg-subtle">No inspections yet. Post a receipt with "Required — pending" to route it here.</td></tr>
                         ) : inspections.map(i => (
-                            <tr key={i.id} className="hover:bg-slate-800/20 transition-colors">
+                            <tr key={i.id} className="hover:bg-surface-raised/20 transition-colors">
                                 <td className="px-6 py-4">
-                                    <div className="font-semibold text-slate-200">{i.inspection_number}</div>
-                                    <div className="text-xs text-slate-500">{formatters.formatDate(i.created_at)}</div>
+                                    <div className="font-semibold text-fg">{i.inspection_number}</div>
+                                    <div className="text-xs text-fg-subtle">{formatters.formatDate(i.created_at)}</div>
                                 </td>
-                                <td className="px-6 py-4 text-sm text-slate-300">
+                                <td className="px-6 py-4 text-sm text-fg-muted">
                                     {i.grn?.grn_number || '—'}
                                 </td>
                                 <td className="px-6 py-4">
@@ -239,23 +239,23 @@ const QualityInspectionPage = () => {
                                         <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border ${RESULT_STYLES[i.result]}`}>
                                             {i.result}
                                         </span>
-                                    ) : <span className="text-slate-600 text-xs">—</span>}
+                                    ) : <span className="text-fg-subtle text-xs">—</span>}
                                 </td>
-                                <td className="px-6 py-4 text-sm text-slate-300 font-mono">
+                                <td className="px-6 py-4 text-sm text-fg-muted font-mono">
                                     {i.quality_inspection_lines?.length || 0}
                                 </td>
                                 <td className="px-6 py-4">
                                     {i.status === 'pending' ? (
                                         <button
                                             onClick={() => startInspecting(i)}
-                                            className="text-amber-400 hover:text-amber-300 font-semibold text-sm transition-colors"
+                                            className="text-warning hover:text-warning font-semibold text-sm transition-colors"
                                         >
                                             Record Result →
                                         </button>
                                     ) : (
                                         <button
                                             onClick={() => navigate(`/procurement/grn/${i.grn_id}`)}
-                                            className="text-blue-400 hover:text-blue-300 font-semibold text-sm transition-colors"
+                                            className="text-primary hover:text-primary font-semibold text-sm transition-colors"
                                         >
                                             View Receipt
                                         </button>
@@ -268,20 +268,20 @@ const QualityInspectionPage = () => {
             </div>
 
             {showOpenForm && (
-                <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center px-4 pt-24 pb-6 z-[600]">
-                    <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-lg overflow-hidden">
-                        <div className="p-8 border-b border-slate-800 flex justify-between items-center">
-                            <h2 className="text-2xl font-bold text-slate-100">Open Inspection</h2>
-                            <button onClick={() => setShowOpenForm(false)} className="text-slate-500 hover:text-slate-50 text-2xl">×</button>
+                <div className="fixed inset-0 bg-bg/80 backdrop-blur-md flex items-center justify-center px-4 pt-24 pb-6 z-[600]">
+                    <div className="bg-surface border border-line rounded-3xl w-full max-w-lg overflow-hidden">
+                        <div className="p-8 border-b border-line flex justify-between items-center">
+                            <h2 className="text-2xl font-bold text-fg">Open Inspection</h2>
+                            <button onClick={() => setShowOpenForm(false)} className="text-fg-subtle hover:text-fg text-2xl">×</button>
                         </div>
                         <form onSubmit={openInspection} className="p-8 space-y-6">
                             <div className="space-y-2">
-                                <label htmlFor="qc-grn" className="text-xs font-bold text-slate-500 uppercase tracking-wider">Goods Receipt</label>
+                                <label htmlFor="qc-grn" className="text-xs font-bold text-fg-subtle uppercase tracking-wider">Goods Receipt</label>
                                 <select
                                     id="qc-grn"
                                     value={grnId}
                                     onChange={e => setGrnId(e.target.value)}
-                                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-200"
+                                    className="w-full bg-bg border border-line rounded-xl px-4 py-3 text-fg"
                                 >
                                     <option value="">Select a receipt</option>
                                     {grns.map(g => (
@@ -292,10 +292,10 @@ const QualityInspectionPage = () => {
                                 </select>
                             </div>
                             <div className="flex gap-4">
-                                <button type="submit" disabled={saving} className="flex-1 px-6 py-4 bg-amber-600 hover:bg-amber-500 disabled:opacity-60 text-white rounded-2xl font-bold">
+                                <button type="submit" disabled={saving} className="flex-1 px-6 py-4 bg-amber-600 hover:bg-amber-500 disabled:opacity-60 text-primary-fg rounded-2xl font-bold">
                                     {saving ? 'Opening...' : 'Open Inspection'}
                                 </button>
-                                <button type="button" onClick={() => setShowOpenForm(false)} className="px-6 py-4 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-2xl font-bold">
+                                <button type="button" onClick={() => setShowOpenForm(false)} className="px-6 py-4 bg-surface-raised hover:bg-line-strong text-fg-muted rounded-2xl font-bold">
                                     Cancel
                                 </button>
                             </div>
@@ -305,47 +305,47 @@ const QualityInspectionPage = () => {
             )}
 
             {active && (
-                <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center px-4 pt-24 pb-6 z-[600]">
-                    <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-3xl max-h-[calc(100vh-7.5rem)] flex flex-col overflow-hidden">
-                        <div className="p-8 border-b border-slate-800 flex justify-between items-center">
+                <div className="fixed inset-0 bg-bg/80 backdrop-blur-md flex items-center justify-center px-4 pt-24 pb-6 z-[600]">
+                    <div className="bg-surface border border-line rounded-3xl w-full max-w-3xl max-h-[calc(100vh-7.5rem)] flex flex-col overflow-hidden">
+                        <div className="p-8 border-b border-line flex justify-between items-center">
                             <div>
-                                <h2 className="text-2xl font-bold text-slate-100">Record Inspection</h2>
-                                <p className="text-sm text-slate-500 mt-1">{active.inspection_number} · {active.grn?.grn_number}</p>
+                                <h2 className="text-2xl font-bold text-fg">Record Inspection</h2>
+                                <p className="text-sm text-fg-subtle mt-1">{active.inspection_number} · {active.grn?.grn_number}</p>
                             </div>
-                            <button onClick={() => setActive(null)} className="text-slate-500 hover:text-slate-50 text-2xl">×</button>
+                            <button onClick={() => setActive(null)} className="text-fg-subtle hover:text-fg text-2xl">×</button>
                         </div>
                         <form onSubmit={submitResult} className="p-8 space-y-6 overflow-y-auto custom-scrollbar flex-1">
-                            <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-sm text-amber-300">
+                            <div className="p-4 bg-warning/10 border border-warning/20 rounded-2xl text-sm text-warning">
                                 Only the accepted quantity enters stock — rejected units stay off the books and can be sent back to the vendor.
                             </div>
 
                             {resultLines.map((l, idx) => (
-                                <div key={l.line_id} className="p-4 bg-slate-950 border border-slate-800 rounded-2xl space-y-3">
+                                <div key={l.line_id} className="p-4 bg-bg border border-line rounded-2xl space-y-3">
                                     <div className="flex items-center justify-between">
-                                        <div className="text-sm font-semibold text-slate-100">{l.description}</div>
-                                        <div className="text-[10px] uppercase tracking-wider font-bold text-slate-500">
+                                        <div className="text-sm font-semibold text-fg">{l.description}</div>
+                                        <div className="text-[10px] uppercase tracking-wider font-bold text-fg-subtle">
                                             {l.submitted} submitted
                                         </div>
                                     </div>
                                     <div className="grid grid-cols-2 gap-3">
                                         <div className="space-y-1">
-                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Accepted</label>
+                                            <label className="text-[10px] font-bold text-fg-subtle uppercase tracking-wider">Accepted</label>
                                             <input
                                                 type="number" min="0"
                                                 aria-label={`Accepted quantity for ${l.description}`}
                                                 value={l.accepted_quantity}
                                                 onChange={e => updateResult(idx, 'accepted_quantity', e.target.value)}
-                                                className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-center text-emerald-400 font-bold"
+                                                className="w-full bg-surface border border-line rounded-lg px-3 py-2 text-center text-success font-bold"
                                             />
                                         </div>
                                         <div className="space-y-1">
-                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Rejected</label>
+                                            <label className="text-[10px] font-bold text-fg-subtle uppercase tracking-wider">Rejected</label>
                                             <input
                                                 type="number" min="0"
                                                 aria-label={`Rejected quantity for ${l.description}`}
                                                 value={l.rejected_quantity}
                                                 onChange={e => updateResult(idx, 'rejected_quantity', e.target.value)}
-                                                className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-center text-rose-400 font-bold"
+                                                className="w-full bg-surface border border-line rounded-lg px-3 py-2 text-center text-rose-400 font-bold"
                                             />
                                         </div>
                                     </div>
@@ -357,7 +357,7 @@ const QualityInspectionPage = () => {
                                                 aria-label={`Defect code for ${l.description}`}
                                                 value={l.defect_code}
                                                 onChange={e => updateResult(idx, 'defect_code', e.target.value)}
-                                                className="bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 font-mono"
+                                                className="bg-surface border border-line rounded-lg px-3 py-2 text-sm text-fg font-mono"
                                             />
                                             <input
                                                 type="text"
@@ -365,37 +365,37 @@ const QualityInspectionPage = () => {
                                                 aria-label={`Rejection reason for ${l.description}`}
                                                 value={l.rejection_reason}
                                                 onChange={e => updateResult(idx, 'rejection_reason', e.target.value)}
-                                                className="bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200"
+                                                className="bg-surface border border-line rounded-lg px-3 py-2 text-sm text-fg"
                                             />
                                         </div>
                                     )}
                                 </div>
                             ))}
 
-                            <div className="flex items-center justify-between p-4 bg-slate-950 border border-slate-800 rounded-2xl">
-                                <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Totals</span>
+                            <div className="flex items-center justify-between p-4 bg-bg border border-line rounded-2xl">
+                                <span className="text-xs font-bold uppercase tracking-wider text-fg-subtle">Totals</span>
                                 <span className="text-sm">
-                                    <span className="text-emerald-400 font-bold">{totals.accepted} accepted</span>
-                                    <span className="text-slate-600 mx-2">·</span>
+                                    <span className="text-success font-bold">{totals.accepted} accepted</span>
+                                    <span className="text-fg-subtle mx-2">·</span>
                                     <span className="text-rose-400 font-bold">{totals.rejected} rejected</span>
                                 </span>
                             </div>
 
                             <div className="space-y-2">
-                                <label htmlFor="qc-remarks" className="text-xs font-bold text-slate-500 uppercase tracking-wider">Inspector Remarks</label>
+                                <label htmlFor="qc-remarks" className="text-xs font-bold text-fg-subtle uppercase tracking-wider">Inspector Remarks</label>
                                 <textarea
                                     id="qc-remarks"
                                     value={remarks}
                                     onChange={e => setRemarks(e.target.value)}
-                                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 h-20 text-slate-200 resize-none"
+                                    className="w-full bg-bg border border-line rounded-xl px-4 py-3 h-20 text-fg resize-none"
                                 />
                             </div>
 
                             <div className="flex gap-4">
-                                <button type="submit" disabled={saving} className="flex-1 px-6 py-4 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 text-white rounded-2xl font-bold">
+                                <button type="submit" disabled={saving} className="flex-1 px-6 py-4 bg-success hover:bg-success disabled:opacity-60 text-primary-fg rounded-2xl font-bold">
                                     {saving ? 'Recording...' : 'Record & Release Stock'}
                                 </button>
-                                <button type="button" onClick={() => setActive(null)} className="px-6 py-4 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-2xl font-bold">
+                                <button type="button" onClick={() => setActive(null)} className="px-6 py-4 bg-surface-raised hover:bg-line-strong text-fg-muted rounded-2xl font-bold">
                                     Cancel
                                 </button>
                             </div>

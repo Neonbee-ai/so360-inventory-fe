@@ -4,7 +4,7 @@ import { inventoryService } from '../../services/inventoryService';
 import type { AgentOption } from '../../types/inventory';
 
 const inputCls =
-    'w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 disabled:opacity-50';
+    'w-full bg-surface-raised border border-line-strong rounded-lg px-3 py-2 text-sm text-fg placeholder-fg-subtle focus:outline-none focus:border-primary disabled:opacity-50';
 
 /** Debounce for server-side user search while typing. */
 export const USER_SEARCH_DEBOUNCE_MS = 200;
@@ -64,25 +64,25 @@ export const AgentMultiSelect: React.FC<AgentMultiSelectProps> = ({
 
     return (
         <div role="group" aria-labelledby={labelId}>
-            <span id={labelId} className="block text-xs text-slate-400 mb-1">{label}</span>
+            <span id={labelId} className="block text-xs text-fg-muted mb-1">{label}</span>
             <div className="flex flex-wrap gap-1 mb-1">
                 {selected.map((id) => {
                     const name = nameOf(id);
                     const text = name || shortId(id);
                     return (
                         <span key={id} title={name ? undefined : id} data-unknown={name ? undefined : 'true'}
-                            className="inline-flex items-center gap-1 rounded-full bg-slate-700 px-2 py-0.5 text-xs text-slate-100">
+                            className="inline-flex items-center gap-1 rounded-full bg-line-strong px-2 py-0.5 text-xs text-fg">
                             {text}
                             {!disabled && (
                                 <button type="button" aria-label={`Remove ${text}`} onClick={() => remove(id)}
-                                    className="text-slate-400 hover:text-slate-100">
+                                    className="text-fg-muted hover:text-fg">
                                     <X size={12} />
                                 </button>
                             )}
                         </span>
                     );
                 })}
-                {disabled && !selected.length && <span className="text-xs text-slate-500">None</span>}
+                {disabled && !selected.length && <span className="text-xs text-fg-subtle">None</span>}
             </div>
             {!disabled && (
                 <div className="relative">
@@ -110,27 +110,27 @@ export const AgentMultiSelect: React.FC<AgentMultiSelectProps> = ({
                     />
                     {open && (
                         <ul role="listbox" aria-label={`${label} options`}
-                            className="absolute z-20 mt-1 max-h-48 w-full overflow-auto rounded-lg border border-slate-700 bg-slate-900 text-sm">
+                            className="absolute z-20 mt-1 max-h-48 w-full overflow-auto rounded-lg border border-line-strong bg-surface text-sm">
                             {loading && (
-                                <li className="flex items-center gap-2 px-3 py-2 text-slate-400">
+                                <li className="flex items-center gap-2 px-3 py-2 text-fg-muted">
                                     <Loader2 size={12} className="animate-spin" /> Loading…
                                 </li>
                             )}
-                            {!loading && !visible.length && <li className="px-3 py-2 text-slate-500">No matches</li>}
+                            {!loading && !visible.length && <li className="px-3 py-2 text-fg-subtle">No matches</li>}
                             {!loading && visible.map((o) => (
                                 <li key={o.id} role="option" aria-selected={false}
-                                    className="cursor-pointer px-3 py-2 text-slate-100 hover:bg-slate-800"
+                                    className="cursor-pointer px-3 py-2 text-fg hover:bg-surface-raised"
                                     onMouseDown={(e) => e.preventDefault()}
                                     onClick={() => add(o.id)}>
                                     {o.name}
-                                    {o.detail && o.detail !== o.name && <span className="ml-2 text-xs text-slate-500">{o.detail}</span>}
+                                    {o.detail && o.detail !== o.name && <span className="ml-2 text-xs text-fg-subtle">{o.detail}</span>}
                                 </li>
                             ))}
                         </ul>
                     )}
                 </div>
             )}
-            {error && <span role="alert" className="block text-[11px] text-amber-400 mt-1">{error}</span>}
+            {error && <span role="alert" className="block text-[11px] text-warning mt-1">{error}</span>}
         </div>
     );
 };
@@ -227,9 +227,9 @@ export const TeamAgentPicker: React.FC<PickerProps> = ({ value, onChange, disabl
     if (failed) {
         return (
             <div>
-                <span className="block text-xs text-slate-400 mb-1">{label}</span>
+                <span className="block text-xs text-fg-muted mb-1">{label}</span>
                 <IdListFallback label="Assigned team IDs" value={value} onChange={onChange} disabled={disabled} />
-                <span role="alert" className="block text-[11px] text-amber-400 mt-1">
+                <span role="alert" className="block text-[11px] text-warning mt-1">
                     Could not load teams ({failed}). Enter team IDs separated by commas.
                 </span>
             </div>

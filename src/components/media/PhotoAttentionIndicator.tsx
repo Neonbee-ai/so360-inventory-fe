@@ -12,7 +12,7 @@ const PhotoAttentionIndicator: React.FC<{ needsAttention?: boolean }> = ({ needs
             role="img"
             aria-label="Photos need attention"
             title="Photos need attention — a photo is small (under 800px) or far from square, so it may look blurry or tiny in the store."
-            className="inline-flex items-center px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-semibold"
+            className="inline-flex items-center px-1.5 py-0.5 rounded bg-warning/10 text-warning border border-warning/20 text-[10px] font-semibold"
         >
             ⚠ Photos
         </span>

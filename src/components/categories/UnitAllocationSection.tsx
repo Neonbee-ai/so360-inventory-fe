@@ -53,21 +53,21 @@ export const UnitAllocationSection: React.FC<UnitAllocationSectionProps> = ({ it
 
     if (loading) {
         return (
-            <div className="flex items-center gap-2 text-slate-500" data-testid="unit-allocation-loading">
+            <div className="flex items-center gap-2 text-fg-subtle" data-testid="unit-allocation-loading">
                 <Loader2 size={12} className="animate-spin" /> Loading agents…
             </div>
         );
     }
 
     return (
-        <div className="border-t border-slate-800 pt-2 space-y-2" data-testid="unit-allocation">
+        <div className="border-t border-line pt-2 space-y-2" data-testid="unit-allocation">
             <AssignedAgentsPanel value={draft} onChange={setDraft} inherited={inherited} disabled={!canManage} scope="unit" />
             {error && <p className="text-rose-400">{error}</p>}
             {canManage && (
                 <button
                     onClick={save}
                     disabled={!dirty || saving}
-                    className="px-3 py-1.5 rounded-lg bg-blue-600 text-white disabled:opacity-50"
+                    className="px-3 py-1.5 rounded-lg bg-primary text-primary-fg disabled:opacity-50"
                 >
                     {saving ? 'Saving…' : 'Save agents'}
                 </button>

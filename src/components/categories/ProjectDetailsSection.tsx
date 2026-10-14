@@ -16,7 +16,7 @@ interface ProjectDetailsSectionProps {
 }
 
 const inputCls =
-    'w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 disabled:opacity-50';
+    'w-full bg-surface-raised border border-line-strong rounded-lg px-3 py-2 text-sm text-fg placeholder-fg-subtle focus:outline-none focus:border-primary disabled:opacity-50';
 
 const PROJECT_STATUS_LABEL: Record<ProjectStatus, string> = {
     planned: 'Planned',
@@ -55,7 +55,7 @@ const compact = <T extends Record<string, unknown>>(o: T): T | null =>
 
 const Field: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
     <label className="block">
-        <span className="block text-xs text-slate-400 mb-1">{label}</span>
+        <span className="block text-xs text-fg-muted mb-1">{label}</span>
         {children}
     </label>
 );
@@ -143,14 +143,14 @@ export const ProjectDetailsSection: React.FC<ProjectDetailsSectionProps> = ({ va
     };
 
     return (
-        <section className="space-y-4 border border-slate-800 rounded-xl p-4" aria-label="Project details">
-            <h3 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
-                <Building2 size={16} className="text-blue-400" /> Project details
+        <section className="space-y-4 border border-line rounded-xl p-4" aria-label="Project details">
+            <h3 className="text-sm font-semibold text-fg-muted flex items-center gap-2">
+                <Building2 size={16} className="text-primary" /> Project details
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <label className="block">
-                    <span className="block text-xs text-slate-400 mb-1">Developer</span>
+                    <span className="block text-xs text-fg-muted mb-1">Developer</span>
                     <select
                         aria-label="Developer"
                         className={inputCls}
@@ -173,7 +173,7 @@ export const ProjectDetailsSection: React.FC<ProjectDetailsSectionProps> = ({ va
                                     type="button"
                                     aria-pressed={devFilter === f.key}
                                     onClick={() => setDevFilter(f.key)}
-                                    className={`px-2 py-0.5 rounded-full text-[11px] border ${devFilter === f.key ? 'bg-blue-500/20 border-blue-500 text-blue-300' : 'border-slate-700 text-slate-400 hover:border-slate-500'}`}
+                                    className={`px-2 py-0.5 rounded-full text-[11px] border ${devFilter === f.key ? 'bg-primary/20 border-primary text-primary' : 'border-line-strong text-fg-muted hover:border-line-strong'}`}
                                 >
                                     {f.label}
                                 </button>
@@ -184,7 +184,7 @@ export const ProjectDetailsSection: React.FC<ProjectDetailsSectionProps> = ({ va
                 </label>
 
                 <label className="block">
-                    <span className="block text-xs text-slate-400 mb-1 flex items-center gap-1"><MapPin size={12} /> Location</span>
+                    <span className="block text-xs text-fg-muted mb-1 flex items-center gap-1"><MapPin size={12} /> Location</span>
                     <input
                         aria-label="Location"
                         className={inputCls}
@@ -196,7 +196,7 @@ export const ProjectDetailsSection: React.FC<ProjectDetailsSectionProps> = ({ va
                 </label>
 
                 <label className="block">
-                    <span className="block text-xs text-slate-400 mb-1 flex items-center gap-1"><Calendar size={12} /> Handover</span>
+                    <span className="block text-xs text-fg-muted mb-1 flex items-center gap-1"><Calendar size={12} /> Handover</span>
                     <input
                         aria-label="Handover"
                         className={inputCls}
@@ -208,10 +208,10 @@ export const ProjectDetailsSection: React.FC<ProjectDetailsSectionProps> = ({ va
                 </label>
 
                 <div>
-                    <span className="block text-xs text-slate-400 mb-1 flex items-center gap-1"><FileText size={12} /> Brochure</span>
+                    <span className="block text-xs text-fg-muted mb-1 flex items-center gap-1"><FileText size={12} /> Brochure</span>
                     {value.brochure_url ? (
                         <div className="flex items-center gap-2 text-sm">
-                            <a href={value.brochure_url} target="_blank" rel="noreferrer" className="text-blue-400 hover:underline truncate">
+                            <a href={value.brochure_url} target="_blank" rel="noreferrer" className="text-primary hover:underline truncate">
                                 View brochure
                             </a>
                             {!disabled && (
@@ -219,14 +219,14 @@ export const ProjectDetailsSection: React.FC<ProjectDetailsSectionProps> = ({ va
                                     type="button"
                                     aria-label="Remove brochure"
                                     onClick={() => set({ brochure_url: null })}
-                                    className="p-1 text-slate-500 hover:text-rose-400"
+                                    className="p-1 text-fg-subtle hover:text-rose-400"
                                 >
                                     <X size={14} />
                                 </button>
                             )}
                         </div>
                     ) : (
-                        <label className={`flex items-center gap-2 text-sm text-slate-300 bg-slate-800 border border-dashed border-slate-700 rounded-lg px-3 py-2 ${disabled ? 'opacity-50' : 'cursor-pointer hover:border-blue-500'}`}>
+                        <label className={`flex items-center gap-2 text-sm text-fg-muted bg-surface-raised border border-dashed border-line-strong rounded-lg px-3 py-2 ${disabled ? 'opacity-50' : 'cursor-pointer hover:border-primary'}`}>
                             {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
                             {uploading ? 'Uploading…' : 'Upload PDF'}
                             <input

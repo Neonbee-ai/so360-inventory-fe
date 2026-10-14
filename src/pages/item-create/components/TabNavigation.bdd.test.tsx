@@ -91,22 +91,22 @@ describe('TabNavigation', () => {
   });
 
   describe('Given the active tab styling', () => {
-    it('When activeTab is "pricing" / Then the Pricing button carries the active text-blue-400 class', () => {
+    it('When activeTab is "pricing" / Then the Pricing button carries the active text-primary class', () => {
       render(<TabNavigation activeTab="pricing" onTabChange={vi.fn()} />);
       const pricingBtn = screen.getByText('Pricing').closest('button');
-      expect(pricingBtn?.className).toContain('text-blue-400');
+      expect(pricingBtn?.className).toContain('text-primary');
     });
 
-    it('When activeTab is "media" / Then the Media button carries the active text-blue-400 class', () => {
+    it('When activeTab is "media" / Then the Media button carries the active text-primary class', () => {
       render(<TabNavigation activeTab="media" onTabChange={vi.fn()} />);
       const mediaBtn = screen.getByText('Media').closest('button');
-      expect(mediaBtn?.className).toContain('text-blue-400');
+      expect(mediaBtn?.className).toContain('text-primary');
     });
 
-    it('When activeTab is "basic" / Then inactive tabs do not carry text-blue-400', () => {
+    it('When activeTab is "basic" / Then inactive tabs do not carry text-primary', () => {
       render(<TabNavigation activeTab="basic" onTabChange={vi.fn()} />);
       const pricingBtn = screen.getByText('Pricing').closest('button');
-      expect(pricingBtn?.className).not.toContain('text-blue-400');
+      expect(pricingBtn?.className).not.toContain('text-primary');
     });
   });
 

@@ -550,11 +550,11 @@ const ItemCreatePage = () => {
     return (
         <div className="min-h-screen pb-24">
             {/* Header */}
-            <div className="sticky top-0 z-10 bg-slate-950/80 backdrop-blur-xl border-b border-slate-800">
+            <div className="sticky top-0 z-10 bg-bg/80 backdrop-blur-xl border-b border-line">
                 <div className="px-8 py-4 flex items-center justify-between">
                     <button
                         onClick={() => navigate('/inventory/items')}
-                        className="flex items-center gap-2 text-slate-400 hover:text-slate-50 transition-colors"
+                        className="flex items-center gap-2 text-fg-muted hover:text-fg transition-colors"
                     >
                         <ArrowLeft size={20} />
                         <span className="font-medium">Back to Items</span>
@@ -563,14 +563,14 @@ const ItemCreatePage = () => {
                         <button
                             type="button"
                             onClick={() => navigate('/inventory/items')}
-                            className="px-4 py-2 rounded-lg border border-slate-700 text-slate-300 hover:bg-slate-800 transition-all font-medium"
+                            className="px-4 py-2 rounded-lg border border-line-strong text-fg-muted hover:bg-surface-raised transition-all font-medium"
                         >
                             Cancel
                         </button>
                         <button
                             onClick={() => handleSubmit()}
                             disabled={isSubmitting || isTaxCodesLoading || !!taxCodesError}
-                            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white px-5 py-2 rounded-lg font-semibold transition-all shadow-lg shadow-blue-900/20"
+                            className="flex items-center gap-2 bg-primary hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed text-primary-fg px-5 py-2 rounded-lg font-semibold transition-all shadow-lg shadow-blue-900/20"
                         >
                             {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
                             {isSubmitting ? 'Saving...' : 'Save Item'}
@@ -580,7 +580,7 @@ const ItemCreatePage = () => {
             </div>
 
             <div className="px-8 pt-6">
-                <h1 className="text-2xl font-bold text-slate-50 mb-6">Register New Item</h1>
+                <h1 className="text-2xl font-bold text-fg mb-6">Register New Item</h1>
 
                 {error && (
                     <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 px-4 py-3 rounded-lg text-sm mb-6">
@@ -588,13 +588,13 @@ const ItemCreatePage = () => {
                     </div>
                 )}
                 {taxCodesError && (
-                    <div className="bg-amber-500/10 border border-amber-500/20 text-amber-400 px-4 py-3 rounded-lg text-sm mb-6">
+                    <div className="bg-warning/10 border border-warning/20 text-warning px-4 py-3 rounded-lg text-sm mb-6">
                         {taxCodesError}
                     </div>
                 )}
 
                 {/* Tab Bar */}
-                <div className="bg-slate-900/50 border border-slate-800 rounded-xl">
+                <div className="bg-surface/50 border border-line rounded-xl">
                     <TabNavigation
                         activeTab={activeTab}
                         onTabChange={setActiveTab}
@@ -609,19 +609,19 @@ const ItemCreatePage = () => {
             </div>
 
             {/* Sticky footer for mobile */}
-            <div className="fixed bottom-0 left-0 right-0 bg-slate-950/90 backdrop-blur-xl border-t border-slate-800 p-4 md:hidden">
+            <div className="fixed bottom-0 left-0 right-0 bg-bg/90 backdrop-blur-xl border-t border-line p-4 md:hidden">
                 <div className="flex gap-3">
                     <button
                         type="button"
                         onClick={() => navigate('/inventory/items')}
-                        className="flex-1 px-4 py-2.5 rounded-lg border border-slate-700 text-slate-300 hover:bg-slate-800 transition-all font-medium"
+                        className="flex-1 px-4 py-2.5 rounded-lg border border-line-strong text-fg-muted hover:bg-surface-raised transition-all font-medium"
                     >
                         Cancel
                     </button>
                     <button
                         onClick={() => handleSubmit()}
                         disabled={isSubmitting || isTaxCodesLoading || !!taxCodesError}
-                        className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white px-5 py-2.5 rounded-lg font-semibold transition-all"
+                        className="flex-1 flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-fg px-5 py-2.5 rounded-lg font-semibold transition-all"
                     >
                         {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
                         {isSubmitting ? 'Saving...' : 'Save Item'}

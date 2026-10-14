@@ -45,23 +45,23 @@ const CsvUploadStep: React.FC<Props> = ({ onParsed, onParse }) => {
                 onClick={() => inputRef.current?.click()}
                 className={`border-2 border-dashed rounded-xl p-12 flex flex-col items-center gap-4 cursor-pointer transition-all ${
                     dragging
-                        ? 'border-blue-500 bg-blue-500/5'
-                        : 'border-slate-700 bg-slate-900/40 hover:border-slate-600 hover:bg-slate-900/60'
+                        ? 'border-primary bg-primary/5'
+                        : 'border-line-strong bg-surface/40 hover:border-line-strong hover:bg-surface/60'
                 }`}
             >
-                <div className="w-14 h-14 rounded-xl bg-slate-800 flex items-center justify-center border border-slate-700">
-                    <FileText size={28} className="text-blue-400" />
+                <div className="w-14 h-14 rounded-xl bg-surface-raised flex items-center justify-center border border-line-strong">
+                    <FileText size={28} className="text-primary" />
                 </div>
                 <div className="text-center">
-                    <p className="text-slate-200 font-semibold text-lg">Drop your CSV here</p>
-                    <p className="text-slate-500 text-sm mt-1">or click to browse — max 2 MB</p>
+                    <p className="text-fg font-semibold text-lg">Drop your CSV here</p>
+                    <p className="text-fg-subtle text-sm mt-1">or click to browse — max 2 MB</p>
                 </div>
                 <input ref={inputRef} type="file" accept=".csv" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handle(f); }} />
             </div>
 
             {loading && (
-                <div className="mt-6 flex items-center gap-3 text-slate-400 text-sm">
-                    <div className="w-5 h-5 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
+                <div className="mt-6 flex items-center gap-3 text-fg-muted text-sm">
+                    <div className="w-5 h-5 border-2 border-primary/30 border-t-blue-500 rounded-full animate-spin" />
                     Parsing CSV…
                 </div>
             )}
@@ -73,8 +73,8 @@ const CsvUploadStep: React.FC<Props> = ({ onParsed, onParse }) => {
                 </div>
             )}
 
-            <div className="mt-8 bg-slate-900/50 border border-slate-800 rounded-xl p-5">
-                <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-3">Required CSV columns</p>
+            <div className="mt-8 bg-surface/50 border border-line rounded-xl p-5">
+                <p className="text-fg-muted text-xs font-semibold uppercase tracking-wider mb-3">Required CSV columns</p>
                 <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 text-sm">
                     {[
                         ['name', 'Item name (required)'],
@@ -87,26 +87,26 @@ const CsvUploadStep: React.FC<Props> = ({ onParsed, onParse }) => {
                         ['description', 'Product description (optional)'],
                     ].map(([col, desc]) => (
                         <div key={col} className="flex gap-2">
-                            <span className="font-mono text-blue-400 text-xs mt-0.5">{col}</span>
-                            <span className="text-slate-500 text-xs">{desc}</span>
+                            <span className="font-mono text-primary text-xs mt-0.5">{col}</span>
+                            <span className="text-fg-subtle text-xs">{desc}</span>
                         </div>
                     ))}
                 </div>
-                <p className="mt-3 text-slate-500 text-xs">
-                    <span className="font-semibold text-slate-400">SKU:</span> not needed — each item gets its SKU automatically.
-                    In the next step, name each image after its product (e.g. <span className="font-mono text-blue-400">Namur Sofa.jpg</span>); for several images add _2, _3… (<span className="font-mono text-blue-400">Namur Sofa_2.jpg</span>).
+                <p className="mt-3 text-fg-subtle text-xs">
+                    <span className="font-semibold text-fg-muted">SKU:</span> not needed — each item gets its SKU automatically.
+                    In the next step, name each image after its product (e.g. <span className="font-mono text-primary">Namur Sofa.jpg</span>); for several images add _2, _3… (<span className="font-mono text-primary">Namur Sofa_2.jpg</span>).
                 </p>
-                <p className="mt-3 text-slate-500 text-xs">
-                    <span className="font-semibold text-slate-400">Description:</span> add the product description in the{' '}
-                    <span className="font-mono text-blue-400">description</span> column. It will be automatically saved to the product.
+                <p className="mt-3 text-fg-subtle text-xs">
+                    <span className="font-semibold text-fg-muted">Description:</span> add the product description in the{' '}
+                    <span className="font-mono text-primary">description</span> column. It will be automatically saved to the product.
                 </p>
                 <div className="mt-4 flex items-center gap-2">
-                    <Upload size={13} className="text-slate-500" />
+                    <Upload size={13} className="text-fg-subtle" />
                     <a
                         href="data:text/csv;charset=utf-8,name,type,price,cost,category_name,unit_name,is_batch_tracked,is_serial_tracked,is_online_visible,product_status,barcode,brand,weight,weight_unit,description"
                         download="bulk-import-template.csv"
                         onClick={(e) => e.stopPropagation()}
-                        className="text-blue-400 hover:text-blue-300 text-xs underline"
+                        className="text-primary hover:text-primary text-xs underline"
                     >
                         Download CSV template
                     </a>

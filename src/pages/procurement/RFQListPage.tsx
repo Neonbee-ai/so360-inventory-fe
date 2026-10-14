@@ -21,10 +21,10 @@ interface RFQ {
 }
 
 export const RFQ_STATUS_STYLES: Record<string, string> = {
-    draft: 'bg-slate-700/50 text-slate-400 border-slate-600/20',
-    sent: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-    closed: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-    awarded: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+    draft: 'bg-line-strong/50 text-fg-muted border-line-strong/20',
+    sent: 'bg-primary/10 text-primary border-primary/20',
+    closed: 'bg-warning/10 text-warning border-warning/20',
+    awarded: 'bg-success/10 text-success border-success/20',
     cancelled: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
 };
 
@@ -150,11 +150,11 @@ const RFQListPage = () => {
                     <h1 className="text-4xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
                         Requests for Quotation
                     </h1>
-                    <p className="text-slate-400 mt-2 font-medium">Source competitive quotes before committing to a purchase order.</p>
+                    <p className="text-fg-muted mt-2 font-medium">Source competitive quotes before committing to a purchase order.</p>
                 </div>
                 <button
                     onClick={() => setShowForm(true)}
-                    className="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-semibold transition-all shadow-lg shadow-blue-900/20 active:scale-95 flex items-center gap-2"
+                    className="px-6 py-3 bg-primary hover:bg-primary-hover text-primary-fg rounded-xl font-semibold transition-all shadow-lg shadow-blue-900/20 active:scale-95 flex items-center gap-2"
                 >
                     <span className="text-xl leading-none">+</span> New RFQ
                 </button>
@@ -167,23 +167,23 @@ const RFQListPage = () => {
                     { label: 'Quotes Received', value: rfqs.reduce((s, r) => s + (r.quotation_count || 0), 0), icon: '💬' },
                     { label: 'Awarded', value: rfqs.filter(r => r.status === 'awarded').length, icon: '🏆' },
                 ].map((stat, i) => (
-                    <div key={i} className="bg-slate-900/50 border border-slate-800 p-6 rounded-2xl backdrop-blur-sm">
+                    <div key={i} className="bg-surface/50 border border-line p-6 rounded-2xl backdrop-blur-sm">
                         <div className="flex justify-between items-start">
                             <span className="text-2xl">{stat.icon}</span>
-                            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{stat.label}</span>
+                            <span className="text-xs font-bold uppercase tracking-wider text-fg-subtle">{stat.label}</span>
                         </div>
-                        <div className="mt-4 text-3xl font-bold text-slate-100">{stat.value}</div>
+                        <div className="mt-4 text-3xl font-bold text-fg">{stat.value}</div>
                     </div>
                 ))}
             </div>
 
             <div className="flex items-center gap-3">
-                <label htmlFor="rfq-status-filter" className="text-xs font-bold text-slate-500 uppercase tracking-wider">Status</label>
+                <label htmlFor="rfq-status-filter" className="text-xs font-bold text-fg-subtle uppercase tracking-wider">Status</label>
                 <select
                     id="rfq-status-filter"
                     value={statusFilter}
                     onChange={e => setStatusFilter(e.target.value)}
-                    className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                    className="bg-bg border border-line rounded-xl px-4 py-2 text-sm text-fg focus:outline-none focus:ring-2 focus:ring-focus/40"
                 >
                     <option value="">All</option>
                     <option value="draft">Draft</option>
@@ -193,48 +193,48 @@ const RFQListPage = () => {
                 </select>
             </div>
 
-            <div className="bg-slate-900/50 border border-slate-800 rounded-2xl overflow-hidden backdrop-blur-sm">
+            <div className="bg-surface/50 border border-line rounded-2xl overflow-hidden backdrop-blur-sm">
                 <table className="w-full text-left border-collapse">
                     <thead>
-                        <tr className="border-b border-slate-800 bg-slate-800/30">
-                            <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400">RFQ</th>
-                            <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400">Status</th>
-                            <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400">Vendors</th>
-                            <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400">Quotes</th>
-                            <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400">Response Due</th>
-                            <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400">Action</th>
+                        <tr className="border-b border-line bg-surface-raised/30">
+                            <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-fg-muted">RFQ</th>
+                            <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-fg-muted">Status</th>
+                            <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-fg-muted">Vendors</th>
+                            <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-fg-muted">Quotes</th>
+                            <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-fg-muted">Response Due</th>
+                            <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-fg-muted">Action</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-800/50">
+                    <tbody className="divide-y divide-line/50">
                         {loading ? (
-                            <tr><td colSpan={6} className="px-6 py-12 text-center text-slate-500 animate-pulse">Loading RFQs...</td></tr>
+                            <tr><td colSpan={6} className="px-6 py-12 text-center text-fg-subtle animate-pulse">Loading RFQs...</td></tr>
                         ) : rfqs.length === 0 ? (
-                            <tr><td colSpan={6} className="px-6 py-12 text-center text-slate-500">No RFQs yet. Create one to start sourcing quotes.</td></tr>
+                            <tr><td colSpan={6} className="px-6 py-12 text-center text-fg-subtle">No RFQs yet. Create one to start sourcing quotes.</td></tr>
                         ) : rfqs.map(rfq => (
-                            <tr key={rfq.id} className="hover:bg-slate-800/20 transition-colors">
+                            <tr key={rfq.id} className="hover:bg-surface-raised/20 transition-colors">
                                 <td className="px-6 py-4">
-                                    <div className="font-semibold text-slate-200">{rfq.rfq_number}</div>
-                                    <div className="text-xs text-slate-500 truncate max-w-[220px]">{rfq.title || `${rfq.line_count} lines`}</div>
+                                    <div className="font-semibold text-fg">{rfq.rfq_number}</div>
+                                    <div className="text-xs text-fg-subtle truncate max-w-[220px]">{rfq.title || `${rfq.line_count} lines`}</div>
                                 </td>
                                 <td className="px-6 py-4">
                                     <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border ${RFQ_STATUS_STYLES[rfq.status] || RFQ_STATUS_STYLES.draft}`}>
                                         {rfq.status}
                                     </span>
                                 </td>
-                                <td className="px-6 py-4 text-sm text-slate-300 font-mono">{rfq.vendor_count}</td>
+                                <td className="px-6 py-4 text-sm text-fg-muted font-mono">{rfq.vendor_count}</td>
                                 <td className="px-6 py-4 text-sm font-mono">
-                                    <span className={rfq.quotation_count > 0 ? 'text-emerald-400 font-bold' : 'text-slate-500'}>
+                                    <span className={rfq.quotation_count > 0 ? 'text-success font-bold' : 'text-fg-subtle'}>
                                         {rfq.quotation_count}
                                     </span>
                                 </td>
-                                <td className="px-6 py-4 text-sm text-slate-300">
+                                <td className="px-6 py-4 text-sm text-fg-muted">
                                     {rfq.response_due_date ? formatters.formatDate(rfq.response_due_date) : '—'}
                                 </td>
                                 <td className="px-6 py-4">
                                     <div className="flex items-center gap-3">
                                         <button
                                             onClick={() => navigate(`/procurement/rfq/${rfq.id}`)}
-                                            className="text-blue-400 hover:text-blue-300 font-semibold text-sm transition-colors"
+                                            className="text-primary hover:text-primary font-semibold text-sm transition-colors"
                                         >
                                             View Details →
                                         </button>
@@ -255,31 +255,31 @@ const RFQListPage = () => {
             </div>
 
             {showForm && (
-                <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center px-4 pt-24 pb-6 z-[600] animate-in fade-in zoom-in duration-300">
-                    <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-3xl max-h-[calc(100vh-7.5rem)] flex flex-col overflow-hidden shadow-2xl shadow-black/50">
-                        <div className="p-8 border-b border-slate-800 flex justify-between items-center">
-                            <h2 className="text-2xl font-bold text-slate-100">New Request for Quotation</h2>
-                            <button onClick={() => setShowForm(false)} className="text-slate-500 hover:text-slate-50 transition-colors text-2xl">×</button>
+                <div className="fixed inset-0 bg-bg/80 backdrop-blur-md flex items-center justify-center px-4 pt-24 pb-6 z-[600] animate-in fade-in zoom-in duration-300">
+                    <div className="bg-surface border border-line rounded-3xl w-full max-w-3xl max-h-[calc(100vh-7.5rem)] flex flex-col overflow-hidden shadow-2xl shadow-black/50">
+                        <div className="p-8 border-b border-line flex justify-between items-center">
+                            <h2 className="text-2xl font-bold text-fg">New Request for Quotation</h2>
+                            <button onClick={() => setShowForm(false)} className="text-fg-subtle hover:text-fg transition-colors text-2xl">×</button>
                         </div>
                         <form onSubmit={handleSubmit} className="p-8 space-y-6 overflow-y-auto custom-scrollbar flex-1">
                             <div className="grid grid-cols-2 gap-6">
                                 <div className="space-y-2">
-                                    <label htmlFor="rfq-title" className="text-xs font-bold text-slate-500 uppercase tracking-wider">Title</label>
+                                    <label htmlFor="rfq-title" className="text-xs font-bold text-fg-subtle uppercase tracking-wider">Title</label>
                                     <input
                                         id="rfq-title"
                                         type="text"
                                         value={form.title}
                                         placeholder="e.g. Q4 cement supply"
-                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                        className="w-full bg-bg border border-line rounded-xl px-4 py-3 text-fg focus:outline-none focus:ring-2 focus:ring-focus/50"
                                         onChange={e => setForm({ ...form, title: e.target.value })}
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label htmlFor="rfq-pr" className="text-xs font-bold text-slate-500 uppercase tracking-wider">Source Requisition</label>
+                                    <label htmlFor="rfq-pr" className="text-xs font-bold text-fg-subtle uppercase tracking-wider">Source Requisition</label>
                                     <select
                                         id="rfq-pr"
                                         value={form.pr_id}
-                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                        className="w-full bg-bg border border-line rounded-xl px-4 py-3 text-fg focus:outline-none focus:ring-2 focus:ring-focus/50"
                                         onChange={e => setForm({ ...form, pr_id: e.target.value })}
                                     >
                                         <option value="">Not from a requisition</option>
@@ -291,53 +291,53 @@ const RFQListPage = () => {
                                     </select>
                                 </div>
                                 <div className="space-y-2">
-                                    <label htmlFor="rfq-due" className="text-xs font-bold text-slate-500 uppercase tracking-wider">Response Due</label>
+                                    <label htmlFor="rfq-due" className="text-xs font-bold text-fg-subtle uppercase tracking-wider">Response Due</label>
                                     <input
                                         id="rfq-due"
                                         type="date"
                                         value={form.response_due_date}
-                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                        className="w-full bg-bg border border-line rounded-xl px-4 py-3 text-fg focus:outline-none focus:ring-2 focus:ring-focus/50"
                                         onChange={e => setForm({ ...form, response_due_date: e.target.value })}
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label htmlFor="rfq-required" className="text-xs font-bold text-slate-500 uppercase tracking-wider">Goods Required By</label>
+                                    <label htmlFor="rfq-required" className="text-xs font-bold text-fg-subtle uppercase tracking-wider">Goods Required By</label>
                                     <input
                                         id="rfq-required"
                                         type="date"
                                         value={form.required_date}
-                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                        className="w-full bg-bg border border-line rounded-xl px-4 py-3 text-fg focus:outline-none focus:ring-2 focus:ring-focus/50"
                                         onChange={e => setForm({ ...form, required_date: e.target.value })}
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label htmlFor="rfq-payment" className="text-xs font-bold text-slate-500 uppercase tracking-wider">Payment Terms</label>
+                                    <label htmlFor="rfq-payment" className="text-xs font-bold text-fg-subtle uppercase tracking-wider">Payment Terms</label>
                                     <input
                                         id="rfq-payment"
                                         type="text"
                                         value={form.payment_terms}
                                         placeholder="e.g. Net 30"
-                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                        className="w-full bg-bg border border-line rounded-xl px-4 py-3 text-fg focus:outline-none focus:ring-2 focus:ring-focus/50"
                                         onChange={e => setForm({ ...form, payment_terms: e.target.value })}
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label htmlFor="rfq-incoterms" className="text-xs font-bold text-slate-500 uppercase tracking-wider">Incoterms</label>
+                                    <label htmlFor="rfq-incoterms" className="text-xs font-bold text-fg-subtle uppercase tracking-wider">Incoterms</label>
                                     <input
                                         id="rfq-incoterms"
                                         type="text"
                                         value={form.incoterms}
                                         placeholder="e.g. DDP"
-                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                        className="w-full bg-bg border border-line rounded-xl px-4 py-3 text-fg focus:outline-none focus:ring-2 focus:ring-focus/50"
                                         onChange={e => setForm({ ...form, incoterms: e.target.value })}
                                     />
                                 </div>
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Invite Vendors</label>
+                                <label className="text-xs font-bold text-fg-subtle uppercase tracking-wider">Invite Vendors</label>
                                 <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto custom-scrollbar">
-                                    {vendors.length === 0 && <span className="text-sm text-slate-600">No vendors found.</span>}
+                                    {vendors.length === 0 && <span className="text-sm text-fg-subtle">No vendors found.</span>}
                                     {vendors.map(v => (
                                         <button
                                             key={v.id}
@@ -345,8 +345,8 @@ const RFQListPage = () => {
                                             aria-pressed={vendorIds.includes(v.id)}
                                             onClick={() => toggleVendor(v.id)}
                                             className={`px-4 py-2 rounded-xl text-sm font-medium border transition-all ${vendorIds.includes(v.id)
-                                                ? 'bg-blue-600/10 text-blue-400 border-blue-500/40'
-                                                : 'bg-slate-950 text-slate-400 border-slate-800 hover:border-slate-700'}`}
+                                                ? 'bg-primary/10 text-primary border-primary/40'
+                                                : 'bg-bg text-fg-muted border-line hover:border-line-strong'}`}
                                         >
                                             {v.name}
                                         </button>
@@ -356,18 +356,18 @@ const RFQListPage = () => {
 
                             <div className="space-y-4">
                                 <div className="flex justify-between items-center">
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Requested Lines</label>
-                                    <button type="button" onClick={addLine} className="text-blue-400 hover:text-blue-300 text-xs font-bold">+ Add Line</button>
+                                    <label className="text-xs font-bold text-fg-subtle uppercase tracking-wider">Requested Lines</label>
+                                    <button type="button" onClick={addLine} className="text-primary hover:text-primary text-xs font-bold">+ Add Line</button>
                                 </div>
                                 {lines.length === 0 && (
-                                    <div className="text-center py-6 text-slate-600 text-sm border border-dashed border-slate-800 rounded-xl">
+                                    <div className="text-center py-6 text-fg-subtle text-sm border border-dashed border-line rounded-xl">
                                         {form.pr_id
                                             ? 'Lines will be copied from the selected requisition.'
                                             : 'No lines yet. Click "+ Add Line" or link a requisition.'}
                                     </div>
                                 )}
                                 {lines.map((line, idx) => (
-                                    <div key={idx} className="p-3 bg-slate-950/50 border border-slate-800 rounded-xl space-y-2">
+                                    <div key={idx} className="p-3 bg-bg/50 border border-line rounded-xl space-y-2">
                                         <div className="flex gap-3 items-center">
                                             <div className="flex-1">
                                                 <ItemSearchSelector
@@ -391,7 +391,7 @@ const RFQListPage = () => {
                                                 placeholder="Qty"
                                                 min="1"
                                                 value={line.quantity}
-                                                className="w-24 bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200"
+                                                className="w-24 bg-bg border border-line rounded-lg px-3 py-2 text-sm text-fg"
                                                 onChange={e => updateLine(idx, 'quantity', e.target.value)}
                                             />
                                             <input
@@ -399,7 +399,7 @@ const RFQListPage = () => {
                                                 aria-label={`Unit of measure for line ${idx + 1}`}
                                                 placeholder="UOM"
                                                 value={line.uom}
-                                                className="w-24 bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200"
+                                                className="w-24 bg-bg border border-line rounded-lg px-3 py-2 text-sm text-fg"
                                                 onChange={e => updateLine(idx, 'uom', e.target.value)}
                                             />
                                             <input
@@ -407,13 +407,13 @@ const RFQListPage = () => {
                                                 aria-label={`Target price for line ${idx + 1}`}
                                                 placeholder="Target"
                                                 value={line.target_unit_price}
-                                                className="w-28 bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200"
+                                                className="w-28 bg-bg border border-line rounded-lg px-3 py-2 text-sm text-fg"
                                                 onChange={e => updateLine(idx, 'target_unit_price', e.target.value)}
                                             />
                                             <button
                                                 type="button"
                                                 onClick={() => setLines(lines.filter((_, i) => i !== idx))}
-                                                className="text-red-400 hover:text-red-300 text-lg font-bold px-2"
+                                                className="text-danger hover:text-red-300 text-lg font-bold px-2"
                                                 title="Remove line"
                                             >×</button>
                                         </div>
@@ -422,7 +422,7 @@ const RFQListPage = () => {
                                             aria-label={`Description for line ${idx + 1}`}
                                             placeholder="Description / specification (optional)"
                                             value={line.description}
-                                            className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 placeholder-slate-600"
+                                            className="w-full bg-bg border border-line rounded-lg px-3 py-2 text-sm text-fg placeholder-fg-subtle"
                                             onChange={e => updateLine(idx, 'description', e.target.value)}
                                         />
                                     </div>
@@ -433,11 +433,11 @@ const RFQListPage = () => {
                                 <button
                                     type="submit"
                                     disabled={saving}
-                                    className="flex-1 px-6 py-4 bg-blue-600 hover:bg-blue-500 disabled:opacity-60 text-white rounded-2xl font-bold transition-all shadow-lg shadow-blue-900/20 active:scale-95"
+                                    className="flex-1 px-6 py-4 bg-primary hover:bg-primary-hover disabled:opacity-60 text-primary-fg rounded-2xl font-bold transition-all shadow-lg shadow-blue-900/20 active:scale-95"
                                 >
                                     {saving ? 'Creating...' : 'Create RFQ'}
                                 </button>
-                                <button type="button" onClick={() => setShowForm(false)} className="px-6 py-4 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-2xl font-bold transition-all active:scale-95">
+                                <button type="button" onClick={() => setShowForm(false)} className="px-6 py-4 bg-surface-raised hover:bg-line-strong text-fg-muted rounded-2xl font-bold transition-all active:scale-95">
                                     Cancel
                                 </button>
                             </div>

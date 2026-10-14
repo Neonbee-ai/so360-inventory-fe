@@ -16,7 +16,7 @@ interface AssignedAgentsPanelProps {
 const Hint: React.FC<{ own: string[] | null; inherited: InheritedList | null; testId: string }> = ({ own, inherited, testId }) => {
     if (own && own.length) return null;
     return (
-        <span data-testid={testId} className="block text-[11px] text-slate-500 mt-1">
+        <span data-testid={testId} className="block text-[11px] text-fg-subtle mt-1">
             {inherited ? `Inherited from ${inherited.from} (${inherited.ids.length})` : 'Not assigned'}
         </span>
     );
@@ -27,11 +27,11 @@ const Hint: React.FC<{ own: string[] | null; inherited: InheritedList | null; te
  * parent's list", which the hint names.
  */
 export const AssignedAgentsPanel: React.FC<AssignedAgentsPanelProps> = ({ value, onChange, inherited, disabled, scope }) => (
-    <section className="space-y-3 border border-slate-800 rounded-xl p-4" aria-label="Assigned agents">
-        <h3 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
-            <Users size={16} className="text-blue-400" /> Assigned agents/teams
+    <section className="space-y-3 border border-line rounded-xl p-4" aria-label="Assigned agents">
+        <h3 className="text-sm font-semibold text-fg-muted flex items-center gap-2">
+            <Users size={16} className="text-primary" /> Assigned agents/teams
         </h3>
-        <p className="text-[11px] text-slate-500">Leave empty to use the parent&apos;s agents for this {scope}.</p>
+        <p className="text-[11px] text-fg-subtle">Leave empty to use the parent&apos;s agents for this {scope}.</p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
                 <UserAgentPicker value={value.assigned_user_ids} disabled={disabled}

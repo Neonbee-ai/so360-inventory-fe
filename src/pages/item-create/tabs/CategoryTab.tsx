@@ -13,8 +13,8 @@ interface CategoryTabProps {
     error?: string | null;
 }
 
-const inputClass = 'w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all placeholder:text-slate-600';
-const labelClass = 'block text-sm font-medium text-slate-400 mb-1.5';
+const inputClass = 'w-full bg-surface-raised border border-line-strong rounded-lg px-4 py-2.5 text-fg focus:outline-none focus:ring-2 focus:ring-focus/50 focus:border-primary transition-all placeholder:text-fg-subtle';
+const labelClass = 'block text-sm font-medium text-fg-muted mb-1.5';
 
 /**
  * Numeric range check shared between the inline per-field error and the
@@ -77,7 +77,7 @@ const CategoryTab: React.FC<CategoryTabProps> = ({
                                 className={inputClass}
                                 placeholder={def.attribute_label}
                             />
-                            {def.unit && <span className="text-sm text-slate-500 whitespace-nowrap">{def.unit}</span>}
+                            {def.unit && <span className="text-sm text-fg-subtle whitespace-nowrap">{def.unit}</span>}
                         </div>
                         {rangeError && (
                             <p role="alert" data-testid={`error-attr-${def.attribute_key}`} className="text-rose-400 text-xs mt-1.5">
@@ -94,9 +94,9 @@ const CategoryTab: React.FC<CategoryTabProps> = ({
                             type="checkbox"
                             checked={!!value}
                             onChange={e => handleMetadataChange(def.attribute_key, e.target.checked)}
-                            className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-blue-600 focus:ring-blue-500/50"
+                            className="w-4 h-4 rounded border-line-strong bg-surface-raised text-primary focus:ring-focus/50"
                         />
-                        <span className="text-sm text-slate-300 group-hover:text-slate-50 transition-colors">
+                        <span className="text-sm text-fg-muted group-hover:text-fg transition-colors">
                             {def.attribute_label}
                         </span>
                     </label>
@@ -106,7 +106,7 @@ const CategoryTab: React.FC<CategoryTabProps> = ({
                 return (
                     <div>
                         <div className="flex items-center gap-2">
-                            {def.unit && <span className="text-sm text-slate-500 whitespace-nowrap">{def.unit}</span>}
+                            {def.unit && <span className="text-sm text-fg-subtle whitespace-nowrap">{def.unit}</span>}
                             <input
                                 type="number"
                                 step="0.01"
@@ -165,9 +165,9 @@ const CategoryTab: React.FC<CategoryTabProps> = ({
                                     name={def.attribute_key}
                                     checked={value === opt.value}
                                     onChange={() => handleMetadataChange(def.attribute_key, opt.value)}
-                                    className="w-4 h-4 border-slate-600 bg-slate-800 text-blue-600 focus:ring-blue-500/50"
+                                    className="w-4 h-4 border-line-strong bg-surface-raised text-primary focus:ring-focus/50"
                                 />
-                                <span className="text-sm text-slate-300">{opt.label}</span>
+                                <span className="text-sm text-fg-muted">{opt.label}</span>
                             </label>
                         ))}
                     </div>
@@ -202,9 +202,9 @@ const CategoryTab: React.FC<CategoryTabProps> = ({
                                                 : selected.filter(v => v !== opt.value);
                                             handleMetadataChange(def.attribute_key, next);
                                         }}
-                                        className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-blue-600 focus:ring-blue-500/50"
+                                        className="w-4 h-4 rounded border-line-strong bg-surface-raised text-primary focus:ring-focus/50"
                                     />
-                                    <span className="text-sm text-slate-300">{opt.label}</span>
+                                    <span className="text-sm text-fg-muted">{opt.label}</span>
                                 </label>
                             );
                         })}
@@ -233,9 +233,9 @@ const CategoryTab: React.FC<CategoryTabProps> = ({
                 )}
 
                 {category_id && (
-                    <div className="mt-4 p-3 bg-slate-800/30 border border-slate-700/50 rounded-lg">
-                        <p className="text-xs text-slate-500">
-                            Selected: <span className="text-slate-300 font-medium">{categories.find(c => c.id === category_id)?.name || 'Unknown'}</span>
+                    <div className="mt-4 p-3 bg-surface-raised/30 border border-line-strong/50 rounded-lg">
+                        <p className="text-xs text-fg-subtle">
+                            Selected: <span className="text-fg-muted font-medium">{categories.find(c => c.id === category_id)?.name || 'Unknown'}</span>
                         </p>
                     </div>
                 )}
@@ -254,7 +254,7 @@ const CategoryTab: React.FC<CategoryTabProps> = ({
                                         {def.attribute_label}
                                         {def.is_required && <span className="text-rose-400 ml-1">*</span>}
                                         {def.unit && def.attribute_type !== 'number' && (
-                                            <span className="text-slate-600 ml-1">({def.unit})</span>
+                                            <span className="text-fg-subtle ml-1">({def.unit})</span>
                                         )}
                                     </label>
                                 )}

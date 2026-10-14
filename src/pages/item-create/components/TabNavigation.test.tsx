@@ -24,7 +24,7 @@ describe('Given TabNavigation', () => {
   it('When activeTab is pricing / Then pricing button has active styling', () => {
     render(<TabNavigation activeTab="pricing" onTabChange={vi.fn()} />);
     const pricingBtn = screen.getByText('Pricing').closest('button');
-    expect(pricingBtn?.className).toContain('text-blue-400');
+    expect(pricingBtn?.className).toContain('text-primary');
   });
 
   it('When tabErrors has error on basic / Then basic tab has error indicator', () => {
@@ -67,6 +67,6 @@ describe('Given TabNavigation interaction hardening', () => {
   it('When inactive tab is rendered / Then it does not have active border class', () => {
     render(<TabNavigation activeTab="basic" onTabChange={vi.fn()} />);
     const pricingBtn = screen.getByText('Pricing').closest('button');
-    expect(pricingBtn?.className).not.toContain('border-blue-500');
+    expect(pricingBtn?.className).not.toContain('border-primary');
   });
 });

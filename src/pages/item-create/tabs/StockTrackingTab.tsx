@@ -18,8 +18,8 @@ interface StockTrackingTabProps {
     is_online_visible?: boolean;
 }
 
-const inputClass = 'w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all placeholder:text-slate-600';
-const labelClass = 'block text-sm font-medium text-slate-400 mb-1.5';
+const inputClass = 'w-full bg-surface-raised border border-line-strong rounded-lg px-4 py-2.5 text-fg focus:outline-none focus:ring-2 focus:ring-focus/50 focus:border-primary transition-all placeholder:text-fg-subtle';
+const labelClass = 'block text-sm font-medium text-fg-muted mb-1.5';
 
 const StockTrackingTab: React.FC<StockTrackingTabProps> = ({
     min_stock_threshold, reorder_level, is_batch_tracked, is_serial_tracked, is_active,
@@ -39,7 +39,7 @@ const StockTrackingTab: React.FC<StockTrackingTabProps> = ({
                             className={inputClass}
                             placeholder="0"
                         />
-                        <p className="text-xs text-slate-600 mt-1">Alert when stock drops below this level</p>
+                        <p className="text-xs text-fg-subtle mt-1">Alert when stock drops below this level</p>
                     </div>
                     <div>
                         <label className={labelClass}>Reorder Level</label>
@@ -51,23 +51,23 @@ const StockTrackingTab: React.FC<StockTrackingTabProps> = ({
                             className={inputClass}
                             placeholder="0"
                         />
-                        <p className="text-xs text-slate-600 mt-1">Trigger reorder when stock reaches this level</p>
+                        <p className="text-xs text-fg-subtle mt-1">Trigger reorder when stock reaches this level</p>
                     </div>
                 </div>
             </FormSection>
 
             <FormSection title="Tracking Options">
-                <div className="flex flex-col gap-3 p-4 bg-slate-800/30 border border-slate-700/50 rounded-lg">
+                <div className="flex flex-col gap-3 p-4 bg-surface-raised/30 border border-line-strong/50 rounded-lg">
                     <label className="flex items-center gap-3 cursor-pointer group">
                         <input
                             type="checkbox"
                             checked={is_batch_tracked}
                             onChange={e => updateField('is_batch_tracked', e.target.checked)}
-                            className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-blue-600 focus:ring-blue-500/50"
+                            className="w-4 h-4 rounded border-line-strong bg-surface-raised text-primary focus:ring-focus/50"
                         />
                         <div>
-                            <span className="text-sm text-slate-300 group-hover:text-slate-50 transition-colors">Batch Tracked</span>
-                            <p className="text-xs text-slate-600">Track items by batch/lot numbers for expiry and recalls</p>
+                            <span className="text-sm text-fg-muted group-hover:text-fg transition-colors">Batch Tracked</span>
+                            <p className="text-xs text-fg-subtle">Track items by batch/lot numbers for expiry and recalls</p>
                         </div>
                     </label>
                     <label className="flex items-center gap-3 cursor-pointer group">
@@ -75,11 +75,11 @@ const StockTrackingTab: React.FC<StockTrackingTabProps> = ({
                             type="checkbox"
                             checked={is_serial_tracked}
                             onChange={e => updateField('is_serial_tracked', e.target.checked)}
-                            className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-blue-600 focus:ring-blue-500/50"
+                            className="w-4 h-4 rounded border-line-strong bg-surface-raised text-primary focus:ring-focus/50"
                         />
                         <div>
-                            <span className="text-sm text-slate-300 group-hover:text-slate-50 transition-colors">Serial Tracked</span>
-                            <p className="text-xs text-slate-600">Track each individual item by unique serial number</p>
+                            <span className="text-sm text-fg-muted group-hover:text-fg transition-colors">Serial Tracked</span>
+                            <p className="text-xs text-fg-subtle">Track each individual item by unique serial number</p>
                         </div>
                     </label>
                 </div>
@@ -102,17 +102,17 @@ const StockTrackingTab: React.FC<StockTrackingTabProps> = ({
             )}
 
             <FormSection title="Status & Visibility">
-                <div className="flex flex-col gap-3 p-4 bg-slate-800/30 border border-slate-700/50 rounded-lg">
+                <div className="flex flex-col gap-3 p-4 bg-surface-raised/30 border border-line-strong/50 rounded-lg">
                     <label className="flex items-center gap-3 cursor-pointer group">
                         <input
                             type="checkbox"
                             checked={is_active}
                             onChange={e => updateField('is_active', e.target.checked)}
-                            className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-blue-600 focus:ring-blue-500/50"
+                            className="w-4 h-4 rounded border-line-strong bg-surface-raised text-primary focus:ring-focus/50"
                         />
                         <div>
-                            <span className="text-sm text-slate-300 group-hover:text-slate-50 transition-colors">Active</span>
-                            <p className="text-xs text-slate-600">Inactive items are hidden from selection lists and ordering</p>
+                            <span className="text-sm text-fg-muted group-hover:text-fg transition-colors">Active</span>
+                            <p className="text-xs text-fg-subtle">Inactive items are hidden from selection lists and ordering</p>
                         </div>
                     </label>
                     <label className="flex items-center gap-3 cursor-pointer group">
@@ -120,11 +120,11 @@ const StockTrackingTab: React.FC<StockTrackingTabProps> = ({
                             type="checkbox"
                             checked={is_online_visible || false}
                             onChange={e => updateField('is_online_visible', e.target.checked)}
-                            className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-blue-600 focus:ring-blue-500/50"
+                            className="w-4 h-4 rounded border-line-strong bg-surface-raised text-primary focus:ring-focus/50"
                         />
                         <div>
-                            <span className="text-sm text-slate-300 group-hover:text-slate-50 transition-colors">Online Visible</span>
-                            <p className="text-xs text-slate-600">Show this product in the Daily Store online catalog (requires Active status)</p>
+                            <span className="text-sm text-fg-muted group-hover:text-fg transition-colors">Online Visible</span>
+                            <p className="text-xs text-fg-subtle">Show this product in the Daily Store online catalog (requires Active status)</p>
                         </div>
                     </label>
                 </div>

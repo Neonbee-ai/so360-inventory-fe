@@ -38,12 +38,12 @@ interface AvailabilityMatrixProps {
 }
 
 export const STATUS_STYLE: Record<UnitStatus, { label: string; short: string; cls: string }> = {
-    available: { label: 'Available', short: 'A', cls: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/25' },
-    on_hold: { label: 'On hold', short: 'H', cls: 'bg-amber-500/15 text-amber-300 border-amber-500/40 hover:bg-amber-500/25' },
+    available: { label: 'Available', short: 'A', cls: 'bg-success/15 text-success border-success/40 hover:bg-success/25' },
+    on_hold: { label: 'On hold', short: 'H', cls: 'bg-warning/15 text-warning border-warning/40 hover:bg-warning/25' },
     sold: { label: 'Sold', short: 'S', cls: 'bg-rose-500/15 text-rose-300 border-rose-500/40 hover:bg-rose-500/25' },
-    blocked: { label: 'Blocked', short: 'B', cls: 'bg-slate-500/20 text-slate-300 border-slate-500/50 hover:bg-slate-500/30' },
+    blocked: { label: 'Blocked', short: 'B', cls: 'bg-fg-subtle/20 text-fg-muted border-line-strong/50 hover:bg-fg-subtle/30' },
     cancelled: { label: 'Cancelled', short: 'C', cls: 'bg-orange-500/15 text-orange-300 border-orange-500/40 hover:bg-orange-500/25' },
-    unavailable: { label: 'Unavailable', short: 'U', cls: 'bg-zinc-700/40 text-zinc-400 border-zinc-600/60 hover:bg-zinc-700/60' },
+    unavailable: { label: 'Unavailable', short: 'U', cls: 'bg-line-strong/40 text-fg-muted border-line-strong/60 hover:bg-line-strong/60' },
 };
 
 const towerCounts = (t: AvailabilityTower): AvailabilityCounts => toCounts(t);
@@ -57,14 +57,14 @@ const MANUAL_BUCKETS: { key: 'blocked' | 'cancelled' | 'unavailable'; label: str
 /** Project dashboard card (RFP §4): Total / Available / Reserved / Sold / % Sold. */
 const CountsSummary: React.FC<{ counts: AvailabilityCounts }> = ({ counts }) => (
     <div className="flex flex-wrap items-center gap-2 text-xs" data-testid="availability-summary">
-        <span className="px-2 py-1 rounded-lg bg-slate-800 text-slate-200">Total {counts.total}</span>
-        <span className="px-2 py-1 rounded-lg bg-emerald-500/15 text-emerald-300">Available {counts.available}</span>
-        <span className="px-2 py-1 rounded-lg bg-amber-500/15 text-amber-300">Reserved {counts.on_hold}</span>
+        <span className="px-2 py-1 rounded-lg bg-surface-raised text-fg">Total {counts.total}</span>
+        <span className="px-2 py-1 rounded-lg bg-success/15 text-success">Available {counts.available}</span>
+        <span className="px-2 py-1 rounded-lg bg-warning/15 text-warning">Reserved {counts.on_hold}</span>
         <span className="px-2 py-1 rounded-lg bg-rose-500/15 text-rose-300">Sold {counts.sold}</span>
         {MANUAL_BUCKETS.filter((b) => counts[b.key] > 0).map((b) => (
-            <span key={b.key} className="px-2 py-1 rounded-lg bg-slate-800 text-slate-400">{b.label} {counts[b.key]}</span>
+            <span key={b.key} className="px-2 py-1 rounded-lg bg-surface-raised text-fg-muted">{b.label} {counts[b.key]}</span>
         ))}
-        <span className="px-2 py-1 rounded-lg bg-blue-500/15 text-blue-300 font-semibold" data-testid="percent-sold">
+        <span className="px-2 py-1 rounded-lg bg-primary/15 text-primary font-semibold" data-testid="percent-sold">
             {percentSold(counts)}% Sold
         </span>
     </div>
@@ -81,8 +81,8 @@ const fmtDate = (v: string | null | undefined): string | null => {
 const Row: React.FC<{ label: string; value: React.ReactNode }> = ({ label, value }) =>
     value === null || value === undefined || value === '' ? null : (
         <div className="flex justify-between gap-3">
-            <dt className="text-slate-500">{label}</dt>
-            <dd className="text-slate-200 text-right">{value}</dd>
+            <dt className="text-fg-subtle">{label}</dt>
+            <dd className="text-fg text-right">{value}</dd>
         </div>
     );
 
@@ -125,16 +125,16 @@ const UnitPanel: React.FC<UnitPanelProps> = ({ unit, orgCurrency, canManage, onC
     };
 
     return (
-        <div className="rounded-xl border border-slate-700 bg-slate-900/80 p-4 space-y-3 text-xs" data-testid="unit-panel">
+        <div className="rounded-xl border border-line-strong bg-surface/80 p-4 space-y-3 text-xs" data-testid="unit-panel">
             <div className="flex items-center gap-2">
-                <h4 className="text-sm font-semibold text-slate-100">Unit {unit.unit_number}</h4>
+                <h4 className="text-sm font-semibold text-fg">Unit {unit.unit_number}</h4>
                 <span className={`px-2 py-0.5 rounded-md border ${st.cls}`}>{st.label}</span>
-                <button onClick={onClose} aria-label="Close unit" className="ml-auto text-slate-500 hover:text-slate-200">
+                <button onClick={onClose} aria-label="Close unit" className="ml-auto text-fg-subtle hover:text-fg">
                     <X size={14} />
                 </button>
             </div>
             {unit.status_override_reason && unit.status_override && (
-                <p className="text-slate-400" data-testid="unit-override-reason">Reason: {unit.status_override_reason}</p>
+                <p className="text-fg-muted" data-testid="unit-override-reason">Reason: {unit.status_override_reason}</p>
             )}
             <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1">
                 <Row label="Property type" value={unit.property_type} />
@@ -150,8 +150,8 @@ const UnitPanel: React.FC<UnitPanelProps> = ({ unit, orgCurrency, canManage, onC
                 <Row label="Final price" value={money(unit.final_price ?? unit.price)} />
             </dl>
             {ref && (
-                <div className="border-t border-slate-800 pt-2 space-y-1" data-testid="unit-deal-ref">
-                    <p className="text-slate-500 uppercase tracking-wide text-[10px]">
+                <div className="border-t border-line pt-2 space-y-1" data-testid="unit-deal-ref">
+                    <p className="text-fg-subtle uppercase tracking-wide text-[10px]">
                         {ref.reservation_status === 'committed' ? 'Sale record' : 'Reservation'}
                     </p>
                     <dl className="space-y-1">
@@ -159,18 +159,18 @@ const UnitPanel: React.FC<UnitPanelProps> = ({ unit, orgCurrency, canManage, onC
                         <Row label="Reserved on" value={fmtDate(ref.reserved_at)} />
                         <Row label="Sold on" value={fmtDate(ref.sold_at)} />
                     </dl>
-                    <p className="text-slate-500">Buyer and agent are on the linked record.</p>
+                    <p className="text-fg-subtle">Buyer and agent are on the linked record.</p>
                 </div>
             )}
             {canManage && (
-                <div className="border-t border-slate-800 pt-2 space-y-2" data-testid="unit-override-form">
-                    <label className="block text-slate-400">
+                <div className="border-t border-line pt-2 space-y-2" data-testid="unit-override-form">
+                    <label className="block text-fg-muted">
                         Manual status
                         <select
                             aria-label="Manual status"
                             value={override}
                             onChange={(e) => setOverride(e.target.value)}
-                            className="mt-1 w-full bg-slate-950 border border-slate-800 rounded-lg px-2 py-1.5 text-slate-200"
+                            className="mt-1 w-full bg-bg border border-line rounded-lg px-2 py-1.5 text-fg"
                         >
                             <option value="">None (use live status)</option>
                             {UNIT_STATUS_OVERRIDES.map((o) => (
@@ -185,14 +185,14 @@ const UnitPanel: React.FC<UnitPanelProps> = ({ unit, orgCurrency, canManage, onC
                             maxLength={500}
                             value={reason}
                             onChange={(e) => setReason(e.target.value)}
-                            className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2 py-1.5 text-slate-200"
+                            className="w-full bg-bg border border-line rounded-lg px-2 py-1.5 text-fg"
                         />
                     )}
                     {saveError && <p className="text-rose-400">{saveError}</p>}
                     <button
                         onClick={save}
                         disabled={!dirty || saving}
-                        className="px-3 py-1.5 rounded-lg bg-blue-600 text-white disabled:opacity-50"
+                        className="px-3 py-1.5 rounded-lg bg-primary text-primary-fg disabled:opacity-50"
                     >
                         {saving ? 'Saving…' : 'Save status'}
                     </button>
@@ -206,7 +206,7 @@ const UnitPanel: React.FC<UnitPanelProps> = ({ unit, orgCurrency, canManage, onC
                     canManage={canManage}
                 />
             )}
-            <button onClick={onOpen} className="flex items-center gap-1 text-blue-400 hover:text-blue-300">
+            <button onClick={onOpen} className="flex items-center gap-1 text-primary hover:text-primary">
                 <ExternalLink size={12} /> Open unit
             </button>
         </div>
@@ -292,7 +292,7 @@ export const AvailabilityMatrix: React.FC<AvailabilityMatrixProps> = ({
 
     if (loading) {
         return (
-            <div className="flex items-center gap-2 text-slate-500 text-sm py-8" data-testid="availability-loading">
+            <div className="flex items-center gap-2 text-fg-subtle text-sm py-8" data-testid="availability-loading">
                 <Loader2 size={16} className="animate-spin" /> Loading availability…
             </div>
         );
@@ -321,7 +321,7 @@ export const AvailabilityMatrix: React.FC<AvailabilityMatrixProps> = ({
                             role="tab"
                             aria-selected={activeTower === t.category_id}
                             onClick={() => setActiveTower(t.category_id)}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${activeTower === t.category_id ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-slate-200'}`}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${activeTower === t.category_id ? 'bg-primary text-primary-fg' : 'bg-surface-raised text-fg-muted hover:text-fg'}`}
                         >
                             {t.name} <span className="opacity-70">({towerCounts(t).available}/{towerCounts(t).total})</span>
                         </button>
@@ -330,11 +330,11 @@ export const AvailabilityMatrix: React.FC<AvailabilityMatrixProps> = ({
             )}
 
             {towerLoading ? (
-                <div className="flex items-center gap-2 text-slate-500 text-sm py-6">
+                <div className="flex items-center gap-2 text-fg-subtle text-sm py-6">
                     <Loader2 size={16} className="animate-spin" /> Loading tower…
                 </div>
             ) : grid.floors.length === 0 ? (
-                <p className="text-sm text-slate-500 py-6 text-center" data-testid="availability-empty">
+                <p className="text-sm text-fg-subtle py-6 text-center" data-testid="availability-empty">
                     No units yet. Use Generate units on a tower to create them.
                 </p>
             ) : (
@@ -342,16 +342,16 @@ export const AvailabilityMatrix: React.FC<AvailabilityMatrixProps> = ({
                     <table className="border-separate border-spacing-1 text-xs" data-testid="availability-grid">
                         <thead>
                             <tr>
-                                <th className="text-slate-500 font-medium text-left pr-2">Floor</th>
+                                <th className="text-fg-subtle font-medium text-left pr-2">Floor</th>
                                 {grid.stacks.map((s) => (
-                                    <th key={s} className="text-slate-500 font-medium">{s}</th>
+                                    <th key={s} className="text-fg-subtle font-medium">{s}</th>
                                 ))}
                             </tr>
                         </thead>
                         <tbody>
                             {grid.floors.map((floor) => (
                                 <tr key={floor}>
-                                    <td className="text-slate-400 pr-2 font-mono">{floor}</td>
+                                    <td className="text-fg-muted pr-2 font-mono">{floor}</td>
                                     {grid.stacks.map((stack) => {
                                         const u = grid.cells.get(cellKey(floor, stack));
                                         if (!u) return <td key={stack} />;
@@ -394,7 +394,7 @@ export const AvailabilityMatrix: React.FC<AvailabilityMatrixProps> = ({
                 />
             )}
 
-            <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-500">
+            <div className="flex flex-wrap items-center gap-3 text-[11px] text-fg-subtle">
                 {(Object.keys(STATUS_STYLE) as UnitStatus[]).map((k) => (
                     <span key={k} className="flex items-center gap-1">
                         <span className={`inline-block w-2.5 h-2.5 rounded-sm border ${STATUS_STYLE[k].cls}`} /> {STATUS_STYLE[k].short} = {STATUS_STYLE[k].label}

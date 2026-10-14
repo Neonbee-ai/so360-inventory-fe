@@ -41,7 +41,7 @@ const ImageSpecChip: React.FC<ImageSpecChipProps> = ({ slot, acceptedTypes = 'PN
         <span ref={rootRef} className={`relative inline-flex items-center gap-1 align-middle ${className}`}>
             <span
                 data-testid="image-spec-chip"
-                className="inline-flex items-center rounded-md border border-slate-700 bg-slate-800/70 px-1.5 py-0.5 text-[10px] font-medium text-slate-300 whitespace-nowrap"
+                className="inline-flex items-center rounded-md border border-line-strong bg-surface-raised/70 px-1.5 py-0.5 text-[10px] font-medium text-fg-muted whitespace-nowrap"
             >
                 {slotSpecLabel(slot)}
             </span>
@@ -52,7 +52,7 @@ const ImageSpecChip: React.FC<ImageSpecChipProps> = ({ slot, acceptedTypes = 'PN
                 aria-controls={popoverId}
                 aria-describedby={popoverId}
                 onClick={e => { e.stopPropagation(); e.preventDefault(); setOpen(o => !o); }}
-                className="inline-flex h-5 w-5 items-center justify-center rounded-full text-slate-500 hover:text-slate-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                className="inline-flex h-5 w-5 items-center justify-center rounded-full text-fg-subtle hover:text-fg-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
             >
                 <Info size={13} />
             </button>
@@ -61,14 +61,14 @@ const ImageSpecChip: React.FC<ImageSpecChipProps> = ({ slot, acceptedTypes = 'PN
                 role="tooltip"
                 hidden={!open}
                 onClick={e => e.stopPropagation()}
-                className={`absolute left-0 top-full z-30 mt-1 ${open ? 'block' : 'hidden'} w-64 rounded-lg border border-slate-700 bg-slate-900 p-3 text-[11px] font-normal leading-snug text-slate-300 shadow-xl`}
+                className={`absolute left-0 top-full z-30 mt-1 ${open ? 'block' : 'hidden'} w-64 rounded-lg border border-line-strong bg-surface p-3 text-[11px] font-normal leading-snug text-fg-muted shadow-xl`}
             >
                 <span className="block">{slot.where}</span>
                 <span className="mt-1 block">{slot.cropNote}</span>
                 <span className="mt-1 block">
                     Best at {slot.width}×{slot.height}. Bigger files are shrunk automatically to {cap} with no visible quality loss.
                 </span>
-                <span className="mt-1 block text-slate-500">Accepted: {acceptedTypes}</span>
+                <span className="mt-1 block text-fg-subtle">Accepted: {acceptedTypes}</span>
             </span>
         </span>
     );

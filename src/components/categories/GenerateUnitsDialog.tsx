@@ -28,9 +28,9 @@ interface StackRow {
 }
 
 const inputCls =
-    'w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500';
+    'w-full bg-surface-raised border border-line-strong rounded-lg px-3 py-2 text-sm text-fg placeholder-fg-subtle focus:outline-none focus:border-primary';
 const cellCls =
-    'w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-slate-100 focus:outline-none focus:border-blue-500';
+    'w-full bg-surface-raised border border-line-strong rounded px-2 py-1 text-xs text-fg focus:outline-none focus:border-primary';
 
 export function suggestSkuPrefix(name: string): string {
     const clean = String(name || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -129,15 +129,15 @@ export const GenerateUnitsDialog: React.FC<GenerateUnitsDialogProps> = ({ isOpen
         <Modal isOpen={isOpen} onClose={onClose} title={`Generate units — ${tower.name}`} size="lg">
             {result ? (
                 <div className="space-y-4" data-testid="generate-result">
-                    <p className="text-sm text-slate-200">
-                        <span className="text-emerald-400 font-semibold">{result.created}</span> units created
+                    <p className="text-sm text-fg">
+                        <span className="text-success font-semibold">{result.created}</span> units created
                         {result.skipped > 0 && (
-                            <>, <span className="text-amber-400 font-semibold">{result.skipped}</span> skipped (already exist)</>
+                            <>, <span className="text-warning font-semibold">{result.skipped}</span> skipped (already exist)</>
                         )}
                         .
                     </p>
                     <div className="flex justify-end">
-                        <button onClick={onClose} className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                        <button onClick={onClose} className="bg-primary hover:bg-primary-hover text-primary-fg px-4 py-2 rounded-lg text-sm font-medium">
                             Done
                         </button>
                     </div>
@@ -146,27 +146,27 @@ export const GenerateUnitsDialog: React.FC<GenerateUnitsDialogProps> = ({ isOpen
                 <div className="space-y-5">
                     <div className="grid grid-cols-3 gap-3">
                         <label className="block">
-                            <span className="block text-xs text-slate-400 mb-1">Floor from</span>
+                            <span className="block text-xs text-fg-muted mb-1">Floor from</span>
                             <input aria-label="Floor from" type="number" className={inputCls} value={floorFrom} onChange={(e) => setFloorFrom(e.target.value)} />
                         </label>
                         <label className="block">
-                            <span className="block text-xs text-slate-400 mb-1">Floor to</span>
+                            <span className="block text-xs text-fg-muted mb-1">Floor to</span>
                             <input aria-label="Floor to" type="number" className={inputCls} value={floorTo} onChange={(e) => setFloorTo(e.target.value)} />
                         </label>
                         <label className="block">
-                            <span className="block text-xs text-slate-400 mb-1">Units per floor</span>
+                            <span className="block text-xs text-fg-muted mb-1">Units per floor</span>
                             <input aria-label="Units per floor" type="number" min={1} max={99} className={inputCls} value={unitsPerFloor} onChange={(e) => handleUnitsPerFloor(e.target.value)} />
                         </label>
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
                         <label className="block">
-                            <span className="block text-xs text-slate-400 mb-1">Numbering pattern</span>
+                            <span className="block text-xs text-fg-muted mb-1">Numbering pattern</span>
                             <input aria-label="Numbering pattern" className={inputCls} value={pattern} onChange={(e) => setPattern(e.target.value)} />
-                            <span className="block text-[11px] text-slate-500 mt-1">Use {'{floor}'} and {'{stack:02}'}</span>
+                            <span className="block text-[11px] text-fg-subtle mt-1">Use {'{floor}'} and {'{stack:02}'}</span>
                         </label>
                         <label className="block">
-                            <span className="block text-xs text-slate-400 mb-1">SKU prefix</span>
+                            <span className="block text-xs text-fg-muted mb-1">SKU prefix</span>
                             <input aria-label="SKU prefix" className={inputCls} value={skuPrefix} onChange={(e) => setSkuPrefix(e.target.value)} />
                         </label>
                     </div>
@@ -175,7 +175,7 @@ export const GenerateUnitsDialog: React.FC<GenerateUnitsDialogProps> = ({ isOpen
                         <div className="overflow-x-auto">
                             <table className="w-full text-xs">
                                 <thead>
-                                    <tr className="text-slate-500 text-left">
+                                    <tr className="text-fg-subtle text-left">
                                         <th className="py-1 pr-2 font-medium">Stack</th>
                                         <th className="py-1 pr-2 font-medium">Bedrooms</th>
                                         <th className="py-1 pr-2 font-medium">Area (sq ft)</th>
@@ -186,7 +186,7 @@ export const GenerateUnitsDialog: React.FC<GenerateUnitsDialogProps> = ({ isOpen
                                 <tbody>
                                     {rows.map((r, i) => (
                                         <tr key={r.stack}>
-                                            <td className="py-1 pr-2 text-slate-300 font-mono">{r.stack}</td>
+                                            <td className="py-1 pr-2 text-fg-muted font-mono">{r.stack}</td>
                                             <td className="py-1 pr-2"><input aria-label={`Stack ${r.stack} bedrooms`} type="number" className={cellCls} value={r.bedrooms} onChange={(e) => updateRow(i, { bedrooms: e.target.value })} /></td>
                                             <td className="py-1 pr-2"><input aria-label={`Stack ${r.stack} area`} type="number" className={cellCls} value={r.area_sqft} onChange={(e) => updateRow(i, { area_sqft: e.target.value })} /></td>
                                             <td className="py-1 pr-2"><input aria-label={`Stack ${r.stack} view`} className={cellCls} value={r.view} onChange={(e) => updateRow(i, { view: e.target.value })} /></td>
@@ -198,11 +198,11 @@ export const GenerateUnitsDialog: React.FC<GenerateUnitsDialogProps> = ({ isOpen
                         </div>
                     )}
 
-                    <div className="flex items-center justify-between gap-3 pt-2 border-t border-slate-800">
+                    <div className="flex items-center justify-between gap-3 pt-2 border-t border-line">
                         <div className="text-sm">
-                            <span className="text-slate-300" data-testid="preview-count">Preview: {count} units</span>
+                            <span className="text-fg-muted" data-testid="preview-count">Preview: {count} units</span>
                             {examples.length > 0 && (
-                                <span className="text-slate-500 ml-2">({examples.join(' … ')})</span>
+                                <span className="text-fg-subtle ml-2">({examples.join(' … ')})</span>
                             )}
                             {tooMany && (
                                 <span className="block text-[11px] text-rose-400">At most {MAX_UNITS_PER_RUN} units per run</span>
@@ -210,11 +210,11 @@ export const GenerateUnitsDialog: React.FC<GenerateUnitsDialogProps> = ({ isOpen
                             {error && <span className="block text-[11px] text-rose-400">{error}</span>}
                         </div>
                         <div className="flex items-center gap-2">
-                            <button onClick={onClose} className="px-4 py-2 text-sm text-slate-400 hover:text-slate-200">Cancel</button>
+                            <button onClick={onClose} className="px-4 py-2 text-sm text-fg-muted hover:text-fg">Cancel</button>
                             <button
                                 onClick={handleSubmit}
                                 disabled={!canSubmit}
-                                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium"
+                                className="flex items-center gap-2 bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-fg px-4 py-2 rounded-lg text-sm font-medium"
                             >
                                 {submitting ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
                                 Create {count} units

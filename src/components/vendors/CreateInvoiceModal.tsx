@@ -119,11 +119,11 @@ export const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
         }
     };
 
-    const inputClass = 'w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-slate-50 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50';
+    const inputClass = 'w-full bg-surface-raised border border-line-strong rounded-lg px-4 py-2 text-fg placeholder-fg-subtle focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50';
 
     return (
         <Modal isOpen={isOpen} onClose={handleClose} title="Create Vendor Invoice" size="lg">
-            <form onSubmit={handleSubmit} className="space-y-5 text-slate-200">
+            <form onSubmit={handleSubmit} className="space-y-5 text-fg">
                 {error && (
                     <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 px-4 py-3 rounded-lg text-sm">
                         {error}
@@ -132,7 +132,7 @@ export const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
 
                 {/* Invoice Number */}
                 <div>
-                    <label className="block text-sm font-medium text-slate-400 mb-1.5">Invoice Number *</label>
+                    <label className="block text-sm font-medium text-fg-muted mb-1.5">Invoice Number *</label>
                     <input
                         required
                         type="text"
@@ -146,7 +146,7 @@ export const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
                 {/* Invoice Date + Due Date */}
                 <div className="grid grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-slate-400 mb-1.5">Invoice Date *</label>
+                        <label className="block text-sm font-medium text-fg-muted mb-1.5">Invoice Date *</label>
                         <input
                             required
                             type="date"
@@ -156,7 +156,7 @@ export const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-slate-400 mb-1.5">Due Date</label>
+                        <label className="block text-sm font-medium text-fg-muted mb-1.5">Due Date</label>
                         <input
                             type="date"
                             value={dueDate}
@@ -168,9 +168,9 @@ export const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
 
                 {/* Total Amount */}
                 <div>
-                    <label className="block text-sm font-medium text-slate-400 mb-1.5">Total Amount *</label>
+                    <label className="block text-sm font-medium text-fg-muted mb-1.5">Total Amount *</label>
                     <div className="relative">
-                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-medium">$</span>
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-fg-subtle font-medium">$</span>
                         <input
                             required
                             type="number"
@@ -186,7 +186,7 @@ export const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
 
                 {/* Link to PO */}
                 <div>
-                    <label className="block text-sm font-medium text-slate-400 mb-1.5">Link to Purchase Order</label>
+                    <label className="block text-sm font-medium text-fg-muted mb-1.5">Link to Purchase Order</label>
                     <select
                         value={selectedPO}
                         onChange={(e) => setSelectedPO(e.target.value)}
@@ -203,18 +203,18 @@ export const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
 
                 {/* File Upload */}
                 <div>
-                    <label className="block text-sm font-medium text-slate-400 mb-1.5">Attach Document</label>
+                    <label className="block text-sm font-medium text-fg-muted mb-1.5">Attach Document</label>
                     {file ? (
-                        <div className="flex items-center gap-3 bg-slate-800 border border-slate-700 rounded-lg px-4 py-3">
+                        <div className="flex items-center gap-3 bg-surface-raised border border-line-strong rounded-lg px-4 py-3">
                             <FileText size={20} className="text-purple-400 shrink-0" />
                             <div className="flex-1 min-w-0">
-                                <p className="text-sm text-slate-50 truncate">{file.name}</p>
-                                <p className="text-xs text-slate-500">{(file.size / 1024).toFixed(1)} KB</p>
+                                <p className="text-sm text-fg truncate">{file.name}</p>
+                                <p className="text-xs text-fg-subtle">{(file.size / 1024).toFixed(1)} KB</p>
                             </div>
                             <button
                                 type="button"
                                 onClick={() => setFile(null)}
-                                className="p-1 hover:bg-slate-700 rounded text-slate-400 hover:text-slate-50 transition-colors"
+                                className="p-1 hover:bg-line-strong rounded text-fg-muted hover:text-fg transition-colors"
                             >
                                 <X size={16} />
                             </button>
@@ -228,14 +228,14 @@ export const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
                             className={`border-2 border-dashed rounded-lg px-6 py-8 text-center cursor-pointer transition-all ${
                                 dragOver
                                     ? 'border-purple-500 bg-purple-500/10'
-                                    : 'border-slate-700 hover:border-slate-600 hover:bg-slate-800/50'
+                                    : 'border-line-strong hover:border-line-strong hover:bg-surface-raised/50'
                             }`}
                         >
-                            <Upload size={24} className="mx-auto mb-2 text-slate-500" />
-                            <p className="text-sm text-slate-400">
+                            <Upload size={24} className="mx-auto mb-2 text-fg-subtle" />
+                            <p className="text-sm text-fg-muted">
                                 Drag & drop or <span className="text-purple-400 font-medium">browse</span>
                             </p>
-                            <p className="text-xs text-slate-600 mt-1">PDF, PNG, JPG up to 5MB</p>
+                            <p className="text-xs text-fg-subtle mt-1">PDF, PNG, JPG up to 5MB</p>
                             <input
                                 ref={fileInputRef}
                                 type="file"
@@ -256,14 +256,14 @@ export const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
                         type="button"
                         onClick={handleClose}
                         disabled={isSubmitting}
-                        className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-50 font-semibold py-2.5 rounded-lg transition-all"
+                        className="flex-1 bg-surface-raised hover:bg-line-strong text-fg font-semibold py-2.5 rounded-lg transition-all"
                     >
                         Cancel
                     </button>
                     <button
                         type="submit"
                         disabled={isSubmitting}
-                        className="flex-1 bg-purple-600 hover:bg-purple-500 disabled:bg-purple-600/50 text-white font-semibold py-2.5 rounded-lg transition-all shadow-lg shadow-purple-900/20 flex items-center justify-center gap-2"
+                        className="flex-1 bg-purple-600 hover:bg-purple-500 disabled:bg-purple-600/50 text-primary-fg font-semibold py-2.5 rounded-lg transition-all shadow-lg shadow-purple-900/20 flex items-center justify-center gap-2"
                     >
                         {isSubmitting ? (
                             <><Loader2 size={18} className="animate-spin" /> Creating...</>

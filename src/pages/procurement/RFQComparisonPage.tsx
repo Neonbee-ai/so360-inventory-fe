@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, AlertCircle, Trophy, Loader2, Clock, Star, TrendingDown } from 'lucide-react';
 import { rfqService } from '../../services/rfqService';
 import { useInventoryFormatters } from '../../utils/formatters';
-import { toast, getErrorMessage } from '@so360/design-system';
+import { toast, getErrorMessage, useConfirm } from '@so360/design-system';
 
 /**
  * Side-by-side quotation comparison.
@@ -13,6 +13,7 @@ import { toast, getErrorMessage } from '@so360/design-system';
  * performance rating — gets its own row, with the best value in each badged.
  */
 const RFQComparisonPage = () => {
+    const [confirm, confirmDialog] = useConfirm();
     const { id } = useParams();
     const navigate = useNavigate();
     const formatters = useInventoryFormatters();
@@ -37,7 +38,7 @@ const RFQComparisonPage = () => {
     };
 
     const handleAward = async (quotationId: string, vendorName: string) => {
-        if (!window.confirm(`Award this RFQ to ${vendorName}? A purchase order will be created.`)) return;
+        if (!(await confirm({ title: 'Award RFQ', message: `Award this RFQ to ${vendorName}? A purchase order will be created.`, intent: 'default', confirmLabel: 'Award' }))) return;
         setAwarding(quotationId);
         try {
             const result = await rfqService.awardRFQ(id!, {
@@ -74,8 +75,8 @@ const RFQComparisonPage = () => {
         return (
             <div className="p-8 text-center">
                 <AlertCircle size={48} className="mx-auto text-rose-500 mb-4" />
-                <h2 className="text-2xl font-bold text-slate-50 mb-2">{error || 'Comparison unavailable'}</h2>
-                <button onClick={() => navigate('/procurement/rfq')} className="text-blue-400 hover:underline">Back to RFQs</button>
+                <h2 className="text-2xl font-bold text-fg mb-2">{error || 'Comparison unavailable'}</h2>
+                <button onClick={() => navigate('/procurement/rfq')} className="text-primary hover:underline">Back to RFQs</button>
             </div>
         );
     }
@@ -85,9 +86,10 @@ const RFQComparisonPage = () => {
 
     return (
         <div className="p-8 space-y-8">
+            {confirmDialog}
             <button
                 onClick={() => navigate(`/procurement/rfq/${id}`)}
-                className="flex items-center gap-2 text-slate-400 hover:text-slate-50 transition-colors group"
+                className="flex items-center gap-2 text-fg-muted hover:text-fg transition-colors group"
             >
                 <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
                 Back to RFQ
@@ -97,7 +99,7 @@ const RFQComparisonPage = () => {
                 <h1 className="text-4xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
                     Quotation Comparison
                 </h1>
-                <p className="text-slate-400 mt-2 font-medium">
+                <p className="text-fg-muted mt-2 font-medium">
                     {rfq.rfq_number}{rfq.title ? ` — ${rfq.title}` : ''}
                 </p>
             </div>
@@ -109,41 +111,41 @@ const RFQComparisonPage = () => {
                     { label: 'Lowest Total', value: summary.lowest_total != null ? formatters.formatCurrency(summary.lowest_total) : '—' },
                     { label: 'Potential Saving', value: formatters.formatCurrency(summary.potential_saving || 0) },
                 ].map((s, i) => (
-                    <div key={i} className="bg-slate-900/50 border border-slate-800 p-6 rounded-2xl">
-                        <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{s.label}</span>
-                        <div className="mt-3 text-2xl font-bold text-slate-100">{s.value}</div>
+                    <div key={i} className="bg-surface/50 border border-line p-6 rounded-2xl">
+                        <span className="text-xs font-bold uppercase tracking-wider text-fg-subtle">{s.label}</span>
+                        <div className="mt-3 text-2xl font-bold text-fg">{s.value}</div>
                     </div>
                 ))}
             </div>
 
             {quotations.length === 0 ? (
-                <div className="bg-slate-900/50 border border-dashed border-slate-800 rounded-2xl p-12 text-center text-slate-500">
+                <div className="bg-surface/50 border border-dashed border-line rounded-2xl p-12 text-center text-fg-subtle">
                     No quotations to compare yet.
                 </div>
             ) : (
-                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl overflow-hidden">
+                <div className="bg-surface/50 border border-line rounded-2xl overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead>
-                                <tr className="border-b border-slate-800 bg-slate-800/30">
-                                    <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-400 sticky left-0 bg-slate-900">Criterion</th>
+                                <tr className="border-b border-line bg-surface-raised/30">
+                                    <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-fg-muted sticky left-0 bg-surface">Criterion</th>
                                     {quotations.map((q: any) => (
                                         <th key={q.quotation_id} className="px-6 py-4 text-left min-w-[220px]">
-                                            <div className="font-bold text-slate-100">{q.vendor_name || q.vendor_id.slice(0, 8)}</div>
-                                            <div className="text-[10px] text-slate-500 font-normal">{q.quotation_number || 'No ref'}</div>
+                                            <div className="font-bold text-fg">{q.vendor_name || q.vendor_id.slice(0, 8)}</div>
+                                            <div className="text-[10px] text-fg-subtle font-normal">{q.quotation_number || 'No ref'}</div>
                                             <div className="flex flex-wrap gap-1 mt-2">
                                                 {q.is_lowest_total && (
-                                                    <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                                                    <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-success/10 text-success border border-success/20 flex items-center gap-1">
                                                         <TrendingDown size={10} /> Lowest
                                                     </span>
                                                 )}
                                                 {q.is_fastest && (
-                                                    <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center gap-1">
+                                                    <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-primary/10 text-primary border border-primary/20 flex items-center gap-1">
                                                         <Clock size={10} /> Fastest
                                                     </span>
                                                 )}
                                                 {q.is_best_rated && (
-                                                    <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center gap-1">
+                                                    <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-warning/10 text-warning border border-warning/20 flex items-center gap-1">
                                                         <Star size={10} /> Top rated
                                                     </span>
                                                 )}
@@ -153,7 +155,7 @@ const RFQComparisonPage = () => {
                                                     </span>
                                                 )}
                                                 {q.status === 'awarded' && (
-                                                    <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                                                    <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-success/20 text-success border border-success/30">
                                                         Awarded
                                                     </span>
                                                 )}
@@ -162,7 +164,7 @@ const RFQComparisonPage = () => {
                                     ))}
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-800/50">
+                            <tbody className="divide-y divide-line/50">
                                 {[
                                     { label: 'Subtotal', render: (q: any) => formatters.formatCurrency(q.subtotal_amount) },
                                     { label: 'Tax', render: (q: any) => formatters.formatCurrency(q.tax_amount) },
@@ -171,7 +173,7 @@ const RFQComparisonPage = () => {
                                     {
                                         label: 'Landed Total',
                                         render: (q: any) => (
-                                            <span className={`font-bold text-base ${q.is_lowest_total ? 'text-emerald-400' : 'text-slate-100'}`}>
+                                            <span className={`font-bold text-base ${q.is_lowest_total ? 'text-success' : 'text-fg'}`}>
                                                 {formatters.formatCurrency(q.total_amount)}
                                             </span>
                                         ),
@@ -188,19 +190,19 @@ const RFQComparisonPage = () => {
                                         render: (q: any) => q.quality_rating != null ? `${Number(q.quality_rating).toFixed(1)} / 5` : '—',
                                     },
                                 ].map(row => (
-                                    <tr key={row.label} className="hover:bg-slate-800/20">
-                                        <td className="px-6 py-3 text-xs font-bold uppercase tracking-wider text-slate-500 sticky left-0 bg-slate-900">{row.label}</td>
+                                    <tr key={row.label} className="hover:bg-surface-raised/20">
+                                        <td className="px-6 py-3 text-xs font-bold uppercase tracking-wider text-fg-subtle sticky left-0 bg-surface">{row.label}</td>
                                         {quotations.map((q: any) => (
-                                            <td key={q.quotation_id} className="px-6 py-3 text-slate-300">{row.render(q)}</td>
+                                            <td key={q.quotation_id} className="px-6 py-3 text-fg-muted">{row.render(q)}</td>
                                         ))}
                                     </tr>
                                 ))}
 
                                 {lines.map((l: any) => (
-                                    <tr key={l.rfq_line_id} className="hover:bg-slate-800/20">
-                                        <td className="px-6 py-3 sticky left-0 bg-slate-900">
-                                            <div className="text-xs text-slate-300">{l.description || 'Line'}</div>
-                                            <div className="text-[10px] text-slate-600">
+                                    <tr key={l.rfq_line_id} className="hover:bg-surface-raised/20">
+                                        <td className="px-6 py-3 sticky left-0 bg-surface">
+                                            <div className="text-xs text-fg-muted">{l.description || 'Line'}</div>
+                                            <div className="text-[10px] text-fg-subtle">
                                                 {l.quantity} {l.uom || ''}
                                                 {l.target_unit_price != null && ` · target ${formatters.formatCurrency(l.target_unit_price)}`}
                                             </div>
@@ -211,11 +213,11 @@ const RFQComparisonPage = () => {
                                             return (
                                                 <td key={q.quotation_id} className="px-6 py-3">
                                                     {cell ? (
-                                                        <span className={isLowest ? 'text-emerald-400 font-bold' : 'text-slate-300'}>
+                                                        <span className={isLowest ? 'text-success font-bold' : 'text-fg-muted'}>
                                                             {formatters.formatCurrency(cell.unit_price)}
                                                         </span>
                                                     ) : (
-                                                        <span className="text-slate-600">Not quoted</span>
+                                                        <span className="text-fg-subtle">Not quoted</span>
                                                     )}
                                                 </td>
                                             );
@@ -225,7 +227,7 @@ const RFQComparisonPage = () => {
 
                                 {!isAwarded && (
                                     <tr>
-                                        <td className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 sticky left-0 bg-slate-900">Decision</td>
+                                        <td className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-fg-subtle sticky left-0 bg-surface">Decision</td>
                                         {quotations.map((q: any) => (
                                             <td key={q.quotation_id} className="px-6 py-4">
                                                 <div className="flex flex-col gap-2">
@@ -233,7 +235,7 @@ const RFQComparisonPage = () => {
                                                         onClick={() => handleAward(q.quotation_id, q.vendor_name || 'this vendor')}
                                                         disabled={!!awarding || q.is_expired}
                                                         title={q.is_expired ? 'This quotation has expired' : undefined}
-                                                        className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-2"
+                                                        className="px-4 py-2 bg-success hover:bg-success disabled:opacity-40 disabled:cursor-not-allowed text-primary-fg rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-2"
                                                     >
                                                         {awarding === q.quotation_id ? <Loader2 size={12} className="animate-spin" /> : <Trophy size={12} />}
                                                         Award
@@ -241,7 +243,7 @@ const RFQComparisonPage = () => {
                                                     <div className="flex gap-2">
                                                         <button
                                                             onClick={() => handleGrade(q.quotation_id, 'shortlisted')}
-                                                            className="flex-1 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-[10px] font-bold uppercase transition-colors"
+                                                            className="flex-1 px-3 py-1.5 bg-surface-raised hover:bg-line-strong text-fg-muted rounded-lg text-[10px] font-bold uppercase transition-colors"
                                                         >
                                                             Shortlist
                                                         </button>
@@ -264,8 +266,8 @@ const RFQComparisonPage = () => {
             )}
 
             {!isAwarded && quotations.length > 0 && (
-                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6 space-y-2">
-                    <label htmlFor="award-justification" className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                <div className="bg-surface/50 border border-line rounded-2xl p-6 space-y-2">
+                    <label htmlFor="award-justification" className="text-xs font-bold text-fg-subtle uppercase tracking-wider">
                         Award Justification
                     </label>
                     <textarea
@@ -273,7 +275,7 @@ const RFQComparisonPage = () => {
                         value={justification}
                         onChange={e => setJustification(e.target.value)}
                         placeholder="Recorded on the RFQ — required in practice whenever the cheapest quote is not the one awarded."
-                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 h-20 text-slate-200 resize-none focus:outline-none focus:ring-2 focus:ring-cyan-500/40"
+                        className="w-full bg-bg border border-line rounded-xl px-4 py-3 h-20 text-fg resize-none focus:outline-none focus:ring-2 focus:ring-cyan-500/40"
                     />
                 </div>
             )}

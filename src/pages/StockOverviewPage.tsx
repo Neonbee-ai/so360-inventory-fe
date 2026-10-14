@@ -86,12 +86,12 @@ const StockOverviewPage = () => {
             header: 'Item',
             accessor: (sl: StockBalance) => (
                 <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded bg-slate-800 flex items-center justify-center border border-slate-700">
-                        <Box size={16} className="text-blue-400" />
+                    <div className="w-8 h-8 rounded bg-surface-raised flex items-center justify-center border border-line-strong">
+                        <Box size={16} className="text-primary" />
                     </div>
                     <div className="flex flex-col">
-                        <span className="font-semibold text-slate-50 text-sm">{sl.items?.name || 'Unknown Item'}</span>
-                        <span className="text-[11px] text-slate-500 font-mono">{sl.items?.sku || '-'}</span>
+                        <span className="font-semibold text-fg text-sm">{sl.items?.name || 'Unknown Item'}</span>
+                        <span className="text-[11px] text-fg-subtle font-mono">{sl.items?.sku || '-'}</span>
                     </div>
                 </div>
             )
@@ -99,11 +99,11 @@ const StockOverviewPage = () => {
         {
             header: 'Warehouse',
             accessor: (sl: StockBalance) => (
-                <div className="flex items-center gap-1.5 text-slate-300">
-                    <MapPin size={14} className="text-slate-500" />
+                <div className="flex items-center gap-1.5 text-fg-muted">
+                    <MapPin size={14} className="text-fg-subtle" />
                     <span>{sl.warehouses?.name || 'Unknown Location'}</span>
                     {sl.warehouse_locations && (
-                        <span className="text-[10px] text-slate-500 bg-slate-800 px-1 rounded">
+                        <span className="text-[10px] text-fg-subtle bg-surface-raised px-1 rounded">
                             {sl.warehouse_locations.name}
                         </span>
                     )}
@@ -117,10 +117,10 @@ const StockOverviewPage = () => {
                 const isLow = threshold != null && sl.quantity < threshold;
                 return (
                     <div className="flex items-center gap-2">
-                        <span className={`font-bold text-lg ${isLow ? 'text-rose-400' : 'text-emerald-400'}`}>
+                        <span className={`font-bold text-lg ${isLow ? 'text-rose-400' : 'text-success'}`}>
                             {sl.quantity}
                         </span>
-                        <span className="text-xs text-slate-500 uppercase">{sl.items?.units?.abbreviation || 'PCS'}</span>
+                        <span className="text-xs text-fg-subtle uppercase">{sl.items?.units?.abbreviation || 'PCS'}</span>
                         {isLow && (
                             <div className="group relative">
                                 <AlertTriangle size={14} className="text-amber-500" />
@@ -133,7 +133,7 @@ const StockOverviewPage = () => {
         {
             header: 'Value (FIFO/W.Avg)',
             accessor: (sl: StockBalance) => (
-                <span className="text-slate-300 font-mono text-sm">
+                <span className="text-fg-muted font-mono text-sm">
                     {formatters.formatCurrency(sl.valuation || 0)}
                 </span>
             )
@@ -141,7 +141,7 @@ const StockOverviewPage = () => {
         {
             header: 'Last Update',
             accessor: (sl: StockBalance) => (
-                <div className="flex items-center gap-1.5 text-slate-400 text-xs text-right">
+                <div className="flex items-center gap-1.5 text-fg-muted text-xs text-right">
                     <Clock size={12} />
                     <span>{formatters.formatDate(sl.last_updated_at)}</span>
                 </div>
@@ -165,12 +165,12 @@ const StockOverviewPage = () => {
 
             <header className="mb-8 flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold text-slate-50 tracking-tight">Stock Overview</h1>
-                    <p className="text-slate-400 mt-1">Real-time physical stock levels and valuation</p>
+                    <h1 className="text-3xl font-bold text-fg tracking-tight">Stock Overview</h1>
+                    <p className="text-fg-muted mt-1">Real-time physical stock levels and valuation</p>
                 </div>
                 <button
                     onClick={() => { setError(null); fetchStock(); }}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-800 bg-slate-900/50 text-slate-300 hover:border-slate-700 hover:text-slate-50 transition-all text-sm font-medium"
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-line bg-surface/50 text-fg-muted hover:border-line-strong hover:text-fg transition-all text-sm font-medium"
                 >
                     <RefreshCcw size={16} className={isLoading ? 'animate-spin' : ''} />
                     Refresh
@@ -178,54 +178,54 @@ const StockOverviewPage = () => {
             </header>
 
             <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-                <div className="bg-slate-900/40 border border-slate-800/50 p-4 rounded-xl">
-                    <span className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Total Positions</span>
-                    <div className="text-xl font-bold text-slate-50 mt-0.5">{stockLevels.length}</div>
+                <div className="bg-surface/40 border border-line/50 p-4 rounded-xl">
+                    <span className="text-fg-subtle text-[10px] font-bold uppercase tracking-wider">Total Positions</span>
+                    <div className="text-xl font-bold text-fg mt-0.5">{stockLevels.length}</div>
                 </div>
-                <div className="bg-slate-900/40 border border-slate-800/50 p-4 rounded-xl">
-                    <span className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Stock Value</span>
-                    <div className="text-xl font-bold text-blue-400 mt-0.5">
+                <div className="bg-surface/40 border border-line/50 p-4 rounded-xl">
+                    <span className="text-fg-subtle text-[10px] font-bold uppercase tracking-wider">Stock Value</span>
+                    <div className="text-xl font-bold text-primary mt-0.5">
                         {formatters.formatCurrency(stockLevels.reduce((sum, sl) => sum + (sl.valuation || 0), 0))}
                     </div>
                 </div>
                 <FeatureGate state={viewGlValuationState} loading={(shell?.effectiveFlagsLoaded === false)} onUpgradeClick={() => navigate('/org/billing')}>
-                <div className="bg-slate-900/40 border border-slate-800/50 p-4 rounded-xl">
-                    <span className="text-slate-500 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
+                <div className="bg-surface/40 border border-line/50 p-4 rounded-xl">
+                    <span className="text-fg-subtle text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
                         <BookOpen size={10} /> GL Balance
                     </span>
                     {glValuation?.source === 'accounting_gl' ? (
                         <>
-                            <div className="text-xl font-bold text-emerald-400 mt-0.5">
+                            <div className="text-xl font-bold text-success mt-0.5">
                                 {formatters.formatCurrency(glValuation.gl_balance)}
                             </div>
                             {(() => {
                                 const stockVal = stockLevels.reduce((sum, sl) => sum + (sl.valuation || 0), 0);
                                 const drift = Math.abs(stockVal - glValuation.gl_balance);
                                 return drift > 0.01 ? (
-                                    <span className="text-[10px] text-amber-400">
+                                    <span className="text-[10px] text-warning">
                                         Drift: {formatters.formatCurrency(drift)}
                                     </span>
                                 ) : (
-                                    <span className="text-[10px] text-emerald-500">In sync</span>
+                                    <span className="text-[10px] text-success">In sync</span>
                                 );
                             })()}
                         </>
                     ) : (
-                        <div className="text-sm text-slate-500 mt-0.5">Unavailable</div>
+                        <div className="text-sm text-fg-subtle mt-0.5">Unavailable</div>
                     )}
                 </div>
                 </FeatureGate>
-                <div className="bg-slate-900/40 border border-slate-800/50 p-4 rounded-xl">
-                    <span className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Low Stock</span>
-                    <div className="text-xl font-bold text-amber-400 mt-0.5">
+                <div className="bg-surface/40 border border-line/50 p-4 rounded-xl">
+                    <span className="text-fg-subtle text-[10px] font-bold uppercase tracking-wider">Low Stock</span>
+                    <div className="text-xl font-bold text-warning mt-0.5">
                         {stockLevels.filter(sl =>
                             sl.items?.min_stock_threshold != null &&
                             sl.quantity < sl.items.min_stock_threshold
                         ).length}
                     </div>
                 </div>
-                <div className="bg-slate-900/40 border border-slate-800/50 p-4 rounded-xl">
-                    <span className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Stock Out</span>
+                <div className="bg-surface/40 border border-line/50 p-4 rounded-xl">
+                    <span className="text-fg-subtle text-[10px] font-bold uppercase tracking-wider">Stock Out</span>
                     <div className="text-xl font-bold text-rose-400 mt-0.5">
                         {stockLevels.filter(sl => sl.quantity === 0).length}
                     </div>
@@ -234,23 +234,23 @@ const StockOverviewPage = () => {
 
             <div className="flex flex-col md:flex-row gap-4 mb-6">
                 <div className="relative flex-1">
-                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" size={18} />
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-fg-subtle pointer-events-none" size={18} />
                     <input
                         type="text"
                         placeholder="Filter by item or SKU..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full bg-slate-900/50 border border-slate-800 pl-12 pr-4 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-slate-200"
+                        className="w-full bg-surface/50 border border-line pl-12 pr-4 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-focus/50 focus:border-primary transition-all text-fg"
                     />
                 </div>
 
                 <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2 bg-slate-900/50 border border-slate-800 rounded-lg px-3 py-1">
-                        <MapPin size={16} className="text-slate-500" />
+                    <div className="flex items-center gap-2 bg-surface/50 border border-line rounded-lg px-3 py-1">
+                        <MapPin size={16} className="text-fg-subtle" />
                         <select
                             value={locationFilter}
                             onChange={(e) => setLocationFilter(e.target.value)}
-                            className="bg-transparent text-sm text-slate-300 focus:outline-none py-1.5 cursor-pointer"
+                            className="bg-transparent text-sm text-fg-muted focus:outline-none py-1.5 cursor-pointer"
                         >
                             <option value="All">All Warehouses</option>
                             {uniqueLocations.map(loc => (
@@ -262,8 +262,8 @@ const StockOverviewPage = () => {
                     <button
                         onClick={() => setLowStockFilter(!lowStockFilter)}
                         className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all text-sm font-medium ${lowStockFilter
-                            ? 'bg-amber-500/10 border-amber-500/50 text-amber-400'
-                            : 'bg-slate-900/50 border-slate-800 text-slate-400 hover:border-slate-700'
+                            ? 'bg-warning/10 border-warning/50 text-warning'
+                            : 'bg-surface/50 border-line text-fg-muted hover:border-line-strong'
                             }`}
                     >
                         <AlertTriangle size={16} />
@@ -280,21 +280,21 @@ const StockOverviewPage = () => {
             />
 
             {filteredStock.length > PAGE_SIZE && (
-                <div className="flex items-center justify-between mt-4 text-sm text-slate-400">
+                <div className="flex items-center justify-between mt-4 text-sm text-fg-muted">
                     <span>Showing {showStart}–{showEnd} of {filteredStock.length} positions</span>
                     <div className="flex items-center gap-2">
                         <button
                             disabled={currentPage === 1}
                             onClick={() => setCurrentPage(p => p - 1)}
-                            className="px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900/50 hover:border-slate-700 hover:text-slate-50 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                            className="px-3 py-1.5 rounded-lg border border-line bg-surface/50 hover:border-line-strong hover:text-fg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                             Previous
                         </button>
-                        <span className="text-slate-500">Page {currentPage} of {totalPages}</span>
+                        <span className="text-fg-subtle">Page {currentPage} of {totalPages}</span>
                         <button
                             disabled={currentPage === totalPages}
                             onClick={() => setCurrentPage(p => p + 1)}
-                            className="px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900/50 hover:border-slate-700 hover:text-slate-50 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                            className="px-3 py-1.5 rounded-lg border border-line bg-surface/50 hover:border-line-strong hover:text-fg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                             Next
                         </button>

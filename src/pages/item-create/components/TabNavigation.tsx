@@ -26,7 +26,7 @@ interface TabNavigationProps {
 
 const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, onTabChange, tabErrors }) => {
     return (
-        <div className="flex gap-1 border-b border-slate-800 overflow-x-auto overflow-y-hidden scrollbar-hide rounded-t-xl">
+        <div className="flex gap-1 border-b border-line overflow-x-auto overflow-y-hidden scrollbar-hide rounded-t-xl">
             {tabs.map(tab => {
                 const isActive = activeTab === tab.id;
                 const hasError = tabErrors?.[tab.id];
@@ -38,8 +38,8 @@ const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, onTabChange, t
                         className={`
                             flex items-center gap-1.5 px-4 py-3 text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all relative
                             ${isActive
-                                ? 'text-blue-400 border-b-2 border-blue-500 bg-blue-500/5'
-                                : 'text-slate-500 hover:text-slate-300 border-b-2 border-transparent'
+                                ? 'text-primary border-b-2 border-primary bg-primary/5'
+                                : 'text-fg-subtle hover:text-fg-muted border-b-2 border-transparent'
                             }
                             ${hasError ? 'text-rose-400' : ''}
                         `}

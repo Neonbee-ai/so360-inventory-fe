@@ -26,16 +26,16 @@ export const Table = <T extends { id: string }>({
 
     if (data.length === 0) {
         return (
-            <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-12 text-center text-slate-500">
+            <div className="bg-surface/50 border border-line rounded-xl p-12 text-center text-fg-subtle">
                 {emptyMessage}
             </div>
         );
     }
 
     return (
-        <div className="overflow-x-auto rounded-xl border border-slate-800">
+        <div className="overflow-x-auto rounded-xl border border-line">
             <table className="w-full text-left text-sm">
-                <thead className="bg-slate-900 text-slate-400 font-medium border-b border-slate-800">
+                <thead className="bg-surface text-fg-muted font-medium border-b border-line">
                     <tr>
                         {columns.map((col, i) => (
                             <th key={i} className={`px-6 py-4 ${col.className}`}>
@@ -44,12 +44,12 @@ export const Table = <T extends { id: string }>({
                         ))}
                     </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800 bg-slate-950">
+                <tbody className="divide-y divide-line bg-bg">
                     {data.map((item) => (
                         <tr
                             key={item.id}
                             onClick={() => onRowClick?.(item)}
-                            className={`hover:bg-slate-900 transition-colors ${onRowClick ? 'cursor-pointer' : ''}`}
+                            className={`hover:bg-surface transition-colors ${onRowClick ? 'cursor-pointer' : ''}`}
                         >
                             {columns.map((col, i) => (
                                 <td key={i} className={`px-6 py-4 ${col.className}`}>

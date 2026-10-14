@@ -18,19 +18,19 @@ const StepIndicator: React.FC<Props> = ({ steps, current }) => (
                     <div className="flex flex-col items-center gap-1.5">
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all ${
                             done
-                                ? 'bg-emerald-500 border-emerald-500 text-white'
+                                ? 'bg-success border-success text-primary-fg'
                                 : active
-                                    ? 'bg-blue-600 border-blue-500 text-white'
-                                    : 'bg-slate-900 border-slate-700 text-slate-500'
+                                    ? 'bg-primary border-primary text-primary-fg'
+                                    : 'bg-surface border-line-strong text-fg-subtle'
                         }`}>
                             {done ? <Check size={14} /> : i + 1}
                         </div>
                         <span className={`text-[10px] font-medium whitespace-nowrap ${
-                            active ? 'text-slate-200' : done ? 'text-emerald-400' : 'text-slate-600'
+                            active ? 'text-fg' : done ? 'text-success' : 'text-fg-subtle'
                         }`}>{step.label}</span>
                     </div>
                     {i < steps.length - 1 && (
-                        <div className={`flex-1 h-px mx-2 mb-4 transition-all ${done ? 'bg-emerald-500' : 'bg-slate-800'}`} />
+                        <div className={`flex-1 h-px mx-2 mb-4 transition-all ${done ? 'bg-success' : 'bg-surface-raised'}`} />
                     )}
                 </React.Fragment>
             );

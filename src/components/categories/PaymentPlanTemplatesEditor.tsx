@@ -25,7 +25,7 @@ import {
 } from '../../utils/paymentPlanTemplates';
 
 const inputCls =
-    'w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 disabled:opacity-50';
+    'w-full bg-surface-raised border border-line-strong rounded-lg px-2 py-1.5 text-sm text-fg placeholder-fg-subtle focus:outline-none focus:border-primary disabled:opacity-50';
 
 export const TRIGGER_LABEL: Record<InstalmentTrigger, string> = {
     booking: 'On booking',
@@ -92,14 +92,14 @@ export const PaymentPlanTemplatesEditor: React.FC<PaymentPlanTemplatesEditorProp
     return (
         <section className="space-y-3" aria-label="Payment plan templates">
             <div className="flex items-center justify-between">
-                <span className="text-xs text-slate-400 flex items-center gap-1"><Wallet size={12} /> Payment plans</span>
+                <span className="text-xs text-fg-muted flex items-center gap-1"><Wallet size={12} /> Payment plans</span>
                 {!disabled && (
                     <button
                         type="button"
                         onClick={() => emit([...templates, newPaymentPlanTemplate(templates.length === 0)])}
                         disabled={atMax}
                         title={atMax ? `At most ${MAX_PAYMENT_PLAN_TEMPLATES} payment plans` : undefined}
-                        className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex items-center gap-1 text-xs text-primary hover:text-primary disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         <Plus size={12} /> Add payment plan
                     </button>
@@ -107,7 +107,7 @@ export const PaymentPlanTemplatesEditor: React.FC<PaymentPlanTemplatesEditorProp
             </div>
 
             {templates.length === 0 && (
-                <p className="text-xs text-slate-500">No payment plans yet.</p>
+                <p className="text-xs text-fg-subtle">No payment plans yet.</p>
             )}
 
             {templates.map((t, ti) => {
@@ -117,7 +117,7 @@ export const PaymentPlanTemplatesEditor: React.FC<PaymentPlanTemplatesEditorProp
                 const err = templateError(t);
                 const n = ti + 1;
                 return (
-                    <div key={t.id} data-testid={`payment-plan-${ti}`} className="border border-slate-800 rounded-lg p-3 space-y-3 bg-slate-900/40">
+                    <div key={t.id} data-testid={`payment-plan-${ti}`} className="border border-line rounded-lg p-3 space-y-3 bg-surface/40">
                         <div className="flex flex-wrap items-center gap-2">
                             <input
                                 aria-label={`Payment plan ${n} name`}
@@ -127,7 +127,7 @@ export const PaymentPlanTemplatesEditor: React.FC<PaymentPlanTemplatesEditorProp
                                 placeholder="e.g. 60/40 post-handover"
                                 onChange={(e) => patchTemplate(ti, { name: e.target.value })}
                             />
-                            <label className="flex items-center gap-1 text-xs text-slate-300">
+                            <label className="flex items-center gap-1 text-xs text-fg-muted">
                                 <input
                                     type="checkbox"
                                     aria-label={`Payment plan ${n} default`}
@@ -142,7 +142,7 @@ export const PaymentPlanTemplatesEditor: React.FC<PaymentPlanTemplatesEditorProp
                                     type="button"
                                     aria-label={`Remove payment plan ${n}`}
                                     onClick={() => emit(templates.filter((_, idx) => idx !== ti))}
-                                    className="p-1 text-slate-500 hover:text-rose-400"
+                                    className="p-1 text-fg-subtle hover:text-rose-400"
                                 >
                                     <Trash2 size={14} />
                                 </button>
@@ -166,7 +166,7 @@ export const PaymentPlanTemplatesEditor: React.FC<PaymentPlanTemplatesEditorProp
                                 ))}
                             </select>
                             <div className="flex flex-wrap items-center gap-1" role="group" aria-label={`Payment plan ${n} payment modes`}>
-                                <span className="text-[11px] text-slate-500 mr-1">{t.allowed_modes ? 'Modes:' : 'Any mode'}</span>
+                                <span className="text-[11px] text-fg-subtle mr-1">{t.allowed_modes ? 'Modes:' : 'Any mode'}</span>
                                 {PAYMENT_MODES.map((m) => {
                                     const on = !!t.allowed_modes?.includes(m);
                                     return (
@@ -176,7 +176,7 @@ export const PaymentPlanTemplatesEditor: React.FC<PaymentPlanTemplatesEditorProp
                                             aria-pressed={on}
                                             disabled={disabled}
                                             onClick={() => toggleMode(ti, m)}
-                                            className={`px-2 py-0.5 rounded-full text-[11px] border disabled:opacity-50 ${on ? 'bg-blue-500/20 border-blue-500 text-blue-300' : 'border-slate-700 text-slate-400 hover:border-slate-500'}`}
+                                            className={`px-2 py-0.5 rounded-full text-[11px] border disabled:opacity-50 ${on ? 'bg-primary/20 border-primary text-primary' : 'border-line-strong text-fg-muted hover:border-line-strong'}`}
                                         >
                                             {PAYMENT_MODE_LABEL[m]}
                                         </button>
@@ -227,7 +227,7 @@ export const PaymentPlanTemplatesEditor: React.FC<PaymentPlanTemplatesEditorProp
                                             <span />
                                         )}
                                         {!disabled && t.lines.length > 1 ? (
-                                            <button type="button" aria-label={`Remove ${ln}`} className="p-1 text-slate-500 hover:text-rose-400 justify-self-end"
+                                            <button type="button" aria-label={`Remove ${ln}`} className="p-1 text-fg-subtle hover:text-rose-400 justify-self-end"
                                                 onClick={() => patchTemplate(ti, { lines: t.lines.filter((_, idx) => idx !== li) })}>
                                                 <Trash2 size={14} />
                                             </button>
@@ -246,14 +246,14 @@ export const PaymentPlanTemplatesEditor: React.FC<PaymentPlanTemplatesEditorProp
                                     aria-label={`Add instalment to payment plan ${n}`}
                                     disabled={t.lines.length >= MAX_PAYMENT_PLAN_LINES}
                                     onClick={() => patchTemplate(ti, { lines: [...t.lines, newPaymentPlanLine()] })}
-                                    className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 disabled:opacity-50"
+                                    className="flex items-center gap-1 text-xs text-primary hover:text-primary disabled:opacity-50"
                                 >
                                     <Plus size={12} /> Add instalment
                                 </button>
                             )}
                             <span
                                 data-testid={`payment-plan-${ti}-total`}
-                                className={`text-xs font-medium ${allPercent ? (totalOk ? 'text-emerald-400' : 'text-rose-400') : 'text-slate-400'}`}
+                                className={`text-xs font-medium ${allPercent ? (totalOk ? 'text-success' : 'text-rose-400') : 'text-fg-muted'}`}
                             >
                                 {allPercent ? `Total ${total}%` : `Percent lines ${total}% + fixed amounts`}
                             </span>

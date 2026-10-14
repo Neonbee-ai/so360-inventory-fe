@@ -186,7 +186,7 @@ const CategoryChannelsPanel: React.FC<Props> = ({ categoryId, canManage, onSaved
 
     if (isLoading) {
         return (
-            <div className="flex items-center gap-2 text-slate-500 text-sm py-4">
+            <div className="flex items-center gap-2 text-fg-subtle text-sm py-4">
                 <Loader2 size={14} className="animate-spin" />
                 Loading channels…
             </div>
@@ -197,8 +197,8 @@ const CategoryChannelsPanel: React.FC<Props> = ({ categoryId, canManage, onSaved
         <div className="space-y-3">
             <div className="flex items-center justify-between">
                 <div>
-                    <h3 className="text-sm font-semibold text-slate-200">Sales channels</h3>
-                    <p className="text-xs text-slate-500">
+                    <h3 className="text-sm font-semibold text-fg">Sales channels</h3>
+                    <p className="text-xs text-fg-subtle">
                         Where this category — and the products in it — can be seen and sold.
                     </p>
                 </div>
@@ -207,7 +207,7 @@ const CategoryChannelsPanel: React.FC<Props> = ({ categoryId, canManage, onSaved
                         type="button"
                         onClick={handleSave}
                         disabled={isSaving || !isDirty}
-                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                        className="flex items-center gap-2 bg-primary hover:bg-primary-hover disabled:opacity-40 text-primary-fg px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
                     >
                         {isSaving ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
                         Save channels
@@ -216,7 +216,7 @@ const CategoryChannelsPanel: React.FC<Props> = ({ categoryId, canManage, onSaved
             </div>
 
             {error && <p className="text-xs text-rose-400">{error}</p>}
-            {saved && !isDirty && <p className="text-xs text-emerald-400">Channel visibility saved</p>}
+            {saved && !isDirty && <p className="text-xs text-success">Channel visibility saved</p>}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {CHANNEL_META.map(({ code, label, hint, Icon }) => {
@@ -233,23 +233,23 @@ const CategoryChannelsPanel: React.FC<Props> = ({ categoryId, canManage, onSaved
                             onClick={() => toggle(code)}
                             className={`flex items-start gap-3 text-left p-3 rounded-xl border transition-colors disabled:cursor-not-allowed ${
                                 on
-                                    ? 'bg-blue-600/10 border-blue-600/50'
-                                    : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
+                                    ? 'bg-primary/10 border-primary/50'
+                                    : 'bg-surface/60 border-line hover:border-line-strong'
                             }`}
                         >
-                            <Icon size={16} className={on ? 'text-blue-400 mt-0.5' : 'text-slate-500 mt-0.5'} />
+                            <Icon size={16} className={on ? 'text-primary mt-0.5' : 'text-fg-subtle mt-0.5'} />
                             <span className="min-w-0">
                                 <span className="flex items-center gap-2">
-                                    <span className={`text-sm font-medium ${on ? 'text-slate-100' : 'text-slate-400'}`}>
+                                    <span className={`text-sm font-medium ${on ? 'text-fg' : 'text-fg-muted'}`}>
                                         {label}
                                     </span>
                                     {inherited && (
-                                        <span className="text-[10px] uppercase tracking-wide text-amber-400/80 border border-amber-400/30 rounded px-1 py-px">
+                                        <span className="text-[10px] uppercase tracking-wide text-warning/80 border border-warning/30 rounded px-1 py-px">
                                             inherited
                                         </span>
                                     )}
                                 </span>
-                                <span className="block text-xs text-slate-500 truncate">{hint}</span>
+                                <span className="block text-xs text-fg-subtle truncate">{hint}</span>
                             </span>
                         </button>
                     );
@@ -257,7 +257,7 @@ const CategoryChannelsPanel: React.FC<Props> = ({ categoryId, canManage, onSaved
             </div>
 
             {canManage && (
-                <label className="flex items-center gap-2 text-xs text-slate-400 cursor-pointer">
+                <label className="flex items-center gap-2 text-xs text-fg-muted cursor-pointer">
                     <input
                         type="checkbox"
                         checked={applyToChildren}

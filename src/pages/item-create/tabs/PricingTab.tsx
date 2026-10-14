@@ -22,8 +22,8 @@ interface PricingTabProps {
     taxCodesError?: string | null;
 }
 
-const inputClass = 'w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all placeholder:text-slate-600';
-const labelClass = 'block text-sm font-medium text-slate-400 mb-1.5';
+const inputClass = 'w-full bg-surface-raised border border-line-strong rounded-lg px-4 py-2.5 text-fg focus:outline-none focus:ring-2 focus:ring-focus/50 focus:border-primary transition-all placeholder:text-fg-subtle';
+const labelClass = 'block text-sm font-medium text-fg-muted mb-1.5';
 
 const PricingTab: React.FC<PricingTabProps> = ({
     price, cost, tax_class, tax_code_id, hsn_code, updateField, currencySymbol = '$', taxCodes = [], isTaxCodesLoading = false, taxCodesError = null
@@ -60,10 +60,10 @@ const PricingTab: React.FC<PricingTabProps> = ({
                     </div>
                 </div>
                 {price && cost && parseFloat(price) > 0 && parseFloat(cost) > 0 && (
-                    <div className="mt-4 p-3 bg-slate-800/50 border border-slate-700/50 rounded-lg">
+                    <div className="mt-4 p-3 bg-surface-raised/50 border border-line-strong/50 rounded-lg">
                         <div className="flex items-center justify-between text-sm">
-                            <span className="text-slate-400">Margin</span>
-                            <span className="text-emerald-400 font-semibold">
+                            <span className="text-fg-muted">Margin</span>
+                            <span className="text-success font-semibold">
                                 {(((parseFloat(price) - parseFloat(cost)) / parseFloat(price)) * 100).toFixed(1)}%
                             </span>
                         </div>
@@ -96,7 +96,7 @@ const PricingTab: React.FC<PricingTabProps> = ({
                             )}
                         </select>
                         {!isTaxCodesLoading && !taxCodesError && !hasTaxCodes && (
-                            <p className="text-xs text-slate-600 mt-1">No tax codes configured. Add tax codes in Settings → Financial → Tax Codes.</p>
+                            <p className="text-xs text-fg-subtle mt-1">No tax codes configured. Add tax codes in Settings → Financial → Tax Codes.</p>
                         )}
                         {!isTaxCodesLoading && !!taxCodesError && (
                             <p className="text-xs text-rose-400 mt-1">{taxCodesError}</p>
@@ -104,7 +104,7 @@ const PricingTab: React.FC<PricingTabProps> = ({
                         {tax_code_id && hasTaxCodes && (() => {
                             const selected = taxCodes.find(tc => tc.id === tax_code_id);
                             return selected ? (
-                                <p className="text-xs text-amber-400 mt-1">Rate: {selected.rate}% applied to purchase orders</p>
+                                <p className="text-xs text-warning mt-1">Rate: {selected.rate}% applied to purchase orders</p>
                             ) : null;
                         })()}
                     </div>

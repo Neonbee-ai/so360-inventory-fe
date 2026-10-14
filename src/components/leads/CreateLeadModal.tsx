@@ -76,63 +76,63 @@ export const CreateLeadModal = ({ isOpen, onClose, onSuccess, existingLeads }: C
                 )}
 
                 {isDuplicate && (
-                    <div className="flex items-start gap-3 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg text-amber-400 text-sm">
+                    <div className="flex items-start gap-3 p-3 bg-warning/10 border border-warning/20 rounded-lg text-warning text-sm">
                         <AlertCircle size={18} className="shrink-0" />
                         <p>Potential duplicate detected. A lead with this company name already exists.</p>
                     </div>
                 )}
 
                 <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-slate-400">Company Name *</label>
+                    <label className="text-sm font-medium text-fg-muted">Company Name *</label>
                     <input
                         required
                         type="text"
                         value={formData.company_name}
                         onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
-                        className="w-full bg-slate-950 border border-slate-800 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                        className="w-full bg-bg border border-line px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-focus/50"
                         placeholder="e.g. Acme Corp"
                     />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                        <label className="text-sm font-medium text-slate-400">Contact Name *</label>
+                        <label className="text-sm font-medium text-fg-muted">Contact Name *</label>
                         <input
                             required
                             type="text"
                             value={formData.contact_name}
                             onChange={(e) => setFormData({ ...formData, contact_name: e.target.value })}
-                            className="w-full bg-slate-950 border border-slate-800 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                            className="w-full bg-bg border border-line px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-focus/50"
                         />
                     </div>
                     <div className="space-y-1.5">
-                        <label className="text-sm font-medium text-slate-400">Contact Email *</label>
+                        <label className="text-sm font-medium text-fg-muted">Contact Email *</label>
                         <input
                             required
                             type="email"
                             value={formData.contact_email}
                             onChange={(e) => setFormData({ ...formData, contact_email: e.target.value })}
-                            className="w-full bg-slate-950 border border-slate-800 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                            className="w-full bg-bg border border-line px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-focus/50"
                         />
                     </div>
                 </div>
 
                 <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-slate-400">Phone (Optional)</label>
+                    <label className="text-sm font-medium text-fg-muted">Phone (Optional)</label>
                     <input
                         type="tel"
                         value={formData.phone}
                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        className="w-full bg-slate-950 border border-slate-800 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                        className="w-full bg-bg border border-line px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-focus/50"
                     />
                 </div>
 
                 <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-slate-400">Lead Source</label>
+                    <label className="text-sm font-medium text-fg-muted">Lead Source</label>
                     <select
                         value={formData.source}
                         onChange={(e) => setFormData({ ...formData, source: e.target.value })}
-                        className="w-full bg-slate-950 border border-slate-800 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                        className="w-full bg-bg border border-line px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-focus/50"
                     >
                         <option value="Website">Website</option>
                         <option value="Referral">Referral</option>
@@ -142,12 +142,12 @@ export const CreateLeadModal = ({ isOpen, onClose, onSuccess, existingLeads }: C
                 </div>
 
                 {customFieldDefs.length > 0 && (
-                    <div className="pt-2 border-t border-slate-800 space-y-4">
-                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Additional Details</p>
+                    <div className="pt-2 border-t border-line space-y-4">
+                        <p className="text-[10px] font-black text-fg-subtle uppercase tracking-widest">Additional Details</p>
                         <div className="grid grid-cols-2 gap-4">
                             {customFieldDefs.map(field => (
                                 <div key={field.id} className="space-y-1.5">
-                                    <label className="text-sm font-medium text-slate-400">{field.label} {field.required ? '*' : ''}</label>
+                                    <label className="text-sm font-medium text-fg-muted">{field.label} {field.required ? '*' : ''}</label>
                                     {field.type === 'boolean' ? (
                                         <div className="flex items-center h-10">
                                             <input
@@ -157,7 +157,7 @@ export const CreateLeadModal = ({ isOpen, onClose, onSuccess, existingLeads }: C
                                                     ...formData,
                                                     custom_fields: { ...formData.custom_fields, [field.id]: e.target.checked }
                                                 })}
-                                                className="w-4 h-4 rounded bg-slate-950 border-slate-800 text-blue-600 focus:ring-blue-500/50"
+                                                className="w-4 h-4 rounded bg-bg border-line text-primary focus:ring-focus/50"
                                             />
                                         </div>
                                     ) : (
@@ -169,7 +169,7 @@ export const CreateLeadModal = ({ isOpen, onClose, onSuccess, existingLeads }: C
                                                 ...formData,
                                                 custom_fields: { ...formData.custom_fields, [field.id]: e.target.value }
                                             })}
-                                            className="w-full bg-slate-950 border border-slate-800 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                            className="w-full bg-bg border border-line px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-focus/50"
                                         />
                                     )}
                                 </div>
@@ -182,14 +182,14 @@ export const CreateLeadModal = ({ isOpen, onClose, onSuccess, existingLeads }: C
                     <button
                         type="button"
                         onClick={onClose}
-                        className="flex-1 px-4 py-2 rounded-lg border border-slate-800 text-slate-400 hover:bg-slate-800 transition-colors"
+                        className="flex-1 px-4 py-2 rounded-lg border border-line text-fg-muted hover:bg-surface-raised transition-colors"
                     >
                         Cancel
                     </button>
                     <button
                         type="submit"
                         disabled={isSubmitting}
-                        className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-semibold transition-all shadow-lg active:scale-95 disabled:opacity-50"
+                        className="flex-1 px-4 py-2 bg-primary hover:bg-primary-hover text-primary-fg rounded-lg font-semibold transition-all shadow-lg active:scale-95 disabled:opacity-50"
                     >
                         {isSubmitting ? 'Creating...' : 'Create Lead'}
                     </button>

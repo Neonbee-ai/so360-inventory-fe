@@ -3,6 +3,7 @@ import { Plus, Pencil, Trash2, X, Check, Info } from 'lucide-react';
 import { inventoryService } from '../../services/inventoryService';
 import { ItemAttributeDefinition, ItemCategory } from '../../types/inventory';
 import { toBound } from '../../utils/attributeBounds';
+import { useConfirm } from '@so360/design-system';
 
 interface Props {
     categories: ItemCategory[];
@@ -60,10 +61,11 @@ const emptyForm = (): FormState => ({
 });
 
 
-const inputClass = 'w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all placeholder:text-slate-600';
-const labelClass = 'block text-xs font-medium text-slate-400 mb-1';
+const inputClass = 'w-full bg-surface-raised border border-line-strong rounded-lg px-3 py-2 text-fg text-sm focus:outline-none focus:ring-2 focus:ring-focus/50 focus:border-primary transition-all placeholder:text-fg-subtle';
+const labelClass = 'block text-xs font-medium text-fg-muted mb-1';
 
 const ItemAttributeSettingsSection: React.FC<Props> = ({ categories, canManage }) => {
+    const [confirm, confirmDialog] = useConfirm();
     const [defs, setDefs] = useState<ItemAttributeDefinition[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -186,7 +188,7 @@ const ItemAttributeSettingsSection: React.FC<Props> = ({ categories, canManage }
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm('Delete this attribute definition? This cannot be undone.')) return;
+        if (!(await confirm({ title: 'Delete', message: 'Delete this attribute definition? This cannot be undone.', intent: 'danger', confirmLabel: 'Delete' }))) return;
         setDeletingId(id);
         setError(null);
         try {
@@ -204,6 +206,7 @@ const ItemAttributeSettingsSection: React.FC<Props> = ({ categories, canManage }
 
     return (
         <div>
+            {confirmDialog}
             {error && (
                 <div className="mb-4 text-sm text-rose-400 bg-rose-500/10 border border-rose-500/20 px-3 py-2 rounded-lg">
                     {error}
@@ -211,33 +214,33 @@ const ItemAttributeSettingsSection: React.FC<Props> = ({ categories, canManage }
             )}
 
             {loading ? (
-                <div className="text-sm text-slate-500 animate-pulse">Loading...</div>
+                <div className="text-sm text-fg-subtle animate-pulse">Loading...</div>
             ) : (
                 <>
                     {defs.length > 0 ? (
                         <div className="overflow-x-auto">
                             <table className="w-full text-sm">
                                 <thead>
-                                    <tr className="border-b border-slate-800">
-                                        <th className="text-left py-2 pr-4 text-xs font-medium text-slate-500 uppercase tracking-wide">Label</th>
-                                        <th className="text-left py-2 pr-4 text-xs font-medium text-slate-500 uppercase tracking-wide">Key</th>
-                                        <th className="text-left py-2 pr-4 text-xs font-medium text-slate-500 uppercase tracking-wide">Type</th>
-                                        <th className="text-left py-2 pr-4 text-xs font-medium text-slate-500 uppercase tracking-wide">Category</th>
-                                        <th className="text-left py-2 pr-4 text-xs font-medium text-slate-500 uppercase tracking-wide">Unit</th>
-                                        <th className="text-left py-2 pr-4 text-xs font-medium text-slate-500 uppercase tracking-wide">Required</th>
-                                        <th className="text-left py-2 pr-4 text-xs font-medium text-slate-500 uppercase tracking-wide">Order</th>
+                                    <tr className="border-b border-line">
+                                        <th className="text-left py-2 pr-4 text-xs font-medium text-fg-subtle uppercase tracking-wide">Label</th>
+                                        <th className="text-left py-2 pr-4 text-xs font-medium text-fg-subtle uppercase tracking-wide">Key</th>
+                                        <th className="text-left py-2 pr-4 text-xs font-medium text-fg-subtle uppercase tracking-wide">Type</th>
+                                        <th className="text-left py-2 pr-4 text-xs font-medium text-fg-subtle uppercase tracking-wide">Category</th>
+                                        <th className="text-left py-2 pr-4 text-xs font-medium text-fg-subtle uppercase tracking-wide">Unit</th>
+                                        <th className="text-left py-2 pr-4 text-xs font-medium text-fg-subtle uppercase tracking-wide">Required</th>
+                                        <th className="text-left py-2 pr-4 text-xs font-medium text-fg-subtle uppercase tracking-wide">Order</th>
                                         {canManage && <th className="py-2 w-16" />}
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {defs.map(def => (
-                                        <tr key={def.id} className="border-b border-slate-800/50 hover:bg-slate-800/20 transition-colors">
-                                            <td className="py-2.5 pr-4 text-slate-200 font-medium">
+                                        <tr key={def.id} className="border-b border-line/50 hover:bg-surface-raised/20 transition-colors">
+                                            <td className="py-2.5 pr-4 text-fg font-medium">
                                                 <span className="inline-flex items-center gap-1.5">
                                                     {def.attribute_label}
                                                     {def.description && (
                                                         <span
-                                                            className="inline-flex text-slate-500 shrink-0 cursor-help"
+                                                            className="inline-flex text-fg-subtle shrink-0 cursor-help"
                                                             title={def.description}
                                                             aria-label={def.description}
                                                         >
@@ -246,24 +249,24 @@ const ItemAttributeSettingsSection: React.FC<Props> = ({ categories, canManage }
                                                     )}
                                                 </span>
                                             </td>
-                                            <td className="py-2.5 pr-4 text-slate-400 font-mono text-xs">{def.attribute_key}</td>
-                                            <td className="py-2.5 pr-4 text-slate-400">
+                                            <td className="py-2.5 pr-4 text-fg-muted font-mono text-xs">{def.attribute_key}</td>
+                                            <td className="py-2.5 pr-4 text-fg-muted">
                                                 {ATTRIBUTE_TYPES.find(t => t.value === def.attribute_type)?.label || def.attribute_type}
                                             </td>
-                                            <td className="py-2.5 pr-4 text-slate-400">{categoryName(def.category_id)}</td>
-                                            <td className="py-2.5 pr-4 text-slate-500">{def.unit || '—'}</td>
+                                            <td className="py-2.5 pr-4 text-fg-muted">{categoryName(def.category_id)}</td>
+                                            <td className="py-2.5 pr-4 text-fg-subtle">{def.unit || '—'}</td>
                                             <td className="py-2.5 pr-4">
                                                 {def.is_required
                                                     ? <span className="text-xs font-medium text-rose-400">Yes</span>
-                                                    : <span className="text-xs text-slate-600">No</span>}
+                                                    : <span className="text-xs text-fg-subtle">No</span>}
                                             </td>
-                                            <td className="py-2.5 pr-4 text-slate-500">{def.sort_order}</td>
+                                            <td className="py-2.5 pr-4 text-fg-subtle">{def.sort_order}</td>
                                             {canManage && (
                                                 <td className="py-2.5">
                                                     <div className="flex items-center gap-2">
                                                         <button
                                                             onClick={() => openEdit(def)}
-                                                            className="text-slate-500 hover:text-blue-400 transition-colors"
+                                                            className="text-fg-subtle hover:text-primary transition-colors"
                                                             title="Edit"
                                                         >
                                                             <Pencil size={14} />
@@ -271,7 +274,7 @@ const ItemAttributeSettingsSection: React.FC<Props> = ({ categories, canManage }
                                                         <button
                                                             onClick={() => handleDelete(def.id)}
                                                             disabled={deletingId === def.id}
-                                                            className="text-slate-500 hover:text-rose-400 transition-colors disabled:opacity-50"
+                                                            className="text-fg-subtle hover:text-rose-400 transition-colors disabled:opacity-50"
                                                             title="Delete"
                                                         >
                                                             <Trash2 size={14} />
@@ -285,25 +288,25 @@ const ItemAttributeSettingsSection: React.FC<Props> = ({ categories, canManage }
                             </table>
                         </div>
                     ) : (
-                        <p className="text-sm text-slate-500 italic">No attribute definitions yet.</p>
+                        <p className="text-sm text-fg-subtle italic">No attribute definitions yet.</p>
                     )}
 
                     {canManage && !showForm && (
                         <button
                             onClick={openCreate}
-                            className="mt-4 flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300 transition-colors"
+                            className="mt-4 flex items-center gap-2 text-sm text-primary hover:text-primary transition-colors"
                         >
                             <Plus size={16} /> Add Attribute
                         </button>
                     )}
 
                     {showForm && (
-                        <div className="mt-4 p-4 bg-slate-800/50 border border-slate-700 rounded-xl space-y-3">
+                        <div className="mt-4 p-4 bg-surface-raised/50 border border-line-strong rounded-xl space-y-3">
                             <div className="flex items-center justify-between mb-1">
-                                <span className="text-sm font-semibold text-slate-200">
+                                <span className="text-sm font-semibold text-fg">
                                     {editingId ? 'Edit Attribute' : 'New Attribute'}
                                 </span>
-                                <button onClick={closeForm} className="text-slate-500 hover:text-slate-50 transition-colors">
+                                <button onClick={closeForm} className="text-fg-subtle hover:text-fg transition-colors">
                                     <X size={16} />
                                 </button>
                             </div>
@@ -329,7 +332,7 @@ const ItemAttributeSettingsSection: React.FC<Props> = ({ categories, canManage }
                                     />
                                 </div>
                                 <div>
-                                    <label className={labelClass}>Key * <span className="text-slate-600 font-normal">(lowercase, numbers, underscore only)</span></label>
+                                    <label className={labelClass}>Key * <span className="text-fg-subtle font-normal">(lowercase, numbers, underscore only)</span></label>
                                     <input
                                         type="text"
                                         value={form.attribute_key}
@@ -339,7 +342,7 @@ const ItemAttributeSettingsSection: React.FC<Props> = ({ categories, canManage }
                                         disabled={!!editingId}
                                     />
                                     {!editingId && (
-                                        <p className="mt-1 text-xs text-slate-600">Auto-generated from label. Edit if needed.</p>
+                                        <p className="mt-1 text-xs text-fg-subtle">Auto-generated from label. Edit if needed.</p>
                                     )}
                                 </div>
                                 <div>
@@ -442,23 +445,23 @@ const ItemAttributeSettingsSection: React.FC<Props> = ({ categories, canManage }
                                     type="checkbox"
                                     checked={form.is_required}
                                     onChange={e => setForm(f => ({ ...f, is_required: e.target.checked }))}
-                                    className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-blue-600 focus:ring-blue-500/50"
+                                    className="w-4 h-4 rounded border-line-strong bg-surface-raised text-primary focus:ring-focus/50"
                                 />
-                                <span className="text-sm text-slate-300">Required field</span>
+                                <span className="text-sm text-fg-muted">Required field</span>
                             </label>
 
                             <div className="flex items-center gap-2 pt-1">
                                 <button
                                     onClick={handleSave}
                                     disabled={saving}
-                                    className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all"
+                                    className="flex items-center gap-1.5 bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-fg px-4 py-2 rounded-lg text-sm font-medium transition-all"
                                 >
                                     <Check size={14} />
                                     {saving ? 'Saving...' : 'Save'}
                                 </button>
                                 <button
                                     onClick={closeForm}
-                                    className="px-4 py-2 rounded-lg border border-slate-700 text-slate-400 hover:text-slate-50 hover:border-slate-500 text-sm transition-all"
+                                    className="px-4 py-2 rounded-lg border border-line-strong text-fg-muted hover:text-fg hover:border-line-strong text-sm transition-all"
                                 >
                                     Cancel
                                 </button>

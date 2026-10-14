@@ -100,13 +100,13 @@ const BulkImportPage: React.FC = () => {
             <header className="mb-8">
                 <button
                     onClick={() => navigate('/inventory/items')}
-                    className="flex items-center gap-2 text-slate-500 hover:text-slate-300 text-sm mb-4 transition-colors"
+                    className="flex items-center gap-2 text-fg-subtle hover:text-fg-muted text-sm mb-4 transition-colors"
                 >
                     <ArrowLeft size={15} />
                     Back to Items
                 </button>
-                <h1 className="text-3xl font-bold text-slate-50 tracking-tight">Bulk Import</h1>
-                <p className="text-slate-400 mt-1">Import multiple inventory items from a CSV file with optional images</p>
+                <h1 className="text-3xl font-bold text-fg tracking-tight">Bulk Import</h1>
+                <p className="text-fg-muted mt-1">Import multiple inventory items from a CSV file with optional images</p>
             </header>
 
             <StepIndicator steps={STEPS} current={step} />

@@ -32,8 +32,8 @@ interface BasicInfoTabProps {
     onResetSku?: () => void;
 }
 
-const inputClass = 'w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all placeholder:text-slate-600';
-const labelClass = 'block text-sm font-medium text-slate-400 mb-1.5';
+const inputClass = 'w-full bg-surface-raised border border-line-strong rounded-lg px-4 py-2.5 text-fg focus:outline-none focus:ring-2 focus:ring-focus/50 focus:border-primary transition-all placeholder:text-fg-subtle';
+const labelClass = 'block text-sm font-medium text-fg-muted mb-1.5';
 
 const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
     name, sku, type, brand, barcode, description, unit_id, uoms, product_type_id,
@@ -44,7 +44,7 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
 }) => {
     const errorFor = (field: string) => (showErrors ? errors[field] || null : null);
     const cls = (field: string) =>
-        errorFor(field) ? inputClass.replace('border-slate-700', 'border-rose-500/60') : inputClass;
+        errorFor(field) ? inputClass.replace('border-line-strong', 'border-rose-500/60') : inputClass;
     const FieldError = ({ field }: { field: string }) => {
         const message = errorFor(field);
         return message ? (
@@ -69,15 +69,15 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
                     </div>
                     <div>
                         <div className="flex items-center justify-between mb-1.5">
-                            <label className="text-sm font-medium text-slate-400">SKU *</label>
+                            <label className="text-sm font-medium text-fg-muted">SKU *</label>
                             <div className="flex items-center gap-1.5">
                                 {isSkuAutoEnabled && (
                                     <span
                                         data-testid="sku-autogen-badge"
                                         className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
                                             isSkuManuallyEdited
-                                                ? 'bg-slate-800 text-slate-400 border border-slate-700'
-                                                : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                                                ? 'bg-surface-raised text-fg-muted border border-line-strong'
+                                                : 'bg-primary/10 text-primary border border-primary/20'
                                         }`}
                                     >
                                         {isSkuManuallyEdited ? 'Manual Override' : 'Auto-generated from Item Name'}
@@ -88,7 +88,7 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
                                         type="button"
                                         data-testid="sku-reset-btn"
                                         onClick={onResetSku}
-                                        className="text-[10px] text-blue-400 hover:text-blue-300 underline focus:outline-none"
+                                        className="text-[10px] text-primary hover:text-primary underline focus:outline-none"
                                     >
                                         Re-generate
                                     </button>
@@ -149,7 +149,7 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
                                 <option value="__new__">+ Create new UoM</option>
                             </select>
                         ) : (
-                            <div className="space-y-2 p-3 bg-slate-800/50 border border-slate-700 rounded-lg">
+                            <div className="space-y-2 p-3 bg-surface-raised/50 border border-line-strong rounded-lg">
                                 <input
                                     type="text"
                                     value={newUomName}
@@ -169,7 +169,7 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
                                     <button
                                         type="button"
                                         onClick={() => { setShowNewUom(false); setNewUomName(''); setNewUomAbbr(''); }}
-                                        className="flex-1 px-3 py-1.5 rounded-lg border border-slate-700 text-slate-400 hover:bg-slate-800 text-sm transition-all"
+                                        className="flex-1 px-3 py-1.5 rounded-lg border border-line-strong text-fg-muted hover:bg-surface-raised text-sm transition-all"
                                     >
                                         Cancel
                                     </button>
@@ -177,7 +177,7 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
                                         type="button"
                                         onClick={onCreateUom}
                                         disabled={isCreatingUom || !newUomName.trim() || !newUomAbbr.trim()}
-                                        className="flex-1 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-sm font-medium transition-all"
+                                        className="flex-1 px-3 py-1.5 rounded-lg bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-fg text-sm font-medium transition-all"
                                     >
                                         {isCreatingUom ? 'Creating...' : 'Create'}
                                     </button>
@@ -202,16 +202,16 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
                                 className={`
                                     p-3 rounded-xl border text-left transition-all
                                     ${isSelected
-                                        ? 'border-blue-500 bg-blue-500/10 ring-1 ring-blue-500/30'
-                                        : 'border-slate-700 bg-slate-800/50 hover:border-slate-600 hover:bg-slate-800'
+                                        ? 'border-primary bg-primary/10 ring-1 ring-focus/30'
+                                        : 'border-line-strong bg-surface-raised/50 hover:border-line-strong hover:bg-surface-raised'
                                     }
                                 `}
                             >
                                 <div className="flex items-center gap-2 mb-1">
-                                    <Icon size={16} className={isSelected ? 'text-blue-400' : 'text-slate-500'} />
-                                    <span className={`text-sm font-semibold ${isSelected ? 'text-blue-300' : 'text-slate-300'}`}>{cls.label}</span>
+                                    <Icon size={16} className={isSelected ? 'text-primary' : 'text-fg-subtle'} />
+                                    <span className={`text-sm font-semibold ${isSelected ? 'text-primary' : 'text-fg-muted'}`}>{cls.label}</span>
                                 </div>
-                                <p className="text-xs text-slate-500 leading-tight">{cls.description}</p>
+                                <p className="text-xs text-fg-subtle leading-tight">{cls.description}</p>
                             </button>
                         );
                     })}

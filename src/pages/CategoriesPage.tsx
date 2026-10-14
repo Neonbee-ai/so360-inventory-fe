@@ -49,7 +49,7 @@ const slugFromName = (name: string) =>
 const CharCount: React.FC<{ value: string; max: number; testId: string }> = ({ value, max, testId }) => (
     <span
         data-testid={testId}
-        className={`text-[11px] tabular-nums ${value.length > max ? 'text-rose-400' : value.length > max * 0.9 ? 'text-amber-400' : 'text-slate-500'}`}
+        className={`text-[11px] tabular-nums ${value.length > max ? 'text-rose-400' : value.length > max * 0.9 ? 'text-warning' : 'text-fg-subtle'}`}
     >
         {value.length}/{max}
     </span>
@@ -113,11 +113,11 @@ const ImageUploadZone: React.FC<{
     return (
         <div>
             <div className="mb-1 flex flex-wrap items-center gap-x-2 gap-y-1">
-                {label && <label className="text-xs font-medium text-slate-400">{label}</label>}
+                {label && <label className="text-xs font-medium text-fg-muted">{label}</label>}
                 <ImageSpecChip slot={fitSlot} />
             </div>
             {currentUrl ? (
-                <div className={`relative ${aspectClass} rounded-xl overflow-hidden bg-slate-800 border border-slate-700`}>
+                <div className={`relative ${aspectClass} rounded-xl overflow-hidden bg-surface-raised border border-line-strong`}>
                     <img
                         src={currentUrl}
                         alt={alt}
@@ -132,24 +132,24 @@ const ImageUploadZone: React.FC<{
                             data-testid="slot-size-badge"
                             title={assessment.ok ? 'Good fit for this slot' : assessment.issues.join('\n')}
                             className={`absolute bottom-0 inset-x-0 px-2 py-0.5 text-[10px] leading-tight text-center truncate ${
-                                assessment.ok ? 'bg-slate-900/80 text-slate-300' : 'bg-amber-500/90 text-slate-950 font-medium'
+                                assessment.ok ? 'bg-surface/80 text-fg-muted' : 'bg-warning/90 text-primary-fg font-medium'
                             }`}
                         >
                             {assessment.ok ? '' : '⚠ '}{assessment.size} · {assessment.ratio}
                         </div>
                     )}
-                    <div className="absolute inset-0 bg-black/0 hover:bg-black/40 transition-colors flex items-center justify-center gap-2 opacity-0 hover:opacity-100">
+                    <div className="absolute inset-0 bg-overlay/0 hover:bg-overlay/40 transition-colors flex items-center justify-center gap-2 opacity-0 hover:opacity-100">
                         <button
                             type="button"
                             onClick={() => fileRef.current?.click()}
-                            className="bg-white/10 backdrop-blur-sm border border-white/20 text-slate-50 px-3 py-1.5 rounded-lg text-xs hover:bg-white/20 transition-colors flex items-center gap-1.5"
+                            className="bg-white/10 backdrop-blur-sm border border-white/20 text-fg px-3 py-1.5 rounded-lg text-xs hover:bg-white/20 transition-colors flex items-center gap-1.5"
                         >
                             <Upload size={12} /> Replace
                         </button>
                         <button
                             type="button"
                             onClick={onRemove}
-                            className="bg-rose-500/80 backdrop-blur-sm text-white px-3 py-1.5 rounded-lg text-xs hover:bg-rose-500 transition-colors flex items-center gap-1.5"
+                            className="bg-rose-500/80 backdrop-blur-sm text-primary-fg px-3 py-1.5 rounded-lg text-xs hover:bg-rose-500 transition-colors flex items-center gap-1.5"
                         >
                             <X size={12} /> Remove
                         </button>
@@ -158,18 +158,18 @@ const ImageUploadZone: React.FC<{
                 </div>
             ) : (
                 <div
-                    className={`${aspectClass} rounded-xl border-2 border-dashed transition-colors cursor-pointer flex flex-col items-center justify-center gap-2 ${dragOver ? 'border-blue-500 bg-blue-500/5' : 'border-slate-700 hover:border-slate-600 bg-slate-800/30'}`}
+                    className={`${aspectClass} rounded-xl border-2 border-dashed transition-colors cursor-pointer flex flex-col items-center justify-center gap-2 ${dragOver ? 'border-primary bg-primary/5' : 'border-line-strong hover:border-line-strong bg-surface-raised/30'}`}
                     onDragOver={e => { e.preventDefault(); setDragOver(true); }}
                     onDragLeave={() => setDragOver(false)}
                     onDrop={handleDrop}
                     onClick={() => fileRef.current?.click()}
                 >
                     {uploading ? (
-                        <Loader2 size={20} className="text-blue-400 animate-spin" />
+                        <Loader2 size={20} className="text-primary animate-spin" />
                     ) : (
                         <>
-                            <ImageIcon size={20} className="text-slate-600" />
-                            <span className="text-xs text-slate-500 text-center px-4">{subLabel || 'Click or drag to upload'}</span>
+                            <ImageIcon size={20} className="text-fg-subtle" />
+                            <span className="text-xs text-fg-subtle text-center px-4">{subLabel || 'Click or drag to upload'}</span>
                         </>
                     )}
                     <input ref={fileRef} type="file" accept={IMAGE_ACCEPT} className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ''; }} />
@@ -179,7 +179,7 @@ const ImageUploadZone: React.FC<{
                 <p className="text-xs text-rose-400 mt-1">{uploadError}</p>
             )}
             {fitNote && !uploadError && (
-                <p data-testid="image-fit-note" className="text-[11px] text-slate-500 mt-1 break-words">{fitNote}</p>
+                <p data-testid="image-fit-note" className="text-[11px] text-fg-subtle mt-1 break-words">{fitNote}</p>
             )}
         </div>
     );
@@ -208,7 +208,7 @@ const CategoryCardsView: React.FC<{
                 onClick={() => onSelect(cat.id)}
                 className={`relative cursor-pointer rounded-xl overflow-hidden transition-all hover:scale-[1.02] hover:opacity-95 ${
                     isRoot ? 'col-span-2' : 'col-span-1'
-                } ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
+                } ${isSelected ? 'ring-2 ring-focus' : ''}`}
                 style={{ aspectRatio: isRoot ? '3/1' : '1/1' }}
             >
                 {/* Background */}
@@ -242,9 +242,9 @@ const CategoryCardsView: React.FC<{
                 {/* Name bottom */}
                 <div className="absolute bottom-2 left-2 right-2">
                     {!isRoot && getParentName(cat.parent_id) && (
-                        <p className="text-[10px] text-slate-50/60 leading-none mb-0.5 truncate">{getParentName(cat.parent_id)}</p>
+                        <p className="text-[10px] text-fg/60 leading-none mb-0.5 truncate">{getParentName(cat.parent_id)}</p>
                     )}
-                    <p className={`text-slate-50 font-semibold truncate ${isRoot ? 'text-base' : 'text-sm'}`}>{cat.name}</p>
+                    <p className={`text-fg font-semibold truncate ${isRoot ? 'text-base' : 'text-sm'}`}>{cat.name}</p>
                 </div>
 
                 {/* Banner indicator */}
@@ -267,7 +267,7 @@ const CategoryCardsView: React.FC<{
     });
 
     if (orderedCards.length === 0) {
-        return <p className="text-sm text-slate-500 italic py-4">No categories created yet</p>;
+        return <p className="text-sm text-fg-subtle italic py-4">No categories created yet</p>;
     }
 
     return (
@@ -501,7 +501,7 @@ const CategoriesPage = () => {
 
     if (isLoading) {
         return (
-            <div className="p-8 flex items-center gap-3 text-slate-500">
+            <div className="p-8 flex items-center gap-3 text-fg-subtle">
                 <Loader2 size={18} className="animate-spin" />
                 Loading categories...
             </div>
@@ -512,11 +512,11 @@ const CategoriesPage = () => {
         <div className="p-8">
             <header className="mb-6 flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold text-slate-50 tracking-tight flex items-center gap-3">
+                    <h1 className="text-3xl font-bold text-fg tracking-tight flex items-center gap-3">
                         {propertyUnits ? <Building2 className="text-purple-400" /> : <Tag className="text-purple-400" />}
                         {propertyUnits ? labels.categories : 'Product Categories'}
                     </h1>
-                    <p className="text-slate-400 mt-1 text-sm">
+                    <p className="text-fg-muted mt-1 text-sm">
                         {propertyUnits
                             ? 'Projects, their towers and unit availability'
                             : 'Organize your products with a hierarchical category system'}
@@ -530,7 +530,7 @@ const CategoriesPage = () => {
                             setViewMode('tree');
                             setShowAddRoot(true);
                         }}
-                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                        className="flex items-center gap-2 bg-primary hover:bg-primary-hover text-primary-fg px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                     >
                         <Plus size={16} /> {`New ${labels.category}`}
                     </button>
@@ -548,21 +548,21 @@ const CategoriesPage = () => {
 
             <div className="flex gap-6 items-start">
                 {/* Left panel — tree / cards */}
-                <div className="w-1/3 min-w-[260px] bg-slate-900/50 border border-slate-800 rounded-2xl p-5">
+                <div className="w-1/3 min-w-[260px] bg-surface/50 border border-line rounded-2xl p-5">
                     <div className="flex items-center justify-between mb-1">
-                        <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">{labels.categories}</h2>
+                        <h2 className="text-sm font-semibold text-fg-muted uppercase tracking-wider">{labels.categories}</h2>
                         <div className="flex items-center gap-1">
                             <button
                                 onClick={() => setViewMode('tree')}
-                                className={`px-2 py-0.5 rounded text-xs transition-colors ${viewMode === 'tree' ? 'bg-slate-700 text-slate-50' : 'text-slate-500 hover:text-slate-300'}`}
+                                className={`px-2 py-0.5 rounded text-xs transition-colors ${viewMode === 'tree' ? 'bg-line-strong text-fg' : 'text-fg-subtle hover:text-fg-muted'}`}
                             >Tree</button>
                             <button
                                 onClick={() => setViewMode('cards')}
-                                className={`px-2 py-0.5 rounded text-xs transition-colors ${viewMode === 'cards' ? 'bg-slate-700 text-slate-50' : 'text-slate-500 hover:text-slate-300'}`}
+                                className={`px-2 py-0.5 rounded text-xs transition-colors ${viewMode === 'cards' ? 'bg-line-strong text-fg' : 'text-fg-subtle hover:text-fg-muted'}`}
                             >Cards</button>
                         </div>
                     </div>
-                    <p className="text-[10px] text-slate-600 mb-3">
+                    <p className="text-[10px] text-fg-subtle mb-3">
                         {categories.filter(c => c.icon_url || c.image_url || c.banner_url).length} of {categories.length} have images
                     </p>
                     <div className="overflow-y-auto max-h-[600px]">
@@ -588,27 +588,27 @@ const CategoriesPage = () => {
                 </div>
 
                 {/* Right panel — detail editor */}
-                <div className="flex-1 bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
+                <div className="flex-1 bg-surface/50 border border-line rounded-2xl p-6">
                     {!selectedCategory ? (
                         <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
-                            <div className="w-16 h-16 rounded-2xl bg-slate-800 flex items-center justify-center">
-                                <Tag size={28} className="text-slate-600" />
+                            <div className="w-16 h-16 rounded-2xl bg-surface-raised flex items-center justify-center">
+                                <Tag size={28} className="text-fg-subtle" />
                             </div>
-                            <p className="text-slate-500 text-sm">Select a {labels.category.toLowerCase()} from the tree<br />to view and edit its details</p>
+                            <p className="text-fg-subtle text-sm">Select a {labels.category.toLowerCase()} from the tree<br />to view and edit its details</p>
                         </div>
                     ) : (
                         <div className="space-y-6">
                             <div className="flex items-center justify-between">
-                                <h2 className="text-lg font-bold text-slate-50">
+                                <h2 className="text-lg font-bold text-fg">
                                     {`Edit ${selectedCategory.parent_id ? labels.subcategory : labels.category}`}
                                 </h2>
                                 <div className="flex items-center gap-2">
-                                    {saveSuccess && <span className="text-xs text-emerald-400">Saved!</span>}
+                                    {saveSuccess && <span className="text-xs text-success">Saved!</span>}
                                     {saveError && <span className="text-xs text-rose-400">{saveError}</span>}
                                     <button
                                         onClick={handleSaveDetail}
                                         disabled={isSaving || !editName.trim() || !!slugError}
-                                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                                        className="flex items-center gap-2 bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-fg px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                                     >
                                         {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
                                         Save
@@ -653,7 +653,7 @@ const CategoriesPage = () => {
                                             type="button"
                                             onClick={() => setShowAvailability(v => !v)}
                                             aria-pressed={showAvailability}
-                                            className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                                            className="flex items-center gap-2 bg-surface-raised hover:bg-line-strong text-fg px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
                                         >
                                             <LayoutGrid size={14} /> {showAvailability ? 'Hide availability' : 'Availability'}
                                         </button>
@@ -661,7 +661,7 @@ const CategoriesPage = () => {
                                             <button
                                                 type="button"
                                                 onClick={() => setShowGenerate(true)}
-                                                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                                                className="flex items-center gap-2 bg-primary hover:bg-primary-hover text-primary-fg px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
                                             >
                                                 <Sparkles size={14} /> Generate units
                                             </button>
@@ -711,7 +711,7 @@ const CategoriesPage = () => {
                             />
                             <div className="-mt-3">
                                 <div className="flex items-center justify-between mb-1">
-                                    <label htmlFor="category-banner-alt" className="text-xs font-medium text-slate-400">Banner alt text</label>
+                                    <label htmlFor="category-banner-alt" className="text-xs font-medium text-fg-muted">Banner alt text</label>
                                     <CharCount value={editBannerAlt} max={CATEGORY_SEO_LIMITS.bannerAlt} testId="banner-alt-count" />
                                 </div>
                                 <input
@@ -720,10 +720,10 @@ const CategoriesPage = () => {
                                     value={editBannerAlt}
                                     maxLength={CATEGORY_SEO_LIMITS.bannerAlt}
                                     onChange={e => setEditBannerAlt(e.target.value)}
-                                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-50 focus:outline-none focus:border-blue-500 placeholder:text-slate-600"
+                                    className="w-full bg-surface-raised border border-line-strong rounded-lg px-3 py-2 text-sm text-fg focus:outline-none focus:border-primary placeholder:text-fg-subtle"
                                     placeholder={`Describe the banner, e.g. "${editName || 'Category'} collection on display"`}
                                 />
-                                <p className="text-[11px] text-slate-600 mt-1">Read by screen readers and search engines. Blank uses the category name.</p>
+                                <p className="text-[11px] text-fg-subtle mt-1">Read by screen readers and search engines. Blank uses the category name.</p>
                             </div>
                             <div className="w-48">
                                 <ImageUploadZone
@@ -743,7 +743,7 @@ const CategoriesPage = () => {
                                 {/* Icon — preset preview OR upload zone */}
                                 {editIconUrl && isPresetUrl(editIconUrl) ? (
                                     <div className="flex-shrink-0">
-                                        <label className="text-xs font-medium text-slate-400 mb-1 block">Icon</label>
+                                        <label className="text-xs font-medium text-fg-muted mb-1 block">Icon</label>
                                         <div
                                             className="w-20 h-20 rounded-xl flex items-center justify-center relative group"
                                             style={{ background: editColor || 'rgb(var(--s-700))' }}
@@ -752,7 +752,7 @@ const CategoriesPage = () => {
                                             <button
                                                 type="button"
                                                 onClick={() => setEditIconUrl(null)}
-                                                className="absolute -top-1 -right-1 w-5 h-5 bg-rose-500 rounded-full text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                                className="absolute -top-1 -right-1 w-5 h-5 bg-rose-500 rounded-full text-primary-fg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                                             >
                                                 <X size={10} />
                                             </button>
@@ -775,22 +775,22 @@ const CategoriesPage = () => {
                                 {/* Name + Description */}
                                 <div className="flex-1 space-y-3">
                                     <div>
-                                        <label className="text-xs font-medium text-slate-400 mb-1 block">Name *</label>
+                                        <label className="text-xs font-medium text-fg-muted mb-1 block">Name *</label>
                                         <input
                                             type="text"
                                             value={editName}
                                             onChange={e => setEditName(e.target.value)}
-                                            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-50 focus:outline-none focus:border-blue-500 placeholder:text-slate-600"
+                                            className="w-full bg-surface-raised border border-line-strong rounded-lg px-3 py-2 text-sm text-fg focus:outline-none focus:border-primary placeholder:text-fg-subtle"
                                             placeholder="Category name"
                                         />
                                     </div>
                                     <div>
-                                        <label className="text-xs font-medium text-slate-400 mb-1 block">Description</label>
+                                        <label className="text-xs font-medium text-fg-muted mb-1 block">Description</label>
                                         <textarea
                                             value={editDesc}
                                             onChange={e => setEditDesc(e.target.value)}
                                             rows={2}
-                                            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-50 focus:outline-none focus:border-blue-500 placeholder:text-slate-600 resize-none"
+                                            className="w-full bg-surface-raised border border-line-strong rounded-lg px-3 py-2 text-sm text-fg focus:outline-none focus:border-primary placeholder:text-fg-subtle resize-none"
                                             placeholder="Brief description..."
                                         />
                                     </div>
@@ -807,7 +807,7 @@ const CategoriesPage = () => {
                             {/* Color picker + Sort order */}
                             <div className="flex items-start gap-6">
                                 <div>
-                                    <label className="text-xs font-medium text-slate-400 mb-2 block">Color</label>
+                                    <label className="text-xs font-medium text-fg-muted mb-2 block">Color</label>
                                     <div className="flex items-center gap-2 flex-wrap">
                                         {PRESET_COLORS.map(c => (
                                             <button
@@ -819,7 +819,7 @@ const CategoriesPage = () => {
                                             />
                                         ))}
                                         {editColor && (
-                                            <button type="button" onClick={() => setEditColor('')} className="text-xs text-slate-500 hover:text-slate-300">
+                                            <button type="button" onClick={() => setEditColor('')} className="text-xs text-fg-subtle hover:text-fg-muted">
                                                 Clear
                                             </button>
                                         )}
@@ -827,26 +827,26 @@ const CategoriesPage = () => {
                                     {editColor && (
                                         <div className="mt-2 flex items-center gap-2">
                                             <div className="w-5 h-5 rounded" style={{ background: editColor }} />
-                                            <span className="text-xs text-slate-500 font-mono">{editColor}</span>
+                                            <span className="text-xs text-fg-subtle font-mono">{editColor}</span>
                                         </div>
                                     )}
                                 </div>
 
                                 <div>
-                                    <label className="text-xs font-medium text-slate-400 mb-2 block">Sort Order</label>
+                                    <label className="text-xs font-medium text-fg-muted mb-2 block">Sort Order</label>
                                     <input
                                         type="number"
                                         value={editSortOrder}
                                         onChange={e => setEditSortOrder(parseInt(e.target.value) || 0)}
-                                        className="w-24 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-50 focus:outline-none focus:border-blue-500"
+                                        className="w-24 bg-surface-raised border border-line-strong rounded-lg px-3 py-2 text-sm text-fg focus:outline-none focus:border-primary"
                                         min={0}
                                     />
-                                    <p className="text-xs text-slate-600 mt-1">Lower = appears first</p>
+                                    <p className="text-xs text-fg-subtle mt-1">Lower = appears first</p>
                                 </div>
                             </div>
 
                             {/* Search engine listing (storefront /c/<slug>) */}
-                            <div className="border-t border-slate-800 pt-5">
+                            <div className="border-t border-line pt-5">
                                 <button
                                     type="button"
                                     onClick={() => setSeoOpen(o => !o)}
@@ -854,31 +854,31 @@ const CategoriesPage = () => {
                                     aria-controls="category-seo-section"
                                     className="flex w-full items-center gap-2 text-left"
                                 >
-                                    {seoOpen ? <ChevronDown size={14} className="text-slate-400" /> : <ChevronRight size={14} className="text-slate-400" />}
-                                    <span className="text-sm font-semibold text-slate-200">Search engine listing</span>
+                                    {seoOpen ? <ChevronDown size={14} className="text-fg-muted" /> : <ChevronRight size={14} className="text-fg-muted" />}
+                                    <span className="text-sm font-semibold text-fg">Search engine listing</span>
                                     {!seoOpen && (
-                                        <span className="ml-auto truncate text-xs text-slate-500">/c/{previewSlug}</span>
+                                        <span className="ml-auto truncate text-xs text-fg-subtle">/c/{previewSlug}</span>
                                     )}
                                 </button>
                                 {seoOpen && (
                                     <div id="category-seo-section" className="mt-4 space-y-4">
                                         {/* Google-style preview */}
-                                        <div data-testid="seo-snippet-preview" className="rounded-lg border border-slate-700 bg-slate-800/40 px-4 py-3">
-                                            <p className="text-xs text-slate-400 truncate">
+                                        <div data-testid="seo-snippet-preview" className="rounded-lg border border-line-strong bg-surface-raised/40 px-4 py-3">
+                                            <p className="text-xs text-fg-muted truncate">
                                                 <span data-testid="seo-snippet-url">/c/{previewSlug}</span>
                                             </p>
-                                            <p data-testid="seo-snippet-title" className="text-base text-blue-400 truncate">
+                                            <p data-testid="seo-snippet-title" className="text-base text-primary truncate">
                                                 {editMetaTitle.trim() || editName.trim() || 'Category'}
                                             </p>
-                                            <p data-testid="seo-snippet-description" className="text-xs text-slate-400 line-clamp-2">
+                                            <p data-testid="seo-snippet-description" className="text-xs text-fg-muted line-clamp-2">
                                                 {editMetaDesc.trim() || editDesc.trim() || 'Add a meta description to control the text shown under the title in search results.'}
                                             </p>
                                         </div>
 
                                         <div>
-                                            <label htmlFor="category-slug" className="text-xs font-medium text-slate-400 mb-1 block">URL slug</label>
-                                            <div className="flex items-center rounded-lg border border-slate-700 bg-slate-800 focus-within:border-blue-500">
-                                                <span className="pl-3 text-sm text-slate-500">/c/</span>
+                                            <label htmlFor="category-slug" className="text-xs font-medium text-fg-muted mb-1 block">URL slug</label>
+                                            <div className="flex items-center rounded-lg border border-line-strong bg-surface-raised focus-within:border-primary">
+                                                <span className="pl-3 text-sm text-fg-subtle">/c/</span>
                                                 <input
                                                     id="category-slug"
                                                     type="text"
@@ -886,20 +886,20 @@ const CategoriesPage = () => {
                                                     maxLength={CATEGORY_SEO_LIMITS.slug}
                                                     onChange={e => setEditSlug(e.target.value)}
                                                     aria-invalid={!!slugError}
-                                                    className="w-full bg-transparent px-1 py-2 text-sm text-slate-50 focus:outline-none placeholder:text-slate-600"
+                                                    className="w-full bg-transparent px-1 py-2 text-sm text-fg focus:outline-none placeholder:text-fg-subtle"
                                                     placeholder={slugFromName(editName)}
                                                 />
                                             </div>
                                             {slugError ? (
                                                 <p data-testid="slug-error" className="text-[11px] text-rose-400 mt-1">{slugError}</p>
                                             ) : (
-                                                <p className="text-[11px] text-slate-600 mt-1">Leave blank to generate it from the name. Changing it changes the page address.</p>
+                                                <p className="text-[11px] text-fg-subtle mt-1">Leave blank to generate it from the name. Changing it changes the page address.</p>
                                             )}
                                         </div>
 
                                         <div>
                                             <div className="flex items-center justify-between mb-1">
-                                                <label htmlFor="category-meta-title" className="text-xs font-medium text-slate-400">Meta title</label>
+                                                <label htmlFor="category-meta-title" className="text-xs font-medium text-fg-muted">Meta title</label>
                                                 <CharCount value={editMetaTitle} max={CATEGORY_SEO_LIMITS.metaTitle} testId="meta-title-count" />
                                             </div>
                                             <input
@@ -908,14 +908,14 @@ const CategoriesPage = () => {
                                                 value={editMetaTitle}
                                                 maxLength={CATEGORY_SEO_LIMITS.metaTitle}
                                                 onChange={e => setEditMetaTitle(e.target.value)}
-                                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-50 focus:outline-none focus:border-blue-500 placeholder:text-slate-600"
+                                                className="w-full bg-surface-raised border border-line-strong rounded-lg px-3 py-2 text-sm text-fg focus:outline-none focus:border-primary placeholder:text-fg-subtle"
                                                 placeholder={editName || 'Category name'}
                                             />
                                         </div>
 
                                         <div>
                                             <div className="flex items-center justify-between mb-1">
-                                                <label htmlFor="category-meta-description" className="text-xs font-medium text-slate-400">Meta description</label>
+                                                <label htmlFor="category-meta-description" className="text-xs font-medium text-fg-muted">Meta description</label>
                                                 <CharCount value={editMetaDesc} max={CATEGORY_SEO_LIMITS.metaDescription} testId="meta-description-count" />
                                             </div>
                                             <textarea
@@ -924,7 +924,7 @@ const CategoriesPage = () => {
                                                 maxLength={CATEGORY_SEO_LIMITS.metaDescription}
                                                 onChange={e => setEditMetaDesc(e.target.value)}
                                                 rows={3}
-                                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-50 focus:outline-none focus:border-blue-500 placeholder:text-slate-600 resize-none"
+                                                className="w-full bg-surface-raised border border-line-strong rounded-lg px-3 py-2 text-sm text-fg focus:outline-none focus:border-primary placeholder:text-fg-subtle resize-none"
                                                 placeholder="A one- or two-sentence summary shown under the title in search results"
                                             />
                                         </div>
@@ -934,7 +934,7 @@ const CategoriesPage = () => {
 
                             {/* Sales channel visibility */}
                             {channelVisibilityState === 'enabled' && (
-                                <div className="border-t border-slate-800 pt-5">
+                                <div className="border-t border-line pt-5">
                                     <CategoryChannelsPanel
                                         key={selectedCategory.id}
                                         categoryId={selectedCategory.id}
@@ -954,8 +954,8 @@ const CategoriesPage = () => {
 
                             {/* Parent info */}
                             {selectedCategory.parent_id && (
-                                <div className="bg-slate-800/50 rounded-lg px-4 py-3 text-sm text-slate-400">
-                                    <span className="text-slate-500 text-xs">Parent: </span>
+                                <div className="bg-surface-raised/50 rounded-lg px-4 py-3 text-sm text-fg-muted">
+                                    <span className="text-fg-subtle text-xs">Parent: </span>
                                     {categories.find(c => c.id === selectedCategory.parent_id)?.name || selectedCategory.parent_id}
                                 </div>
                             )}

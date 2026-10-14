@@ -7,8 +7,8 @@ interface DynamicAttributeFieldProps {
     onChange: (fieldName: string, value: any) => void;
 }
 
-const inputClass = 'w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all placeholder:text-slate-600';
-const labelClass = 'block text-sm font-medium text-slate-400 mb-1.5';
+const inputClass = 'w-full bg-surface-raised border border-line-strong rounded-lg px-4 py-2.5 text-fg focus:outline-none focus:ring-2 focus:ring-focus/50 focus:border-primary transition-all placeholder:text-fg-subtle';
+const labelClass = 'block text-sm font-medium text-fg-muted mb-1.5';
 
 const DynamicAttributeField: React.FC<DynamicAttributeFieldProps> = ({ attribute, value, onChange }) => {
     const handleChange = (val: any) => {
@@ -39,7 +39,7 @@ const DynamicAttributeField: React.FC<DynamicAttributeFieldProps> = ({ attribute
                             placeholder={attribute.placeholder || ''}
                         />
                         {attribute.unit && (
-                            <span className="text-sm text-slate-500 whitespace-nowrap">{attribute.unit}</span>
+                            <span className="text-sm text-fg-subtle whitespace-nowrap">{attribute.unit}</span>
                         )}
                     </div>
                 );
@@ -65,9 +65,9 @@ const DynamicAttributeField: React.FC<DynamicAttributeFieldProps> = ({ attribute
                             type="checkbox"
                             checked={!!value}
                             onChange={e => handleChange(e.target.checked)}
-                            className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-blue-600 focus:ring-blue-500/50"
+                            className="w-4 h-4 rounded border-line-strong bg-surface-raised text-primary focus:ring-focus/50"
                         />
-                        <span className="text-sm text-slate-300 group-hover:text-slate-50 transition-colors">
+                        <span className="text-sm text-fg-muted group-hover:text-fg transition-colors">
                             {attribute.label}
                         </span>
                     </label>
@@ -113,7 +113,7 @@ const DynamicAttributeField: React.FC<DynamicAttributeFieldProps> = ({ attribute
                     {attribute.label}
                     {attribute.is_required && <span className="text-rose-400 ml-1">*</span>}
                     {attribute.unit && attribute.field_type !== 'number' && (
-                        <span className="text-slate-600 ml-1">({attribute.unit})</span>
+                        <span className="text-fg-subtle ml-1">({attribute.unit})</span>
                     )}
                 </label>
             )}

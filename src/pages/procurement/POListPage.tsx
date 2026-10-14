@@ -311,7 +311,7 @@ const POListPage = () => {
                     role={fetchError.kind === 'error' ? 'alert' : 'status'}
                     className={`p-4 rounded-xl flex items-center gap-3 text-sm ${
                         fetchError.kind === 'permission'
-                            ? 'bg-amber-500/10 border border-amber-500/20 text-amber-300'
+                            ? 'bg-warning/10 border border-warning/20 text-warning'
                             : 'bg-rose-500/10 border border-rose-500/20 text-rose-400'
                     }`}
                 >
@@ -334,7 +334,7 @@ const POListPage = () => {
                     role={vendorNotice.kind === 'error' ? 'alert' : 'status'}
                     className={`p-4 rounded-xl flex items-center gap-3 text-sm ${
                         vendorNotice.kind === 'permission'
-                            ? 'bg-amber-500/10 border border-amber-500/20 text-amber-300'
+                            ? 'bg-warning/10 border border-warning/20 text-warning'
                             : 'bg-rose-500/10 border border-rose-500/20 text-rose-400'
                     }`}
                 >
@@ -355,27 +355,27 @@ const POListPage = () => {
                     <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">
                         Purchase Orders
                     </h1>
-                    <p className="text-slate-400 mt-2 font-medium">Official commercial documents issued to sellers.</p>
+                    <p className="text-fg-muted mt-2 font-medium">Official commercial documents issued to sellers.</p>
                 </div>
                 <div className="flex gap-4">
                     {approvedPrs.length > 0 && (
                         <div className="relative group">
-                            <button className="px-6 py-3 bg-indigo-600/20 border border-indigo-500/50 text-indigo-400 rounded-xl font-bold hover:bg-indigo-600/30 transition-all flex items-center gap-2">
-                                <span className="w-5 h-5 bg-indigo-500 text-white rounded-full flex items-center justify-center text-[10px]">{approvedPrs.length}</span>
+                            <button className="px-6 py-3 bg-primary/20 border border-primary/50 text-primary rounded-xl font-bold hover:bg-primary/30 transition-all flex items-center gap-2">
+                                <span className="w-5 h-5 bg-primary text-primary-fg rounded-full flex items-center justify-center text-[10px]">{approvedPrs.length}</span>
                                 Convert Approved PRs
                             </button>
-                            <div className="absolute right-0 top-full mt-2 w-72 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-4 hidden group-hover:block z-50">
-                                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 border-b border-slate-800 pb-2">Approved Requisitions</div>
+                            <div className="absolute right-0 top-full mt-2 w-72 bg-surface border border-line rounded-2xl shadow-2xl p-4 hidden group-hover:block z-50">
+                                <div className="text-[10px] font-bold text-fg-subtle uppercase tracking-widest mb-3 border-b border-line pb-2">Approved Requisitions</div>
                                 <div className="space-y-3 max-h-60 overflow-y-auto">
                                     {approvedPrs.map(pr => (
-                                        <div key={pr.id} className="flex justify-between items-center bg-slate-950 p-2 rounded-lg border border-slate-800 hover:border-slate-700 transition-colors">
+                                        <div key={pr.id} className="flex justify-between items-center bg-bg p-2 rounded-lg border border-line hover:border-line-strong transition-colors">
                                             <div className="text-xs">
-                                                <div className="text-slate-300 font-bold">#PR-{pr.id.slice(0, 8).toUpperCase()}</div>
-                                                <div className="text-slate-500">{pr.pr_lines?.length} items</div>
+                                                <div className="text-fg-muted font-bold">#PR-{pr.id.slice(0, 8).toUpperCase()}</div>
+                                                <div className="text-fg-subtle">{pr.pr_lines?.length} items</div>
                                             </div>
                                             <button
                                                 onClick={() => handleCreateFromPR(pr)}
-                                                className="text-[10px] font-bold bg-indigo-500 px-2 py-1 rounded text-white"
+                                                className="text-[10px] font-bold bg-primary px-2 py-1 rounded text-primary-fg"
                                             >
                                                 Convert
                                             </button>
@@ -387,7 +387,7 @@ const POListPage = () => {
                     )}
                     <button
                         onClick={() => navigate('/procurement/opening-balance')}
-                        className="px-6 py-3 bg-amber-600/20 border border-amber-500/50 text-amber-400 rounded-xl font-semibold transition-all hover:bg-amber-600/30 active:scale-95 flex items-center gap-2"
+                        className="px-6 py-3 bg-warning/20 border border-warning/50 text-warning rounded-xl font-semibold transition-all hover:bg-warning/30 active:scale-95 flex items-center gap-2"
                     >
                         <span className="text-base leading-none">⚖</span> Opening Balance
                     </button>
@@ -404,7 +404,7 @@ const POListPage = () => {
                             onClick={openNewPOForm}
                             disabled={!!vendorNotice}
                             title={vendorNotice ? vendorNotice.message : undefined}
-                            className="px-6 py-3 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-blue-600 text-white rounded-xl font-semibold transition-all shadow-lg shadow-blue-900/20 active:scale-95 flex items-center gap-2"
+                            className="px-6 py-3 bg-primary hover:bg-primary-hover disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-primary text-primary-fg rounded-xl font-semibold transition-all shadow-lg shadow-blue-900/20 active:scale-95 flex items-center gap-2"
                         >
                             <span className="text-xl leading-none">+</span> New PO
                         </button>
@@ -423,23 +423,23 @@ const POListPage = () => {
                 />
             )}
 
-            <div className="bg-slate-900/50 border border-slate-800 rounded-3xl overflow-hidden backdrop-blur-sm">
+            <div className="bg-surface/50 border border-line rounded-3xl overflow-hidden backdrop-blur-sm">
                 <table className="w-full text-left">
-                    <thead className="bg-slate-800/30 border-b border-slate-800">
+                    <thead className="bg-surface-raised/30 border-b border-line">
                         <tr>
-                            <th className="px-6 py-4 text-[10px] font-bold uppercase text-slate-500 tracking-widest">Order Info</th>
-                            <th className="px-6 py-4 text-[10px] font-bold uppercase text-slate-500 tracking-widest">Vendor</th>
-                            <th className="px-6 py-4 text-[10px] font-bold uppercase text-slate-500 tracking-widest">Status</th>
-                            <th className="px-6 py-4 text-[10px] font-bold uppercase text-slate-500 tracking-widest">Amount</th>
-                            <th className="px-6 py-4 text-[10px] font-bold uppercase text-slate-500 tracking-widest">Progress</th>
-                            <th className="px-6 py-4 text-[10px] font-bold uppercase text-slate-500 tracking-widest">Date</th>
+                            <th className="px-6 py-4 text-[10px] font-bold uppercase text-fg-subtle tracking-widest">Order Info</th>
+                            <th className="px-6 py-4 text-[10px] font-bold uppercase text-fg-subtle tracking-widest">Vendor</th>
+                            <th className="px-6 py-4 text-[10px] font-bold uppercase text-fg-subtle tracking-widest">Status</th>
+                            <th className="px-6 py-4 text-[10px] font-bold uppercase text-fg-subtle tracking-widest">Amount</th>
+                            <th className="px-6 py-4 text-[10px] font-bold uppercase text-fg-subtle tracking-widest">Progress</th>
+                            <th className="px-6 py-4 text-[10px] font-bold uppercase text-fg-subtle tracking-widest">Date</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-800/50">
+                    <tbody className="divide-y divide-line/50">
                         {loading ? (
-                            <tr><td colSpan={6} className="px-6 py-12 text-center text-slate-500 animate-pulse">Loading orders...</td></tr>
+                            <tr><td colSpan={6} className="px-6 py-12 text-center text-fg-subtle animate-pulse">Loading orders...</td></tr>
                         ) : pos.length === 0 ? (
-                            <tr><td colSpan={6} className="px-6 py-12 text-center text-slate-500 italic">No purchase orders found.</td></tr>
+                            <tr><td colSpan={6} className="px-6 py-12 text-center text-fg-subtle italic">No purchase orders found.</td></tr>
                         ) : pos.map(po => {
                             const totalLines = po.po_lines?.length || 0;
                             const receivedLines = po.po_lines?.filter((l: any) => l.received_quantity >= l.quantity).length || 0;
@@ -448,43 +448,43 @@ const POListPage = () => {
                             return (
                                 <tr
                                     key={po.id}
-                                    className="hover:bg-slate-800/20 transition-all cursor-pointer group"
+                                    className="hover:bg-surface-raised/20 transition-all cursor-pointer group"
                                     onClick={() => navigate(`/procurement/po/${po.id}`)}
                                 >
                                     <td className="px-6 py-5">
-                                        <div className="font-bold text-slate-100 uppercase tracking-tight">#{po.po_number}</div>
+                                        <div className="font-bold text-fg uppercase tracking-tight">#{po.po_number}</div>
                                         {po.pr_id && (
-                                            <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">Reference: PR-{po.pr_id?.slice(0, 6).toUpperCase()}</div>
+                                            <div className="text-[10px] text-fg-subtle font-bold uppercase tracking-widest mt-0.5">Reference: PR-{po.pr_id?.slice(0, 6).toUpperCase()}</div>
                                         )}
                                     </td>
                                     <td className="px-6 py-5">
-                                        <div className="text-sm font-semibold text-slate-300 group-hover:text-blue-400 transition-colors uppercase">{po.vendor?.name}</div>
+                                        <div className="text-sm font-semibold text-fg-muted group-hover:text-primary transition-colors uppercase">{po.vendor?.name}</div>
                                     </td>
                                     <td className="px-6 py-5">
                                         <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-widest border
-                                            ${po.status === 'sent' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
+                                            ${po.status === 'sent' ? 'bg-primary/10 text-primary border-primary/20' :
                                                 po.status === 'acknowledged' ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' :
-                                                po.status === 'partially_received' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
-                                                po.status === 'received' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
-                                                    po.status === 'closed' ? 'bg-slate-500/10 text-slate-300 border-slate-500/20' :
+                                                po.status === 'partially_received' ? 'bg-warning/10 text-warning border-warning/20' :
+                                                po.status === 'received' ? 'bg-success/10 text-success border-success/20' :
+                                                    po.status === 'closed' ? 'bg-fg-subtle/10 text-fg-muted border-line-strong/20' :
                                                         po.status === 'cancelled' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' :
-                                                    'bg-slate-700/50 text-slate-400 border-slate-600'}
+                                                    'bg-line-strong/50 text-fg-muted border-line-strong'}
                                         `}>
                                             {po.status}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-5 font-mono text-sm font-bold text-slate-100">
+                                    <td className="px-6 py-5 font-mono text-sm font-bold text-fg">
                                         {formatters.formatCurrency(parseFloat(po.total_amount || 0))}
                                     </td>
                                     <td className="px-6 py-5 w-48">
                                         <div className="flex items-center gap-3">
-                                            <div className="flex-1 h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                                                <div className={`h-full transition-all duration-1000 ${progress === 100 ? 'bg-emerald-500' : 'bg-blue-500'}`} style={{ width: `${progress}%` }}></div>
+                                            <div className="flex-1 h-1.5 bg-surface-raised rounded-full overflow-hidden">
+                                                <div className={`h-full transition-all duration-1000 ${progress === 100 ? 'bg-success' : 'bg-primary'}`} style={{ width: `${progress}%` }}></div>
                                             </div>
-                                            <span className="text-[10px] font-bold text-slate-500">{Math.round(progress)}%</span>
+                                            <span className="text-[10px] font-bold text-fg-subtle">{Math.round(progress)}%</span>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-5 text-[10px] text-slate-500 font-bold">
+                                    <td className="px-6 py-5 text-[10px] text-fg-subtle font-bold">
                                         {formatters.formatDate(po.created_at).toUpperCase()}
                                     </td>
                                 </tr>
@@ -496,24 +496,24 @@ const POListPage = () => {
 
             {/* New PO Modal Form */}
             {showForm && (
-                <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center px-4 pt-24 pb-6 z-[600] animate-in fade-in zoom-in duration-300">
-                    <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-3xl max-h-[calc(100vh-7.5rem)] flex flex-col overflow-hidden shadow-2xl shadow-black/50">
-                        <div className="p-8 border-b border-slate-800 flex justify-between items-center">
-                            <h2 className="text-2xl font-bold text-slate-100">Create Purchase Order</h2>
-                            <button onClick={() => setShowForm(false)} className="text-slate-500 hover:text-slate-50 transition-colors text-2xl">×</button>
+                <div className="fixed inset-0 bg-bg/80 backdrop-blur-md flex items-center justify-center px-4 pt-24 pb-6 z-[600] animate-in fade-in zoom-in duration-300">
+                    <div className="bg-surface border border-line rounded-3xl w-full max-w-3xl max-h-[calc(100vh-7.5rem)] flex flex-col overflow-hidden shadow-2xl shadow-black/50">
+                        <div className="p-8 border-b border-line flex justify-between items-center">
+                            <h2 className="text-2xl font-bold text-fg">Create Purchase Order</h2>
+                            <button onClick={() => setShowForm(false)} className="text-fg-subtle hover:text-fg transition-colors text-2xl">×</button>
                         </div>
                         <form onSubmit={handleSubmit} className="p-8 space-y-6 overflow-y-auto custom-scrollbar flex-1">
                             {/* Conversion context banner */}
                             {formData.pr_id && (
-                                <div className="flex items-center gap-3 p-4 bg-indigo-500/10 border border-indigo-500/20 rounded-xl">
-                                    <div className="w-8 h-8 rounded-lg bg-indigo-500/20 flex items-center justify-center flex-shrink-0">
-                                        <span className="text-indigo-400 text-sm">PR</span>
+                                <div className="flex items-center gap-3 p-4 bg-primary/10 border border-primary/20 rounded-xl">
+                                    <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
+                                        <span className="text-primary text-sm">PR</span>
                                     </div>
                                     <div>
-                                        <span className="text-sm font-bold text-indigo-300">
+                                        <span className="text-sm font-bold text-primary">
                                             Converting from PR #{formData.pr_id.slice(0, 8).toUpperCase()}
                                         </span>
-                                        <span className="block text-xs text-indigo-400/70">
+                                        <span className="block text-xs text-primary/70">
                                             Items pre-filled from requisition. Select a vendor and adjust quantities as needed.
                                         </span>
                                     </div>
@@ -523,11 +523,11 @@ const POListPage = () => {
                             {/* Row 1: Vendor + PO Number */}
                             <div className="grid grid-cols-2 gap-6">
                                 <div className="space-y-2">
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Vendor <span className="text-red-400">*</span></label>
+                                    <label className="text-xs font-bold text-fg-subtle uppercase tracking-wider">Vendor <span className="text-danger">*</span></label>
                                     <select
                                         required
                                         value={formData.vendor_id}
-                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-slate-200"
+                                        className="w-full bg-bg border border-line rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-focus/50 transition-all text-fg"
                                         onChange={(e) => setFormData({ ...formData, vendor_id: e.target.value })}
                                     >
                                         <option value="">Select Vendor</option>
@@ -535,12 +535,12 @@ const POListPage = () => {
                                     </select>
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">PO Number <span className="text-red-400">*</span></label>
+                                    <label className="text-xs font-bold text-fg-subtle uppercase tracking-wider">PO Number <span className="text-danger">*</span></label>
                                     <input
                                         type="text"
                                         required
                                         value={formData.po_number}
-                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-slate-200"
+                                        className="w-full bg-bg border border-line rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-focus/50 transition-all text-fg"
                                         onChange={(e) => setFormData({ ...formData, po_number: e.target.value })}
                                     />
                                 </div>
@@ -548,10 +548,10 @@ const POListPage = () => {
 
                             {/* Row 2: Link PR (full width) */}
                             <div className="space-y-2">
-                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Link to Requisition</label>
+                                <label className="text-xs font-bold text-fg-subtle uppercase tracking-wider">Link to Requisition</label>
                                 <select
                                     value={formData.pr_id}
-                                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-slate-200"
+                                    className="w-full bg-bg border border-line rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-focus/50 transition-all text-fg"
                                     onChange={(e) => setFormData({ ...formData, pr_id: e.target.value })}
                                 >
                                     <option value="">None (standalone PO)</option>
@@ -578,23 +578,23 @@ const POListPage = () => {
                                     )}
                                 </select>
                                 {approvedPrs.length === 0 && allPrs.filter(pr => ['pending_approval', 'draft'].includes(pr.status)).length > 0 && (
-                                    <p className="text-[10px] text-amber-400 mt-1 flex items-center gap-1">
+                                    <p className="text-[10px] text-warning mt-1 flex items-center gap-1">
                                         <span>⚠️</span>
                                         <span>You have {allPrs.filter(pr => ['pending_approval', 'draft'].includes(pr.status)).length} pending PR(s). PRs must be approved before conversion to PO.</span>
                                     </p>
                                 )}
-                                <div className="text-xs text-slate-500 mt-1">
-                                    Currency: <span className="text-slate-300 font-semibold">{settings?.base_currency || 'USD'}</span>
-                                    <span className="text-slate-600"> · From org settings</span>
+                                <div className="text-xs text-fg-subtle mt-1">
+                                    Currency: <span className="text-fg-muted font-semibold">{settings?.base_currency || 'USD'}</span>
+                                    <span className="text-fg-subtle"> · From org settings</span>
                                 </div>
                             </div>
 
                             {/* Row 3: Terms */}
                             <div className="space-y-2">
-                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Terms & Conditions</label>
+                                <label className="text-xs font-bold text-fg-subtle uppercase tracking-wider">Terms & Conditions</label>
                                 <textarea
                                     value={formData.terms}
-                                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 h-20 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-slate-200 resize-none"
+                                    className="w-full bg-bg border border-line rounded-xl px-4 py-3 h-20 focus:outline-none focus:ring-2 focus:ring-focus/50 transition-all text-fg resize-none"
                                     placeholder="Payment terms, delivery conditions, etc."
                                     onChange={(e) => setFormData({ ...formData, terms: e.target.value })}
                                 />
@@ -602,11 +602,11 @@ const POListPage = () => {
 
                             {/* Row 4: Shipping Address */}
                             <div className="space-y-2">
-                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Shipping Address</label>
+                                <label className="text-xs font-bold text-fg-subtle uppercase tracking-wider">Shipping Address</label>
                                 <input
                                     type="text"
                                     value={formData.shipping_address}
-                                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-slate-200"
+                                    className="w-full bg-bg border border-line rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-focus/50 transition-all text-fg"
                                     placeholder="Delivery address for goods"
                                     onChange={(e) => setFormData({ ...formData, shipping_address: e.target.value })}
                                 />
@@ -615,11 +615,11 @@ const POListPage = () => {
                             {/* Line Items */}
                             <div className="space-y-4">
                                 <div className="flex justify-between items-center">
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Order Items <span className="text-red-400">*</span></label>
-                                    <button type="button" onClick={addItemLine} className="text-blue-400 hover:text-blue-300 text-xs font-bold">+ Add Item</button>
+                                    <label className="text-xs font-bold text-fg-subtle uppercase tracking-wider">Order Items <span className="text-danger">*</span></label>
+                                    <button type="button" onClick={addItemLine} className="text-primary hover:text-primary text-xs font-bold">+ Add Item</button>
                                 </div>
                                 {items.length === 0 && (
-                                    <div className="text-center py-6 text-slate-600 text-sm border border-dashed border-slate-800 rounded-xl">
+                                    <div className="text-center py-6 text-fg-subtle text-sm border border-dashed border-line rounded-xl">
                                         No items added yet. Click "+ Add Item" to begin.
                                     </div>
                                 )}
@@ -641,7 +641,7 @@ const POListPage = () => {
                                                     min="1"
                                                     placeholder="Qty"
                                                     value={item.quantity}
-                                                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                                                    className="w-full bg-bg border border-line rounded-lg px-3 py-2 text-sm text-fg focus:outline-none focus:ring-2 focus:ring-focus/30"
                                                     onChange={(e) => updateItem(idx, 'quantity', e.target.value)}
                                                 />
                                             </div>
@@ -652,7 +652,7 @@ const POListPage = () => {
                                                     step="0.01"
                                                     placeholder="Unit Price"
                                                     value={item.unit_price}
-                                                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                                                    className="w-full bg-bg border border-line rounded-lg px-3 py-2 text-sm text-fg focus:outline-none focus:ring-2 focus:ring-focus/30"
                                                     onChange={(e) => updateItem(idx, 'unit_price', e.target.value)}
                                                 />
                                             </div>
@@ -660,8 +660,8 @@ const POListPage = () => {
                                                 {/* Tax rate badge — resolved server-side */}
                                                 <div className={`px-3 py-2 rounded-lg text-xs font-bold text-center border ${
                                                     hasTaxCode
-                                                        ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                                                        : 'bg-slate-800/50 text-slate-600 border-slate-700'
+                                                        ? 'bg-warning/10 text-warning border-warning/20'
+                                                        : 'bg-surface-raised/50 text-fg-subtle border-line-strong'
                                                 }`}>
                                                     {hasTaxCode ? 'Tax ✓' : 'No Tax'}
                                                 </div>
@@ -671,14 +671,14 @@ const POListPage = () => {
                                                     type="text"
                                                     placeholder="Description"
                                                     value={item.description}
-                                                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                                                    className="w-full bg-bg border border-line rounded-lg px-3 py-2 text-sm text-fg focus:outline-none focus:ring-2 focus:ring-focus/30"
                                                     onChange={(e) => updateItem(idx, 'description', e.target.value)}
                                                 />
                                             </div>
                                             <button
                                                 type="button"
                                                 onClick={() => removeItemLine(idx)}
-                                                className="text-red-400 hover:text-red-300 text-lg font-bold px-2 py-1 transition-colors"
+                                                className="text-danger hover:text-red-300 text-lg font-bold px-2 py-1 transition-colors"
                                                 title="Remove item"
                                             >
                                                 ×
@@ -687,26 +687,26 @@ const POListPage = () => {
                                     );
                                 })}
                                 {items.length > 0 && (
-                                    <div className="flex justify-end pt-2 border-t border-slate-800">
+                                    <div className="flex justify-end pt-2 border-t border-line">
                                         <div className="text-right space-y-1 min-w-48">
                                             <div className="flex justify-between items-center gap-6">
-                                                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Subtotal</span>
-                                                <span className="text-sm font-semibold text-slate-300 font-mono">{formatters.formatCurrency(subtotal)}</span>
+                                                <span className="text-xs font-bold text-fg-subtle uppercase tracking-wider">Subtotal</span>
+                                                <span className="text-sm font-semibold text-fg-muted font-mono">{formatters.formatCurrency(subtotal)}</span>
                                             </div>
                                             {isTaxInclusive ? (
                                                 <div className="flex justify-between items-center gap-6">
-                                                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Tax</span>
-                                                    <span className="text-xs text-slate-500 italic">Inclusive in price</span>
+                                                    <span className="text-xs font-bold text-fg-subtle uppercase tracking-wider">Tax</span>
+                                                    <span className="text-xs text-fg-subtle italic">Inclusive in price</span>
                                                 </div>
                                             ) : (
                                                 <div className="flex justify-between items-center gap-6">
-                                                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Tax</span>
-                                                    <span className="text-xs text-amber-400 italic">Resolved on save</span>
+                                                    <span className="text-xs font-bold text-fg-subtle uppercase tracking-wider">Tax</span>
+                                                    <span className="text-xs text-warning italic">Resolved on save</span>
                                                 </div>
                                             )}
-                                            <div className="flex justify-between items-center gap-6 border-t border-slate-700 pt-1">
-                                                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total</span>
-                                                <span className="text-lg font-bold text-slate-100 font-mono">{formatters.formatCurrency(total)}</span>
+                                            <div className="flex justify-between items-center gap-6 border-t border-line-strong pt-1">
+                                                <span className="text-xs font-bold text-fg-subtle uppercase tracking-wider">Total</span>
+                                                <span className="text-lg font-bold text-fg font-mono">{formatters.formatCurrency(total)}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -718,11 +718,11 @@ const POListPage = () => {
                                 <button
                                     type="submit"
                                     disabled={submitting}
-                                    className="flex-1 px-6 py-4 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-2xl font-bold transition-all shadow-lg shadow-blue-900/20 active:scale-95"
+                                    className="flex-1 px-6 py-4 bg-primary hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed text-primary-fg rounded-2xl font-bold transition-all shadow-lg shadow-blue-900/20 active:scale-95"
                                 >
                                     {submitting ? 'Creating...' : 'Create Purchase Order'}
                                 </button>
-                                <button type="button" onClick={() => setShowForm(false)} className="px-6 py-4 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-2xl font-bold transition-all active:scale-95">
+                                <button type="button" onClick={() => setShowForm(false)} className="px-6 py-4 bg-surface-raised hover:bg-line-strong text-fg-muted rounded-2xl font-bold transition-all active:scale-95">
                                     Cancel
                                 </button>
                             </div>

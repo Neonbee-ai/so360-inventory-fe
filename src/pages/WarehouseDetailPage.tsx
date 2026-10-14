@@ -201,16 +201,16 @@ const WarehouseDetailPage = () => {
     if (error && !warehouse) return (
         <div className="p-8 text-center">
             <AlertCircle size={48} className="mx-auto text-rose-500 mb-4" />
-            <h2 className="text-2xl font-bold text-slate-50 mb-2">{error || 'Warehouse not found'}</h2>
-            <button onClick={() => navigate('/inventory/locations')} className="text-blue-400 hover:underline">Back to Warehouses</button>
+            <h2 className="text-2xl font-bold text-fg mb-2">{error || 'Warehouse not found'}</h2>
+            <button onClick={() => navigate('/inventory/locations')} className="text-primary hover:underline">Back to Warehouses</button>
         </div>
     );
 
     if (!warehouse) return (
         <div className="p-8 text-center">
             <AlertCircle size={48} className="mx-auto text-rose-500 mb-4" />
-            <h2 className="text-2xl font-bold text-slate-50 mb-2">Warehouse not found</h2>
-            <button onClick={() => navigate('/inventory/locations')} className="text-blue-400 hover:underline">Back to Warehouses</button>
+            <h2 className="text-2xl font-bold text-fg mb-2">Warehouse not found</h2>
+            <button onClick={() => navigate('/inventory/locations')} className="text-primary hover:underline">Back to Warehouses</button>
         </div>
     );
 
@@ -232,7 +232,7 @@ const WarehouseDetailPage = () => {
 
             <button
                 onClick={() => navigate('/inventory/locations')}
-                className="flex items-center gap-2 text-slate-400 hover:text-slate-50 mb-6 transition-colors group"
+                className="flex items-center gap-2 text-fg-muted hover:text-fg mb-6 transition-colors group"
             >
                 <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
                 Back to Warehouses
@@ -241,9 +241,9 @@ const WarehouseDetailPage = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Warehouse Info Card */}
                 <div className="lg:col-span-1">
-                    <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6 relative overflow-hidden">
+                    <div className="bg-surface/50 border border-line rounded-2xl p-6 relative overflow-hidden">
                         <div className="absolute top-0 right-0 p-4 flex items-center gap-2">
-                            <span className={`px-2 py-1 rounded text-[10px] uppercase font-bold border ${warehouse.is_active ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-slate-500/10 text-slate-400'}`}>
+                            <span className={`px-2 py-1 rounded text-[10px] uppercase font-bold border ${warehouse.is_active ? 'bg-success/10 text-success border-success/20' : 'bg-fg-subtle/10 text-fg-muted'}`}>
                                 {warehouse.is_active ? 'Operational' : 'Inactive'}
                             </span>
                             {can('warehouses.create') && (
@@ -251,14 +251,14 @@ const WarehouseDetailPage = () => {
                                 <>
                                     <button
                                         onClick={handleEditClick}
-                                        className="p-1.5 hover:bg-slate-800 rounded-lg transition-colors text-slate-400 hover:text-blue-400"
+                                        className="p-1.5 hover:bg-surface-raised rounded-lg transition-colors text-fg-muted hover:text-primary"
                                         title="Edit Warehouse"
                                     >
                                         <Edit2 size={16} />
                                     </button>
                                     <button
                                         onClick={() => setShowDeleteConfirm(true)}
-                                        className="p-1.5 hover:bg-slate-800 rounded-lg transition-colors text-slate-400 hover:text-rose-400"
+                                        className="p-1.5 hover:bg-surface-raised rounded-lg transition-colors text-fg-muted hover:text-rose-400"
                                         title="Delete Warehouse"
                                     >
                                         <Trash2 size={16} />
@@ -269,30 +269,30 @@ const WarehouseDetailPage = () => {
                         </div>
 
                         <div className="flex items-start gap-4 mb-8 mt-6">
-                            <div className="w-16 h-16 rounded-2xl bg-slate-800 flex items-center justify-center border border-slate-700 shadow-xl">
-                                <Home size={32} className="text-blue-400" />
+                            <div className="w-16 h-16 rounded-2xl bg-surface-raised flex items-center justify-center border border-line-strong shadow-xl">
+                                <Home size={32} className="text-primary" />
                             </div>
                             <div className="pt-1">
-                                <h1 className="text-2xl font-bold text-slate-50 mb-1 leading-tight">{warehouse.name}</h1>
-                                <span className="text-xs font-mono text-slate-500 tracking-widest">{warehouse.code || 'NO-CODE'}</span>
+                                <h1 className="text-2xl font-bold text-fg mb-1 leading-tight">{warehouse.name}</h1>
+                                <span className="text-xs font-mono text-fg-subtle tracking-widest">{warehouse.code || 'NO-CODE'}</span>
                             </div>
                         </div>
 
                         <div className="space-y-3">
-                            <div className="flex items-center gap-2 p-3 bg-slate-800/30 rounded-xl border border-slate-700/30">
-                                <MapPin size={16} className="text-slate-400" />
-                                <span className="text-sm text-slate-50">{warehouse.address || 'No address set'}</span>
+                            <div className="flex items-center gap-2 p-3 bg-surface-raised/30 rounded-xl border border-line-strong/30">
+                                <MapPin size={16} className="text-fg-muted" />
+                                <span className="text-sm text-fg">{warehouse.address || 'No address set'}</span>
                             </div>
                         </div>
                     </div>
 
                     {/* Locations Summary Card */}
-                    <div className="mt-6 bg-blue-600 rounded-2xl p-6 text-white shadow-lg shadow-blue-900/40">
-                        <span className="text-blue-100 text-[10px] font-bold uppercase tracking-wider">Storage Locations</span>
+                    <div className="mt-6 bg-primary rounded-2xl p-6 text-primary-fg shadow-lg shadow-blue-900/40">
+                        <span className="text-primary text-[10px] font-bold uppercase tracking-wider">Storage Locations</span>
                         <div className="text-5xl font-black mt-2">
                             {warehouse.warehouse_locations?.length || 0}
                         </div>
-                        <p className="mt-2 text-sm text-blue-200">
+                        <p className="mt-2 text-sm text-primary">
                             {warehouse.stock_balances?.length || 0} items in stock
                         </p>
                     </div>
@@ -301,13 +301,13 @@ const WarehouseDetailPage = () => {
                 {/* Locations & Stock */}
                 <div className="lg:col-span-2 space-y-6">
                     {/* Locations */}
-                    <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
+                    <div className="bg-surface/50 border border-line rounded-2xl p-6">
                         <div className="flex items-center justify-between mb-6">
-                            <h2 className="text-xl font-bold text-slate-50">Storage Locations</h2>
+                            <h2 className="text-xl font-bold text-fg">Storage Locations</h2>
                             {can('warehouses.create') && canManageWarehouse && (
                                 <button
                                     onClick={() => openLocationModal()}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-lg transition-colors shadow-lg shadow-blue-900/20"
+                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-primary hover:bg-primary-hover text-primary-fg text-sm font-semibold rounded-lg transition-colors shadow-lg shadow-blue-900/20"
                                 >
                                     <Plus size={16} />
                                     Add Location
@@ -318,26 +318,26 @@ const WarehouseDetailPage = () => {
                         {warehouse.warehouse_locations?.length > 0 ? (
                             <div className="space-y-4">
                                 {warehouse.warehouse_locations.map((loc: any) => (
-                                    <div key={loc.id} className="bg-slate-800/30 rounded-xl p-4 border border-slate-700/30">
+                                    <div key={loc.id} className="bg-surface-raised/30 rounded-xl p-4 border border-line-strong/30">
                                         <div className="flex items-center justify-between mb-3">
                                             <div className="flex items-center gap-2">
-                                                <MapPin size={16} className="text-blue-400" />
-                                                <span className="font-semibold text-slate-50">{loc.name}</span>
+                                                <MapPin size={16} className="text-primary" />
+                                                <span className="font-semibold text-fg">{loc.name}</span>
                                             </div>
                                             <div className="flex items-center gap-1">
-                                                <span className="text-xs font-mono text-slate-500 mr-2">{loc.code}</span>
+                                                <span className="text-xs font-mono text-fg-subtle mr-2">{loc.code}</span>
                                                 {can('warehouses.create') && canManageWarehouse && (
                                                     <>
                                                         <button
                                                             onClick={() => openLocationModal(loc)}
-                                                            className="p-1.5 hover:bg-slate-700 rounded-lg transition-colors text-slate-400 hover:text-blue-400"
+                                                            className="p-1.5 hover:bg-line-strong rounded-lg transition-colors text-fg-muted hover:text-primary"
                                                             title="Edit Location"
                                                         >
                                                             <Edit2 size={14} />
                                                         </button>
                                                         <button
                                                             onClick={() => confirmDeleteLocation(loc)}
-                                                            className="p-1.5 hover:bg-slate-700 rounded-lg transition-colors text-slate-400 hover:text-rose-400"
+                                                            className="p-1.5 hover:bg-line-strong rounded-lg transition-colors text-fg-muted hover:text-rose-400"
                                                             title="Delete Location"
                                                         >
                                                             <Trash2 size={14} />
@@ -349,7 +349,7 @@ const WarehouseDetailPage = () => {
                                         {loc.warehouse_bins?.length > 0 && (
                                             <div className="flex flex-wrap gap-2">
                                                 {loc.warehouse_bins.map((bin: any) => (
-                                                    <span key={bin.id} className="text-xs bg-blue-500/10 text-blue-400 px-2 py-1 rounded border border-blue-500/20">
+                                                    <span key={bin.id} className="text-xs bg-primary/10 text-primary px-2 py-1 rounded border border-primary/20">
                                                         {bin.code}
                                                     </span>
                                                 ))}
@@ -359,13 +359,13 @@ const WarehouseDetailPage = () => {
                                 ))}
                             </div>
                         ) : (
-                            <div className="text-center py-8 text-slate-500">
+                            <div className="text-center py-8 text-fg-subtle">
                                 <MapPin size={48} className="mx-auto mb-4 opacity-50" />
                                 <p>No storage locations defined</p>
                                 {can('warehouses.create') && canManageWarehouse && (
                                     <button
                                         onClick={() => openLocationModal()}
-                                        className="mt-3 text-blue-400 hover:text-blue-300 text-sm font-medium"
+                                        className="mt-3 text-primary hover:text-primary text-sm font-medium"
                                     >
                                         Add your first location
                                     </button>
@@ -375,13 +375,13 @@ const WarehouseDetailPage = () => {
                     </div>
 
                     {/* Stock in Warehouse */}
-                    <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
-                        <h2 className="text-xl font-bold text-slate-50 mb-6">Current Stock</h2>
+                    <div className="bg-surface/50 border border-line rounded-2xl p-6">
+                        <h2 className="text-xl font-bold text-fg mb-6">Current Stock</h2>
                         {warehouse.stock_balances?.length > 0 ? (
                             <div className="overflow-x-auto">
                                 <table className="w-full">
                                     <thead>
-                                        <tr className="text-left text-xs font-bold uppercase tracking-wider text-slate-500 border-b border-slate-800">
+                                        <tr className="text-left text-xs font-bold uppercase tracking-wider text-fg-subtle border-b border-line">
                                             <th className="pb-3">Item</th>
                                             <th className="pb-3">SKU</th>
                                             <th className="pb-3 text-right">Quantity</th>
@@ -389,22 +389,22 @@ const WarehouseDetailPage = () => {
                                     </thead>
                                     <tbody>
                                         {warehouse.stock_balances.map((balance: any) => (
-                                            <tr key={balance.id} className="border-b border-slate-800/50">
+                                            <tr key={balance.id} className="border-b border-line/50">
                                                 <td className="py-3">
                                                     <div className="flex items-center gap-2">
-                                                        <Package size={16} className="text-slate-500" />
-                                                        <span className="text-slate-50 font-medium">{balance.items?.name || 'Unknown'}</span>
+                                                        <Package size={16} className="text-fg-subtle" />
+                                                        <span className="text-fg font-medium">{balance.items?.name || 'Unknown'}</span>
                                                     </div>
                                                 </td>
-                                                <td className="py-3 text-slate-500 font-mono text-sm">{balance.items?.sku || '-'}</td>
-                                                <td className="py-3 text-right font-bold text-slate-50">{balance.quantity}</td>
+                                                <td className="py-3 text-fg-subtle font-mono text-sm">{balance.items?.sku || '-'}</td>
+                                                <td className="py-3 text-right font-bold text-fg">{balance.quantity}</td>
                                             </tr>
                                         ))}
                                     </tbody>
                                 </table>
                             </div>
                         ) : (
-                            <div className="text-center py-8 text-slate-500">
+                            <div className="text-center py-8 text-fg-subtle">
                                 <Package size={48} className="mx-auto mb-4 opacity-50" />
                                 <p>No stock in this warehouse</p>
                             </div>
@@ -419,14 +419,14 @@ const WarehouseDetailPage = () => {
                 onClose={() => setIsEditModalOpen(false)}
                 title="Edit Warehouse"
             >
-                <form onSubmit={handleSaveEdit} className="space-y-4 text-slate-200">
+                <form onSubmit={handleSaveEdit} className="space-y-4 text-fg">
                     <div>
-                        <label className="block text-sm font-medium text-slate-400 mb-1.5">Warehouse Name *</label>
+                        <label className="block text-sm font-medium text-fg-muted mb-1.5">Warehouse Name *</label>
                         <input
                             type="text"
                             value={editForm.name}
                             onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                            className={`w-full bg-slate-800 border ${showEditErrors && editErrors.name ? 'border-rose-500/60' : 'border-slate-700'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50`}
+                            className={`w-full bg-surface-raised border ${showEditErrors && editErrors.name ? 'border-rose-500/60' : 'border-line-strong'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-focus/50`}
                         />
                         {showEditErrors && editErrors.name && (
                             <p role="alert" data-testid="error-warehouse-name" className="text-rose-400 text-xs mt-1">{editErrors.name}</p>
@@ -434,12 +434,12 @@ const WarehouseDetailPage = () => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-400 mb-1.5">Short Code *</label>
+                        <label className="block text-sm font-medium text-fg-muted mb-1.5">Short Code *</label>
                         <input
                             type="text"
                             value={editForm.code}
                             onChange={(e) => setEditForm({ ...editForm, code: e.target.value.toUpperCase() })}
-                            className={`w-full bg-slate-800 border ${showEditErrors && editErrors.code ? 'border-rose-500/60' : 'border-slate-700'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50 font-mono`}
+                            className={`w-full bg-surface-raised border ${showEditErrors && editErrors.code ? 'border-rose-500/60' : 'border-line-strong'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-focus/50 font-mono`}
                         />
                         {showEditErrors && editErrors.code && (
                             <p role="alert" data-testid="error-warehouse-code" className="text-rose-400 text-xs mt-1">{editErrors.code}</p>
@@ -447,11 +447,11 @@ const WarehouseDetailPage = () => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-400 mb-1.5">Address</label>
+                        <label className="block text-sm font-medium text-fg-muted mb-1.5">Address</label>
                         <textarea
                             value={editForm.address}
                             onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
-                            className={`w-full bg-slate-800 border ${showEditErrors && editErrors.address ? 'border-rose-500/60' : 'border-slate-700'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50 h-24 resize-none`}
+                            className={`w-full bg-surface-raised border ${showEditErrors && editErrors.address ? 'border-rose-500/60' : 'border-line-strong'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-focus/50 h-24 resize-none`}
                         />
                         {showEditErrors && editErrors.address && (
                             <p role="alert" data-testid="error-warehouse-address" className="text-rose-400 text-xs mt-1">{editErrors.address}</p>
@@ -463,9 +463,9 @@ const WarehouseDetailPage = () => {
                             type="checkbox"
                             checked={editForm.is_active}
                             onChange={(e) => setEditForm({ ...editForm, is_active: e.target.checked })}
-                            className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-blue-600 focus:ring-blue-500/50"
+                            className="w-4 h-4 rounded border-line-strong bg-surface-raised text-primary focus:ring-focus/50"
                         />
-                        <span className="text-sm text-slate-300 group-hover:text-slate-50 transition-colors">Active / Operational</span>
+                        <span className="text-sm text-fg-muted group-hover:text-fg transition-colors">Active / Operational</span>
                     </label>
 
                     <div className="flex gap-3 mt-8">
@@ -473,14 +473,14 @@ const WarehouseDetailPage = () => {
                             type="button"
                             onClick={() => setIsEditModalOpen(false)}
                             disabled={isSaving}
-                            className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-50 font-semibold py-2.5 rounded-lg transition-all"
+                            className="flex-1 bg-surface-raised hover:bg-line-strong text-fg font-semibold py-2.5 rounded-lg transition-all"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
                             disabled={isSaving}
-                            className="flex-1 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-600/50 text-white font-semibold py-2.5 rounded-lg transition-all shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2"
+                            className="flex-1 bg-primary hover:bg-primary-hover disabled:bg-primary/50 text-primary-fg font-semibold py-2.5 rounded-lg transition-all shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2"
                         >
                             {isSaving ? <><Loader2 size={18} className="animate-spin" /> Saving...</> : <><Save size={18} /> Save Changes</>}
                         </button>
@@ -494,15 +494,15 @@ const WarehouseDetailPage = () => {
                 onClose={() => { setIsLocationModalOpen(false); setEditingLocation(null); }}
                 title={editingLocation ? 'Edit Storage Location' : 'Add Storage Location'}
             >
-                <form onSubmit={handleSaveLocation} className="space-y-4 text-slate-200">
+                <form onSubmit={handleSaveLocation} className="space-y-4 text-fg">
                     <div>
-                        <label className="block text-sm font-medium text-slate-400 mb-1.5">Location Name *</label>
+                        <label className="block text-sm font-medium text-fg-muted mb-1.5">Location Name *</label>
                         <input
                             type="text"
                             value={locationForm.name}
                             onChange={(e) => setLocationForm({ ...locationForm, name: e.target.value })}
                             placeholder="e.g. Zone A, Aisle 3"
-                            className={`w-full bg-slate-800 border ${showLocationErrors && locationErrors.name ? 'border-rose-500/60' : 'border-slate-700'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50`}
+                            className={`w-full bg-surface-raised border ${showLocationErrors && locationErrors.name ? 'border-rose-500/60' : 'border-line-strong'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-focus/50`}
                         />
                         {showLocationErrors && locationErrors.name && (
                             <p role="alert" data-testid="error-location-name" className="text-rose-400 text-xs mt-1">
@@ -512,13 +512,13 @@ const WarehouseDetailPage = () => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-400 mb-1.5">Location Code *</label>
+                        <label className="block text-sm font-medium text-fg-muted mb-1.5">Location Code *</label>
                         <input
                             type="text"
                             value={locationForm.code}
                             onChange={(e) => setLocationForm({ ...locationForm, code: e.target.value.toUpperCase() })}
                             placeholder="e.g. ZA, A3"
-                            className={`w-full bg-slate-800 border ${showLocationErrors && locationErrors.code ? 'border-rose-500/60' : 'border-slate-700'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50 font-mono`}
+                            className={`w-full bg-surface-raised border ${showLocationErrors && locationErrors.code ? 'border-rose-500/60' : 'border-line-strong'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-focus/50 font-mono`}
                         />
                         {showLocationErrors && locationErrors.code && (
                             <p role="alert" data-testid="error-location-code" className="text-rose-400 text-xs mt-1">
@@ -532,14 +532,14 @@ const WarehouseDetailPage = () => {
                             type="button"
                             onClick={() => { setIsLocationModalOpen(false); setEditingLocation(null); }}
                             disabled={isSavingLocation}
-                            className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-50 font-semibold py-2.5 rounded-lg transition-all"
+                            className="flex-1 bg-surface-raised hover:bg-line-strong text-fg font-semibold py-2.5 rounded-lg transition-all"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
                             disabled={isSavingLocation}
-                            className="flex-1 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-600/50 text-white font-semibold py-2.5 rounded-lg transition-all shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2"
+                            className="flex-1 bg-primary hover:bg-primary-hover disabled:bg-primary/50 text-primary-fg font-semibold py-2.5 rounded-lg transition-all shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2"
                         >
                             {isSavingLocation ? <><Loader2 size={18} className="animate-spin" /> Saving...</> : <><Save size={18} /> {editingLocation ? 'Save Changes' : 'Add Location'}</>}
                         </button>
@@ -549,20 +549,20 @@ const WarehouseDetailPage = () => {
 
             {/* Delete Warehouse Confirmation */}
             {showDeleteConfirm && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[600]">
-                    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto shadow-2xl">
+                <div className="fixed inset-0 bg-overlay/60 backdrop-blur-sm flex items-center justify-center z-[600]">
+                    <div className="bg-surface border border-line rounded-2xl p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto shadow-2xl">
                         <div className="flex items-center gap-4 mb-4">
                             <div className="w-12 h-12 rounded-full bg-rose-500/10 flex items-center justify-center">
                                 <Trash2 size={24} className="text-rose-500" />
                             </div>
                             <div>
-                                <h3 className="text-lg font-bold text-slate-50">Delete Warehouse</h3>
-                                <p className="text-slate-400 text-sm">This action cannot be undone</p>
+                                <h3 className="text-lg font-bold text-fg">Delete Warehouse</h3>
+                                <p className="text-fg-muted text-sm">This action cannot be undone</p>
                             </div>
                         </div>
 
-                        <p className="text-slate-300 mb-6">
-                            Are you sure you want to delete <strong className="text-slate-50">{warehouse.name}</strong>?
+                        <p className="text-fg-muted mb-6">
+                            Are you sure you want to delete <strong className="text-fg">{warehouse.name}</strong>?
                             Warehouses with stock cannot be deleted.
                         </p>
 
@@ -570,14 +570,14 @@ const WarehouseDetailPage = () => {
                             <button
                                 onClick={() => setShowDeleteConfirm(false)}
                                 disabled={isDeleting}
-                                className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-50 font-semibold py-2.5 rounded-lg transition-all"
+                                className="flex-1 bg-surface-raised hover:bg-line-strong text-fg font-semibold py-2.5 rounded-lg transition-all"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={handleDeleteWarehouse}
                                 disabled={isDeleting}
-                                className="flex-1 bg-rose-600 hover:bg-rose-500 disabled:bg-rose-600/50 text-white font-semibold py-2.5 rounded-lg transition-all flex items-center justify-center gap-2"
+                                className="flex-1 bg-rose-600 hover:bg-rose-500 disabled:bg-rose-600/50 text-primary-fg font-semibold py-2.5 rounded-lg transition-all flex items-center justify-center gap-2"
                             >
                                 {isDeleting ? <><Loader2 size={18} className="animate-spin" /> Deleting...</> : <><Trash2 size={18} /> Delete</>}
                             </button>
@@ -588,20 +588,20 @@ const WarehouseDetailPage = () => {
 
             {/* Delete Location Confirmation */}
             {deletingLocationId && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[600]">
-                    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto shadow-2xl">
+                <div className="fixed inset-0 bg-overlay/60 backdrop-blur-sm flex items-center justify-center z-[600]">
+                    <div className="bg-surface border border-line rounded-2xl p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto shadow-2xl">
                         <div className="flex items-center gap-4 mb-4">
                             <div className="w-12 h-12 rounded-full bg-rose-500/10 flex items-center justify-center">
                                 <Trash2 size={24} className="text-rose-500" />
                             </div>
                             <div>
-                                <h3 className="text-lg font-bold text-slate-50">Delete Storage Location</h3>
-                                <p className="text-slate-400 text-sm">This action cannot be undone</p>
+                                <h3 className="text-lg font-bold text-fg">Delete Storage Location</h3>
+                                <p className="text-fg-muted text-sm">This action cannot be undone</p>
                             </div>
                         </div>
 
-                        <p className="text-slate-300 mb-6">
-                            Are you sure you want to delete <strong className="text-slate-50">{deletingLocation?.name || 'this location'}</strong>?
+                        <p className="text-fg-muted mb-6">
+                            Are you sure you want to delete <strong className="text-fg">{deletingLocation?.name || 'this location'}</strong>?
                             Locations with stock cannot be deleted. All bins in this location will also be removed.
                         </p>
 
@@ -609,14 +609,14 @@ const WarehouseDetailPage = () => {
                             <button
                                 onClick={() => setDeletingLocationId(null)}
                                 disabled={isDeletingLocation}
-                                className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-50 font-semibold py-2.5 rounded-lg transition-all"
+                                className="flex-1 bg-surface-raised hover:bg-line-strong text-fg font-semibold py-2.5 rounded-lg transition-all"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={handleDeleteLocation}
                                 disabled={isDeletingLocation}
-                                className="flex-1 bg-rose-600 hover:bg-rose-500 disabled:bg-rose-600/50 text-white font-semibold py-2.5 rounded-lg transition-all flex items-center justify-center gap-2"
+                                className="flex-1 bg-rose-600 hover:bg-rose-500 disabled:bg-rose-600/50 text-primary-fg font-semibold py-2.5 rounded-lg transition-all flex items-center justify-center gap-2"
                             >
                                 {isDeletingLocation ? <><Loader2 size={18} className="animate-spin" /> Deleting...</> : <><Trash2 size={18} /> Delete</>}
                             </button>

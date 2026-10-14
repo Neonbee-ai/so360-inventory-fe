@@ -10,9 +10,9 @@ const FormSection: React.FC<FormSectionProps> = ({ title, description, children 
     return (
         <div className="space-y-4">
             <div>
-                <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">{title}</h3>
+                <h3 className="text-sm font-semibold text-fg-muted uppercase tracking-wider">{title}</h3>
                 {description && (
-                    <p className="text-xs text-slate-500 mt-1">{description}</p>
+                    <p className="text-xs text-fg-subtle mt-1">{description}</p>
                 )}
             </div>
             {children}

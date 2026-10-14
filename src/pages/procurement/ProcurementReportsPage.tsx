@@ -92,7 +92,7 @@ const ProcurementReportsPage = () => {
                 <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-400 to-blue-400 bg-clip-text text-transparent">
                     Procurement Reports
                 </h1>
-                <p className="text-slate-400 mt-2 font-medium">{active?.hint}</p>
+                <p className="text-fg-muted mt-2 font-medium">{active?.hint}</p>
             </div>
 
             <div className="flex flex-wrap gap-2">
@@ -102,8 +102,8 @@ const ProcurementReportsPage = () => {
                         onClick={() => setReport(r.key)}
                         aria-pressed={report === r.key}
                         className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider border transition-all ${report === r.key
-                            ? 'bg-indigo-600/10 text-indigo-300 border-indigo-500/40'
-                            : 'bg-slate-950 text-slate-500 border-slate-800 hover:border-slate-700'}`}
+                            ? 'bg-primary/10 text-primary border-primary/40'
+                            : 'bg-bg text-fg-subtle border-line hover:border-line-strong'}`}
                     >
                         {r.label}
                     </button>
@@ -112,29 +112,29 @@ const ProcurementReportsPage = () => {
 
             <div className="flex flex-wrap items-end gap-4">
                 <div className="space-y-1">
-                    <label htmlFor="rep-from" className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">From</label>
+                    <label htmlFor="rep-from" className="text-[10px] font-bold text-fg-subtle uppercase tracking-wider">From</label>
                     <input
                         id="rep-from"
                         type="date"
                         value={range.from}
                         onChange={e => setRange({ ...range, from: e.target.value })}
-                        className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-200"
+                        className="bg-bg border border-line rounded-xl px-4 py-2 text-sm text-fg"
                     />
                 </div>
                 <div className="space-y-1">
-                    <label htmlFor="rep-to" className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">To</label>
+                    <label htmlFor="rep-to" className="text-[10px] font-bold text-fg-subtle uppercase tracking-wider">To</label>
                     <input
                         id="rep-to"
                         type="date"
                         value={range.to}
                         onChange={e => setRange({ ...range, to: e.target.value })}
-                        className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-200"
+                        className="bg-bg border border-line rounded-xl px-4 py-2 text-sm text-fg"
                     />
                 </div>
-                <button onClick={run} className="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-bold transition-colors">
+                <button onClick={run} className="px-6 py-2 bg-primary hover:bg-primary-hover text-primary-fg rounded-xl text-sm font-bold transition-colors">
                     Run
                 </button>
-                <button onClick={exportCsv} className="px-6 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-sm font-bold transition-colors">
+                <button onClick={exportCsv} className="px-6 py-2 bg-surface-raised hover:bg-line-strong text-fg rounded-xl text-sm font-bold transition-colors">
                     Export CSV
                 </button>
             </div>
@@ -143,30 +143,30 @@ const ProcurementReportsPage = () => {
                 <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-400 text-sm">{error}</div>
             )}
 
-            <div className="bg-slate-900/50 border border-slate-800 rounded-2xl overflow-hidden">
+            <div className="bg-surface/50 border border-line rounded-2xl overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                         <thead>
-                            <tr className="border-b border-slate-800 bg-slate-800/30">
+                            <tr className="border-b border-line bg-surface-raised/30">
                                 {columns.map(c => (
-                                    <th key={c} className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-400 whitespace-nowrap">
+                                    <th key={c} className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-fg-muted whitespace-nowrap">
                                         {humanise(c)}
                                     </th>
                                 ))}
                                 {columns.length === 0 && (
-                                    <th className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-400">Result</th>
+                                    <th className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-fg-muted">Result</th>
                                 )}
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-800/50">
+                        <tbody className="divide-y divide-line/50">
                             {loading ? (
-                                <tr><td colSpan={Math.max(1, columns.length)} className="px-4 py-12 text-center text-slate-500 animate-pulse">Running report...</td></tr>
+                                <tr><td colSpan={Math.max(1, columns.length)} className="px-4 py-12 text-center text-fg-subtle animate-pulse">Running report...</td></tr>
                             ) : rows.length === 0 ? (
-                                <tr><td colSpan={Math.max(1, columns.length)} className="px-4 py-12 text-center text-slate-500">No rows for this report.</td></tr>
+                                <tr><td colSpan={Math.max(1, columns.length)} className="px-4 py-12 text-center text-fg-subtle">No rows for this report.</td></tr>
                             ) : rows.map((row, i) => (
-                                <tr key={i} className="hover:bg-slate-800/20 transition-colors">
+                                <tr key={i} className="hover:bg-surface-raised/20 transition-colors">
                                     {columns.map(c => (
-                                        <td key={c} className="px-4 py-3 text-slate-300 whitespace-nowrap">
+                                        <td key={c} className="px-4 py-3 text-fg-muted whitespace-nowrap">
                                             {typeof row[c] === 'number' && CURRENCY_KEYS.has(c)
                                                 ? formatters.formatCurrency(row[c])
                                                 : typeof row[c] === 'boolean'
@@ -184,7 +184,7 @@ const ProcurementReportsPage = () => {
             </div>
 
             {rows.length > 0 && (
-                <p className="text-xs text-slate-500">{rows.length} row(s)</p>
+                <p className="text-xs text-fg-subtle">{rows.length} row(s)</p>
             )}
         </div>
     );

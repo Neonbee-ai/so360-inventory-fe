@@ -11,8 +11,8 @@ interface ShippingTabProps {
     updateField: (field: string, value: any) => void;
 }
 
-const inputClass = 'w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all placeholder:text-slate-600';
-const labelClass = 'block text-sm font-medium text-slate-400 mb-1.5';
+const inputClass = 'w-full bg-surface-raised border border-line-strong rounded-lg px-4 py-2.5 text-fg focus:outline-none focus:ring-2 focus:ring-focus/50 focus:border-primary transition-all placeholder:text-fg-subtle';
+const labelClass = 'block text-sm font-medium text-fg-muted mb-1.5';
 
 const ShippingTab: React.FC<ShippingTabProps> = ({
     weight, weight_unit, dimensions_length, dimensions_width, dimensions_height, dimensions_unit,
@@ -64,7 +64,7 @@ const ShippingTab: React.FC<ShippingTabProps> = ({
                             placeholder="L"
                         />
                     </div>
-                    <span className="text-slate-600 pb-3">&times;</span>
+                    <span className="text-fg-subtle pb-3">&times;</span>
                     <div className="flex-1">
                         <label className={labelClass}>Width</label>
                         <input
@@ -77,7 +77,7 @@ const ShippingTab: React.FC<ShippingTabProps> = ({
                             placeholder="W"
                         />
                     </div>
-                    <span className="text-slate-600 pb-3">&times;</span>
+                    <span className="text-fg-subtle pb-3">&times;</span>
                     <div className="flex-1">
                         <label className={labelClass}>Height</label>
                         <input

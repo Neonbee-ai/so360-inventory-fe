@@ -22,15 +22,15 @@ export const Modal = ({ isOpen, onClose, title, children, size = 'md' }: ModalPr
     return (
         <div className="fixed inset-0 z-[600] flex items-center justify-center px-4 pt-20 pb-6">
             <div
-                className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"
+                className="absolute inset-0 bg-bg/80 backdrop-blur-sm"
                 onClick={onClose}
             />
-            <div className={`relative bg-slate-900 border border-slate-800 rounded-2xl w-full ${sizeClasses[size]} max-h-[88vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200`}>
-                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 flex-shrink-0">
-                    <h3 className="text-xl font-bold text-slate-50">{title}</h3>
+            <div className={`relative bg-surface border border-line rounded-2xl w-full ${sizeClasses[size]} max-h-[88vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200`}>
+                <div className="flex items-center justify-between px-6 py-4 border-b border-line flex-shrink-0">
+                    <h3 className="text-xl font-bold text-fg">{title}</h3>
                     <button
                         onClick={onClose}
-                        className="p-1 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-50 transition-colors"
+                        className="p-1 hover:bg-surface-raised rounded-lg text-fg-muted hover:text-fg transition-colors"
                     >
                         <X size={20} />
                     </button>

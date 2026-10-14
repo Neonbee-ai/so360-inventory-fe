@@ -32,11 +32,11 @@ const ProductTypePicker: React.FC<ProductTypePickerProps> = ({ value, onChange }
     };
 
     if (loading) {
-        return <div className="text-sm text-slate-500 animate-pulse">Loading product types...</div>;
+        return <div className="text-sm text-fg-subtle animate-pulse">Loading product types...</div>;
     }
 
     if (types.length === 0) {
-        return <p className="text-sm text-slate-500">No product types available. Create them in Settings.</p>;
+        return <p className="text-sm text-fg-subtle">No product types available. Create them in Settings.</p>;
     }
 
     return (
@@ -48,16 +48,16 @@ const ProductTypePicker: React.FC<ProductTypePickerProps> = ({ value, onChange }
                 className={`
                     p-3 rounded-xl border text-left transition-all
                     ${!value
-                        ? 'border-blue-500 bg-blue-500/10 ring-1 ring-blue-500/30'
-                        : 'border-slate-700 bg-slate-800/50 hover:border-slate-600 hover:bg-slate-800'
+                        ? 'border-primary bg-primary/10 ring-1 ring-focus/30'
+                        : 'border-line-strong bg-surface-raised/50 hover:border-line-strong hover:bg-surface-raised'
                     }
                 `}
             >
                 <div className="flex items-center gap-2 mb-1">
-                    <Package size={16} className={!value ? 'text-blue-400' : 'text-slate-500'} />
-                    <span className={`text-sm font-semibold ${!value ? 'text-blue-300' : 'text-slate-300'}`}>None</span>
+                    <Package size={16} className={!value ? 'text-primary' : 'text-fg-subtle'} />
+                    <span className={`text-sm font-semibold ${!value ? 'text-primary' : 'text-fg-muted'}`}>None</span>
                 </div>
-                <p className="text-xs text-slate-500 leading-tight">No product type</p>
+                <p className="text-xs text-fg-subtle leading-tight">No product type</p>
             </button>
 
             {types.map(pt => {
@@ -71,18 +71,18 @@ const ProductTypePicker: React.FC<ProductTypePickerProps> = ({ value, onChange }
                         className={`
                             p-3 rounded-xl border text-left transition-all
                             ${isSelected
-                                ? 'border-blue-500 bg-blue-500/10 ring-1 ring-blue-500/30'
-                                : 'border-slate-700 bg-slate-800/50 hover:border-slate-600 hover:bg-slate-800'
+                                ? 'border-primary bg-primary/10 ring-1 ring-focus/30'
+                                : 'border-line-strong bg-surface-raised/50 hover:border-line-strong hover:bg-surface-raised'
                             }
                         `}
                     >
                         <div className="flex items-center gap-2 mb-1">
-                            <Icon size={16} className={isSelected ? 'text-blue-400' : 'text-slate-500'} />
-                            <span className={`text-sm font-semibold ${isSelected ? 'text-blue-300' : 'text-slate-300'}`}>{pt.name}</span>
+                            <Icon size={16} className={isSelected ? 'text-primary' : 'text-fg-subtle'} />
+                            <span className={`text-sm font-semibold ${isSelected ? 'text-primary' : 'text-fg-muted'}`}>{pt.name}</span>
                         </div>
-                        <p className="text-xs text-slate-500 leading-tight line-clamp-2">{pt.description || pt.code}</p>
+                        <p className="text-xs text-fg-subtle leading-tight line-clamp-2">{pt.description || pt.code}</p>
                         {pt.is_system && (
-                            <span className="inline-block mt-1.5 text-[10px] text-slate-600 uppercase tracking-wider">System</span>
+                            <span className="inline-block mt-1.5 text-[10px] text-fg-subtle uppercase tracking-wider">System</span>
                         )}
                     </button>
                 );

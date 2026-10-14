@@ -6,8 +6,8 @@ import { getErrorMessage } from '@so360/design-system';
 
 const ALERT_STYLES: Record<string, string> = {
     critical: 'bg-rose-500/10 text-rose-300 border-rose-500/20',
-    warning: 'bg-amber-500/10 text-amber-300 border-amber-500/20',
-    info: 'bg-blue-500/10 text-blue-300 border-blue-500/20',
+    warning: 'bg-warning/10 text-warning border-warning/20',
+    info: 'bg-primary/10 text-primary border-primary/20',
 };
 
 /** Where each alert type takes the buyer when they act on it. */
@@ -57,7 +57,7 @@ const ProcurementDashboardPage = () => {
     if (loading) {
         return (
             <div className="p-8 flex items-center justify-center min-h-[400px]">
-                <div className="w-8 h-8 border-2 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
+                <div className="w-8 h-8 border-2 border-primary/20 border-t-blue-500 rounded-full animate-spin" />
             </div>
         );
     }
@@ -119,13 +119,13 @@ const ProcurementDashboardPage = () => {
                     <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
                         Procurement Dashboard
                     </h1>
-                    <p className="text-slate-400 mt-2 font-medium">
+                    <p className="text-fg-muted mt-2 font-medium">
                         The whole purchasing pipeline — requisition to payment — in one place.
                     </p>
                 </div>
                 <button
                     onClick={load}
-                    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm font-semibold transition-colors"
+                    className="px-4 py-2 bg-surface-raised hover:bg-line-strong text-fg-muted rounded-xl text-sm font-semibold transition-colors"
                 >
                     Refresh
                 </button>
@@ -134,7 +134,7 @@ const ProcurementDashboardPage = () => {
             {/* Alerts first — they are the things a human must act on today. */}
             {(data?.alerts || []).length > 0 && (
                 <div className="space-y-3">
-                    <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500">Needs Attention</h2>
+                    <h2 className="text-xs font-bold uppercase tracking-wider text-fg-subtle">Needs Attention</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         {data.alerts.map((alert: any) => (
                             <button
@@ -153,61 +153,61 @@ const ProcurementDashboardPage = () => {
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div className="md:col-span-2 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl p-6 text-white">
-                    <span className="text-blue-100 text-[10px] font-bold uppercase tracking-wider">Total Procurement Value</span>
+                <div className="md:col-span-2 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl p-6 text-primary-fg">
+                    <span className="text-primary text-[10px] font-bold uppercase tracking-wider">Total Procurement Value</span>
                     <div className="text-4xl font-black mt-2">{formatters.formatCurrency(k.total_procurement_value || 0)}</div>
-                    <p className="mt-2 text-sm text-blue-200">{k.po_issued || 0} orders issued · {k.completed_orders || 0} completed</p>
+                    <p className="mt-2 text-sm text-primary">{k.po_issued || 0} orders issued · {k.completed_orders || 0} completed</p>
                 </div>
-                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Cost Savings</span>
-                    <div className="text-3xl font-bold text-emerald-400 mt-2">{formatters.formatCurrency(k.cost_savings || 0)}</div>
-                    <p className="mt-2 text-xs text-slate-500">Won against higher competing quotes</p>
+                <div className="bg-surface/50 border border-line rounded-2xl p-6">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-fg-subtle">Cost Savings</span>
+                    <div className="text-3xl font-bold text-success mt-2">{formatters.formatCurrency(k.cost_savings || 0)}</div>
+                    <p className="mt-2 text-xs text-fg-subtle">Won against higher competing quotes</p>
                 </div>
-                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Budget Utilisation</span>
-                    <div className="text-3xl font-bold text-slate-100 mt-2">
+                <div className="bg-surface/50 border border-line rounded-2xl p-6">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-fg-subtle">Budget Utilisation</span>
+                    <div className="text-3xl font-bold text-fg mt-2">
                         {k.budget_utilisation_percent != null ? `${k.budget_utilisation_percent}%` : '—'}
                     </div>
-                    <p className="mt-2 text-xs text-slate-500">
+                    <p className="mt-2 text-xs text-fg-subtle">
                         {k.budget_allocated ? `of ${formatters.formatCurrency(k.budget_allocated)} allocated` : 'No budgets set on requisitions'}
                     </p>
                 </div>
             </div>
 
             <div>
-                <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Pipeline</h2>
+                <h2 className="text-xs font-bold uppercase tracking-wider text-fg-subtle mb-3">Pipeline</h2>
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                     {pipeline.map(tile => (
                         <button
                             key={tile.label}
                             onClick={() => navigate(tile.route)}
-                            className="text-left bg-slate-900/50 border border-slate-800 hover:border-slate-700 rounded-2xl p-5 transition-colors"
+                            className="text-left bg-surface/50 border border-line hover:border-line-strong rounded-2xl p-5 transition-colors"
                         >
-                            <div className="text-2xl font-bold text-slate-100">{tile.value}</div>
-                            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mt-1">{tile.label}</div>
+                            <div className="text-2xl font-bold text-fg">{tile.value}</div>
+                            <div className="text-[10px] font-bold uppercase tracking-wider text-fg-subtle mt-1">{tile.label}</div>
                         </button>
                     ))}
                 </div>
             </div>
 
             <div>
-                <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Process Health</h2>
+                <h2 className="text-xs font-bold uppercase tracking-wider text-fg-subtle mb-3">Process Health</h2>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     {health.map(tile => (
-                        <div key={tile.label} className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5">
-                            <div className={`text-2xl font-bold ${tile.danger ? 'text-rose-400' : 'text-slate-100'}`}>{tile.value}</div>
-                            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mt-1">{tile.label}</div>
-                            <div className="text-[10px] text-slate-600 mt-1">{tile.hint}</div>
+                        <div key={tile.label} className="bg-surface/50 border border-line rounded-2xl p-5">
+                            <div className={`text-2xl font-bold ${tile.danger ? 'text-rose-400' : 'text-fg'}`}>{tile.value}</div>
+                            <div className="text-[10px] font-bold uppercase tracking-wider text-fg-subtle mt-1">{tile.label}</div>
+                            <div className="text-[10px] text-fg-subtle mt-1">{tile.hint}</div>
                         </div>
                     ))}
                 </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
-                    <h2 className="text-sm font-bold text-slate-300 mb-4">Spend by Vendor</h2>
+                <div className="bg-surface/50 border border-line rounded-2xl p-6">
+                    <h2 className="text-sm font-bold text-fg-muted mb-4">Spend by Vendor</h2>
                     {(data?.spend_by_vendor || []).length === 0 ? (
-                        <p className="text-sm text-slate-500">No purchase orders yet.</p>
+                        <p className="text-sm text-fg-subtle">No purchase orders yet.</p>
                     ) : (
                         <div className="space-y-3">
                             {data.spend_by_vendor.map((row: any) => {
@@ -215,11 +215,11 @@ const ProcurementDashboardPage = () => {
                                 return (
                                     <div key={row.vendor_id}>
                                         <div className="flex justify-between text-sm mb-1">
-                                            <span className="text-slate-300 truncate max-w-[60%]">{row.vendor_name || row.vendor_id.slice(0, 8)}</span>
-                                            <span className="text-slate-100 font-bold">{formatters.formatCurrency(row.amount)}</span>
+                                            <span className="text-fg-muted truncate max-w-[60%]">{row.vendor_name || row.vendor_id.slice(0, 8)}</span>
+                                            <span className="text-fg font-bold">{formatters.formatCurrency(row.amount)}</span>
                                         </div>
-                                        <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                                            <div className="h-full bg-blue-500" style={{ width: `${Math.max(2, (row.amount / top) * 100)}%` }} />
+                                        <div className="h-1.5 bg-surface-raised rounded-full overflow-hidden">
+                                            <div className="h-full bg-primary" style={{ width: `${Math.max(2, (row.amount / top) * 100)}%` }} />
                                         </div>
                                     </div>
                                 );
@@ -228,10 +228,10 @@ const ProcurementDashboardPage = () => {
                     )}
                 </div>
 
-                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
-                    <h2 className="text-sm font-bold text-slate-300 mb-4">Monthly Spend</h2>
+                <div className="bg-surface/50 border border-line rounded-2xl p-6">
+                    <h2 className="text-sm font-bold text-fg-muted mb-4">Monthly Spend</h2>
                     {!(trends?.monthly_spend || []).length ? (
-                        <p className="text-sm text-slate-500">Not enough history yet.</p>
+                        <p className="text-sm text-fg-subtle">Not enough history yet.</p>
                     ) : (
                         <div className="flex items-end gap-2 h-40">
                             {trends.monthly_spend.map((m: any) => {
@@ -243,7 +243,7 @@ const ProcurementDashboardPage = () => {
                                             style={{ height: `${Math.max(4, (m.value / max) * 120)}px` }}
                                             title={`${m.month}: ${formatters.formatCurrency(m.value)}`}
                                         />
-                                        <span className="text-[9px] text-slate-500">{m.month.slice(5)}</span>
+                                        <span className="text-[9px] text-fg-subtle">{m.month.slice(5)}</span>
                                     </div>
                                 );
                             })}
@@ -253,11 +253,11 @@ const ProcurementDashboardPage = () => {
             </div>
 
             {(trends?.top_items || []).length > 0 && (
-                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
-                    <h2 className="text-sm font-bold text-slate-300 mb-4">Top Purchased Items</h2>
+                <div className="bg-surface/50 border border-line rounded-2xl p-6">
+                    <h2 className="text-sm font-bold text-fg-muted mb-4">Top Purchased Items</h2>
                     <table className="w-full text-sm">
                         <thead>
-                            <tr className="text-left text-[10px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-800">
+                            <tr className="text-left text-[10px] font-bold uppercase tracking-wider text-fg-subtle border-b border-line">
                                 <th className="pb-2">Item</th>
                                 <th className="pb-2 text-center">Quantity</th>
                                 <th className="pb-2 text-right">Value</th>
@@ -265,13 +265,13 @@ const ProcurementDashboardPage = () => {
                         </thead>
                         <tbody>
                             {trends.top_items.map((item: any) => (
-                                <tr key={item.item_id} className="border-b border-slate-800/50">
-                                    <td className="py-2 text-slate-200">
+                                <tr key={item.item_id} className="border-b border-line/50">
+                                    <td className="py-2 text-fg">
                                         {item.item_name || item.item_id.slice(0, 8)}
-                                        {item.sku && <span className="block text-[10px] text-slate-500 font-mono">{item.sku}</span>}
+                                        {item.sku && <span className="block text-[10px] text-fg-subtle font-mono">{item.sku}</span>}
                                     </td>
-                                    <td className="py-2 text-center text-slate-300">{item.quantity}</td>
-                                    <td className="py-2 text-right text-slate-100 font-bold">{formatters.formatCurrency(item.value)}</td>
+                                    <td className="py-2 text-center text-fg-muted">{item.quantity}</td>
+                                    <td className="py-2 text-right text-fg font-bold">{formatters.formatCurrency(item.value)}</td>
                                 </tr>
                             ))}
                         </tbody>
@@ -282,13 +282,13 @@ const ProcurementDashboardPage = () => {
             <div className="flex gap-3">
                 <button
                     onClick={() => navigate('/procurement/reports')}
-                    className="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl font-semibold transition-colors"
+                    className="px-6 py-3 bg-surface-raised hover:bg-line-strong text-fg rounded-xl font-semibold transition-colors"
                 >
                     Open Reports
                 </button>
                 <button
                     onClick={() => navigate('/procurement/vendor-performance')}
-                    className="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl font-semibold transition-colors"
+                    className="px-6 py-3 bg-surface-raised hover:bg-line-strong text-fg rounded-xl font-semibold transition-colors"
                 >
                     Vendor Performance
                 </button>

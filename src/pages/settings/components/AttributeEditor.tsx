@@ -26,8 +26,8 @@ interface AttributeEditorProps {
     };
 }
 
-const inputClass = 'w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all placeholder:text-slate-600';
-const labelClass = 'block text-xs font-medium text-slate-400 mb-1';
+const inputClass = 'w-full bg-surface-raised border border-line-strong rounded-lg px-3 py-2 text-sm text-fg focus:outline-none focus:ring-2 focus:ring-focus/50 focus:border-primary transition-all placeholder:text-fg-subtle';
+const labelClass = 'block text-xs font-medium text-fg-muted mb-1';
 
 const FIELD_TYPES: { value: AttributeFieldType; label: string }[] = [
     { value: 'text', label: 'Text' },
@@ -90,7 +90,7 @@ const AttributeEditor: React.FC<AttributeEditorProps> = ({ onSave, onCancel, ini
     };
 
     return (
-        <div className="p-4 bg-slate-800/50 border border-slate-700 rounded-lg space-y-3">
+        <div className="p-4 bg-surface-raised/50 border border-line-strong rounded-lg space-y-3">
             <div className="grid grid-cols-2 gap-3">
                 <div>
                     <label className={labelClass}>Label *</label>
@@ -139,9 +139,9 @@ const AttributeEditor: React.FC<AttributeEditorProps> = ({ onSave, onCancel, ini
                     <label className={labelClass}>Options</label>
                     <div className="flex flex-wrap gap-1.5 mb-2">
                         {options.map((opt, i) => (
-                            <span key={i} className="bg-slate-700 text-slate-300 px-2 py-0.5 rounded text-xs flex items-center gap-1">
+                            <span key={i} className="bg-line-strong text-fg-muted px-2 py-0.5 rounded text-xs flex items-center gap-1">
                                 {opt}
-                                <button type="button" onClick={() => removeOption(i)} className="text-slate-500 hover:text-rose-400"><X size={10} /></button>
+                                <button type="button" onClick={() => removeOption(i)} className="text-fg-subtle hover:text-rose-400"><X size={10} /></button>
                             </span>
                         ))}
                     </div>
@@ -154,7 +154,7 @@ const AttributeEditor: React.FC<AttributeEditorProps> = ({ onSave, onCancel, ini
                             placeholder="Add option..."
                             onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addOption(); } }}
                         />
-                        <button type="button" onClick={addOption} className="px-3 py-1 bg-slate-700 hover:bg-slate-600 rounded text-xs text-slate-300">
+                        <button type="button" onClick={addOption} className="px-3 py-1 bg-line-strong hover:bg-line-strong rounded text-xs text-fg-muted">
                             <Plus size={14} />
                         </button>
                     </div>
@@ -162,19 +162,19 @@ const AttributeEditor: React.FC<AttributeEditorProps> = ({ onSave, onCancel, ini
             )}
 
             <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" checked={isRequired} onChange={e => setIsRequired(e.target.checked)} className="w-3.5 h-3.5 rounded border-slate-600 bg-slate-800 text-blue-600" />
-                <span className="text-xs text-slate-400">Required field</span>
+                <input type="checkbox" checked={isRequired} onChange={e => setIsRequired(e.target.checked)} className="w-3.5 h-3.5 rounded border-line-strong bg-surface-raised text-primary" />
+                <span className="text-xs text-fg-muted">Required field</span>
             </label>
 
             <div className="flex gap-2 pt-1">
-                <button type="button" onClick={onCancel} className="flex-1 px-3 py-1.5 rounded-lg border border-slate-700 text-slate-400 hover:bg-slate-800 text-sm transition-all">
+                <button type="button" onClick={onCancel} className="flex-1 px-3 py-1.5 rounded-lg border border-line-strong text-fg-muted hover:bg-surface-raised text-sm transition-all">
                     Cancel
                 </button>
                 <button
                     type="button"
                     onClick={handleSave}
                     disabled={isSaving || !label.trim() || !fieldName.trim()}
-                    className="flex-1 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-sm font-medium transition-all"
+                    className="flex-1 px-3 py-1.5 rounded-lg bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-fg text-sm font-medium transition-all"
                 >
                     {isSaving ? 'Saving...' : initialData ? 'Update' : 'Add Attribute'}
                 </button>
