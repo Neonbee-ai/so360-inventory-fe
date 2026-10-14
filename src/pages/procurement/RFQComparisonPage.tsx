@@ -243,7 +243,7 @@ const RFQComparisonPage = () => {
                                                     <div className="flex gap-2">
                                                         <button
                                                             onClick={() => handleGrade(q.quotation_id, 'shortlisted')}
-                                                            className="flex-1 px-3 py-1.5 bg-surface-raised hover:bg-line-strong text-fg-muted rounded-lg text-[10px] font-bold uppercase transition-colors"
+                                                            className="flex-1 px-3 py-1.5 bg-surface-raised hover:bg-surface-high text-fg-muted rounded-lg text-[10px] font-bold uppercase transition-colors"
                                                         >
                                                             Shortlist
                                                         </button>

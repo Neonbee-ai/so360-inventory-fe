@@ -64,7 +64,7 @@ const MediaTab: React.FC<MediaTabProps> = ({ image_urls, image_meta, updateField
                     <button
                         type="button"
                         onClick={addImageUrl}
-                        className="px-4 py-2.5 bg-surface-raised hover:bg-line-strong border border-line-strong rounded-lg text-fg-muted transition-all flex items-center gap-1.5"
+                        className="px-4 py-2.5 bg-surface-raised hover:bg-surface-high border border-line-strong rounded-lg text-fg-muted transition-all flex items-center gap-1.5"
                     >
                         <Plus size={16} /> Add
                     </button>

@@ -11,7 +11,7 @@ import { toast, getErrorMessage, useConfirm } from '@so360/design-system';
 import { RFQ_STATUS_STYLES } from './RFQListPage';
 
 const VENDOR_STATUS_STYLES: Record<string, string> = {
-    invited: 'bg-line-strong/50 text-fg-muted border-line-strong/20',
+    invited: 'bg-surface-high text-fg-muted border-line-strong/20',
     quoted: 'bg-success/10 text-success border-success/20',
     declined: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
     no_response: 'bg-warning/10 text-warning border-warning/20',
@@ -254,7 +254,7 @@ const RFQDetailPage = () => {
                             {!['awarded', 'cancelled'].includes(rfq.status) && (
                                 <button
                                     onClick={openQuoteForm}
-                                    className="w-full px-4 py-3 bg-surface-raised hover:bg-line-strong text-fg rounded-xl font-bold transition-colors"
+                                    className="w-full px-4 py-3 bg-surface-raised hover:bg-surface-high text-fg rounded-xl font-bold transition-colors"
                                 >
                                     Record Quotation
                                 </button>
@@ -476,7 +476,7 @@ const RFQDetailPage = () => {
                                     {busy === 'quote' ? 'Saving...' : 'Save Quotation'}
                                 </button>
                                 <button type="button" onClick={() => setShowQuoteForm(false)}
-                                    className="px-6 py-4 bg-surface-raised hover:bg-line-strong text-fg-muted rounded-2xl font-bold transition-all">
+                                    className="px-6 py-4 bg-surface-raised hover:bg-surface-high text-fg-muted rounded-2xl font-bold transition-all">
                                     Cancel
                                 </button>
                             </div>

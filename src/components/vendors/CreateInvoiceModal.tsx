@@ -214,7 +214,7 @@ export const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
                             <button
                                 type="button"
                                 onClick={() => setFile(null)}
-                                className="p-1 hover:bg-line-strong rounded text-fg-muted hover:text-fg transition-colors"
+                                className="p-1 hover:bg-surface-high rounded text-fg-muted hover:text-fg transition-colors"
                             >
                                 <X size={16} />
                             </button>
@@ -256,7 +256,7 @@ export const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
                         type="button"
                         onClick={handleClose}
                         disabled={isSubmitting}
-                        className="flex-1 bg-surface-raised hover:bg-line-strong text-fg font-semibold py-2.5 rounded-lg transition-all"
+                        className="flex-1 bg-surface-raised hover:bg-surface-high text-fg font-semibold py-2.5 rounded-lg transition-all"
                     >
                         Cancel
                     </button>

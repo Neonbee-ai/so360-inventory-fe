@@ -335,7 +335,7 @@ const SettingsPage = () => {
                                 type="button"
                                 disabled={togglingLogic}
                                 onClick={() => handleToggleLogic('allow_negative_stock', !allowNegativeStock)}
-                                className={`w-12 h-6 rounded-full relative transition-colors disabled:opacity-50 ${allowNegativeStock ? 'bg-primary' : 'bg-line-strong'}`}
+                                className={`w-12 h-6 rounded-full relative transition-colors disabled:opacity-50 ${allowNegativeStock ? 'bg-primary' : 'bg-surface-high'}`}
                             >
                                 <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${allowNegativeStock ? 'right-1' : 'left-1'}`} />
                             </button>
@@ -349,7 +349,7 @@ const SettingsPage = () => {
                                 type="button"
                                 disabled={togglingLogic}
                                 onClick={() => handleToggleLogic('auto_approve_transfers', !autoApproveTransfers)}
-                                className={`w-12 h-6 rounded-full relative transition-colors disabled:opacity-50 ${autoApproveTransfers ? 'bg-primary' : 'bg-line-strong'}`}
+                                className={`w-12 h-6 rounded-full relative transition-colors disabled:opacity-50 ${autoApproveTransfers ? 'bg-primary' : 'bg-surface-high'}`}
                             >
                                 <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${autoApproveTransfers ? 'right-1' : 'left-1'}`} />
                             </button>

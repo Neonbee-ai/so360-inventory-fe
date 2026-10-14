@@ -87,7 +87,7 @@ const CategoryPicker: React.FC<CategoryPickerProps> = ({ categories, value, onCh
                         <button
                             type="button"
                             onClick={() => { onChange(''); setIsOpen(false); setSearch(''); }}
-                            className={`w-full text-left px-4 py-2 text-sm hover:bg-line-strong/50 transition-colors ${!value ? 'text-primary' : 'text-fg-muted'}`}
+                            className={`w-full text-left px-4 py-2 text-sm hover:bg-surface-high transition-colors ${!value ? 'text-primary' : 'text-fg-muted'}`}
                         >
                             None
                         </button>
@@ -98,7 +98,7 @@ const CategoryPicker: React.FC<CategoryPickerProps> = ({ categories, value, onCh
                                     key={node.id}
                                     type="button"
                                     onClick={() => { onChange(node.id); setIsOpen(false); setSearch(''); }}
-                                    className={`w-full text-left px-4 py-2 text-sm hover:bg-line-strong/50 transition-colors flex items-center gap-2 ${node.id === value ? 'text-primary bg-primary/10' : 'text-fg-muted'}`}
+                                    className={`w-full text-left px-4 py-2 text-sm hover:bg-surface-high transition-colors flex items-center gap-2 ${node.id === value ? 'text-primary bg-primary/10' : 'text-fg-muted'}`}
                                     style={{ paddingLeft: search.trim() ? '16px' : `${node.depth * 16 + 16}px` }}
                                 >
                                     {renderCategoryIcon({

@@ -5,7 +5,7 @@ import { useInventoryFormatters } from '../../utils/formatters';
 import { toast, getErrorMessage } from '@so360/design-system';
 
 export const RETURN_STATUS_STYLES: Record<string, string> = {
-    draft: 'bg-line-strong/50 text-fg-muted border-line-strong/20',
+    draft: 'bg-surface-high text-fg-muted border-line-strong/20',
     approved: 'bg-primary/10 text-primary border-primary/20',
     dispatched: 'bg-warning/10 text-warning border-warning/20',
     settled: 'bg-success/10 text-success border-success/20',
@@ -406,7 +406,7 @@ const VendorReturnsPage = () => {
                                 <button type="submit" disabled={saving} className="flex-1 px-6 py-4 bg-rose-600 hover:bg-rose-500 disabled:opacity-60 text-primary-fg rounded-2xl font-bold">
                                     {saving ? 'Raising...' : 'Raise Return'}
                                 </button>
-                                <button type="button" onClick={() => setShowForm(false)} className="px-6 py-4 bg-surface-raised hover:bg-line-strong text-fg-muted rounded-2xl font-bold">
+                                <button type="button" onClick={() => setShowForm(false)} className="px-6 py-4 bg-surface-raised hover:bg-surface-high text-fg-muted rounded-2xl font-bold">
                                     Cancel
                                 </button>
                             </div>
@@ -447,7 +447,7 @@ const VendorReturnsPage = () => {
                                 <button type="submit" className="flex-1 px-6 py-4 bg-success hover:bg-success text-primary-fg rounded-2xl font-bold">
                                     Settle
                                 </button>
-                                <button type="button" onClick={() => setSettling(null)} className="px-6 py-4 bg-surface-raised hover:bg-line-strong text-fg-muted rounded-2xl font-bold">
+                                <button type="button" onClick={() => setSettling(null)} className="px-6 py-4 bg-surface-raised hover:bg-surface-high text-fg-muted rounded-2xl font-bold">
                                     Cancel
                                 </button>
                             </div>

@@ -45,7 +45,7 @@ const MOVEMENT_BADGES: Record<string, { label: string; className: string }> = {
 const badgeFor = (movementType?: string | null) =>
     MOVEMENT_BADGES[(movementType || '').toLowerCase()] || {
         label: (movementType || 'MOVEMENT').replace(/_/g, ' ').toUpperCase(),
-        className: 'bg-line-strong/40 text-fg-muted border-line-strong',
+        className: 'bg-surface-high text-fg-muted border-line-strong',
     };
 
 /** Human label for a reason code — falls back to the raw code, never blank. */
@@ -203,7 +203,7 @@ const ItemSearchSelect = ({
                             key={i.id}
                             type="button"
                             onClick={() => { onSelect(i); setOpen(false); }}
-                            className="w-full text-left px-4 py-2 hover:bg-line-strong text-fg"
+                            className="w-full text-left px-4 py-2 hover:bg-surface-high text-fg"
                         >
                             <span className="font-medium">{i.name}</span>
                             <span className="text-fg-muted text-xs ml-2">{i.sku}</span>
@@ -731,7 +731,7 @@ const StockMovementRegisterPage = () => {
                 <div className="flex items-center gap-3">
                     <button
                         onClick={() => setShowFilters((s) => !s)}
-                        className="flex items-center gap-2 bg-surface-raised hover:bg-line-strong text-fg px-4 py-2.5 rounded-lg font-semibold transition-all"
+                        className="flex items-center gap-2 bg-surface-raised hover:bg-surface-high text-fg px-4 py-2.5 rounded-lg font-semibold transition-all"
                     >
                         <SlidersHorizontal size={18} />
                         Filters
@@ -1236,7 +1236,7 @@ const StockMovementRegisterPage = () => {
                         <button
                             type="button"
                             onClick={() => setIsModalOpen(false)}
-                            className="flex-1 bg-surface-raised hover:bg-line-strong text-fg font-semibold py-2.5 rounded-lg transition-all"
+                            className="flex-1 bg-surface-raised hover:bg-surface-high text-fg font-semibold py-2.5 rounded-lg transition-all"
                         >
                             Cancel
                         </button>

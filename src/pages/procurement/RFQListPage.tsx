@@ -21,7 +21,7 @@ interface RFQ {
 }
 
 export const RFQ_STATUS_STYLES: Record<string, string> = {
-    draft: 'bg-line-strong/50 text-fg-muted border-line-strong/20',
+    draft: 'bg-surface-high text-fg-muted border-line-strong/20',
     sent: 'bg-primary/10 text-primary border-primary/20',
     closed: 'bg-warning/10 text-warning border-warning/20',
     awarded: 'bg-success/10 text-success border-success/20',
@@ -437,7 +437,7 @@ const RFQListPage = () => {
                                 >
                                     {saving ? 'Creating...' : 'Create RFQ'}
                                 </button>
-                                <button type="button" onClick={() => setShowForm(false)} className="px-6 py-4 bg-surface-raised hover:bg-line-strong text-fg-muted rounded-2xl font-bold transition-all active:scale-95">
+                                <button type="button" onClick={() => setShowForm(false)} className="px-6 py-4 bg-surface-raised hover:bg-surface-high text-fg-muted rounded-2xl font-bold transition-all active:scale-95">
                                     Cancel
                                 </button>
                             </div>

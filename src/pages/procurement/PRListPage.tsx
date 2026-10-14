@@ -62,7 +62,7 @@ const sourceChips = (pr: PR) => {
 };
 
 const PRIORITIES = [
-    { value: 'low', label: 'Low', className: 'bg-fg-subtle/10 text-fg-muted border-line-strong/20' },
+    { value: 'low', label: 'Low', className: 'bg-surface-sunken text-fg-muted border-line-strong/20' },
     { value: 'normal', label: 'Normal', className: 'bg-primary/10 text-primary border-primary/20' },
     { value: 'high', label: 'High', className: 'bg-warning/10 text-warning border-warning/20' },
     { value: 'urgent', label: 'Urgent', className: 'bg-rose-500/10 text-rose-400 border-rose-500/20' },
@@ -321,8 +321,8 @@ const PRListPage = () => {
                                                     pr.status === 'fully_converted' ? 'bg-primary/10 text-primary border border-primary/20' :
                                                         pr.status === 'converted_to_po' ? 'bg-primary/10 text-primary border border-primary/20' :
                                                             pr.status === 'rejected' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' :
-                                                                pr.status === 'closed' ? 'bg-fg-subtle/10 text-fg-muted border border-line-strong/20' :
-                                                                    'bg-line-strong/50 text-fg-muted border border-line-strong/20'}
+                                                                pr.status === 'closed' ? 'bg-surface-sunken text-fg-muted border border-line-strong/20' :
+                                                                    'bg-surface-high text-fg-muted border border-line-strong/20'}
                                     `}>
                                         {pr.status.replace(/_/g, ' ')}
                                     </span>
@@ -582,7 +582,7 @@ const PRListPage = () => {
                                 <button type="submit" className="flex-1 px-6 py-4 bg-primary hover:bg-primary-hover text-primary-fg rounded-2xl font-bold transition-all shadow-lg shadow-blue-900/20 active:scale-95">
                                     Submit for Approval
                                 </button>
-                                <button type="button" onClick={() => setShowForm(false)} className="px-6 py-4 bg-surface-raised hover:bg-line-strong text-fg-muted rounded-2xl font-bold transition-all active:scale-95">
+                                <button type="button" onClick={() => setShowForm(false)} className="px-6 py-4 bg-surface-raised hover:bg-surface-high text-fg-muted rounded-2xl font-bold transition-all active:scale-95">
                                     Cancel
                                 </button>
                             </div>

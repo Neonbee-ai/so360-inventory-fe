@@ -227,7 +227,7 @@ const ProductTypeSettingsPage = () => {
                                                 <span className="text-sm text-fg">{attr.label}</span>
                                                 <span className="ml-2 text-xs text-fg-subtle">{attr.field_name}</span>
                                                 <div className="flex items-center gap-2 mt-0.5">
-                                                    <span className="text-xs bg-line-strong text-fg-muted px-1.5 py-0.5 rounded">{attr.field_type}</span>
+                                                    <span className="text-xs bg-surface-high text-fg-muted px-1.5 py-0.5 rounded">{attr.field_type}</span>
                                                     {attr.is_required && <span className="text-xs text-rose-400">Required</span>}
                                                     {attr.unit && <span className="text-xs text-fg-subtle">{attr.unit}</span>}
                                                     {attr.field_type === 'select' && attr.options && (

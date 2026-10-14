@@ -472,7 +472,7 @@ const ItemDetailPage = () => {
                             <div className="flex items-center gap-3">
                                 <button
                                     onClick={handleCancelEdit}
-                                    className="px-4 py-2 bg-surface-raised hover:bg-line-strong text-fg text-sm font-semibold rounded-lg transition-all"
+                                    className="px-4 py-2 bg-surface-raised hover:bg-surface-high text-fg text-sm font-semibold rounded-lg transition-all"
                                 >
                                     Cancel
                                 </button>
@@ -498,7 +498,7 @@ const ItemDetailPage = () => {
                                 {can('items.update') && (
                                     <button
                                         onClick={handleEditClick}
-                                        className="px-4 py-2 bg-surface-raised hover:bg-line-strong text-fg text-sm font-semibold rounded-lg transition-all flex items-center gap-2"
+                                        className="px-4 py-2 bg-surface-raised hover:bg-surface-high text-fg text-sm font-semibold rounded-lg transition-all flex items-center gap-2"
                                     >
                                         <Edit2 size={16} /> Edit
                                     </button>
@@ -526,7 +526,7 @@ const ItemDetailPage = () => {
                         <div className="bg-surface/50 border border-line rounded-2xl p-6 relative overflow-hidden hover:border-line-strong transition-colors">
                             {/* Active/Inactive badge */}
                             <div className="absolute top-4 right-4 z-10">
-                                <span className={`px-2 py-1 rounded text-[10px] uppercase font-bold border ${item.is_active ? 'bg-success/10 text-success border-success/20' : 'bg-fg-subtle/10 text-fg-muted border-line-strong'}`}>
+                                <span className={`px-2 py-1 rounded text-[10px] uppercase font-bold border ${item.is_active ? 'bg-success/10 text-success border-success/20' : 'bg-surface-sunken text-fg-muted border-line-strong'}`}>
                                     {item.is_active ? 'Active' : 'Inactive'}
                                 </span>
                             </div>
@@ -1106,7 +1106,7 @@ const ItemDetailPage = () => {
                             Items with stock movements or balances cannot be deleted.
                         </p>
                         <div className="flex gap-3">
-                            <button onClick={() => setShowDeleteConfirm(false)} disabled={isDeleting} className="flex-1 bg-surface-raised hover:bg-line-strong text-fg font-semibold py-2.5 rounded-lg transition-all">Cancel</button>
+                            <button onClick={() => setShowDeleteConfirm(false)} disabled={isDeleting} className="flex-1 bg-surface-raised hover:bg-surface-high text-fg font-semibold py-2.5 rounded-lg transition-all">Cancel</button>
                             <button onClick={handleDeleteItem} disabled={isDeleting} className="flex-1 bg-rose-600 hover:bg-rose-500 disabled:bg-rose-600/50 text-primary-fg font-semibold py-2.5 rounded-lg transition-all flex items-center justify-center gap-2">
                                 {isDeleting ? <><Loader2 size={18} className="animate-spin" /> Deleting...</> : <><Trash2 size={18} /> Delete</>}
                             </button>
@@ -1194,7 +1194,7 @@ const StatusPill = ({ label, active }: { label: string; active: boolean }) => (
         active ? 'bg-success/10 text-success border-success/20'
                : 'bg-surface-raised/50 text-fg-subtle border-line-strong'
     }`}>
-        <span className={`w-2 h-2 rounded-full ${active ? 'bg-emerald-400' : 'bg-line-strong'}`} />
+        <span className={`w-2 h-2 rounded-full ${active ? 'bg-emerald-400' : 'bg-surface-high'}`} />
         {label}: {active ? 'Yes' : 'No'}
     </div>
 );

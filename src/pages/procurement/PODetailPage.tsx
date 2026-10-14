@@ -100,7 +100,7 @@ const PODetailPage = () => {
             case 'received': return 'bg-success/10 text-success border-success/20';
             case 'partially_received': return 'bg-warning/10 text-warning border-warning/20';
             case 'cancelled': return 'bg-rose-500/10 text-rose-400 border-rose-500/20';
-            default: return 'bg-line-strong/50 text-fg-muted border-line-strong';
+            default: return 'bg-surface-high text-fg-muted border-line-strong';
         }
     };
 
@@ -345,7 +345,7 @@ const PODetailPage = () => {
 
                             {po.acknowledgement_status && po.acknowledgement_status !== 'pending' ? (
                                 <div className="space-y-3">
-                                    <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border ${ACK_OPTIONS.find(o => o.value === po.acknowledgement_status)?.className || 'bg-line-strong/50 text-fg-muted border-line-strong'}`}>
+                                    <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border ${ACK_OPTIONS.find(o => o.value === po.acknowledgement_status)?.className || 'bg-surface-high text-fg-muted border-line-strong'}`}>
                                         {po.acknowledgement_status.replace(/_/g, ' ')}
                                     </span>
                                     {po.acknowledged_at && (
@@ -371,7 +371,7 @@ const PODetailPage = () => {
                             {['sent', 'acknowledged'].includes(po.status) && !showAckForm && (
                                 <button
                                     onClick={() => setShowAckForm(true)}
-                                    className="mt-4 w-full px-4 py-2.5 bg-surface-raised hover:bg-line-strong text-fg rounded-xl text-sm font-semibold transition-colors"
+                                    className="mt-4 w-full px-4 py-2.5 bg-surface-raised hover:bg-surface-high text-fg rounded-xl text-sm font-semibold transition-colors"
                                 >
                                     {po.acknowledgement_status && po.acknowledgement_status !== 'pending' ? 'Update acknowledgement' : 'Record acknowledgement'}
                                 </button>
@@ -432,7 +432,7 @@ const PODetailPage = () => {
                                         <button
                                             type="button"
                                             onClick={() => setShowAckForm(false)}
-                                            className="px-4 py-2.5 bg-surface-raised hover:bg-line-strong text-fg-muted rounded-xl text-sm font-bold transition-colors"
+                                            className="px-4 py-2.5 bg-surface-raised hover:bg-surface-high text-fg-muted rounded-xl text-sm font-bold transition-colors"
                                         >
                                             Cancel
                                         </button>
@@ -632,7 +632,7 @@ const PODetailPage = () => {
                                         <button
                                             onClick={() => handleStatusChange('closed')}
                                             disabled={!!statusAction}
-                                            className="px-4 py-2 bg-line-strong hover:bg-fg-subtle disabled:opacity-60 text-fg rounded-lg font-medium transition-all flex items-center gap-2"
+                                            className="px-4 py-2 bg-surface-high hover:bg-surface-high/80 disabled:opacity-60 text-fg rounded-lg font-medium transition-all flex items-center gap-2"
                                         >
                                             {statusAction === 'closed' ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}
                                             Close PO
@@ -644,7 +644,7 @@ const PODetailPage = () => {
                                 <button
                                     onClick={() => handleStatusChange('closed')}
                                     disabled={!!statusAction}
-                                    className="px-4 py-2 bg-line-strong hover:bg-fg-subtle disabled:opacity-60 text-fg rounded-lg font-medium transition-all flex items-center gap-2"
+                                    className="px-4 py-2 bg-surface-high hover:bg-surface-high/80 disabled:opacity-60 text-fg rounded-lg font-medium transition-all flex items-center gap-2"
                                 >
                                     {statusAction === 'closed' ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}
                                     Close PO
@@ -654,7 +654,7 @@ const PODetailPage = () => {
                                 <button
                                     onClick={() => handleStatusChange('closed')}
                                     disabled={!!statusAction}
-                                    className="px-4 py-2 bg-line-strong hover:bg-fg-subtle disabled:opacity-60 text-fg rounded-lg font-medium transition-all flex items-center gap-2"
+                                    className="px-4 py-2 bg-surface-high hover:bg-surface-high/80 disabled:opacity-60 text-fg rounded-lg font-medium transition-all flex items-center gap-2"
                                 >
                                     {statusAction === 'closed' ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}
                                     Close PO
@@ -671,7 +671,7 @@ const PODetailPage = () => {
                             )}
                             <button
                                 onClick={handlePrint}
-                                className="px-4 py-2 bg-line-strong hover:bg-line-strong text-fg rounded-lg font-medium transition-all flex items-center gap-2"
+                                className="px-4 py-2 bg-surface-high hover:bg-surface-high text-fg rounded-lg font-medium transition-all flex items-center gap-2"
                             >
                                 <FileText size={16} />
                                 Print PO

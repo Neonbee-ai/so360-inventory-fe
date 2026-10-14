@@ -1,7 +1,7 @@
 import React from 'react';
 
 export const Skeleton = ({ className }: { className?: string }) => (
-    <div className={`animate-pulse bg-line-strong/50 rounded${className ? ` ${className}` : ''}`} />
+    <div className={`animate-pulse bg-surface-high rounded${className ? ` ${className}` : ''}`} />
 );
 
 export const TableSkeleton = () => (

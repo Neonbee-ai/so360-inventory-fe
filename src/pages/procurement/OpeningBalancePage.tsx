@@ -217,7 +217,7 @@ const OpeningBalancePage = () => {
                         </button>
                         <button
                             onClick={() => navigate(`/procurement/grn/${result.grn?.id}`)}
-                            className="px-5 py-2.5 bg-line-strong hover:bg-line-strong text-fg rounded-xl font-semibold text-sm transition-all"
+                            className="px-5 py-2.5 bg-surface-high hover:bg-surface-high text-fg rounded-xl font-semibold text-sm transition-all"
                         >
                             View GRN
                         </button>

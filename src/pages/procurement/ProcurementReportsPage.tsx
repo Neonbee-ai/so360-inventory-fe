@@ -134,7 +134,7 @@ const ProcurementReportsPage = () => {
                 <button onClick={run} className="px-6 py-2 bg-primary hover:bg-primary-hover text-primary-fg rounded-xl text-sm font-bold transition-colors">
                     Run
                 </button>
-                <button onClick={exportCsv} className="px-6 py-2 bg-surface-raised hover:bg-line-strong text-fg rounded-xl text-sm font-bold transition-colors">
+                <button onClick={exportCsv} className="px-6 py-2 bg-surface-raised hover:bg-surface-high text-fg rounded-xl text-sm font-bold transition-colors">
                     Export CSV
                 </button>
             </div>

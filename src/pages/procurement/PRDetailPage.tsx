@@ -191,8 +191,8 @@ const PRDetailPage = () => {
             case 'converted_to_po': return 'bg-primary/10 text-primary border-primary/20';
             case 'partially_converted': return 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20';
             case 'fully_converted': return 'bg-primary/10 text-primary border-primary/20';
-            case 'closed': return 'bg-fg-subtle/10 text-fg-muted border-line-strong/20';
-            default: return 'bg-line-strong/50 text-fg-muted border-line-strong';
+            case 'closed': return 'bg-surface-sunken text-fg-muted border-line-strong/20';
+            default: return 'bg-surface-high text-fg-muted border-line-strong';
         }
     };
 
@@ -319,7 +319,7 @@ const PRDetailPage = () => {
                         <button
                             onClick={handleClosePR}
                             disabled={isLoading}
-                            className="w-full px-6 py-3 bg-line-strong hover:bg-line-strong disabled:opacity-50 disabled:cursor-not-allowed text-fg rounded-2xl font-bold transition-all"
+                            className="w-full px-6 py-3 bg-surface-high hover:bg-surface-high disabled:opacity-50 disabled:cursor-not-allowed text-fg rounded-2xl font-bold transition-all"
                         >
                             Close PR
                         </button>
@@ -571,7 +571,7 @@ const PRDetailPage = () => {
                                             <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border
                                                 ${po.status === 'sent' ? 'bg-primary/10 text-primary border-primary/20' :
                                                     po.status === 'received' ? 'bg-success/10 text-success border-success/20' :
-                                                        'bg-line-strong/50 text-fg-muted border-line-strong'}`}
+                                                        'bg-surface-high text-fg-muted border-line-strong'}`}
                                             >
                                                 {po.status}
                                             </span>

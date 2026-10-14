@@ -554,11 +554,11 @@ const CategoriesPage = () => {
                         <div className="flex items-center gap-1">
                             <button
                                 onClick={() => setViewMode('tree')}
-                                className={`px-2 py-0.5 rounded text-xs transition-colors ${viewMode === 'tree' ? 'bg-line-strong text-fg' : 'text-fg-subtle hover:text-fg-muted'}`}
+                                className={`px-2 py-0.5 rounded text-xs transition-colors ${viewMode === 'tree' ? 'bg-surface-high text-fg' : 'text-fg-subtle hover:text-fg-muted'}`}
                             >Tree</button>
                             <button
                                 onClick={() => setViewMode('cards')}
-                                className={`px-2 py-0.5 rounded text-xs transition-colors ${viewMode === 'cards' ? 'bg-line-strong text-fg' : 'text-fg-subtle hover:text-fg-muted'}`}
+                                className={`px-2 py-0.5 rounded text-xs transition-colors ${viewMode === 'cards' ? 'bg-surface-high text-fg' : 'text-fg-subtle hover:text-fg-muted'}`}
                             >Cards</button>
                         </div>
                     </div>
@@ -653,7 +653,7 @@ const CategoriesPage = () => {
                                             type="button"
                                             onClick={() => setShowAvailability(v => !v)}
                                             aria-pressed={showAvailability}
-                                            className="flex items-center gap-2 bg-surface-raised hover:bg-line-strong text-fg px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                                            className="flex items-center gap-2 bg-surface-raised hover:bg-surface-high text-fg px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
                                         >
                                             <LayoutGrid size={14} /> {showAvailability ? 'Hide availability' : 'Availability'}
                                         </button>

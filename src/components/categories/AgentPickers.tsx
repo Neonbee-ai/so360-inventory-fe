@@ -71,7 +71,7 @@ export const AgentMultiSelect: React.FC<AgentMultiSelectProps> = ({
                     const text = name || shortId(id);
                     return (
                         <span key={id} title={name ? undefined : id} data-unknown={name ? undefined : 'true'}
-                            className="inline-flex items-center gap-1 rounded-full bg-line-strong px-2 py-0.5 text-xs text-fg">
+                            className="inline-flex items-center gap-1 rounded-full bg-surface-high px-2 py-0.5 text-xs text-fg">
                             {text}
                             {!disabled && (
                                 <button type="button" aria-label={`Remove ${text}`} onClick={() => remove(id)}

@@ -41,9 +41,9 @@ export const STATUS_STYLE: Record<UnitStatus, { label: string; short: string; cl
     available: { label: 'Available', short: 'A', cls: 'bg-success/15 text-success border-success/40 hover:bg-success/25' },
     on_hold: { label: 'On hold', short: 'H', cls: 'bg-warning/15 text-warning border-warning/40 hover:bg-warning/25' },
     sold: { label: 'Sold', short: 'S', cls: 'bg-rose-500/15 text-rose-300 border-rose-500/40 hover:bg-rose-500/25' },
-    blocked: { label: 'Blocked', short: 'B', cls: 'bg-fg-subtle/20 text-fg-muted border-line-strong/50 hover:bg-fg-subtle/30' },
+    blocked: { label: 'Blocked', short: 'B', cls: 'bg-surface-sunken text-fg-muted border-line-strong/50 hover:bg-surface-high' },
     cancelled: { label: 'Cancelled', short: 'C', cls: 'bg-orange-500/15 text-orange-300 border-orange-500/40 hover:bg-orange-500/25' },
-    unavailable: { label: 'Unavailable', short: 'U', cls: 'bg-line-strong/40 text-fg-muted border-line-strong/60 hover:bg-line-strong/60' },
+    unavailable: { label: 'Unavailable', short: 'U', cls: 'bg-surface-high text-fg-muted border-line-strong/60 hover:bg-surface-high' },
 };
 
 const towerCounts = (t: AvailabilityTower): AvailabilityCounts => toCounts(t);

@@ -466,9 +466,9 @@ const POListPage = () => {
                                                 po.status === 'acknowledged' ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' :
                                                 po.status === 'partially_received' ? 'bg-warning/10 text-warning border-warning/20' :
                                                 po.status === 'received' ? 'bg-success/10 text-success border-success/20' :
-                                                    po.status === 'closed' ? 'bg-fg-subtle/10 text-fg-muted border-line-strong/20' :
+                                                    po.status === 'closed' ? 'bg-surface-sunken text-fg-muted border-line-strong/20' :
                                                         po.status === 'cancelled' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' :
-                                                    'bg-line-strong/50 text-fg-muted border-line-strong'}
+                                                    'bg-surface-high text-fg-muted border-line-strong'}
                                         `}>
                                             {po.status}
                                         </span>
@@ -722,7 +722,7 @@ const POListPage = () => {
                                 >
                                     {submitting ? 'Creating...' : 'Create Purchase Order'}
                                 </button>
-                                <button type="button" onClick={() => setShowForm(false)} className="px-6 py-4 bg-surface-raised hover:bg-line-strong text-fg-muted rounded-2xl font-bold transition-all active:scale-95">
+                                <button type="button" onClick={() => setShowForm(false)} className="px-6 py-4 bg-surface-raised hover:bg-surface-high text-fg-muted rounded-2xl font-bold transition-all active:scale-95">
                                     Cancel
                                 </button>
                             </div>

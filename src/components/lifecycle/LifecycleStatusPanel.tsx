@@ -19,7 +19,7 @@ interface LifecycleStatusPanelProps {
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bgColor: string; borderColor: string }> = {
-    draft: { label: 'Draft', color: 'text-fg-muted', bgColor: 'bg-fg-subtle/10', borderColor: 'border-line-strong/20' },
+    draft: { label: 'Draft', color: 'text-fg-muted', bgColor: 'bg-surface-sunken', borderColor: 'border-line-strong/20' },
     pending_review: { label: 'Pending Review', color: 'text-warning', bgColor: 'bg-warning/10', borderColor: 'border-warning/20' },
     active: { label: 'Active', color: 'text-success', bgColor: 'bg-success/10', borderColor: 'border-success/20' },
     archived: { label: 'Archived', color: 'text-rose-400', bgColor: 'bg-rose-500/10', borderColor: 'border-rose-500/20' },
@@ -97,7 +97,7 @@ const LifecycleStatusPanel: React.FC<LifecycleStatusPanelProps> = ({
             case 'primary':
                 return `${base} bg-primary hover:bg-primary-hover text-primary-fg`;
             case 'secondary':
-                return `${base} bg-surface-raised hover:bg-line-strong text-fg-muted border border-line-strong`;
+                return `${base} bg-surface-raised hover:bg-surface-high text-fg-muted border border-line-strong`;
             case 'danger':
                 return `${base} bg-rose-600/10 hover:bg-rose-600/20 text-rose-400 border border-rose-500/20`;
         }

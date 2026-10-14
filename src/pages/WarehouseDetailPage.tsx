@@ -243,7 +243,7 @@ const WarehouseDetailPage = () => {
                 <div className="lg:col-span-1">
                     <div className="bg-surface/50 border border-line rounded-2xl p-6 relative overflow-hidden">
                         <div className="absolute top-0 right-0 p-4 flex items-center gap-2">
-                            <span className={`px-2 py-1 rounded text-[10px] uppercase font-bold border ${warehouse.is_active ? 'bg-success/10 text-success border-success/20' : 'bg-fg-subtle/10 text-fg-muted'}`}>
+                            <span className={`px-2 py-1 rounded text-[10px] uppercase font-bold border ${warehouse.is_active ? 'bg-success/10 text-success border-success/20' : 'bg-surface-sunken text-fg-muted'}`}>
                                 {warehouse.is_active ? 'Operational' : 'Inactive'}
                             </span>
                             {can('warehouses.create') && (
@@ -330,14 +330,14 @@ const WarehouseDetailPage = () => {
                                                     <>
                                                         <button
                                                             onClick={() => openLocationModal(loc)}
-                                                            className="p-1.5 hover:bg-line-strong rounded-lg transition-colors text-fg-muted hover:text-primary"
+                                                            className="p-1.5 hover:bg-surface-high rounded-lg transition-colors text-fg-muted hover:text-primary"
                                                             title="Edit Location"
                                                         >
                                                             <Edit2 size={14} />
                                                         </button>
                                                         <button
                                                             onClick={() => confirmDeleteLocation(loc)}
-                                                            className="p-1.5 hover:bg-line-strong rounded-lg transition-colors text-fg-muted hover:text-rose-400"
+                                                            className="p-1.5 hover:bg-surface-high rounded-lg transition-colors text-fg-muted hover:text-rose-400"
                                                             title="Delete Location"
                                                         >
                                                             <Trash2 size={14} />
@@ -473,7 +473,7 @@ const WarehouseDetailPage = () => {
                             type="button"
                             onClick={() => setIsEditModalOpen(false)}
                             disabled={isSaving}
-                            className="flex-1 bg-surface-raised hover:bg-line-strong text-fg font-semibold py-2.5 rounded-lg transition-all"
+                            className="flex-1 bg-surface-raised hover:bg-surface-high text-fg font-semibold py-2.5 rounded-lg transition-all"
                         >
                             Cancel
                         </button>
@@ -532,7 +532,7 @@ const WarehouseDetailPage = () => {
                             type="button"
                             onClick={() => { setIsLocationModalOpen(false); setEditingLocation(null); }}
                             disabled={isSavingLocation}
-                            className="flex-1 bg-surface-raised hover:bg-line-strong text-fg font-semibold py-2.5 rounded-lg transition-all"
+                            className="flex-1 bg-surface-raised hover:bg-surface-high text-fg font-semibold py-2.5 rounded-lg transition-all"
                         >
                             Cancel
                         </button>
@@ -570,7 +570,7 @@ const WarehouseDetailPage = () => {
                             <button
                                 onClick={() => setShowDeleteConfirm(false)}
                                 disabled={isDeleting}
-                                className="flex-1 bg-surface-raised hover:bg-line-strong text-fg font-semibold py-2.5 rounded-lg transition-all"
+                                className="flex-1 bg-surface-raised hover:bg-surface-high text-fg font-semibold py-2.5 rounded-lg transition-all"
                             >
                                 Cancel
                             </button>
@@ -609,7 +609,7 @@ const WarehouseDetailPage = () => {
                             <button
                                 onClick={() => setDeletingLocationId(null)}
                                 disabled={isDeletingLocation}
-                                className="flex-1 bg-surface-raised hover:bg-line-strong text-fg font-semibold py-2.5 rounded-lg transition-all"
+                                className="flex-1 bg-surface-raised hover:bg-surface-high text-fg font-semibold py-2.5 rounded-lg transition-all"
                             >
                                 Cancel
                             </button>

@@ -128,7 +128,7 @@ const ItemsPage = () => {
             accessor: (item: Item) => (
                 <span className={`px-2 py-1 rounded-full text-[10px] uppercase font-bold border ${item.is_active
                     ? 'bg-success/10 text-success border-success/20'
-                    : 'bg-fg-subtle/10 text-fg-muted border-line-strong/20'
+                    : 'bg-surface-sunken text-fg-muted border-line-strong/20'
                     }`}>
                     {item.is_active ? 'Active' : 'Inactive'}
                 </span>
@@ -149,7 +149,7 @@ const ItemsPage = () => {
                         <div className="relative group/tooltip">
                             <button
                                 onClick={() => navigate('/inventory/items/bulk-import')}
-                                className="flex items-center gap-2 bg-surface-raised hover:bg-line-strong border border-line-strong text-fg-muted hover:text-fg px-4 py-2.5 rounded-lg font-semibold text-sm transition-all active:scale-95"
+                                className="flex items-center gap-2 bg-surface-raised hover:bg-surface-high border border-line-strong text-fg-muted hover:text-fg px-4 py-2.5 rounded-lg font-semibold text-sm transition-all active:scale-95"
                             >
                                 <Upload size={16} />
                                 Bulk Import

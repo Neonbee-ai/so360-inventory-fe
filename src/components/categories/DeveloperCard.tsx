@@ -140,7 +140,7 @@ export const DeveloperCard: React.FC<DeveloperCardProps> = ({ partnerId, project
     const statusCls = status === 'active'
         ? 'bg-success/15 text-success'
         : status
-            ? 'bg-line-strong text-fg-muted'
+            ? 'bg-surface-high text-fg-muted'
             : '';
 
     return (

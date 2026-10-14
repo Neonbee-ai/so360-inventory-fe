@@ -329,7 +329,7 @@ const VendorDetailPage = () => {
                                                     <span className={`px-2 py-1 rounded text-[10px] uppercase font-bold ${
                                                         po.status === 'completed' ? 'bg-success/10 text-success' :
                                                         po.status === 'pending' ? 'bg-warning/10 text-warning' :
-                                                        'bg-fg-subtle/10 text-fg-muted'
+                                                        'bg-surface-sunken text-fg-muted'
                                                     }`}>
                                                         {po.status}
                                                     </span>
@@ -390,7 +390,7 @@ const VendorDetailPage = () => {
                                                         inv.status === 'paid' ? 'bg-success/10 text-success' :
                                                         inv.status === 'pending' ? 'bg-warning/10 text-warning' :
                                                         inv.status === 'overdue' ? 'bg-rose-500/10 text-rose-400' :
-                                                        'bg-fg-subtle/10 text-fg-muted'
+                                                        'bg-surface-sunken text-fg-muted'
                                                     }`}>
                                                         {inv.status}
                                                     </span>
@@ -542,7 +542,7 @@ const VendorDetailPage = () => {
                             type="button"
                             onClick={() => setIsEditModalOpen(false)}
                             disabled={isSaving}
-                            className="flex-1 bg-surface-raised hover:bg-line-strong text-fg font-semibold py-2.5 rounded-lg transition-all"
+                            className="flex-1 bg-surface-raised hover:bg-surface-high text-fg font-semibold py-2.5 rounded-lg transition-all"
                         >
                             Cancel
                         </button>
@@ -580,7 +580,7 @@ const VendorDetailPage = () => {
                             <button
                                 onClick={() => setShowDeleteConfirm(false)}
                                 disabled={isDeleting}
-                                className="flex-1 bg-surface-raised hover:bg-line-strong text-fg font-semibold py-2.5 rounded-lg transition-all"
+                                className="flex-1 bg-surface-raised hover:bg-surface-high text-fg font-semibold py-2.5 rounded-lg transition-all"
                             >
                                 Cancel
                             </button>

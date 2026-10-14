@@ -125,7 +125,7 @@ const ProcurementDashboardPage = () => {
                 </div>
                 <button
                     onClick={load}
-                    className="px-4 py-2 bg-surface-raised hover:bg-line-strong text-fg-muted rounded-xl text-sm font-semibold transition-colors"
+                    className="px-4 py-2 bg-surface-raised hover:bg-surface-high text-fg-muted rounded-xl text-sm font-semibold transition-colors"
                 >
                     Refresh
                 </button>
@@ -282,13 +282,13 @@ const ProcurementDashboardPage = () => {
             <div className="flex gap-3">
                 <button
                     onClick={() => navigate('/procurement/reports')}
-                    className="px-6 py-3 bg-surface-raised hover:bg-line-strong text-fg rounded-xl font-semibold transition-colors"
+                    className="px-6 py-3 bg-surface-raised hover:bg-surface-high text-fg rounded-xl font-semibold transition-colors"
                 >
                     Open Reports
                 </button>
                 <button
                     onClick={() => navigate('/procurement/vendor-performance')}
-                    className="px-6 py-3 bg-surface-raised hover:bg-line-strong text-fg rounded-xl font-semibold transition-colors"
+                    className="px-6 py-3 bg-surface-raised hover:bg-surface-high text-fg rounded-xl font-semibold transition-colors"
                 >
                     Vendor Performance
                 </button>

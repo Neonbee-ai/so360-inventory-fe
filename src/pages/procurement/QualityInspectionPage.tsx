@@ -9,7 +9,7 @@ export const QC_STATUS_STYLES: Record<string, string> = {
     pending: 'bg-warning/10 text-warning border-warning/20',
     in_progress: 'bg-primary/10 text-primary border-primary/20',
     completed: 'bg-success/10 text-success border-success/20',
-    cancelled: 'bg-fg-subtle/10 text-fg-muted border-line-strong/20',
+    cancelled: 'bg-surface-sunken text-fg-muted border-line-strong/20',
 };
 
 const RESULT_STYLES: Record<string, string> = {
@@ -295,7 +295,7 @@ const QualityInspectionPage = () => {
                                 <button type="submit" disabled={saving} className="flex-1 px-6 py-4 bg-amber-600 hover:bg-amber-500 disabled:opacity-60 text-primary-fg rounded-2xl font-bold">
                                     {saving ? 'Opening...' : 'Open Inspection'}
                                 </button>
-                                <button type="button" onClick={() => setShowOpenForm(false)} className="px-6 py-4 bg-surface-raised hover:bg-line-strong text-fg-muted rounded-2xl font-bold">
+                                <button type="button" onClick={() => setShowOpenForm(false)} className="px-6 py-4 bg-surface-raised hover:bg-surface-high text-fg-muted rounded-2xl font-bold">
                                     Cancel
                                 </button>
                             </div>
@@ -395,7 +395,7 @@ const QualityInspectionPage = () => {
                                 <button type="submit" disabled={saving} className="flex-1 px-6 py-4 bg-success hover:bg-success disabled:opacity-60 text-primary-fg rounded-2xl font-bold">
                                     {saving ? 'Recording...' : 'Record & Release Stock'}
                                 </button>
-                                <button type="button" onClick={() => setActive(null)} className="px-6 py-4 bg-surface-raised hover:bg-line-strong text-fg-muted rounded-2xl font-bold">
+                                <button type="button" onClick={() => setActive(null)} className="px-6 py-4 bg-surface-raised hover:bg-surface-high text-fg-muted rounded-2xl font-bold">
                                     Cancel
                                 </button>
                             </div>

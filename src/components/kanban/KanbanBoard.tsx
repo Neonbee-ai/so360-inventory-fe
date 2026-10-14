@@ -114,7 +114,7 @@ export const KanbanBoard = ({ deals, stages, onDealClick, onStageChange }: Kanba
 
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-2">
-                                            <div className="w-5 h-5 rounded-full bg-line-strong flex items-center justify-center text-[8px] font-black overflow-hidden border border-line-strong">
+                                            <div className="w-5 h-5 rounded-full bg-surface-high flex items-center justify-center text-[8px] font-black overflow-hidden border border-line-strong">
                                                 {deal.owner.avatar_url ? (
                                                     <img src={deal.owner.avatar_url} alt={deal.owner.full_name} />
                                                 ) : (

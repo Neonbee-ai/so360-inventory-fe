@@ -379,7 +379,7 @@ const VendorListPage = () => {
                             type="button"
                             onClick={() => setShowCreateModal(false)}
                             disabled={isCreating}
-                            className="flex-1 bg-surface-raised hover:bg-line-strong text-fg font-semibold py-2.5 rounded-lg transition-all"
+                            className="flex-1 bg-surface-raised hover:bg-surface-high text-fg font-semibold py-2.5 rounded-lg transition-all"
                         >
                             Cancel
                         </button>
@@ -417,7 +417,7 @@ const VendorListPage = () => {
                             <button
                                 onClick={() => setDeletingVendor(null)}
                                 disabled={isDeleting}
-                                className="flex-1 bg-surface-raised hover:bg-line-strong text-fg font-semibold py-2.5 rounded-lg transition-all"
+                                className="flex-1 bg-surface-raised hover:bg-surface-high text-fg font-semibold py-2.5 rounded-lg transition-all"
                             >
                                 Cancel
                             </button>

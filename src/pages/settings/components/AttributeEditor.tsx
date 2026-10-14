@@ -139,7 +139,7 @@ const AttributeEditor: React.FC<AttributeEditorProps> = ({ onSave, onCancel, ini
                     <label className={labelClass}>Options</label>
                     <div className="flex flex-wrap gap-1.5 mb-2">
                         {options.map((opt, i) => (
-                            <span key={i} className="bg-line-strong text-fg-muted px-2 py-0.5 rounded text-xs flex items-center gap-1">
+                            <span key={i} className="bg-surface-high text-fg-muted px-2 py-0.5 rounded text-xs flex items-center gap-1">
                                 {opt}
                                 <button type="button" onClick={() => removeOption(i)} className="text-fg-subtle hover:text-rose-400"><X size={10} /></button>
                             </span>
@@ -154,7 +154,7 @@ const AttributeEditor: React.FC<AttributeEditorProps> = ({ onSave, onCancel, ini
                             placeholder="Add option..."
                             onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addOption(); } }}
                         />
-                        <button type="button" onClick={addOption} className="px-3 py-1 bg-line-strong hover:bg-line-strong rounded text-xs text-fg-muted">
+                        <button type="button" onClick={addOption} className="px-3 py-1 bg-surface-high hover:bg-surface-high rounded text-xs text-fg-muted">
                             <Plus size={14} />
                         </button>
                     </div>

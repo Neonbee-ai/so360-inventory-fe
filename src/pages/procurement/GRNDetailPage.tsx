@@ -92,7 +92,7 @@ const GRNDetailPage = () => {
         sum + (acceptedOf(line) * (line.po_line?.unit_price || 0)), 0) || 0;
 
     const INSPECTION_LABELS: Record<string, { label: string; className: string }> = {
-        not_required: { label: 'Not required', className: 'bg-line-strong/50 text-fg-muted border-line-strong' },
+        not_required: { label: 'Not required', className: 'bg-surface-high text-fg-muted border-line-strong' },
         pending: { label: 'Inspection pending', className: 'bg-warning/10 text-warning border-warning/20' },
         in_progress: { label: 'Inspection in progress', className: 'bg-primary/10 text-primary border-primary/20' },
         passed: { label: 'Passed', className: 'bg-success/10 text-success border-success/20' },
