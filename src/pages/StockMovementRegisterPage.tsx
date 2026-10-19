@@ -1,18 +1,20 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
-    Plus, History, MapPin, AlertCircle, Package, Search, X,
-    ArrowDownCircle, ArrowUpCircle, SlidersHorizontal, ArrowRightLeft, CheckCircle2,
+    Plus, MapPin, AlertCircle, Package, Search, X,
+    ArrowDownCircle, ArrowUpCircle, SlidersHorizontal, ArrowRightLeft,
 } from 'lucide-react';
 import { inventoryService } from '../services/inventoryService';
 import { StockMovement, Item, Warehouse } from '../types/inventory';
-import { Table } from '../components/common/Table';
-import { Modal } from '../components/common/Modal';
 import { useAuth } from '../hooks/useAuth';
 import { useActivity, useShellBridge } from '@so360/shell-context';
 import { useInventoryFormatters } from '../utils/formatters';
 import { optional, validateReference } from '../utils/validators';
-import { FeatureGate } from '@so360/design-system';
+import {
+    FeatureGate, ListPageTemplate, DataTable, Button, IconButton, Modal, TextField, Textarea, Select,
+    SegmentedControl, Alert, Card, EmptyState,
+    type DataTableColumn,
+} from '@so360/design-system';
 
 type TransactionType = 'stock_in' | 'stock_out' | 'adjustment' | 'transfer';
 
@@ -163,51 +165,50 @@ const ItemSearchSelect = ({
 
     if (value && !open) {
         return (
-            <div className="flex items-center justify-between w-full bg-surface-raised border border-line-strong rounded-lg px-4 py-2">
+            <div className="flex w-full items-center justify-between rounded-nb-md border border-line-strong bg-surface-raised px-nb-4 py-nb-2">
                 <span className="text-fg">{itemName}</span>
-                <button
-                    type="button"
-                    aria-label="Clear item"
+                <IconButton
+                    label="Clear item"
+                    variant="ghost"
+                    size="sm"
+                    icon={<X size={16} />}
                     onClick={() => { onSelect(null); setQuery(''); setOpen(true); }}
-                    className="text-fg-muted hover:text-fg"
-                >
-                    <X size={16} />
-                </button>
+                />
             </div>
         );
     }
 
     return (
         <div className="relative">
-            <div className="flex items-center gap-2 bg-surface-raised border border-line-strong rounded-lg px-3 py-2 focus-within:ring-2 focus-within:ring-focus/50">
-                <Search size={16} className="text-fg-subtle" />
-                <input
-                    type="text"
-                    disabled={disabled}
-                    placeholder="Search by item code or name..."
-                    aria-label="Search items"
-                    value={query}
-                    onFocus={() => setOpen(true)}
-                    onChange={(e) => setQuery(e.target.value)}
-                    className="flex-1 bg-transparent focus:outline-none text-fg"
-                />
-            </div>
+            <TextField
+                name="item-search"
+                type="text"
+                disabled={disabled}
+                placeholder="Search by item code or name..."
+                aria-label="Search items"
+                leadingIcon={<Search size={16} />}
+                value={query}
+                onFocus={() => setOpen(true)}
+                onChange={(e: any) => setQuery(e.target.value)}
+            />
             {open && (
-                <div className="absolute z-20 mt-1 w-full max-h-56 overflow-y-auto bg-surface-raised border border-line-strong rounded-lg shadow-xl">
-                    {searching && <div className="px-4 py-2 text-fg-muted text-sm">Searching…</div>}
+                <div className="absolute z-20 mt-nb-1 max-h-56 w-full overflow-y-auto rounded-nb-md border border-line-strong bg-surface-raised shadow-overlay">
+                    {searching && <div className="px-nb-4 py-nb-2 text-nb-caption text-fg-muted">Searching…</div>}
                     {!searching && results.length === 0 && (
-                        <div className="px-4 py-2 text-fg-muted text-sm">No items found</div>
+                        <div className="px-nb-4 py-nb-2 text-nb-caption text-fg-muted">No items found</div>
                     )}
                     {results.map((i) => (
-                        <button
+                        <Button
                             key={i.id}
                             type="button"
+                            variant="ghost"
+                            fullWidth
+                            className="justify-start text-left"
                             onClick={() => { onSelect(i); setOpen(false); }}
-                            className="w-full text-left px-4 py-2 hover:bg-surface-high text-fg"
                         >
                             <span className="font-medium">{i.name}</span>
-                            <span className="text-fg-muted text-xs ml-2">{i.sku}</span>
-                        </button>
+                            <span className="ml-nb-2 text-nb-caption text-fg-muted">{i.sku}</span>
+                        </Button>
                     ))}
                 </div>
             )}
@@ -243,7 +244,6 @@ const StockMovementRegisterPage = () => {
     const [workOrdersError, setWorkOrdersError] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [showFilters, setShowFilters] = useState(false);
 
     const [orgDefaults, setOrgDefaults] = useState({
         allow_negative_stock: false,
@@ -556,10 +556,11 @@ const StockMovementRegisterPage = () => {
         return byRef;
     }, [movements]);
 
-    const columns = [
+    const columns: DataTableColumn<StockMovement>[] = [
         {
+            key: 'date',
             header: 'Date',
-            accessor: (m: StockMovement) => (
+            render: (m: StockMovement) => (
                 <div className="flex flex-col">
                     <span className="text-fg">
                         {formatters.formatDate(m.transaction_date || m.created_at)}
@@ -571,8 +572,9 @@ const StockMovementRegisterPage = () => {
             ),
         },
         {
+            key: 'transaction_type',
             header: 'Transaction Type',
-            accessor: (m: StockMovement) => {
+            render: (m: StockMovement) => {
                 const badge = badgeFor(m.movement_type || (m as any).type);
                 return (
                     <span
@@ -585,16 +587,18 @@ const StockMovementRegisterPage = () => {
             },
         },
         {
+            key: 'reference',
             header: 'Reference',
-            accessor: (m: StockMovement) => (
+            render: (m: StockMovement) => (
                 <span className="font-mono text-fg text-xs">
                     {m.reference_number || '—'}
                 </span>
             ),
         },
         {
+            key: 'item',
             header: 'Item',
-            accessor: (m: StockMovement) => (
+            render: (m: StockMovement) => (
                 <div className="flex items-center gap-2">
                     <Package size={14} className="text-fg-subtle" />
                     <span className="font-semibold text-fg">{m.items?.name || '—'}</span>
@@ -602,8 +606,9 @@ const StockMovementRegisterPage = () => {
             ),
         },
         {
+            key: 'warehouse',
             header: 'Warehouse',
-            accessor: (m: StockMovement) => {
+            render: (m: StockMovement) => {
                 const context = m.reference_number
                     ? transferContext.get(m.reference_number)
                     : undefined;
@@ -627,8 +632,9 @@ const StockMovementRegisterPage = () => {
             },
         },
         {
+            key: 'qty',
             header: 'Qty',
-            accessor: (m: StockMovement) =>
+            render: (m: StockMovement) =>
                 m.quantity > 0 ? (
                     <span className="text-success font-bold">+{m.quantity}</span>
                 ) : (
@@ -636,8 +642,9 @@ const StockMovementRegisterPage = () => {
                 ),
         },
         {
+            key: 'balance',
             header: 'Balance',
-            accessor: (m: StockMovement) =>
+            render: (m: StockMovement) =>
                 m.balance_after === null || m.balance_after === undefined ? (
                     <span className="text-fg-subtle">—</span>
                 ) : (
@@ -655,8 +662,9 @@ const StockMovementRegisterPage = () => {
                 ),
         },
         {
+            key: 'allocation',
             header: 'Allocation',
-            accessor: (m: StockMovement) => (
+            render: (m: StockMovement) => (
                 <div className="flex flex-col text-xs">
                     {m.project_name_snapshot && (
                         <span className="text-fg-muted">Project: {m.project_name_snapshot}</span>
@@ -677,8 +685,9 @@ const StockMovementRegisterPage = () => {
             ),
         },
         {
+            key: 'reason_remarks',
             header: 'Reason / Remarks',
-            accessor: (m: StockMovement) => {
+            render: (m: StockMovement) => {
                 const reason = reasonLabel(m.reason_code);
                 return (
                     <div className="flex flex-col text-xs max-w-[220px]">
@@ -692,282 +701,201 @@ const StockMovementRegisterPage = () => {
                     </div>
                 );
             },
-            className: 'max-w-[220px]',
         },
     ];
 
-    const inputClass =
-        'w-full bg-surface-raised border border-line-strong rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-focus/50 text-fg';
-    /** Same input, but wearing its error state. */
-    const fieldClass = (field: string) =>
-        errorFor(field)
-            ? `${inputClass} border-rose-500/60 focus:ring-rose-500/40`
-            : inputClass;
     /** Error text rendered directly beneath the field it belongs to. */
     const FieldError = ({ field }: { field: string }) => {
         const message = errorFor(field);
         if (!message) return null;
         return (
-            <p role="alert" data-testid={`error-${field}`} className="text-rose-400 text-xs mt-1">
+            <p role="alert" data-testid={`error-${field}`} className="mt-nb-1 text-nb-caption text-danger">
                 {message}
             </p>
         );
     };
-    const labelClass = 'block text-sm font-medium text-fg-muted mb-1.5';
-    const sectionClass = 'border border-line rounded-xl p-4 bg-surface/40 space-y-4';
-    const sectionTitle = 'text-xs font-bold uppercase tracking-wide text-fg-muted';
+    const sectionTitle = (t: string) => t;
+
+    const filterValues: Record<string, any> = { ...filters };
+    const handleFilterChange = (next: Record<string, any>) => {
+        setFilters((prev) => {
+            const merged: any = { ...prev };
+            Object.keys(prev).forEach((k) => { merged[k] = next[k] ? String(next[k]) : ''; });
+            return merged;
+        });
+    };
+    const clearFilters = () =>
+        setFilters({
+            movement_type: '', reference_number: '', warehouse_id: '', project_id: '',
+            work_order_id: '', source_type: '', date_from: '', date_to: '',
+        });
+
+    const typeOptions: { value: TransactionType; label: string; icon: any }[] = [
+        { value: 'stock_in', label: 'Stock In', icon: ArrowDownCircle },
+        { value: 'stock_out', label: 'Stock Out', icon: ArrowUpCircle },
+        { value: 'adjustment', label: 'Adjustment', icon: SlidersHorizontal },
+        { value: 'transfer', label: 'Transfer', icon: ArrowRightLeft },
+    ];
+    const warehouseOptions = warehouses.map((w) => ({ value: w.id, label: w.name }));
+    const projectPlaceholder = projectsLoading
+        ? 'Loading projects…'
+        : projectsError
+            ? 'Could not load projects.'
+            : projects.length === 0
+                ? 'No active projects available.'
+                : 'Not linked';
+    const workOrderPlaceholder = workOrdersLoading
+        ? 'Loading work orders…'
+        : workOrdersError
+            ? 'Could not load work orders.'
+            : availableWorkOrders.length === 0
+                ? 'No active work orders available.'
+                : 'Not linked';
 
     return (
-        <div className="p-8">
-            <header className="mb-8 flex items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold text-fg tracking-tight flex items-center gap-3">
-                        <History className="text-primary" /> Stock Transactions
-                    </h1>
-                    <p className="text-fg-muted mt-1">
-                        Inventory movement register — every movement traceable end to end
-                    </p>
-                </div>
-                <div className="flex items-center gap-3">
-                    <button
-                        onClick={() => setShowFilters((s) => !s)}
-                        className="flex items-center gap-2 bg-surface-raised hover:bg-surface-high text-fg px-4 py-2.5 rounded-lg font-semibold transition-all"
+        <ListPageTemplate
+            title="Stock Transactions"
+            description="Inventory movement register — every movement traceable end to end"
+            primaryAction={
+                can('stock.adjust') ? (
+                    <FeatureGate
+                        state={adjustStockState}
+                        loading={shell?.effectiveFlagsLoaded === false}
+                        onUpgradeClick={() => navigate('/org/billing')}
                     >
-                        <SlidersHorizontal size={18} />
-                        Filters
-                    </button>
-                    {can('stock.adjust') && (
-                        <FeatureGate
-                            state={adjustStockState}
-                            loading={shell?.effectiveFlagsLoaded === false}
-                            onUpgradeClick={() => navigate('/org/billing')}
+                        <Button
+                            variant="primary"
+                            leftIcon={<Plus size={16} />}
+                            onClick={() => { resetForm(); setIsModalOpen(true); }}
                         >
-                            <button
-                                onClick={() => { resetForm(); setIsModalOpen(true); }}
-                                className="flex items-center gap-2 bg-primary hover:bg-primary-hover text-primary-fg px-4 py-2.5 rounded-lg font-semibold transition-all shadow-lg shadow-blue-900/20 active:scale-95"
-                            >
-                                <Plus size={20} />
-                                New Transaction
-                            </button>
-                        </FeatureGate>
-                    )}
-                </div>
-            </header>
+                            New Transaction
+                        </Button>
+                    </FeatureGate>
+                ) : undefined
+            }
+            filterConfig={{
+                fields: [
+                    {
+                        key: 'movement_type', label: 'Movement Type', type: 'select',
+                        options: [
+                            { value: 'inbound', label: 'Inbound' },
+                            { value: 'outbound', label: 'Outbound' },
+                            { value: 'adjustment', label: 'Adjustment' },
+                            { value: 'transfer', label: 'Transfer' },
+                        ],
+                    },
+                    {
+                        key: 'reference_number', label: 'Reference Number', type: 'custom',
+                        render: (v: any, set: (n: any) => void) => (
+                            <TextField
+                                name="filter-reference"
+                                type="text"
+                                value={typeof v === 'string' ? v : ''}
+                                placeholder="STK-…"
+                                onChange={(e: any) => set(e.target.value || null)}
+                            />
+                        ),
+                    },
+                    { key: 'warehouse_id', label: 'Warehouse', type: 'select', options: warehouseOptions },
+                    { key: 'source_type', label: 'Source', type: 'select', options: SOURCE_TYPES.map((s) => ({ value: s.value, label: s.label })) },
+                    { key: 'project_id', label: 'Project', type: 'select', options: projects.map((p) => ({ value: p.id, label: p.title || p.name })) },
+                    { key: 'work_order_id', label: 'Work Order', type: 'select', options: workOrders.map((w) => ({ value: w.id, label: w.code || w.id })) },
+                    { key: 'date_from', label: 'From Date', type: 'date' },
+                    { key: 'date_to', label: 'To Date', type: 'date' },
+                ],
+                values: filterValues,
+                onChange: handleFilterChange,
+                onClear: clearFilters,
+            }}
+            loading={isLoading}
+        >
+            {error && !isModalOpen && <Alert variant="error" className="mb-nb-4">{error}</Alert>}
 
-            {error && !isModalOpen && (
-                <div className="mb-6 bg-rose-500/10 border border-rose-500/20 text-rose-400 px-4 py-3 rounded-lg flex items-center gap-3">
-                    <AlertCircle size={18} />
-                    <span>{error}</span>
-                </div>
-            )}
-
-            {showFilters && (
-                <div className="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4 border border-line rounded-xl p-4 bg-surface/40">
-                    <div>
-                        <label className={labelClass}>Movement Type</label>
-                        <select
-                            value={filters.movement_type}
-                            aria-label="Filter movement type"
-                            onChange={(e) => setFilters({ ...filters, movement_type: e.target.value })}
-                            className={inputClass}
-                        >
-                            <option value="">All</option>
-                            <option value="inbound">Inbound</option>
-                            <option value="outbound">Outbound</option>
-                            <option value="adjustment">Adjustment</option>
-                            <option value="transfer">Transfer</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label className={labelClass}>Reference Number</label>
-                        <input
-                            type="text"
-                            value={filters.reference_number}
-                            onChange={(e) => setFilters({ ...filters, reference_number: e.target.value })}
-                            placeholder="STK-…"
-                            className={inputClass}
-                        />
-                    </div>
-                    <div>
-                        <label className={labelClass}>Warehouse</label>
-                        <select
-                            value={filters.warehouse_id}
-                            aria-label="Filter warehouse"
-                            onChange={(e) => setFilters({ ...filters, warehouse_id: e.target.value })}
-                            className={inputClass}
-                        >
-                            <option value="">All</option>
-                            {warehouses.map((w) => (
-                                <option key={w.id} value={w.id}>{w.name}</option>
-                            ))}
-                        </select>
-                    </div>
-                    <div>
-                        <label className={labelClass}>Source</label>
-                        <select
-                            value={filters.source_type}
-                            aria-label="Filter source"
-                            onChange={(e) => setFilters({ ...filters, source_type: e.target.value })}
-                            className={inputClass}
-                        >
-                            <option value="">All</option>
-                            {SOURCE_TYPES.map((s) => (
-                                <option key={s.value} value={s.value}>{s.label}</option>
-                            ))}
-                        </select>
-                    </div>
-                    <div>
-                        <label className={labelClass}>Project</label>
-                        <select
-                            value={filters.project_id}
-                            aria-label="Filter project"
-                            onChange={(e) => setFilters({ ...filters, project_id: e.target.value })}
-                            className={inputClass}
-                        >
-                            <option value="">All</option>
-                            {projects.map((p) => (
-                                <option key={p.id} value={p.id}>{p.title || p.name}</option>
-                            ))}
-                        </select>
-                    </div>
-                    <div>
-                        <label className={labelClass}>Work Order</label>
-                        <select
-                            value={filters.work_order_id}
-                            aria-label="Filter work order"
-                            onChange={(e) => setFilters({ ...filters, work_order_id: e.target.value })}
-                            className={inputClass}
-                        >
-                            <option value="">All</option>
-                            {workOrders.map((w) => (
-                                <option key={w.id} value={w.id}>{w.code || w.id}</option>
-                            ))}
-                        </select>
-                    </div>
-                    <div>
-                        <label className={labelClass}>From Date</label>
-                        <input
-                            type="date"
-                            value={filters.date_from}
-                            aria-label="Filter from date"
-                            onChange={(e) => setFilters({ ...filters, date_from: e.target.value })}
-                            className={inputClass}
-                        />
-                    </div>
-                    <div>
-                        <label className={labelClass}>To Date</label>
-                        <input
-                            type="date"
-                            value={filters.date_to}
-                            aria-label="Filter to date"
-                            onChange={(e) => setFilters({ ...filters, date_to: e.target.value })}
-                            className={inputClass}
-                        />
-                    </div>
-                </div>
-            )}
-
-            <Table
-                data={movements}
+            <DataTable
                 columns={columns}
-                isLoading={isLoading}
-                emptyMessage="No stock movements found."
+                rows={movements}
+                rowKey={(m: StockMovement) => m.id}
+                loading={isLoading}
+                emptyState={<EmptyState title="No stock movements found." />}
             />
 
             <Modal
-                isOpen={isModalOpen}
+                open={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 title="Record Stock Transaction"
                 size="xl"
+                footer={
+                    <div className="flex justify-end gap-nb-2">
+                        <Button variant="secondary" onClick={() => setIsModalOpen(false)}>Cancel</Button>
+                        <Button
+                            variant="primary"
+                            type="submit"
+                            form="stock-transaction-form"
+                            disabled={isSubmitting || insufficientStock || !!dateWarning}
+                            loading={isSubmitting}
+                        >
+                            {isSubmitting ? 'Recording…' : 'Record Transaction'}
+                        </Button>
+                    </div>
+                }
             >
-                <form onSubmit={handleSubmit} className="space-y-5 text-fg">
-                    {error && (
-                        <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 px-4 py-3 rounded-lg flex items-center gap-3 text-sm">
-                            <AlertCircle size={18} />
-                            <span>{error}</span>
-                        </div>
-                    )}
+                <form id="stock-transaction-form" onSubmit={handleSubmit} className="flex flex-col gap-nb-5 text-fg">
+                    {error && <Alert variant="error">{error}</Alert>}
 
-                    {/* Section 1 — Transaction Information */}
-                    <section className={sectionClass}>
-                        <h4 className={sectionTitle}>Transaction Information</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Card title={sectionTitle('Transaction Information')}>
+                        <div className="grid grid-cols-1 gap-nb-4 md:grid-cols-3">
                             <div className="md:col-span-2">
-                                <label className={labelClass}>Transaction Type *</label>
-                                <div className="grid grid-cols-4 gap-1 p-1 bg-surface-raised rounded-lg border border-line-strong">
-                                    {([
-                                        ['stock_in', 'Stock In', ArrowDownCircle],
-                                        ['stock_out', 'Stock Out', ArrowUpCircle],
-                                        ['adjustment', 'Adjustment', SlidersHorizontal],
-                                        ['transfer', 'Transfer', ArrowRightLeft],
-                                    ] as [TransactionType, string, any][]).map(([val, label, Icon]) => (
-                                        <button
-                                            key={val}
-                                            type="button"
-                                            onClick={() => setForm({ ...form, transaction_type: val, reason_code: '' })}
-                                            className={`flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-bold transition-all ${
-                                                form.transaction_type === val
-                                                    ? 'bg-primary text-primary-fg'
-                                                    : 'text-fg-muted hover:text-fg'
-                                            }`}
-                                        >
-                                            <Icon size={14} /> {label}
-                                        </button>
-                                    ))}
-                                </div>
+                                <p className="mb-nb-1 text-nb-caption font-medium text-fg-muted">Transaction Type *</p>
+                                <SegmentedControl
+                                    aria-label="Transaction type"
+                                    fullWidth
+                                    value={form.transaction_type}
+                                    onChange={(val: string) => setForm({ ...form, transaction_type: val as TransactionType, reason_code: '' })}
+                                    options={typeOptions.map((t) => ({ value: t.value, label: t.label }))}
+                                />
                             </div>
                             <div>
-                                <label className={labelClass}>Transaction Date *</label>
-                                <input
+                                <TextField
+                                    name="transaction-date"
+                                    label="Transaction Date"
                                     required
                                     type="date"
                                     value={form.transaction_date}
                                     aria-label="Transaction date"
-                                    onChange={(e) => setForm({ ...form, transaction_date: e.target.value })}
-                                    className={inputClass}
+                                    onChange={(e: any) => setForm({ ...form, transaction_date: e.target.value })}
                                 />
                                 {dateWarning && (
-                                    <p role="alert" data-testid="error-transaction_date" className="text-warning text-xs mt-1">
+                                    <p role="alert" data-testid="error-transaction_date" className="mt-nb-1 text-nb-caption text-warning">
                                         {dateWarning}
                                     </p>
                                 )}
                             </div>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="mt-nb-4 grid grid-cols-1 gap-nb-4 md:grid-cols-2">
                             {form.transaction_type !== 'transfer' && (
                                 <div>
-                                    <label className={labelClass}>Reason *</label>
-                                    <select
-                                        value={form.reason_code}
+                                    <Select
+                                        name="reason"
+                                        label="Reason *"
                                         aria-label="Reason"
-                                        onChange={(e) => setForm({ ...form, reason_code: e.target.value })}
-                                        className={fieldClass('reason')}
-                                    >
-                                        <option value="">Select reason…</option>
-                                        {REASON_CODES[form.transaction_type].map((r) => (
-                                            <option key={r.value} value={r.value}>{r.label}</option>
-                                        ))}
-                                    </select>
+                                        value={form.reason_code}
+                                        onChange={(e: any) => setForm({ ...form, reason_code: e.target.value })}
+                                        options={[
+                                            { value: '', label: 'Select reason…' },
+                                            ...REASON_CODES[form.transaction_type].map((r) => ({ value: r.value, label: r.label })),
+                                        ]}
+                                    />
                                     <FieldError field="reason" />
                                 </div>
                             )}
-                            <div>
-                                <label className={labelClass}>Reference Number</label>
-                                <input
-                                    disabled
-                                    value="Auto-generated on save"
-                                    className={`${inputClass} opacity-60 cursor-not-allowed`}
-                                />
-                            </div>
+                            <TextField name="reference-number" label="Reference Number" disabled value="Auto-generated on save" onChange={() => {}} />
                         </div>
-                    </section>
+                    </Card>
 
-                    {/* Section 2 — Item Details */}
-                    <section className={sectionClass}>
-                        <h4 className={sectionTitle}>Item Details</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Card title={sectionTitle('Item Details')}>
+                        <div className="grid grid-cols-1 gap-nb-4 md:grid-cols-3">
                             <div className="md:col-span-2">
-                                <label className={labelClass}>Item *</label>
+                                <p className="mb-nb-1 text-nb-caption font-medium text-fg-muted">Item *</p>
                                 <ItemSearchSelect
                                     value={form.item_id}
                                     itemName={selectedItem ? `${selectedItem.name} (${selectedItem.sku})` : ''}
@@ -978,279 +906,180 @@ const StockMovementRegisterPage = () => {
                                 />
                                 <FieldError field="item" />
                             </div>
-                            <div>
-                                <label className={labelClass}>Unit</label>
-                                <input
-                                    disabled
-                                    value={(selectedItem as any)?.units?.abbreviation || (selectedItem as any)?.unit || '—'}
-                                    className={`${inputClass} opacity-60`}
-                                />
-                            </div>
+                            <TextField
+                                name="unit"
+                                label="Unit"
+                                disabled
+                                value={(selectedItem as any)?.units?.abbreviation || (selectedItem as any)?.unit || '—'}
+                                onChange={() => {}}
+                            />
                         </div>
-                    </section>
+                    </Card>
 
-                    {/* Section 3 — Movement Details */}
-                    <section className={sectionClass}>
-                        <h4 className={sectionTitle}>Movement Details</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Card title={sectionTitle('Movement Details')}>
+                        <div className="grid grid-cols-1 gap-nb-4 md:grid-cols-3">
                             <div>
-                                <label className={labelClass}>
-                                    {form.transaction_type === 'transfer' ? 'Source Warehouse *' : 'Warehouse *'}
-                                </label>
-                                <select
-                                    value={form.warehouse_id}
+                                <Select
+                                    name="warehouse"
+                                    label={form.transaction_type === 'transfer' ? 'Source Warehouse *' : 'Warehouse *'}
                                     aria-label="Warehouse"
-                                    onChange={(e) => setForm({ ...form, warehouse_id: e.target.value })}
-                                    className={fieldClass('warehouse')}
-                                >
-                                    <option value="">Select warehouse…</option>
-                                    {warehouses.map((w) => (
-                                        <option key={w.id} value={w.id}>{w.name}</option>
-                                    ))}
-                                </select>
+                                    value={form.warehouse_id}
+                                    onChange={(e: any) => setForm({ ...form, warehouse_id: e.target.value })}
+                                    options={[{ value: '', label: 'Select warehouse…' }, ...warehouseOptions]}
+                                />
                                 <FieldError field="warehouse" />
                             </div>
                             {form.transaction_type === 'transfer' && (
                                 <div>
-                                    <label className={labelClass}>Destination Warehouse *</label>
-                                    <select
-                                        value={form.to_warehouse_id}
+                                    <Select
+                                        name="to-warehouse"
+                                        label="Destination Warehouse *"
                                         aria-label="Destination warehouse"
-                                        onChange={(e) => setForm({ ...form, to_warehouse_id: e.target.value })}
-                                        className={fieldClass('to_warehouse')}
-                                    >
-                                        <option value="">Select destination…</option>
-                                        {warehouses.map((w) => (
-                                            <option key={w.id} value={w.id}>{w.name}</option>
-                                        ))}
-                                    </select>
+                                        value={form.to_warehouse_id}
+                                        onChange={(e: any) => setForm({ ...form, to_warehouse_id: e.target.value })}
+                                        options={[{ value: '', label: 'Select destination…' }, ...warehouseOptions]}
+                                    />
                                     <FieldError field="to_warehouse" />
                                 </div>
                             )}
                             <div>
-                                <label className={labelClass}>
-                                    Quantity *
-                                    {form.transaction_type === 'adjustment' && (
-                                        <span className="text-fg-subtle font-normal"> (signed)</span>
-                                    )}
-                                </label>
-                                <input
+                                <TextField
+                                    name="quantity"
+                                    label={form.transaction_type === 'adjustment' ? 'Quantity * (signed)' : 'Quantity *'}
                                     type="number"
                                     step="any"
                                     min={form.transaction_type === 'adjustment' ? undefined : 0}
                                     value={form.quantity}
                                     aria-label="Quantity"
-                                    onChange={(e) => {
+                                    onChange={(e: any) => {
                                         setForm({ ...form, quantity: e.target.value });
                                         setShowFieldErrors(true);
                                     }}
-                                    className={`${fieldClass('quantity')} text-center font-bold`}
                                 />
                                 <FieldError field="quantity" />
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="bg-surface-raised/60 rounded-lg px-4 py-3">
-                                <p className="text-[11px] uppercase tracking-wide text-fg-subtle">Current Balance</p>
-                                <p className="text-lg font-bold text-fg">
-                                    {currentBalance === null ? '—' : currentBalance}
-                                </p>
+                        <div className="mt-nb-4 grid grid-cols-2 gap-nb-4">
+                            <div className="rounded-nb-md bg-surface-sunken px-nb-4 py-nb-3">
+                                <p className="text-nb-caption uppercase tracking-wide text-fg-subtle">Current Balance</p>
+                                <p className="text-nb-h3 font-bold text-fg">{currentBalance === null ? '—' : currentBalance}</p>
                             </div>
-                            <div className={`rounded-lg px-4 py-3 ${insufficientStock ? 'bg-rose-500/10 border border-rose-500/30' : 'bg-surface-raised/60'}`}>
-                                <p className="text-[11px] uppercase tracking-wide text-fg-subtle">Updated Balance</p>
-                                <p className={`text-lg font-bold ${insufficientStock ? 'text-rose-400' : 'text-fg'}`}>
+                            <div className={`rounded-nb-md px-nb-4 py-nb-3 ${insufficientStock ? 'border border-danger bg-danger-soft' : 'bg-surface-sunken'}`}>
+                                <p className="text-nb-caption uppercase tracking-wide text-fg-subtle">Updated Balance</p>
+                                <p className={`text-nb-h3 font-bold ${insufficientStock ? 'text-danger' : 'text-fg'}`}>
                                     {projectedBalance === null ? '—' : projectedBalance}
                                 </p>
                             </div>
                         </div>
                         {insufficientStock && (
-                            <p role="alert" data-testid="error-stock" className="text-rose-400 text-xs flex items-center gap-2">
+                            <p role="alert" data-testid="error-stock" className="mt-nb-2 flex items-center gap-nb-2 text-nb-caption text-danger">
                                 <AlertCircle size={14} />
                                 {fieldErrors.stock} Enable negative inventory in Inventory Settings to allow this.
                             </p>
                         )}
-                    </section>
+                    </Card>
 
-                    {/* Section 4 — Allocation */}
-                    <section className={sectionClass}>
-                        <h4 className={sectionTitle}>Allocation</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Card title={sectionTitle('Allocation')}>
+                        <div className="grid grid-cols-1 gap-nb-4 md:grid-cols-2">
+                            <Select
+                                name="source-type"
+                                label={form.transaction_type === 'stock_in' ? 'Received From' : 'Issued To'}
+                                aria-label="Movement source"
+                                value={form.source_type}
+                                onChange={(e: any) => setForm({ ...form, source_type: e.target.value, source_ref_id: '', source_label: '' })}
+                                options={[{ value: '', label: 'Select source…' }, ...SOURCE_TYPES.map((s) => ({ value: s.value, label: s.label }))]}
+                            />
                             <div>
-                                <label className={labelClass}>
-                                    {form.transaction_type === 'stock_in' ? 'Received From' : 'Issued To'}
-                                </label>
-                                <select
-                                    value={form.source_type}
-                                    aria-label="Movement source"
-                                    onChange={(e) => setForm({ ...form, source_type: e.target.value, source_ref_id: '', source_label: '' })}
-                                    className={inputClass}
-                                >
-                                    <option value="">Select source…</option>
-                                    {SOURCE_TYPES.map((s) => (
-                                        <option key={s.value} value={s.value}>{s.label}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div>
-                                <label className={labelClass}>
-                                    {form.source_type === 'warehouse' ? 'Warehouse' : 'Party / Reference'}
-                                    {requiresParty && <span className="text-rose-400"> *</span>}
-                                </label>
                                 {form.source_type === 'warehouse' ? (
-                                    <select
-                                        value={form.source_ref_id}
+                                    <Select
+                                        name="source-party"
+                                        label={`Source warehouse${requiresParty ? ' *' : ''}`}
                                         aria-label="Source party"
-                                        onChange={(e) => setForm({ ...form, source_ref_id: e.target.value })}
-                                        className={inputClass}
-                                    >
-                                        <option value="">Select warehouse…</option>
-                                        {warehouses.map((w) => (
-                                            <option key={w.id} value={w.id}>{w.name}</option>
-                                        ))}
-                                    </select>
+                                        value={form.source_ref_id}
+                                        onChange={(e: any) => setForm({ ...form, source_ref_id: e.target.value })}
+                                        options={[{ value: '', label: 'Select warehouse…' }, ...warehouseOptions]}
+                                    />
                                 ) : (
-                                    <input
+                                    <TextField
+                                        name="source-label"
+                                        label={`Party / Reference${requiresParty ? ' *' : ''}`}
                                         type="text"
                                         placeholder="Name or reference"
                                         value={form.source_label}
                                         aria-label="Source party label"
-                                        onChange={(e) => {
+                                        onChange={(e: any) => {
                                             setForm({ ...form, source_label: e.target.value });
                                             setShowFieldErrors(true);
                                         }}
-                                        className={fieldClass('source_label')}
                                     />
                                 )}
                                 <FieldError field="source_label" />
                             </div>
                             <div>
-                                <label className={labelClass}>
-                                    Project {requiresProject && <span className="text-rose-400">*</span>}
-                                </label>
-                                <select
-                                    value={form.project_id}
+                                <Select
+                                    name="project"
+                                    label={`Project${requiresProject ? ' *' : ''}`}
                                     aria-label="Project"
-                                    onChange={(e) => setForm({ ...form, project_id: e.target.value, work_order_id: '' })}
-                                    className={fieldClass('project')}
+                                    value={form.project_id}
+                                    onChange={(e: any) => setForm({ ...form, project_id: e.target.value, work_order_id: '' })}
                                     disabled={projectsLoading || projectsError || projects.length === 0}
-                                >
-                                    {/* Three states, three messages. "No active projects
-                                        available" is only said once the list has actually
-                                        loaded and come back empty — while loading, and when
-                                        the lookup failed, the placeholder says that instead.
-                                        bg/text set explicitly on each <option> because native
-                                        dropdown popups don't reliably inherit the <select>'s
-                                        Tailwind classes — without this the options render with
-                                        the browser's default light popup background and the
-                                        same light text colour, making them invisible. */}
-                                    <option value="" className="bg-surface-raised text-fg">
-                                        {projectsLoading
-                                            ? 'Loading projects…'
-                                            : projectsError
-                                                ? 'Could not load projects.'
-                                                : projects.length === 0
-                                                    ? 'No active projects available.'
-                                                    : 'Not linked'}
-                                    </option>
-                                    {projects.map((p) => (
-                                        <option key={p.id} value={p.id} className="bg-surface-raised text-fg">{p.title || p.name}</option>
-                                    ))}
-                                </select>
+                                    options={[
+                                        { value: '', label: projectPlaceholder },
+                                        ...projects.map((p) => ({ value: p.id, label: p.title || p.name })),
+                                    ]}
+                                />
                                 {projectsError && (
-                                    <button
-                                        type="button"
-                                        onClick={loadProjects}
-                                        className="mt-1 text-xs text-rose-300 underline hover:text-rose-200"
-                                    >
+                                    <Button type="button" variant="ghost" size="sm" onClick={loadProjects}>
                                         Projects lookup failed — retry
-                                    </button>
+                                    </Button>
                                 )}
                                 <FieldError field="project" />
                             </div>
                             <div>
-                                <label className={labelClass}>
-                                    Work Order {requiresWorkOrder && <span className="text-rose-400">*</span>}
-                                </label>
-                                <select
-                                    value={form.work_order_id}
+                                <Select
+                                    name="work-order"
+                                    label={`Work Order${requiresWorkOrder ? ' *' : ''}`}
                                     aria-label="Work order"
-                                    onChange={(e) => setForm({ ...form, work_order_id: e.target.value })}
-                                    className={fieldClass('work_order')}
+                                    value={form.work_order_id}
+                                    onChange={(e: any) => setForm({ ...form, work_order_id: e.target.value })}
                                     disabled={workOrdersLoading || workOrdersError || availableWorkOrders.length === 0}
-                                >
-                                    <option value="">
-                                        {workOrdersLoading
-                                            ? 'Loading work orders…'
-                                            : workOrdersError
-                                                ? 'Could not load work orders.'
-                                                : availableWorkOrders.length === 0
-                                                    ? 'No active work orders available.'
-                                                    : 'Not linked'}
-                                    </option>
-                                    {availableWorkOrders.map((w) => (
-                                        <option key={w.id} value={w.id}>
-                                            {[w.code || w.order_number || w.id, w.item_name || w.description, w.status]
+                                    options={[
+                                        { value: '', label: workOrderPlaceholder },
+                                        ...availableWorkOrders.map((w) => ({
+                                            value: w.id,
+                                            label: [w.code || w.order_number || w.id, w.item_name || w.description, w.status]
                                                 .filter(Boolean)
-                                                .join(' · ')}
-                                        </option>
-                                    ))}
-                                </select>
+                                                .join(' · '),
+                                        })),
+                                    ]}
+                                />
                                 {workOrdersError && (
-                                    <button
-                                        type="button"
-                                        onClick={loadWorkOrders}
-                                        className="mt-1 text-xs text-rose-300 underline hover:text-rose-200"
-                                    >
+                                    <Button type="button" variant="ghost" size="sm" onClick={loadWorkOrders}>
                                         Work orders lookup failed — retry
-                                    </button>
+                                    </Button>
                                 )}
                                 <FieldError field="work_order" />
                             </div>
                         </div>
-                    </section>
+                    </Card>
 
-                    {/* Section 5 — Remarks */}
-                    <section className={sectionClass}>
-                        <h4 className={sectionTitle}>Remarks</h4>
-                        <textarea
+                    <Card title={sectionTitle('Remarks')}>
+                        <Textarea
+                            name="remarks"
                             rows={3}
                             value={form.remarks}
                             aria-label="Remarks"
-                            onChange={(e) => setForm({ ...form, remarks: e.target.value })}
+                            onChange={(e: any) => setForm({ ...form, remarks: e.target.value })}
                             placeholder="Issue notes, adjustment reason, damage details, return reason…"
-                            className={inputClass}
                         />
-                    </section>
+                    </Card>
 
-                    <div className="bg-primary/10 border border-primary/20 p-4 rounded-xl flex items-start gap-3">
-                        <CheckCircle2 size={18} className="text-primary mt-0.5 flex-shrink-0" />
-                        <div className="text-[11px] text-primary">
-                            <p className="font-bold mb-1 uppercase tracking-tight">Audit Trail</p>
-                            <p className="opacity-70">
-                                A reference number and running balance are recorded automatically and cannot be edited.
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="flex gap-3">
-                        <button
-                            type="button"
-                            onClick={() => setIsModalOpen(false)}
-                            className="flex-1 bg-surface-raised hover:bg-surface-high text-fg font-semibold py-2.5 rounded-lg transition-all"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            type="submit"
-                            disabled={isSubmitting || insufficientStock || !!dateWarning}
-                            className="flex-1 bg-primary hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed text-primary-fg font-semibold py-2.5 rounded-lg transition-all shadow-lg shadow-blue-900/20"
-                        >
-                            {isSubmitting ? 'Recording…' : 'Record Transaction'}
-                        </button>
-                    </div>
+                    <Alert variant="info" title="Audit Trail">
+                        A reference number and running balance are recorded automatically and cannot be edited.
+                    </Alert>
                 </form>
             </Modal>
-        </div>
+        </ListPageTemplate>
     );
 };
 

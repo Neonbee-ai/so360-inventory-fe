@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { X, Loader2, AlertCircle } from 'lucide-react';
+import { X, AlertCircle } from 'lucide-react';
+import { IconButton, Spinner } from '@so360/design-system';
 import { assessProductImage, type ProductImageAssessment } from '../../utils/imageRatio';
 
 interface ImageThumbnailProps {
@@ -17,15 +18,15 @@ const ImageThumbnail: React.FC<ImageThumbnailProps> = ({ url, isLoading, error, 
     const [assessment, setAssessment] = useState<ProductImageAssessment | null>(null);
 
     return (
-        <div className="relative group w-24 h-24 rounded-lg overflow-hidden border border-line-strong bg-surface-raised">
+        <div className="relative group w-24 h-24 rounded-nb-md overflow-hidden border border-line-strong bg-surface-raised">
             {isLoading ? (
                 <div className="w-full h-full flex items-center justify-center">
-                    <Loader2 size={20} className="text-primary animate-spin" />
+                    <Spinner label="Uploading" />
                 </div>
             ) : error ? (
                 <div className="w-full h-full flex flex-col items-center justify-center p-2">
-                    <AlertCircle size={16} className="text-rose-400 mb-1" />
-                    <span className="text-[10px] text-rose-400 text-center leading-tight">Failed</span>
+                    <AlertCircle size={16} className="text-danger mb-1" />
+                    <span className="text-[10px] text-danger text-center leading-tight">Failed</span>
                 </div>
             ) : (
                 <img
@@ -54,13 +55,9 @@ const ImageThumbnail: React.FC<ImageThumbnailProps> = ({ url, isLoading, error, 
                     {assessment.ok ? '' : '⚠ '}{assessment.size} · {assessment.ratio}
                 </div>
             )}
-            <button
-                type="button"
-                onClick={onRemove}
-                className="absolute top-1 right-1 w-5 h-5 rounded-full bg-surface/80 text-fg-muted hover:bg-rose-600 hover:text-fg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
-            >
-                <X size={12} />
-            </button>
+            <div className="absolute top-nb-1 right-nb-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+                <IconButton label="Remove image" size="sm" icon={<X size={12} />} onClick={onRemove} />
+            </div>
         </div>
     );
 };

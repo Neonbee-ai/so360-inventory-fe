@@ -6,6 +6,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 // Instagram/Facebook/Globe are not used anywhere else here to vouch for them.
 import { Check, Loader2 } from 'lucide-react';
 import { inventoryService } from '../../services/inventoryService';
+import { Alert, Badge, Button, Checkbox, Switch } from '@so360/design-system';
 
 export interface ChannelVisibilityRow {
     category_id: string;
@@ -203,69 +204,52 @@ const CategoryChannelsPanel: React.FC<Props> = ({ categoryId, canManage, onSaved
                     </p>
                 </div>
                 {canManage && (
-                    <button
+                    <Button
                         type="button"
+                        variant="primary"
+                        size="sm"
                         onClick={handleSave}
                         disabled={isSaving || !isDirty}
-                        className="flex items-center gap-2 bg-primary hover:bg-primary-hover disabled:opacity-40 text-primary-fg px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
                     >
                         {isSaving ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
                         Save channels
-                    </button>
+                    </Button>
                 )}
             </div>
 
-            {error && <p className="text-xs text-rose-400">{error}</p>}
-            {saved && !isDirty && <p className="text-xs text-success">Channel visibility saved</p>}
+            {error && <Alert variant="error">{error}</Alert>}
+            {saved && !isDirty && <Alert variant="success">Channel visibility saved</Alert>}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {CHANNEL_META.map(({ code, label, hint, Icon }) => {
                     const on = draft[code] ?? false;
                     const inherited = inheritedChannels.has(code);
                     return (
-                        <button
-                            key={code}
-                            type="button"
-                            role="switch"
-                            aria-checked={on}
-                            aria-label={label}
-                            disabled={!canManage}
-                            onClick={() => toggle(code)}
-                            className={`flex items-start gap-3 text-left p-3 rounded-xl border transition-colors disabled:cursor-not-allowed ${
-                                on
-                                    ? 'bg-primary/10 border-primary/50'
-                                    : 'bg-surface/60 border-line hover:border-line-strong'
-                            }`}
-                        >
+                        <div key={code} className="flex items-start gap-3 p-3 rounded-nb border border-line">
                             <Icon size={16} className={on ? 'text-primary mt-0.5' : 'text-fg-subtle mt-0.5'} />
-                            <span className="min-w-0">
-                                <span className="flex items-center gap-2">
-                                    <span className={`text-sm font-medium ${on ? 'text-fg' : 'text-fg-muted'}`}>
-                                        {label}
-                                    </span>
-                                    {inherited && (
-                                        <span className="text-[10px] uppercase tracking-wide text-warning/80 border border-warning/30 rounded px-1 py-px">
-                                            inherited
-                                        </span>
-                                    )}
-                                </span>
-                                <span className="block text-xs text-fg-subtle truncate">{hint}</span>
-                            </span>
-                        </button>
+                            <div className="min-w-0 flex-1">
+                                <Switch
+                                    name={`channel-${code}`}
+                                    label={label}
+                                    description={hint}
+                                    checked={on}
+                                    disabled={!canManage}
+                                    onCheckedChange={() => toggle(code)}
+                                />
+                            </div>
+                            {inherited && <Badge tone="warning" size="sm">inherited</Badge>}
+                        </div>
                     );
                 })}
             </div>
 
             {canManage && (
-                <label className="flex items-center gap-2 text-xs text-fg-muted cursor-pointer">
-                    <input
-                        type="checkbox"
-                        checked={applyToChildren}
-                        onChange={e => setApplyToChildren(e.target.checked)}
-                        className="accent-blue-600"
-                    />
-                    Also apply to every subcategory
-                </label>
+                <Checkbox
+                    name="apply-to-children"
+                    label="Also apply to every subcategory"
+                    checked={applyToChildren}
+                    onChange={e => setApplyToChildren(e.target.checked)}
+                />
             )}
         </div>
     );

@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
-import { Image, CheckCircle2, XCircle, Loader2, ArrowRight } from 'lucide-react';
+import { Image, CheckCircle2, XCircle, ArrowRight } from 'lucide-react';
+import { Alert, Badge, Button, Spinner } from '@so360/design-system';
 import { fitImageFile, describeFitChange, IMAGE_FIT_SLOTS } from '../../../utils/imageFit';
 import ImageSpecChip from '../../../components/media/ImageSpecChip';
 import { importableRowKeyCounts, planImages, type ImageMatch } from '../nameKey';
@@ -18,12 +19,12 @@ interface Props {
 export const BULK_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
 const PRODUCT_SLOT = IMAGE_FIT_SLOTS.product;
 
-const MATCH_BADGE: Record<ImageMatch, { label: string; className: string }> = {
-    matched: { label: 'MATCHED', className: 'text-success bg-success/10 border-success/20' },
-    no_match: { label: 'NO MATCH', className: 'text-warning bg-warning/10 border-warning/20' },
-    ambiguous: { label: 'AMBIGUOUS', className: 'text-rose-400 bg-rose-500/10 border-rose-500/20' },
-    duplicate_image: { label: 'DUPLICATE IMAGE', className: 'text-rose-400 bg-rose-500/10 border-rose-500/20' },
-    missing_primary: { label: 'MISSING PRIMARY', className: 'text-rose-400 bg-rose-500/10 border-rose-500/20' },
+const MATCH_BADGE: Record<ImageMatch, { label: string; tone: 'success' | 'warning' | 'danger' }> = {
+    matched: { label: 'MATCHED', tone: 'success' },
+    no_match: { label: 'NO MATCH', tone: 'warning' },
+    ambiguous: { label: 'AMBIGUOUS', tone: 'danger' },
+    duplicate_image: { label: 'DUPLICATE IMAGE', tone: 'danger' },
+    missing_primary: { label: 'MISSING PRIMARY', tone: 'danger' },
 };
 const MATCH_HINT: Record<ImageMatch, string> = {
     matched: 'Maps to the product with this name',
@@ -106,9 +107,9 @@ const ImageUploadStep: React.FC<Props> = ({ parsedRows, onImagesUploaded, onUplo
     const attentionCount = files.length - matchedCount;
 
     return (
-        <div className="max-w-2xl mx-auto space-y-6">
-            <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs font-medium text-fg-muted">Product photos</span>
+        <div className="max-w-2xl mx-auto space-y-nb-6">
+            <div className="flex flex-wrap items-center gap-nb-2">
+                <span className="text-nb-caption font-medium text-fg-muted">Product photos</span>
                 <ImageSpecChip slot={PRODUCT_SLOT} acceptedTypes="JPG, PNG, WebP" />
             </div>
             <div
@@ -116,19 +117,20 @@ const ImageUploadStep: React.FC<Props> = ({ parsedRows, onImagesUploaded, onUplo
                 onDragLeave={() => setDragging(false)}
                 onDrop={(e) => { e.preventDefault(); setDragging(false); addFiles(e.dataTransfer.files); }}
                 onClick={() => inputRef.current?.click()}
-                className={`border-2 border-dashed rounded-xl p-10 flex flex-col items-center gap-4 cursor-pointer transition-all ${
-                    dragging ? 'border-primary bg-primary/5' : 'border-line-strong bg-surface/40 hover:border-line-strong'
+                className={`border-2 border-dashed rounded-nb-lg p-nb-8 flex flex-col items-center gap-nb-4 cursor-pointer transition-all ${
+                    dragging ? 'border-primary bg-surface-raised' : 'border-line-strong bg-surface'
                 }`}
             >
                 <Image size={32} className="text-fg-subtle" />
                 <div className="text-center">
                     <p className="text-fg font-semibold">Drop images here</p>
-                    <p className="text-fg-subtle text-sm mt-1">JPG, PNG, WebP — big photos are shrunk automatically · name each file after its product (e.g. Namur Sofa.jpg, Namur Sofa_2.jpg)</p>
+                    <p className="text-fg-subtle text-nb-caption mt-nb-1">JPG, PNG, WebP — big photos are shrunk automatically · name each file after its product (e.g. Namur Sofa.jpg, Namur Sofa_2.jpg)</p>
                 </div>
+                {/* comb-exception: multi-file accumulating drop zone with its own status list; Comb FileUpload would duplicate the file list. Hidden native input behind the zone. */}
                 <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/jpg,image/webp" multiple className="hidden" onChange={(e) => addFiles(e.target.files)} />
             </div>
 
-            <div data-testid="image-naming-guide" className="rounded-lg border border-line bg-surface/40 px-4 py-3 text-xs text-fg-muted space-y-1.5">
+            <div data-testid="image-naming-guide" className="rounded-nb-md border border-line bg-surface px-nb-4 py-nb-3 text-nb-caption text-fg-muted space-y-nb-1">
                 <p className="font-semibold text-fg-muted">How to Upload Product Images</p>
                 <p>Name each image after its product — use the exact Product Name from your CSV.</p>
                 <p>One image: <span className="font-mono text-primary">Chair.jpg</span></p>
@@ -137,47 +139,46 @@ const ImageUploadStep: React.FC<Props> = ({ parsedRows, onImagesUploaded, onUplo
             </div>
 
             {importableCount === 0 && (
-                <div role="alert" className="rounded-lg border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">
+                <Alert variant="error">
                     None of the {parsedRows.length} CSV row{parsedRows.length !== 1 ? 's' : ''} can be imported
                     {errorCount > 0 ? ` (${errorCount} with errors)` : ''}, so no image can be matched to a product.
                     Go back and fix the CSV first — for example, check the <span className="font-mono">name</span> column header.
-                </div>
+                </Alert>
             )}
 
             {files.length > 0 && (
-                <div className="space-y-2">
-                    <p className="text-fg-muted text-xs font-semibold uppercase tracking-wider">
+                <div className="space-y-nb-2">
+                    <p className="text-fg-muted text-nb-caption font-semibold uppercase">
                         {files.length} file{files.length !== 1 ? 's' : ''} selected · {matchedCount} match products · {attentionCount} need attention
                     </p>
-                    <div className="max-h-48 overflow-y-auto space-y-1 pr-1">
+                    <div className="max-h-48 overflow-y-auto space-y-nb-1 pr-nb-1">
                         {files.map(f => {
                             const match = matchOf(f);
                             const isMatch = match === 'matched';
                             const uploadedEntry = uploaded.find(u => u.filename === f.name);
                             const failedEntry = failed.find(u => u.filename === f.name);
                             return (
-                                <div key={f.name} className="flex items-center gap-3 px-3 py-2 rounded-lg bg-surface/60 border border-line">
-                                    {(status === 'uploading' || status === 'optimising') && !uploadedEntry && !failedEntry && <Loader2 size={14} className="text-primary animate-spin shrink-0" />}
+                                <div key={f.name} className="flex items-center gap-nb-3 px-nb-3 py-nb-2 rounded-nb-md bg-surface border border-line">
+                                    {(status === 'uploading' || status === 'optimising') && !uploadedEntry && !failedEntry && <Spinner label="Uploading" />}
                                     {uploadedEntry && <CheckCircle2 size={14} className="text-success shrink-0" />}
-                                    {failedEntry && <XCircle size={14} className="text-rose-400 shrink-0" />}
+                                    {failedEntry && <XCircle size={14} className="text-danger shrink-0" />}
                                     {status === 'idle' && (isMatch
-                                        ? <CheckCircle2 size={14} className="text-success/60 shrink-0" />
-                                        : <div className="w-3.5 h-3.5 rounded-full border border-warning/50 shrink-0" />
+                                        ? <CheckCircle2 size={14} className="text-success shrink-0" />
+                                        : <div className="w-3.5 h-3.5 rounded-full border border-warning shrink-0" />
                                     )}
-                                    <span className="text-fg-muted text-xs font-mono flex-1 truncate">{f.name}</span>
+                                    <span className="text-fg-muted text-nb-caption font-mono flex-1 truncate">{f.name}</span>
                                     {isMatch && (
-                                        <span data-testid="image-position" className="text-fg-subtle text-[10px] shrink-0">{entryOf(f)!.seq === 1 ? 'Primary' : `Image ${entryOf(f)!.seq}`}</span>
+                                        <span data-testid="image-position" className="text-fg-subtle text-nb-caption shrink-0">{entryOf(f)!.seq === 1 ? 'Primary' : `Image ${entryOf(f)!.seq}`}</span>
                                     )}
                                     {fitNotes[f.name] && (
-                                        <span data-testid="bulk-fit-note" className="text-fg-subtle text-[10px] shrink-0">{fitNotes[f.name]}</span>
+                                        <span data-testid="bulk-fit-note" className="text-fg-subtle text-nb-caption shrink-0">{fitNotes[f.name]}</span>
                                     )}
                                     {status === 'idle' && (
-                                        <span
-                                            title={MATCH_HINT[match]}
-                                            className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${MATCH_BADGE[match].className}`}
-                                        >{MATCH_BADGE[match].label}</span>
+                                        <span title={MATCH_HINT[match]}>
+                                            <Badge tone={MATCH_BADGE[match].tone} size="sm">{MATCH_BADGE[match].label}</Badge>
+                                        </span>
                                     )}
-                                    {failedEntry && <span className="text-rose-400 text-[10px]">{failedEntry.reason}</span>}
+                                    {failedEntry && <span className="text-danger text-nb-caption">{failedEntry.reason}</span>}
                                 </div>
                             );
                         })}
@@ -185,32 +186,26 @@ const ImageUploadStep: React.FC<Props> = ({ parsedRows, onImagesUploaded, onUplo
                 </div>
             )}
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-nb-3">
                 {status === 'idle' && (
                     <>
-                        <button
-                            onClick={doUpload}
-                            disabled={files.length === 0}
-                            className="flex items-center gap-2 bg-primary hover:bg-primary-hover disabled:opacity-40 disabled:cursor-not-allowed text-primary-fg px-5 py-2.5 rounded-lg font-semibold text-sm transition-all"
-                        >
+                        <Button variant="primary" onClick={doUpload} disabled={files.length === 0}>
                             <Image size={16} />
                             Upload {files.length > 0 ? `${files.length} image${files.length !== 1 ? 's' : ''}` : 'Images'}
-                        </button>
-                        <button onClick={onSkip} className="text-fg-subtle hover:text-fg-muted text-sm transition-colors">
-                            Skip images →
-                        </button>
+                        </Button>
+                        <Button variant="ghost" onClick={onSkip}>Skip images →</Button>
                     </>
                 )}
                 {(status === 'uploading' || status === 'optimising') && (
-                    <div className="flex items-center gap-2 text-fg-muted text-sm">
-                        <Loader2 size={16} className="animate-spin" />
+                    <div className="flex items-center gap-nb-2 text-fg-muted text-nb-caption">
+                        <Spinner label="Uploading" />
                         {status === 'optimising' ? 'Optimising photos…' : 'Uploading…'}
                     </div>
                 )}
                 {status === 'done' && (
-                    <button onClick={onSkip} className="flex items-center gap-2 bg-success hover:bg-success text-primary-fg px-5 py-2.5 rounded-lg font-semibold text-sm transition-all">
+                    <Button variant="primary" onClick={onSkip}>
                         Next: Preview <ArrowRight size={16} />
-                    </button>
+                    </Button>
                 )}
             </div>
         </div>

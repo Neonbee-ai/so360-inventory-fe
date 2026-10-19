@@ -2,7 +2,20 @@ import React, { useEffect, useState } from 'react';
 import { procurementService } from '../../services/procurementService';
 import { inventoryService } from '../../services/inventoryService';
 import { useActivity } from '@so360/shell-context';
-import { toast, getErrorMessage } from '@so360/design-system';
+import {
+    toast, getErrorMessage, Button, Card, DataTable, DatePicker, EmptyState, FieldGrid, FieldGridItem,
+    FormPageTemplate, FormSection, Select, Textarea, TextField, type DataTableColumn,
+} from '@so360/design-system';
+
+const GRN_ENTRY_TRAIL = [{ label: 'Goods Receipts', to: '/procurement/grn' }];
+
+const INSPECTION_OPTIONS = [
+    { value: 'not_required', label: 'Not required' },
+    { value: 'pending', label: 'Required — pending' },
+    { value: 'passed', label: 'Inspected — passed' },
+    { value: 'partial', label: 'Inspected — partial' },
+    { value: 'failed', label: 'Inspected — failed' },
+];
 
 const GRNEntryPage = () => {
     const { recordActivity } = useActivity();
@@ -113,259 +126,236 @@ const GRNEntryPage = () => {
         }
     };
 
+    const poColumns: DataTableColumn<any>[] = [
+        {
+            key: 'po_number',
+            header: 'Purchase Order',
+            alwaysVisible: true,
+            render: (po) => `#PO-${po.po_number || po.id.slice(0, 8).toUpperCase()}`,
+        },
+        { key: 'vendor', header: 'Vendor', render: (po) => po.vendor?.name },
+    ];
+
+    const cancelReceipt = () => {
+        setSelectedPo(null);
+        setReceiptLines([]);
+    };
+
     return (
-        <div className="p-8 space-y-8 animate-in fade-in duration-700">
-            <div>
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-violet-400 to-fuchsia-400 bg-clip-text text-transparent">
-                    Goods Receipt Entry
-                </h1>
-                <p className="text-fg-muted mt-2 font-medium">Record incoming shipments and update stock levels against Purchase Orders.</p>
-            </div>
+        <FormPageTemplate
+            title="Goods Receipt Entry"
+            description="Record incoming shipments and update stock levels against Purchase Orders."
+            trail={GRN_ENTRY_TRAIL}
+            onCancel={selectedPo ? cancelReceipt : undefined}
+            primaryAction={selectedPo ? (
+                <Button type="submit" form="grn-entry-form">Post Goods Receipt</Button>
+            ) : undefined}
+        >
+            <FormSection title="1. Select Purchase Order">
+                <DataTable
+                    columns={poColumns}
+                    rows={pos}
+                    rowKey={(po) => po.id}
+                    loading={loading}
+                    onRowClick={(po) => handleSelectPo(po.id)}
+                    getRowProps={(po) => ({ 'aria-selected': selectedPo?.id === po.id })}
+                    emptyState={<EmptyState title="No open purchase orders" description="Only sent, acknowledged or partially received orders can be received." />}
+                />
+            </FormSection>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {/* PO Selector */}
-                <div className="md:col-span-1 space-y-6">
-                    <div className="bg-surface/50 border border-line rounded-3xl p-6 backdrop-blur-sm">
-                        <label className="text-xs font-bold text-fg-subtle uppercase tracking-wider mb-4 block">1. Select Purchase Order</label>
-                        <div className="space-y-2 max-h-[400px] overflow-y-auto custom-scrollbar">
-                            {pos.map(po => (
-                                <button
-                                    key={po.id}
-                                    onClick={() => handleSelectPo(po.id)}
-                                    className={`w-full text-left p-4 rounded-2xl border transition-all ${selectedPo?.id === po.id
-                                            ? 'bg-primary/10 border-primary/50 text-primary'
-                                            : 'bg-bg border-line text-fg-muted hover:border-line-strong'
-                                        }`}
-                                >
-                                    <div className="font-bold">#PO-{po.po_number || po.id.slice(0, 8).toUpperCase()}</div>
-                                    <div className="text-xs opacity-70 mt-1">{po.vendor?.name}</div>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-
-                {/* Receipt Details */}
-                <div className="md:col-span-2 space-y-6">
-                    {selectedPo ? (
-                        <form onSubmit={handleSubmit} className="bg-surface/50 border border-line rounded-3xl p-8 backdrop-blur-sm space-y-8 animate-in slide-in-from-right-4 duration-500">
-                            <div className="grid grid-cols-2 gap-6">
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-fg-subtle uppercase tracking-wider">GRN Number</label>
-                                    <input
-                                        required
-                                        placeholder="e.g. GRN-2024-001"
-                                        className="w-full bg-bg border border-line rounded-xl px-4 py-3 text-fg focus:outline-none focus:ring-2 focus:ring-violet-500/50 transition-all font-mono"
-                                        onChange={e => setGrnData({ ...grnData, grn_number: e.target.value })}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-fg-subtle uppercase tracking-wider">Receiving Warehouse</label>
-                                    <select
-                                        required
-                                        aria-label="Receiving Warehouse"
-                                        className="w-full bg-bg border border-line rounded-xl px-4 py-3 text-fg focus:outline-none focus:ring-2 focus:ring-violet-500/50 transition-all"
-                                        onChange={e => setGrnData({ ...grnData, warehouse_id: e.target.value })}
-                                    >
-                                        <option value="">Select Warehouse</option>
-                                        {warehouses.map(wh => <option key={wh.id} value={wh.id}>{wh.name}</option>)}
-                                    </select>
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-fg-subtle uppercase tracking-wider">Received Date</label>
-                                    <input
-                                        type="date"
-                                        value={grnData.received_date}
-                                        className="w-full bg-bg border border-line rounded-xl px-4 py-3 text-fg focus:outline-none focus:ring-2 focus:ring-violet-500/50 transition-all"
-                                        onChange={e => setGrnData({ ...grnData, received_date: e.target.value })}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-fg-subtle uppercase tracking-wider">Supplier Delivery Note</label>
-                                    <input
-                                        type="text"
-                                        placeholder="Challan / DN number"
-                                        value={grnData.supplier_delivery_note}
-                                        className="w-full bg-bg border border-line rounded-xl px-4 py-3 text-fg focus:outline-none focus:ring-2 focus:ring-violet-500/50 transition-all"
-                                        onChange={e => setGrnData({ ...grnData, supplier_delivery_note: e.target.value })}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-fg-subtle uppercase tracking-wider">Vehicle Number</label>
-                                    <input
-                                        type="text"
-                                        placeholder="e.g. KA-01-AB-1234"
-                                        value={grnData.vehicle_number}
-                                        className="w-full bg-bg border border-line rounded-xl px-4 py-3 text-fg focus:outline-none focus:ring-2 focus:ring-violet-500/50 transition-all font-mono"
-                                        onChange={e => setGrnData({ ...grnData, vehicle_number: e.target.value })}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-fg-subtle uppercase tracking-wider">Transporter</label>
-                                    <input
-                                        type="text"
-                                        value={grnData.transporter}
-                                        className="w-full bg-bg border border-line rounded-xl px-4 py-3 text-fg focus:outline-none focus:ring-2 focus:ring-violet-500/50 transition-all"
-                                        onChange={e => setGrnData({ ...grnData, transporter: e.target.value })}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-fg-subtle uppercase tracking-wider">Gate Entry No.</label>
-                                    <input
-                                        type="text"
-                                        value={grnData.gate_entry_no}
-                                        className="w-full bg-bg border border-line rounded-xl px-4 py-3 text-fg focus:outline-none focus:ring-2 focus:ring-violet-500/50 transition-all font-mono"
-                                        onChange={e => setGrnData({ ...grnData, gate_entry_no: e.target.value })}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-fg-subtle uppercase tracking-wider">Quality Inspection</label>
-                                    <select
-                                        aria-label="Quality Inspection"
-                                        value={grnData.inspection_status}
-                                        className="w-full bg-bg border border-line rounded-xl px-4 py-3 text-fg focus:outline-none focus:ring-2 focus:ring-violet-500/50 transition-all"
-                                        onChange={e => setGrnData({ ...grnData, inspection_status: e.target.value })}
-                                    >
-                                        <option value="not_required">Not required</option>
-                                        <option value="pending">Required — pending</option>
-                                        <option value="passed">Inspected — passed</option>
-                                        <option value="partial">Inspected — partial</option>
-                                        <option value="failed">Inspected — failed</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div className="space-y-4">
-                                <label className="text-xs font-bold text-fg-subtle uppercase tracking-wider block">2. Verify Quantities</label>
-                                <div className="space-y-4">
-                                    {receiptLines.map((line, idx) => (
-                                        <div key={idx} className="bg-bg border border-line rounded-2xl p-4 space-y-4">
-                                            <div className="flex items-center justify-between gap-6">
-                                                <div className="flex-1">
-                                                    <div className="font-semibold text-fg uppercase tracking-tight text-sm">{line.description}</div>
-                                                    <div className="text-[10px] text-fg-subtle mt-1 uppercase tracking-wider font-bold">
-                                                        Ordered: {line.ordered} | Already received: {line.already_received} | Accepted now: <span className={acceptedQty(line) < 0 ? 'text-rose-400' : 'text-success'}>{acceptedQty(line)}</span>
-                                                    </div>
-                                                </div>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => updateLine(idx, '_expanded', !line._expanded)}
-                                                    className="text-xs font-bold uppercase tracking-wider text-violet-400 hover:text-violet-300 transition-colors"
-                                                >
-                                                    {line._expanded ? 'Hide details' : 'Batch / QC'}
-                                                </button>
-                                            </div>
-
-                                            <div className="grid grid-cols-3 gap-3">
-                                                <div className="space-y-1">
-                                                    <label className="text-[10px] font-bold text-fg-subtle uppercase tracking-wider">Received</label>
-                                                    <input
-                                                        type="number"
-                                                        min="0"
-                                                        aria-label={`Received quantity for ${line.description}`}
-                                                        value={line.quantity_received}
-                                                        onChange={e => updateLine(idx, 'quantity_received', e.target.value)}
-                                                        className="w-full bg-surface border border-line rounded-lg px-3 py-2 text-center text-success font-bold focus:outline-none focus:ring-2 focus:ring-success/30"
-                                                    />
-                                                </div>
-                                                <div className="space-y-1">
-                                                    <label className="text-[10px] font-bold text-fg-subtle uppercase tracking-wider">Rejected</label>
-                                                    <input
-                                                        type="number"
-                                                        min="0"
-                                                        aria-label={`Rejected quantity for ${line.description}`}
-                                                        value={line.rejected_quantity}
-                                                        onChange={e => updateLine(idx, 'rejected_quantity', e.target.value)}
-                                                        className="w-full bg-surface border border-line rounded-lg px-3 py-2 text-center text-rose-400 font-bold focus:outline-none focus:ring-2 focus:ring-rose-500/30"
-                                                    />
-                                                </div>
-                                                <div className="space-y-1">
-                                                    <label className="text-[10px] font-bold text-fg-subtle uppercase tracking-wider">Damaged</label>
-                                                    <input
-                                                        type="number"
-                                                        min="0"
-                                                        aria-label={`Damaged quantity for ${line.description}`}
-                                                        value={line.damaged_quantity}
-                                                        onChange={e => updateLine(idx, 'damaged_quantity', e.target.value)}
-                                                        className="w-full bg-surface border border-line rounded-lg px-3 py-2 text-center text-warning font-bold focus:outline-none focus:ring-2 focus:ring-amber-500/30"
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            {line._expanded && (
-                                                <div className="grid grid-cols-2 gap-3 pt-2 border-t border-line/70 animate-in slide-in-from-top-2 duration-200">
-                                                    <div className="space-y-1">
-                                                        <label className="text-[10px] font-bold text-fg-subtle uppercase tracking-wider">Batch Number</label>
-                                                        <input
-                                                            type="text"
-                                                            aria-label={`Batch number for ${line.description}`}
-                                                            value={line.batch_number}
-                                                            onChange={e => updateLine(idx, 'batch_number', e.target.value)}
-                                                            className="w-full bg-surface border border-line rounded-lg px-3 py-2 text-sm text-fg focus:outline-none focus:ring-2 focus:ring-violet-500/30 font-mono"
-                                                        />
-                                                    </div>
-                                                    <div className="space-y-1">
-                                                        <label className="text-[10px] font-bold text-fg-subtle uppercase tracking-wider">Expiry Date</label>
-                                                        <input
-                                                            type="date"
-                                                            aria-label={`Expiry date for ${line.description}`}
-                                                            value={line.expiry_date}
-                                                            onChange={e => updateLine(idx, 'expiry_date', e.target.value)}
-                                                            className="w-full bg-surface border border-line rounded-lg px-3 py-2 text-sm text-fg focus:outline-none focus:ring-2 focus:ring-violet-500/30"
-                                                        />
-                                                    </div>
-                                                    <div className="space-y-1">
-                                                        <label className="text-[10px] font-bold text-fg-subtle uppercase tracking-wider">Serial Numbers</label>
-                                                        <input
-                                                            type="text"
-                                                            placeholder="Comma separated"
-                                                            aria-label={`Serial numbers for ${line.description}`}
-                                                            value={line.serial_numbers}
-                                                            onChange={e => updateLine(idx, 'serial_numbers', e.target.value)}
-                                                            className="w-full bg-surface border border-line rounded-lg px-3 py-2 text-sm text-fg focus:outline-none focus:ring-2 focus:ring-violet-500/30 font-mono"
-                                                        />
-                                                    </div>
-                                                    <div className="space-y-1">
-                                                        <label className="text-[10px] font-bold text-fg-subtle uppercase tracking-wider">Rejection Reason</label>
-                                                        <input
-                                                            type="text"
-                                                            placeholder="Why units were rejected"
-                                                            aria-label={`Rejection reason for ${line.description}`}
-                                                            value={line.rejection_reason}
-                                                            onChange={e => updateLine(idx, 'rejection_reason', e.target.value)}
-                                                            className="w-full bg-surface border border-line rounded-lg px-3 py-2 text-sm text-fg focus:outline-none focus:ring-2 focus:ring-violet-500/30"
-                                                        />
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-fg-subtle uppercase tracking-wider">Receipt Notes</label>
-                                <textarea
-                                    value={grnData.notes}
-                                    placeholder="Condition of the shipment, discrepancies, remarks for the buyer..."
-                                    className="w-full bg-bg border border-line rounded-xl px-4 py-3 h-20 text-fg focus:outline-none focus:ring-2 focus:ring-violet-500/50 transition-all resize-none"
-                                    onChange={e => setGrnData({ ...grnData, notes: e.target.value })}
+            {selectedPo ? (
+                <form id="grn-entry-form" onSubmit={handleSubmit} className="flex flex-col gap-nb-6">
+                    <FormSection title="Receipt details">
+                        <FieldGrid columns={2}>
+                            <FieldGridItem>
+                                <TextField
+                                    label="GRN Number"
+                                    name="grn_number"
+                                    required
+                                    placeholder="e.g. GRN-2024-001"
+                                    value={grnData.grn_number}
+                                    onChange={e => setGrnData({ ...grnData, grn_number: e.target.value })}
                                 />
-                            </div>
+                            </FieldGridItem>
+                            <FieldGridItem>
+                                <Select
+                                    label="Receiving Warehouse"
+                                    name="warehouse_id"
+                                    required
+                                    placeholder="Select Warehouse"
+                                    value={grnData.warehouse_id}
+                                    options={warehouses.map(wh => ({ value: wh.id, label: wh.name }))}
+                                    onValueChange={v => setGrnData({ ...grnData, warehouse_id: v })}
+                                />
+                            </FieldGridItem>
+                            <FieldGridItem>
+                                <DatePicker
+                                    label="Received Date"
+                                    name="received_date"
+                                    value={grnData.received_date}
+                                    onChange={v => setGrnData({ ...grnData, received_date: v })}
+                                />
+                            </FieldGridItem>
+                            <FieldGridItem>
+                                <TextField
+                                    label="Supplier Delivery Note"
+                                    name="supplier_delivery_note"
+                                    placeholder="Challan / DN number"
+                                    value={grnData.supplier_delivery_note}
+                                    onChange={e => setGrnData({ ...grnData, supplier_delivery_note: e.target.value })}
+                                />
+                            </FieldGridItem>
+                            <FieldGridItem>
+                                <TextField
+                                    label="Vehicle Number"
+                                    name="vehicle_number"
+                                    placeholder="e.g. KA-01-AB-1234"
+                                    value={grnData.vehicle_number}
+                                    onChange={e => setGrnData({ ...grnData, vehicle_number: e.target.value })}
+                                />
+                            </FieldGridItem>
+                            <FieldGridItem>
+                                <TextField
+                                    label="Transporter"
+                                    name="transporter"
+                                    value={grnData.transporter}
+                                    onChange={e => setGrnData({ ...grnData, transporter: e.target.value })}
+                                />
+                            </FieldGridItem>
+                            <FieldGridItem>
+                                <TextField
+                                    label="Gate Entry No."
+                                    name="gate_entry_no"
+                                    value={grnData.gate_entry_no}
+                                    onChange={e => setGrnData({ ...grnData, gate_entry_no: e.target.value })}
+                                />
+                            </FieldGridItem>
+                            <FieldGridItem>
+                                <Select
+                                    label="Quality Inspection"
+                                    name="inspection_status"
+                                    value={grnData.inspection_status}
+                                    options={INSPECTION_OPTIONS}
+                                    onValueChange={v => setGrnData({ ...grnData, inspection_status: v })}
+                                />
+                            </FieldGridItem>
+                        </FieldGrid>
+                    </FormSection>
 
-                            <button type="submit" className="w-full py-4 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-primary-fg rounded-2xl font-bold transition-all shadow-xl shadow-fuchsia-900/20 active:scale-[0.98]">
-                                Post Goods Receipt
-                            </button>
-                        </form>
-                    ) : (
-                        <div className="h-full flex flex-col items-center justify-center text-fg-subtle border border-dashed border-line rounded-3xl p-12 bg-surface/10">
-                            <span className="text-5xl mb-4 opacity-20">📦</span>
-                            <p className="font-medium">Select a Purchase Order to start receiving goods.</p>
-                        </div>
-                    )}
-                </div>
-            </div>
-        </div>
+                    <FormSection title="2. Verify Quantities">
+                        {receiptLines.map((line, idx) => (
+                            <Card
+                                key={idx}
+                                title={line.description}
+                                actions={
+                                    <Button type="button" variant="ghost" size="sm" onClick={() => updateLine(idx, '_expanded', !line._expanded)}>
+                                        {line._expanded ? 'Hide details' : 'Batch / QC'}
+                                    </Button>
+                                }
+                            >
+                                <p className="mb-nb-3 text-nb-caption text-fg-subtle">
+                                    Ordered: {line.ordered} | Already received: {line.already_received} | Accepted now:{' '}
+                                    <span className={acceptedQty(line) < 0 ? 'text-danger' : 'text-success'}>{acceptedQty(line)}</span>
+                                </p>
+                                <FieldGrid columns={3}>
+                                    <FieldGridItem>
+                                        <TextField
+                                            type="number"
+                                            min="0"
+                                            label="Received"
+                                            name={`received_${idx}`}
+                                            aria-label={`Received quantity for ${line.description}`}
+                                            value={line.quantity_received}
+                                            onChange={e => updateLine(idx, 'quantity_received', e.target.value)}
+                                        />
+                                    </FieldGridItem>
+                                    <FieldGridItem>
+                                        <TextField
+                                            type="number"
+                                            min="0"
+                                            label="Rejected"
+                                            name={`rejected_${idx}`}
+                                            aria-label={`Rejected quantity for ${line.description}`}
+                                            value={line.rejected_quantity}
+                                            onChange={e => updateLine(idx, 'rejected_quantity', e.target.value)}
+                                        />
+                                    </FieldGridItem>
+                                    <FieldGridItem>
+                                        <TextField
+                                            type="number"
+                                            min="0"
+                                            label="Damaged"
+                                            name={`damaged_${idx}`}
+                                            aria-label={`Damaged quantity for ${line.description}`}
+                                            value={line.damaged_quantity}
+                                            onChange={e => updateLine(idx, 'damaged_quantity', e.target.value)}
+                                        />
+                                    </FieldGridItem>
+                                </FieldGrid>
+
+                                {line._expanded && (
+                                    <div className="mt-nb-4">
+                                        <FieldGrid columns={2}>
+                                            <FieldGridItem>
+                                                <TextField
+                                                    label="Batch Number"
+                                                    name={`batch_${idx}`}
+                                                    aria-label={`Batch number for ${line.description}`}
+                                                    value={line.batch_number}
+                                                    onChange={e => updateLine(idx, 'batch_number', e.target.value)}
+                                                />
+                                            </FieldGridItem>
+                                            <FieldGridItem>
+                                                <TextField
+                                                    type="date"
+                                                    label="Expiry Date"
+                                                    name={`expiry_${idx}`}
+                                                    aria-label={`Expiry date for ${line.description}`}
+                                                    value={line.expiry_date}
+                                                    onChange={e => updateLine(idx, 'expiry_date', e.target.value)}
+                                                />
+                                            </FieldGridItem>
+                                            <FieldGridItem>
+                                                <TextField
+                                                    label="Serial Numbers"
+                                                    name={`serials_${idx}`}
+                                                    placeholder="Comma separated"
+                                                    aria-label={`Serial numbers for ${line.description}`}
+                                                    value={line.serial_numbers}
+                                                    onChange={e => updateLine(idx, 'serial_numbers', e.target.value)}
+                                                />
+                                            </FieldGridItem>
+                                            <FieldGridItem>
+                                                <TextField
+                                                    label="Rejection Reason"
+                                                    name={`reason_${idx}`}
+                                                    placeholder="Why units were rejected"
+                                                    aria-label={`Rejection reason for ${line.description}`}
+                                                    value={line.rejection_reason}
+                                                    onChange={e => updateLine(idx, 'rejection_reason', e.target.value)}
+                                                />
+                                            </FieldGridItem>
+                                        </FieldGrid>
+                                    </div>
+                                )}
+                            </Card>
+                        ))}
+                    </FormSection>
+
+                    <FormSection title="Notes">
+                        <Textarea
+                            label="Receipt Notes"
+                            name="notes"
+                            value={grnData.notes}
+                            placeholder="Condition of the shipment, discrepancies, remarks for the buyer..."
+                            onChange={e => setGrnData({ ...grnData, notes: e.target.value })}
+                        />
+                    </FormSection>
+                </form>
+            ) : (
+                <EmptyState title="Select a Purchase Order to start receiving goods." />
+            )}
+        </FormPageTemplate>
     );
 };
 

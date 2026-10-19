@@ -1,5 +1,6 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { Upload } from 'lucide-react';
+import { Alert } from '@so360/design-system';
 import { mediaService } from '../../services/mediaService';
 import { fitImageFile, describeFit, IMAGE_FIT_SLOTS } from '../../utils/imageFit';
 import ImageThumbnail from './ImageThumbnail';
@@ -125,7 +126,7 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({ imageUrls, onImagesChange
                 <ImageSpecChip slot={PRODUCT_SLOT} />
             </div>
 
-            {/* Drop zone */}
+            {/* comb-exception: no DS drop-zone; hand-built drag/drop target */}
             <div
                 onDrop={handleDrop}
                 onDragOver={handleDragOver}
@@ -144,6 +145,7 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({ imageUrls, onImagesChange
                     {isDragOver ? 'Drop files here' : 'Drag and drop images here, or click to browse'}
                 </p>
                 <p className="text-xs text-fg-subtle mt-1">PNG, JPG, SVG, WebP — large photos are shrunk automatically</p>
+                {/* comb-exception: hidden native file input driven by the drop zone (no DS file-picker trigger) */}
                 <input
                     ref={fileInputRef}
                     type="file"
@@ -184,7 +186,7 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({ imageUrls, onImagesChange
             )}
 
             {imageUrls.length >= maxFiles && (
-                <p className="text-xs text-warning">Maximum {maxFiles} images reached</p>
+                <Alert variant="warning">Maximum {maxFiles} images reached</Alert>
             )}
         </div>
     );

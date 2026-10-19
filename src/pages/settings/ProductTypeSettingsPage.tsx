@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useActivity, useShellBridge } from '@so360/shell-context';
-import { FeatureGate, useConfirm } from '@so360/design-system';
-import { ArrowLeft, Plus, Trash2, Pencil, ChevronRight, AlertCircle, CheckCircle2, Sliders } from 'lucide-react';
+import {
+    Alert, Button, EmptyState, FeatureGate, IconButton, SettingsCard, SettingsPageTemplate, Skeleton, StatusBadge, TextField, useConfirm,
+} from '@so360/design-system';
+import { Plus, Trash2, ChevronRight, Sliders } from 'lucide-react';
 import { ProductType, ProductTypeAttribute } from '../../types/productTypes';
 import { productTypeService } from '../../services/productTypeService';
 import AttributeEditor from './components/AttributeEditor';
-
-const inputClass = 'w-full bg-surface-raised border border-line-strong rounded-lg px-4 py-2.5 text-fg focus:outline-none focus:ring-2 focus:ring-focus/50 focus:border-primary transition-all placeholder:text-fg-subtle';
 
 const ProductTypeSettingsPage = () => {
     const [confirm, confirmDialog] = useConfirm();
@@ -120,164 +120,132 @@ const ProductTypeSettingsPage = () => {
         }
     };
 
-    if (loading) return <div className="p-8"><div className="animate-pulse text-fg-subtle">Loading product types...</div></div>;
+    if (loading) return <div className="p-nb-6" aria-busy="true"><Skeleton variant="rect" /></div>;
+
+    const canEditSelected = !!selectedType && !selectedType.is_system && canManageProductTypes;
 
     return (
-        <div className="p-8">
+        <SettingsPageTemplate
+            title="Product Types"
+            description="Manage product type templates and their attribute schemas"
+            trail={[{ label: 'Settings', to: '/inventory/settings', onClick: () => navigate('/inventory/settings') }]}
+        >
             {confirmDialog}
-            <header className="mb-8">
-                <button onClick={() => navigate('/inventory/settings')} className="flex items-center gap-2 text-fg-muted hover:text-fg transition-colors mb-4">
-                    <ArrowLeft size={18} /> <span className="text-sm">Back to Settings</span>
-                </button>
-                <h1 className="text-2xl font-bold text-fg tracking-tight flex items-center gap-3">
-                    <Sliders className="text-primary" size={24} /> Product Types
-                </h1>
-                <p className="text-fg-muted mt-1">Manage product type templates and their attribute schemas</p>
-            </header>
+            {error && <Alert variant="error">{error}</Alert>}
+            {success && <Alert variant="success">Saved successfully</Alert>}
 
-            {error && (
-                <div className="mb-6 bg-rose-500/10 border border-rose-500/20 text-rose-400 px-4 py-3 rounded-lg flex items-center gap-3">
-                    <AlertCircle size={18} /> <span>{error}</span>
-                </div>
-            )}
-            {success && (
-                <div className="mb-6 bg-success/10 border border-success/20 text-success px-4 py-3 rounded-lg flex items-center gap-3">
-                    <CheckCircle2 size={18} /> <span>Saved successfully</span>
-                </div>
-            )}
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 gap-nb-region md:grid-cols-3">
                 {/* Left: Type list */}
-                <div className="space-y-3">
-                    <div className="flex items-center justify-between mb-2">
-                        <h2 className="text-sm font-semibold text-fg-muted uppercase tracking-wider">Types</h2>
+                <SettingsCard
+                    title="Types"
+                    actions={
                         <FeatureGate state={manageProductTypesState} loading={(shell?.effectiveFlagsLoaded === false)} onUpgradeClick={() => navigate('/org/billing')}>
-                            <button
-                                onClick={() => setShowCreateForm(true)}
-                                className="text-primary hover:text-primary text-xs flex items-center gap-1"
-                            >
-                                <Plus size={14} /> New
-                            </button>
+                            <Button variant="secondary" size="sm" onClick={() => setShowCreateForm(true)}><Plus size={14} /> New</Button>
                         </FeatureGate>
+                    }
+                >
+                    <div className="flex flex-col gap-nb-2">
+                        {showCreateForm && (
+                            <div className="flex flex-col gap-nb-2 rounded-nb-lg border border-line bg-surface p-nb-3">
+                                <TextField
+                                    name="product-type-name"
+                                    aria-label="Name"
+                                    value={newName}
+                                    onChange={e => { setNewName(e.target.value); setNewCode(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '_')); }}
+                                    placeholder="Name *"
+                                    autoFocus
+                                />
+                                <TextField name="product-type-code" aria-label="Code" value={newCode} onChange={e => setNewCode(e.target.value)} placeholder="Code *" />
+                                <TextField name="product-type-description" aria-label="Description" value={newDesc} onChange={e => setNewDesc(e.target.value)} placeholder="Description" />
+                                <div className="flex justify-end gap-nb-2">
+                                    <Button variant="secondary" size="sm" onClick={() => setShowCreateForm(false)}>Cancel</Button>
+                                    <Button size="sm" onClick={handleCreate} disabled={isCreating || !newName.trim() || !newCode.trim()} loading={isCreating}>Create</Button>
+                                </div>
+                            </div>
+                        )}
+
+                        {types.map(pt => (
+                            <Button
+                                key={pt.id}
+                                variant={selectedType?.id === pt.id ? 'tonal' : 'ghost'}
+                                className="w-full justify-between"
+                                onClick={() => loadTypeDetail(pt.id)}
+                            >
+                                <span className="flex flex-col items-start text-left">
+                                    <span className="text-nb-body font-medium text-fg">{pt.name}</span>
+                                    <span className="text-nb-caption text-fg-subtle">{pt.code}</span>
+                                </span>
+                                {pt.is_system && <StatusBadge status="System" />}
+                                <ChevronRight size={14} className="text-fg-subtle" />
+                            </Button>
+                        ))}
                     </div>
-
-                    {showCreateForm && (
-                        <div className="p-3 bg-surface/50 border border-line rounded-xl space-y-2">
-                            <input type="text" value={newName} onChange={e => { setNewName(e.target.value); setNewCode(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '_')); }} className={inputClass} placeholder="Name *" autoFocus />
-                            <input type="text" value={newCode} onChange={e => setNewCode(e.target.value)} className={inputClass} placeholder="Code *" />
-                            <input type="text" value={newDesc} onChange={e => setNewDesc(e.target.value)} className={inputClass} placeholder="Description" />
-                            <div className="flex gap-2">
-                                <button onClick={() => setShowCreateForm(false)} className="flex-1 px-3 py-1.5 rounded-lg border border-line-strong text-fg-muted text-sm">Cancel</button>
-                                <button onClick={handleCreate} disabled={isCreating || !newName.trim() || !newCode.trim()} className="flex-1 px-3 py-1.5 rounded-lg bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-fg text-sm font-medium">
-                                    {isCreating ? '...' : 'Create'}
-                                </button>
-                            </div>
-                        </div>
-                    )}
-
-                    {types.map(pt => (
-                        <button
-                            key={pt.id}
-                            onClick={() => loadTypeDetail(pt.id)}
-                            className={`w-full text-left p-3 rounded-xl border transition-all flex items-center justify-between group ${
-                                selectedType?.id === pt.id
-                                    ? 'border-primary bg-primary/10'
-                                    : 'border-line bg-surface/50 hover:border-line-strong'
-                            }`}
-                        >
-                            <div>
-                                <span className="text-sm font-medium text-fg">{pt.name}</span>
-                                {pt.is_system && <span className="ml-2 text-[10px] text-fg-subtle uppercase">System</span>}
-                                <p className="text-xs text-fg-subtle mt-0.5">{pt.code}</p>
-                            </div>
-                            <ChevronRight size={14} className="text-fg-subtle" />
-                        </button>
-                    ))}
-                </div>
+                </SettingsCard>
 
                 {/* Right: Type detail + attributes */}
                 <div className="md:col-span-2">
                     {selectedType ? (
-                        <div className="bg-surface/50 border border-line rounded-xl p-6">
-                            <div className="flex items-center justify-between mb-6">
-                                <div>
-                                    <h2 className="text-lg font-bold text-fg">{selectedType.name}</h2>
-                                    <p className="text-sm text-fg-subtle">{selectedType.description || selectedType.code}</p>
-                                    {selectedType.is_system && (
-                                        <span className="inline-block mt-1 text-xs text-amber-500 bg-warning/10 px-2 py-0.5 rounded">System template — attributes are read-only</span>
-                                    )}
-                                </div>
-                                {!selectedType.is_system && canManageProductTypes && (
-                                    <button
-                                        onClick={() => handleDelete(selectedType.id)}
-                                        className="text-fg-subtle hover:text-rose-400 transition-colors"
-                                    >
-                                        <Trash2 size={18} />
-                                    </button>
-                                )}
-                            </div>
+                        <SettingsCard
+                            title={selectedType.name}
+                            description={selectedType.description || selectedType.code}
+                            actions={canEditSelected ? (
+                                <IconButton label="Delete product type" icon={<Trash2 size={18} />} variant="danger" onClick={() => handleDelete(selectedType.id)} />
+                            ) : undefined}
+                        >
+                            <div className="flex flex-col gap-nb-4">
+                                {selectedType.is_system && <Alert variant="warning">System template — attributes are read-only</Alert>}
 
-                            <h3 className="text-sm font-semibold text-fg-muted uppercase tracking-wider mb-4">Attributes</h3>
+                                <h3 className="text-nb-label text-fg-muted">Attributes</h3>
 
-                            {selectedType.product_type_attributes && selectedType.product_type_attributes.length > 0 ? (
-                                <div className="space-y-2 mb-4">
-                                    {selectedType.product_type_attributes.map((attr: ProductTypeAttribute) => (
-                                        <div key={attr.id} className="flex items-center justify-between p-3 bg-surface-raised/30 border border-line-strong/50 rounded-lg group">
-                                            <div>
-                                                <span className="text-sm text-fg">{attr.label}</span>
-                                                <span className="ml-2 text-xs text-fg-subtle">{attr.field_name}</span>
-                                                <div className="flex items-center gap-2 mt-0.5">
-                                                    <span className="text-xs bg-surface-high text-fg-muted px-1.5 py-0.5 rounded">{attr.field_type}</span>
-                                                    {attr.is_required && <span className="text-xs text-rose-400">Required</span>}
-                                                    {attr.unit && <span className="text-xs text-fg-subtle">{attr.unit}</span>}
-                                                    {attr.field_type === 'select' && attr.options && (
-                                                        <span className="text-xs text-fg-subtle">{attr.options.length} options</span>
-                                                    )}
+                                {selectedType.product_type_attributes && selectedType.product_type_attributes.length > 0 ? (
+                                    <ul className="flex flex-col divide-y divide-line rounded-nb-lg border border-line">
+                                        {selectedType.product_type_attributes.map((attr: ProductTypeAttribute) => (
+                                            <li key={attr.id} className="flex items-center justify-between gap-nb-3 p-nb-3">
+                                                <div className="flex flex-col gap-nb-1">
+                                                    <span className="text-nb-body text-fg">
+                                                        {attr.label} <span className="text-nb-caption text-fg-subtle">{attr.field_name}</span>
+                                                    </span>
+                                                    <div className="flex flex-wrap items-center gap-nb-2">
+                                                        <StatusBadge status={attr.field_type} />
+                                                        {attr.is_required && <span className="text-nb-caption text-danger">Required</span>}
+                                                        {attr.unit && <span className="text-nb-caption text-fg-subtle">{attr.unit}</span>}
+                                                        {attr.field_type === 'select' && attr.options && (
+                                                            <span className="text-nb-caption text-fg-subtle">{attr.options.length} options</span>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            {!selectedType.is_system && canManageProductTypes && (
-                                                <button
-                                                    onClick={() => handleDeleteAttribute(attr.id)}
-                                                    className="opacity-0 group-hover:opacity-100 text-fg-subtle hover:text-rose-400 transition-all"
-                                                >
-                                                    <Trash2 size={14} />
-                                                </button>
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <p className="text-sm text-fg-subtle mb-4">No attributes defined</p>
-                            )}
+                                                {canEditSelected && (
+                                                    <IconButton label="Delete attribute" icon={<Trash2 size={14} />} variant="danger" size="sm" onClick={() => handleDeleteAttribute(attr.id)} />
+                                                )}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                ) : (
+                                    <p className="text-nb-body text-fg-subtle">No attributes defined</p>
+                                )}
 
-                            {!selectedType.is_system && canManageProductTypes && (
-                                <>
-                                    {showAddAttr ? (
+                                {canEditSelected && (
+                                    showAddAttr ? (
                                         <AttributeEditor
                                             onSave={handleAddAttribute}
                                             onCancel={() => setShowAddAttr(false)}
                                         />
                                     ) : (
-                                        <button
-                                            onClick={() => setShowAddAttr(true)}
-                                            className="w-full border border-dashed border-line-strong px-4 py-3 rounded-lg text-sm text-fg-subtle hover:text-primary hover:border-primary/50 transition-all flex items-center justify-center gap-2"
-                                        >
-                                            <Plus size={16} /> Add Attribute
-                                        </button>
-                                    )}
-                                </>
-                            )}
-                        </div>
+                                        <Button variant="secondary" className="w-full" onClick={() => setShowAddAttr(true)}><Plus size={16} /> Add Attribute</Button>
+                                    )
+                                )}
+                            </div>
+                        </SettingsCard>
                     ) : (
-                        <div className="flex flex-col items-center justify-center py-20 text-center">
-                            <Sliders size={48} className="text-fg-subtle mb-4" />
-                            <h3 className="text-lg font-semibold text-fg-muted mb-2">Select a Product Type</h3>
-                            <p className="text-sm text-fg-subtle">Choose a type from the left panel to view and manage its attributes</p>
-                        </div>
+                        <EmptyState
+                            icon={Sliders}
+                            title="Select a Product Type"
+                            description="Choose a type from the left panel to view and manage its attributes"
+                        />
                     )}
                 </div>
             </div>
-        </div>
+        </SettingsPageTemplate>
     );
 };
 

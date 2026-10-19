@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users } from 'lucide-react';
+import { Card } from '@so360/design-system';
 import { TeamAgentPicker, UserAgentPicker } from './AgentPickers';
 import type { UnitAllocation } from '../../types/inventory';
 import type { InheritedAllocation, InheritedList } from '../../utils/unitAllocation';
@@ -16,7 +16,7 @@ interface AssignedAgentsPanelProps {
 const Hint: React.FC<{ own: string[] | null; inherited: InheritedList | null; testId: string }> = ({ own, inherited, testId }) => {
     if (own && own.length) return null;
     return (
-        <span data-testid={testId} className="block text-[11px] text-fg-subtle mt-1">
+        <span data-testid={testId} className="block text-xs text-fg-subtle mt-1">
             {inherited ? `Inherited from ${inherited.from} (${inherited.ids.length})` : 'Not assigned'}
         </span>
     );
@@ -27,11 +27,9 @@ const Hint: React.FC<{ own: string[] | null; inherited: InheritedList | null; te
  * parent's list", which the hint names.
  */
 export const AssignedAgentsPanel: React.FC<AssignedAgentsPanelProps> = ({ value, onChange, inherited, disabled, scope }) => (
-    <section className="space-y-3 border border-line rounded-xl p-4" aria-label="Assigned agents">
-        <h3 className="text-sm font-semibold text-fg-muted flex items-center gap-2">
-            <Users size={16} className="text-primary" /> Assigned agents/teams
-        </h3>
-        <p className="text-[11px] text-fg-subtle">Leave empty to use the parent&apos;s agents for this {scope}.</p>
+    <section aria-label="Assigned agents">
+        <Card title="Assigned agents/teams">
+        <p className="text-xs text-fg-subtle mb-3">Leave empty to use the parent&apos;s agents for this {scope}.</p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
                 <UserAgentPicker value={value.assigned_user_ids} disabled={disabled}
@@ -44,6 +42,7 @@ export const AssignedAgentsPanel: React.FC<AssignedAgentsPanelProps> = ({ value,
                 <Hint own={value.assigned_team_ids} inherited={inherited.teams} testId="inherited-teams" />
             </div>
         </div>
+        </Card>
     </section>
 );
 

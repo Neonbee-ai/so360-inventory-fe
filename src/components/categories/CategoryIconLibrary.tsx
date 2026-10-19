@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import { Button } from '@so360/design-system';
 import { PRESET_ICONS, buildPresetUrl, isPresetUrl, getPresetId } from '../../constants/categoryIcons';
 
 interface CategoryIconLibraryProps {
@@ -18,10 +19,12 @@ const CategoryIconLibrary: React.FC<CategoryIconLibraryProps> = ({ currentUrl, c
 
   return (
     <div className="border border-line rounded-xl overflow-hidden">
-      <button
+      <Button
         type="button"
+        variant="ghost"
+        aria-expanded={open}
         onClick={() => setOpen(v => !v)}
-        className="w-full flex items-center justify-between px-4 py-2.5 text-left hover:bg-surface-raised/50 transition-colors"
+        className="w-full justify-between"
       >
         <span className="text-xs font-medium text-fg-muted uppercase tracking-wider">Preset Icons</span>
         {open ? (
@@ -29,7 +32,7 @@ const CategoryIconLibrary: React.FC<CategoryIconLibraryProps> = ({ currentUrl, c
         ) : (
           <ChevronDown size={14} className="text-fg-subtle" />
         )}
-      </button>
+      </Button>
 
       {open && (
         <div className="px-4 pb-4 pt-1 bg-surface/30">
@@ -42,11 +45,12 @@ const CategoryIconLibrary: React.FC<CategoryIconLibraryProps> = ({ currentUrl, c
                   const isActive = currentPresetId === icon.id;
                   const bg = categoryColor || icon.defaultColor;
                   return (
-                    <button
+                    <Button
                       key={icon.id}
                       type="button"
+                      variant="ghost"
                       onClick={() => onSelect(buildPresetUrl(icon.id))}
-                      className={`flex flex-col items-center gap-1 p-2 rounded-lg border transition-all hover:border-primary/50 hover:bg-surface-raised/60 ${
+                      className={`!h-auto flex flex-col items-center gap-1 p-2 rounded-lg border transition-all ${
                         isActive
                           ? 'border-primary bg-primary/10 ring-1 ring-focus'
                           : 'border-line bg-surface-raised/30'
@@ -60,7 +64,7 @@ const CategoryIconLibrary: React.FC<CategoryIconLibraryProps> = ({ currentUrl, c
                         <IconComp size={16} className="text-fg" />
                       </div>
                       <span className="text-[10px] text-fg-subtle leading-tight text-center truncate w-full">{icon.label}</span>
-                    </button>
+                    </Button>
                   );
                 })}
               </div>

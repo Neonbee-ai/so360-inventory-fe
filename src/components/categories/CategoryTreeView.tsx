@@ -3,7 +3,7 @@ import { ChevronRight, ChevronDown, Plus, Pencil, Trash2, X, Check, Camera, Load
 import { TreeNode } from '../../utils/categoryTree';
 import { mediaService } from '../../services/mediaService';
 import { renderCategoryIcon } from '../../constants/categoryIcons';
-import { useConfirm } from '@so360/design-system';
+import { Button, IconButton, TextField, useConfirm } from '@so360/design-system';
 
 const PRESET_COLORS = ['#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#EC4899', '#06B6D4', '#64748B'];
 
@@ -58,6 +58,7 @@ const CategoryAvatar: React.FC<{
 
     return (
         <div className="relative flex-shrink-0">
+            {/* comb-exception: 28px avatar tile is a label wrapping a hidden file input; no Comb primitive for an image-tile upload trigger */}
             <label className={`block w-7 h-7 rounded-lg overflow-hidden group/avatar ${canManage ? 'cursor-pointer' : 'cursor-default'}`}>
                 <div className="relative w-full h-full">
                     {uploading ? (
@@ -148,48 +149,49 @@ const TreeItem: React.FC<TreeItemProps> = ({ node, onAdd, onUpdate, onDelete, ca
         <div>
             {confirmDialog}
             <div className="flex items-start gap-1 group py-1.5 px-2 rounded-lg hover:bg-surface-raised/50 transition-colors" style={{ paddingLeft: `${node.depth * 20 + 8}px` }}>
-                <button
-                    type="button"
+                <IconButton
+                    label={expanded ? 'Collapse' : 'Expand'}
+                    size="sm"
+                    hideTooltip
                     onClick={() => setExpanded(!expanded)}
-                    className={`w-5 h-5 flex items-center justify-center text-fg-subtle mt-0.5 flex-shrink-0 ${hasChildren ? 'hover:text-fg-muted' : 'invisible'}`}
-                >
-                    {hasChildren && (expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />)}
-                </button>
+                    className={`flex-shrink-0 ${hasChildren ? '' : 'invisible'}`}
+                    icon={hasChildren ? (expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />) : <span />}
+                />
 
                 <CategoryAvatar node={node} canManage={canManage} onUpdate={onUpdate} />
 
                 {isEditing ? (
                     <div className="flex flex-col gap-2 flex-1 mt-0.5">
                         <div className="flex items-center gap-2">
-                            <input
+                            <TextField
+                                name={`edit-category-${node.id}`}
+                                aria-label="Category name"
                                 type="text"
                                 value={editName}
                                 onChange={e => setEditName(e.target.value)}
-                                className="bg-surface-raised border border-line-strong px-2 py-0.5 rounded text-sm text-fg flex-1"
+                                className="flex-1"
                                 autoFocus
                                 onKeyDown={e => { if (e.key === 'Enter') handleSaveEdit(); if (e.key === 'Escape') { setIsEditing(false); setEditName(node.name); setEditColor(node.color || ''); } }}
                             />
-                            <button onClick={handleSaveEdit} disabled={isSaving} className="text-success hover:text-success"><Check size={14} /></button>
-                            <button onClick={() => { setIsEditing(false); setEditName(node.name); setEditColor(node.color || ''); }} className="text-fg-muted hover:text-fg"><X size={14} /></button>
+                            <IconButton label="Save" size="sm" onClick={handleSaveEdit} disabled={isSaving} icon={<Check size={14} />} />
+                            <IconButton label="Cancel" size="sm" onClick={() => { setIsEditing(false); setEditName(node.name); setEditColor(node.color || ''); }} icon={<X size={14} />} />
                         </div>
                         <div className="flex items-center gap-1.5">
                             {PRESET_COLORS.map(c => (
-                                <button
+                                <IconButton
                                     key={c}
-                                    type="button"
+                                    label={`Colour ${c}`}
+                                    size="sm"
+                                    hideTooltip
+                                    selected={editColor === c}
                                     onClick={() => setEditColor(c)}
-                                    className="w-5 h-5 rounded-full border-2 transition-all"
-                                    style={{ background: c, borderColor: editColor === c ? 'white' : 'transparent' }}
+                                    icon={<span className="block w-4 h-4 rounded-full" style={{ background: c }} />}
                                 />
                             ))}
                             {editColor && (
-                                <button
-                                    type="button"
-                                    onClick={() => setEditColor('')}
-                                    className="text-xs text-fg-subtle hover:text-fg-muted ml-1"
-                                >
+                                <Button type="button" variant="ghost" size="sm" onClick={() => setEditColor('')}>
                                     Clear
-                                </button>
+                                </Button>
                             )}
                         </div>
                     </div>
@@ -206,15 +208,17 @@ const TreeItem: React.FC<TreeItemProps> = ({ node, onAdd, onUpdate, onDelete, ca
                         </div>
                         {canManage && (
                             <div className="flex items-center gap-1 ml-1 flex-shrink-0">
-                                <button
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
                                     onClick={() => setShowAddChild(true)}
-                                    className="px-1.5 py-0.5 text-xs text-fg-subtle hover:text-primary hover:bg-primary-hover/10 rounded transition-colors"
                                     title="Add subcategory"
                                 >
                                     + Sub
-                                </button>
-                                <button onClick={() => setIsEditing(true)} className="p-1 text-fg-subtle hover:text-warning" title="Edit"><Pencil size={12} /></button>
-                                <button onClick={handleDelete} className="p-1 text-fg-subtle hover:text-rose-400" title="Delete"><Trash2 size={12} /></button>
+                                </Button>
+                                <IconButton label="Edit" size="sm" onClick={() => setIsEditing(true)} icon={<Pencil size={12} />} />
+                                <IconButton label="Delete" size="sm" variant="danger" onClick={handleDelete} icon={<Trash2 size={12} />} />
                             </div>
                         )}
                     </>
@@ -223,19 +227,21 @@ const TreeItem: React.FC<TreeItemProps> = ({ node, onAdd, onUpdate, onDelete, ca
 
             {showAddChild && (
                 <div className="flex items-center gap-2 py-1.5" style={{ paddingLeft: `${(node.depth + 1) * 20 + 40}px` }}>
-                    <input
+                    <TextField
+                        name={`add-child-${node.id}`}
+                        aria-label="Subcategory name"
                         type="text"
                         value={childName}
                         onChange={e => setChildName(e.target.value)}
                         placeholder="Subcategory name..."
-                        className="bg-surface-raised border border-line-strong px-2 py-1 rounded text-sm text-fg flex-1"
+                        className="flex-1"
                         autoFocus
                         onKeyDown={e => { if (e.key === 'Enter') handleAddChild(); if (e.key === 'Escape') setShowAddChild(false); }}
                     />
-                    <button onClick={handleAddChild} disabled={isAdding} className="bg-primary hover:bg-primary-hover text-primary-fg px-2 py-1 rounded text-xs disabled:opacity-50">
+                    <Button type="button" variant="primary" size="sm" onClick={handleAddChild} disabled={isAdding}>
                         {isAdding ? '...' : 'Add'}
-                    </button>
-                    <button onClick={() => setShowAddChild(false)} className="text-fg-muted hover:text-fg"><X size={14} /></button>
+                    </Button>
+                    <IconButton label="Cancel add subcategory" size="sm" onClick={() => setShowAddChild(false)} icon={<X size={14} />} />
                 </div>
             )}
 
@@ -291,27 +297,26 @@ const CategoryTreeView: React.FC<CategoryTreeViewProps> = ({ tree, onAdd, onUpda
                 <div className="mt-3">
                     {showAddRoot ? (
                         <div className="flex items-center gap-2">
-                            <input
+                            <TextField
+                                name="add-root-category"
+                                aria-label="Category name"
                                 type="text"
                                 value={rootName}
                                 onChange={e => setRootName(e.target.value)}
                                 placeholder="Category name..."
-                                className="bg-surface-raised border border-line-strong px-2 py-1 rounded text-sm text-fg flex-1"
+                                className="flex-1"
                                 autoFocus
                                 onKeyDown={e => { if (e.key === 'Enter') handleAddRoot(); if (e.key === 'Escape') setShowAddRoot(false); }}
                             />
-                            <button onClick={handleAddRoot} disabled={isAddingRoot} className="bg-primary hover:bg-primary-hover text-primary-fg px-2 py-1 rounded text-sm disabled:opacity-50">
+                            <Button type="button" variant="primary" size="sm" onClick={handleAddRoot} disabled={isAddingRoot}>
                                 {isAddingRoot ? '...' : 'Add'}
-                            </button>
-                            <button onClick={() => setShowAddRoot(false)} className="text-fg-muted hover:text-fg"><X size={14} /></button>
+                            </Button>
+                            <IconButton label="Cancel add category" size="sm" onClick={() => setShowAddRoot(false)} icon={<X size={14} />} />
                         </div>
                     ) : (
-                        <button
-                            onClick={() => setShowAddRoot(true)}
-                            className="border border-dashed border-line-strong px-3 py-1.5 rounded-lg text-sm text-fg-subtle hover:text-fg-muted hover:border-line-strong transition-all flex items-center gap-1"
-                        >
+                        <Button type="button" variant="secondary" size="sm" onClick={() => setShowAddRoot(true)}>
                             <Plus size={14} /> Add Category
-                        </button>
+                        </Button>
                     )}
                 </div>
             )}

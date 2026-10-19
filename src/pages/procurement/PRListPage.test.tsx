@@ -472,66 +472,23 @@ describe('PRListPage', () => {
     });
   });
 
-  describe('Given modal positioning — header overlap fix', () => {
-    it('When New Requisition modal opens / Then overlay has pt-24 class for header clearance', async () => {
+  describe('Given the Comb Modal for the requisition form', () => {
+    it('When New Requisition clicked / Then a dialog titled Create New Requisition opens', async () => {
       render(<PRListPage />);
       await waitFor(() => screen.getByText('New Requisition'));
       fireEvent.click(screen.getByText('New Requisition'));
       await waitFor(() => screen.getByText('Create New Requisition'));
-      const overlay = document.querySelector('.fixed.inset-0') as HTMLElement;
-      expect(overlay).not.toBeNull();
-      expect(overlay.className).toContain('pt-24');
+      expect(screen.getByRole('dialog')).toBeTruthy();
     });
 
-    it('When modal open / Then overlay uses items-center for centering within safe zone', async () => {
-      render(<PRListPage />);
-      await waitFor(() => screen.getByText('New Requisition'));
-      fireEvent.click(screen.getByText('New Requisition'));
-      await waitFor(() => screen.getByText('Create New Requisition'));
-      const overlay = document.querySelector('.fixed.inset-0') as HTMLElement;
-      expect(overlay.className).toContain('items-center');
-    });
-
-    it('When modal open / Then overlay does NOT have bare p-4 (replaced by split padding)', async () => {
-      render(<PRListPage />);
-      await waitFor(() => screen.getByText('New Requisition'));
-      fireEvent.click(screen.getByText('New Requisition'));
-      await waitFor(() => screen.getByText('Create New Requisition'));
-      const overlay = document.querySelector('.fixed.inset-0') as HTMLElement;
-      // p-4 produces exactly "p-4" as a class token — pt-20 replaces the uniform shorthand
-      const classes = overlay.className.split(/\s+/);
-      expect(classes).not.toContain('p-4');
-    });
-
-    it('When modal open / Then dialog height is bounded to the safe zone (never overlaps header) with internal scroll', async () => {
-      render(<PRListPage />);
-      await waitFor(() => screen.getByText('New Requisition'));
-      fireEvent.click(screen.getByText('New Requisition'));
-      await waitFor(() => screen.getByText('Create New Requisition'));
-      // Bounded to calc(100vh - top/bottom offset) so a tall dialog can never exceed the
-      // padded safe zone and intrude into the header; 90vh (larger than the safe zone) is gone.
-      const dialog = document.querySelector('.max-h-\\[calc\\(100vh-7\\.5rem\\)\\]') as HTMLElement;
-      expect(dialog).not.toBeNull();
-      expect(document.querySelector('.max-h-\\[90vh\\]')).toBeNull();
-    });
-
-    it('When modal open / Then overlay stacks above shell NavBar (z-[600] > z-[500])', async () => {
-      render(<PRListPage />);
-      await waitFor(() => screen.getByText('New Requisition'));
-      fireEvent.click(screen.getByText('New Requisition'));
-      await waitFor(() => screen.getByText('Create New Requisition'));
-      const overlay = document.querySelector('.fixed.inset-0') as HTMLElement;
-      expect(overlay.className).toContain('z-[600]');
-    });
-
-    it('When Cancel clicked / Then overlay is removed from DOM', async () => {
+    it('When Cancel clicked / Then dialog is removed from DOM', async () => {
       render(<PRListPage />);
       await waitFor(() => screen.getByText('New Requisition'));
       fireEvent.click(screen.getByText('New Requisition'));
       await waitFor(() => screen.getByText('Create New Requisition'));
       fireEvent.click(screen.getByText('Cancel'));
       await waitFor(() => {
-        expect(document.querySelector('.fixed.inset-0')).toBeNull();
+        expect(screen.queryByRole('dialog')).toBeNull();
       });
     });
   });

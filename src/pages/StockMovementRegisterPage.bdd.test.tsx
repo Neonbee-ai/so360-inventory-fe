@@ -186,7 +186,7 @@ describe('Stock Movement Register — filters', () => {
         await waitFor(() => expect(inv.getMovements).toHaveBeenCalled());
 
         fireEvent.click(screen.getByText('Filters'));
-        fireEvent.change(screen.getByLabelText('Filter movement type'), {
+        fireEvent.change(screen.getByLabelText('Movement Type'), {
             target: { value: 'transfer' },
         });
 

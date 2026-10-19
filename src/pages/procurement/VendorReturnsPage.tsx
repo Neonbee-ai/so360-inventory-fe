@@ -2,15 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { qualityService } from '../../services/qualityService';
 import { procurementService } from '../../services/procurementService';
 import { useInventoryFormatters } from '../../utils/formatters';
-import { toast, getErrorMessage } from '@so360/design-system';
-
-export const RETURN_STATUS_STYLES: Record<string, string> = {
-    draft: 'bg-surface-high text-fg-muted border-line-strong/20',
-    approved: 'bg-primary/10 text-primary border-primary/20',
-    dispatched: 'bg-warning/10 text-warning border-warning/20',
-    settled: 'bg-success/10 text-success border-success/20',
-    cancelled: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
-};
+import { Alert, Button, Checkbox, DataTable, EmptyState, Grid, GridItem, KpiCard, ListPageTemplate, Modal, Select, StatusBadge, TextField, Textarea, toast, getErrorMessage, type DataTableColumn } from '@so360/design-system';
 
 const REASONS = [
     { value: 'damaged', label: 'Damaged' },
@@ -99,8 +91,7 @@ const VendorReturnsPage = () => {
         setLines(next);
     };
 
-    const submit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const submit = async () => {
         const payloadLines = lines.filter(l => parseFloat(l.quantity) > 0);
         if (!selectedGrn) {
             toast.warning('Select the receipt the goods came in on.');
@@ -169,8 +160,7 @@ const VendorReturnsPage = () => {
         }
     };
 
-    const submitSettlement = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const submitSettlement = async () => {
         if (!creditNote.credit_note_number) {
             toast.warning('Enter the vendor credit note number.');
             return;
@@ -190,272 +180,212 @@ const VendorReturnsPage = () => {
         }
     };
 
+    const columns: DataTableColumn<any>[] = [
+        {
+            key: 'return',
+            header: 'Return',
+            render: (r: any) => (
+                <>
+                    <div className="font-semibold text-fg">{r.return_number}</div>
+                    <div className="text-xs text-fg-subtle">{r.grn?.grn_number || ''}</div>
+                </>
+            ),
+        },
+        { key: 'vendor', header: 'Vendor', render: (r: any) => r.vendor_name || '—' },
+        { key: 'reason', header: 'Reason', render: (r: any) => r.reason?.replace(/_/g, ' ') },
+        {
+            key: 'resolution',
+            header: 'Resolution',
+            render: (r: any) => (
+                <>
+                    {r.resolution?.replace(/_/g, ' ')}
+                    {r.credit_note_number && <div className="font-mono text-xs text-success">{r.credit_note_number}</div>}
+                </>
+            ),
+        },
+        { key: 'value', header: 'Value', align: 'right', render: (r: any) => formatters.formatCurrency(r.total_amount || 0) },
+        { key: 'status', header: 'Status', render: (r: any) => <StatusBadge status={r.status} /> },
+        {
+            key: 'action',
+            header: 'Action',
+            render: (r: any) => NEXT_STEP[r.status] ? (
+                <Button variant="ghost" size="sm" onClick={() => advance(r)}>{NEXT_STEP[r.status]!.label} →</Button>
+            ) : (
+                <span className="text-sm text-fg-subtle">—</span>
+            ),
+        },
+    ];
+
     return (
-        <div className="p-8 space-y-8 animate-in fade-in duration-700">
-            {fetchError && (
-                <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl flex items-center gap-3 text-rose-400 text-sm">
-                    <span>⚠</span> {fetchError}
-                </div>
-            )}
-
-            <div className="flex items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-4xl font-bold bg-gradient-to-r from-rose-400 to-pink-400 bg-clip-text text-transparent">
-                        Vendor Returns
-                    </h1>
-                    <p className="text-fg-muted mt-2 font-medium">
-                        Send back damaged, wrong, excess or expired goods and track the credit.
-                    </p>
-                </div>
-                <button
-                    onClick={() => setShowForm(true)}
-                    className="px-6 py-3 bg-rose-600 hover:bg-rose-500 text-primary-fg rounded-xl font-semibold transition-all shadow-lg shadow-rose-900/20 active:scale-95"
-                >
-                    + New Return
-                </button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                {[
-                    { label: 'Open Returns', value: returns.filter(r => ['draft', 'approved', 'dispatched'].includes(r.status)).length, icon: '📦' },
-                    { label: 'Awaiting Credit', value: returns.filter(r => r.status === 'dispatched' && r.resolution === 'credit_note').length, icon: '🧾' },
-                    { label: 'Settled', value: returns.filter(r => r.status === 'settled').length, icon: '✅' },
-                    { label: 'Value Returned', value: formatters.formatCurrency(returns.reduce((s, r) => s + (Number(r.total_amount) || 0), 0)), icon: '💰' },
-                ].map((s, i) => (
-                    <div key={i} className="bg-surface/50 border border-line p-6 rounded-2xl">
-                        <div className="flex justify-between items-start">
-                            <span className="text-2xl">{s.icon}</span>
-                            <span className="text-xs font-bold uppercase tracking-wider text-fg-subtle">{s.label}</span>
-                        </div>
-                        <div className="mt-4 text-2xl font-bold text-fg">{s.value}</div>
-                    </div>
-                ))}
-            </div>
-
-            <div className="flex items-center gap-3">
-                <label htmlFor="return-status-filter" className="text-xs font-bold text-fg-subtle uppercase tracking-wider">Status</label>
-                <select
-                    id="return-status-filter"
-                    value={statusFilter}
-                    onChange={e => setStatusFilter(e.target.value)}
-                    className="bg-bg border border-line rounded-xl px-4 py-2 text-sm text-fg focus:outline-none focus:ring-2 focus:ring-rose-500/40"
-                >
-                    <option value="">All</option>
-                    <option value="draft">Draft</option>
-                    <option value="approved">Approved</option>
-                    <option value="dispatched">Dispatched</option>
-                    <option value="settled">Settled</option>
-                </select>
-            </div>
-
-            <div className="bg-surface/50 border border-line rounded-2xl overflow-hidden">
-                <table className="w-full text-left border-collapse">
-                    <thead>
-                        <tr className="border-b border-line bg-surface-raised/30">
-                            <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-fg-muted">Return</th>
-                            <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-fg-muted">Vendor</th>
-                            <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-fg-muted">Reason</th>
-                            <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-fg-muted">Resolution</th>
-                            <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-fg-muted">Value</th>
-                            <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-fg-muted">Status</th>
-                            <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-fg-muted">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-line/50">
-                        {loading ? (
-                            <tr><td colSpan={7} className="px-6 py-12 text-center text-fg-subtle animate-pulse">Loading returns...</td></tr>
-                        ) : returns.length === 0 ? (
-                            <tr><td colSpan={7} className="px-6 py-12 text-center text-fg-subtle">No vendor returns raised.</td></tr>
-                        ) : returns.map(r => (
-                            <tr key={r.id} className="hover:bg-surface-raised/20 transition-colors">
-                                <td className="px-6 py-4">
-                                    <div className="font-semibold text-fg">{r.return_number}</div>
-                                    <div className="text-xs text-fg-subtle">{r.grn?.grn_number || ''}</div>
-                                </td>
-                                <td className="px-6 py-4 text-sm text-fg-muted">{r.vendor_name || '—'}</td>
-                                <td className="px-6 py-4 text-sm text-fg-muted">{r.reason?.replace(/_/g, ' ')}</td>
-                                <td className="px-6 py-4 text-sm text-fg-muted">
-                                    {r.resolution?.replace(/_/g, ' ')}
-                                    {r.credit_note_number && (
-                                        <div className="text-[10px] text-success font-mono">{r.credit_note_number}</div>
-                                    )}
-                                </td>
-                                <td className="px-6 py-4 text-sm text-fg font-bold">{formatters.formatCurrency(r.total_amount || 0)}</td>
-                                <td className="px-6 py-4">
-                                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border ${RETURN_STATUS_STYLES[r.status] || RETURN_STATUS_STYLES.draft}`}>
-                                        {r.status}
-                                    </span>
-                                </td>
-                                <td className="px-6 py-4">
-                                    {NEXT_STEP[r.status] ? (
-                                        <button
-                                            onClick={() => advance(r)}
-                                            className="text-rose-400 hover:text-rose-300 font-semibold text-sm transition-colors"
-                                        >
-                                            {NEXT_STEP[r.status]!.label} →
-                                        </button>
-                                    ) : (
-                                        <span className="text-fg-subtle text-sm">—</span>
-                                    )}
-                                </td>
-                            </tr>
+        <>
+            <ListPageTemplate
+                title="Vendor Returns"
+                description="Send back damaged, wrong, excess or expired goods and track the credit."
+                count={returns.length > 0 ? `${returns.length} return(s)` : undefined}
+                primaryAction={<Button onClick={() => setShowForm(true)}>+ New Return</Button>}
+                filterConfig={{
+                    fields: [{
+                        key: 'status',
+                        label: 'Status',
+                        type: 'select',
+                        options: [
+                            { value: 'draft', label: 'Draft' },
+                            { value: 'approved', label: 'Approved' },
+                            { value: 'dispatched', label: 'Dispatched' },
+                            { value: 'settled', label: 'Settled' },
+                        ],
+                    }],
+                    values: { status: statusFilter || null },
+                    onChange: (v: any) => setStatusFilter(v?.status || ''),
+                    onClear: () => setStatusFilter(''),
+                }}
+                loading={loading}
+                isEmpty={!loading && !fetchError && returns.length === 0}
+                empty={<EmptyState title="No vendor returns raised." />}
+            >
+                <div className="flex flex-col gap-nb-4">
+                    {fetchError && <Alert variant="error">{fetchError}</Alert>}
+                    <Grid columns="auto" data-testid="vendor-returns-kpis">
+                        {[
+                            { label: 'Open Returns', value: returns.filter(r => ['draft', 'approved', 'dispatched'].includes(r.status)).length },
+                            { label: 'Awaiting Credit', value: returns.filter(r => r.status === 'dispatched' && r.resolution === 'credit_note').length },
+                            { label: 'Settled', value: returns.filter(r => r.status === 'settled').length },
+                            { label: 'Value Returned', value: formatters.formatCurrency(returns.reduce((s, r) => s + (Number(r.total_amount) || 0), 0)) },
+                        ].map(s => (
+                            <GridItem key={s.label} span={3}>
+                                <KpiCard label={s.label} value={s.value} />
+                            </GridItem>
                         ))}
-                    </tbody>
-                </table>
-            </div>
+                    </Grid>
+                    <DataTable
+                        data-testid="vendor-returns-table"
+                        columns={columns}
+                        rows={returns}
+                        rowKey={(r: any) => r.id}
+                        loading={loading}
+                    />
+                </div>
+            </ListPageTemplate>
 
-            {showForm && (
-                <div className="fixed inset-0 bg-bg/80 backdrop-blur-md flex items-center justify-center px-4 pt-24 pb-6 z-[600]">
-                    <div className="bg-surface border border-line rounded-3xl w-full max-w-3xl max-h-[calc(100vh-7.5rem)] flex flex-col overflow-hidden">
-                        <div className="p-8 border-b border-line flex justify-between items-center">
-                            <h2 className="text-2xl font-bold text-fg">New Vendor Return</h2>
-                            <button onClick={() => setShowForm(false)} className="text-fg-subtle hover:text-fg text-2xl">×</button>
-                        </div>
-                        <form onSubmit={submit} className="p-8 space-y-6 overflow-y-auto custom-scrollbar flex-1">
-                            <div className="grid grid-cols-3 gap-6">
-                                <div className="space-y-2">
-                                    <label htmlFor="ret-grn" className="text-xs font-bold text-fg-subtle uppercase tracking-wider">Goods Receipt</label>
-                                    <select
-                                        id="ret-grn"
-                                        value={selectedGrn?.id || ''}
-                                        onChange={e => selectGrn(e.target.value)}
-                                        className="w-full bg-bg border border-line rounded-xl px-4 py-3 text-fg"
-                                    >
-                                        <option value="">Select a receipt</option>
-                                        {grns.map(g => <option key={g.id} value={g.id}>{g.grn_number}</option>)}
-                                    </select>
-                                </div>
-                                <div className="space-y-2">
-                                    <label htmlFor="ret-reason" className="text-xs font-bold text-fg-subtle uppercase tracking-wider">Reason</label>
-                                    <select
-                                        id="ret-reason"
-                                        value={form.reason}
-                                        onChange={e => setForm({ ...form, reason: e.target.value })}
-                                        className="w-full bg-bg border border-line rounded-xl px-4 py-3 text-fg"
-                                    >
-                                        {REASONS.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
-                                    </select>
-                                </div>
-                                <div className="space-y-2">
-                                    <label htmlFor="ret-resolution" className="text-xs font-bold text-fg-subtle uppercase tracking-wider">Resolution</label>
-                                    <select
-                                        id="ret-resolution"
-                                        value={form.resolution}
-                                        onChange={e => setForm({ ...form, resolution: e.target.value })}
-                                        className="w-full bg-bg border border-line rounded-xl px-4 py-3 text-fg"
-                                    >
-                                        {RESOLUTIONS.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
-                                    </select>
-                                </div>
-                            </div>
+            <Modal
+                open={showForm}
+                onClose={() => setShowForm(false)}
+                title="New Vendor Return"
+                size="3xl"
+                name="new-vendor-return"
+                footer={(
+                    <>
+                        <Button variant="secondary" onClick={() => setShowForm(false)}>Cancel</Button>
+                        <Button onClick={submit} disabled={saving} loading={saving}>{saving ? 'Raising...' : 'Raise Return'}</Button>
+                    </>
+                )}
+            >
+                <div className="flex flex-col gap-nb-4">
+                    <div className="grid grid-cols-1 gap-nb-4 md:grid-cols-3">
+                        <Select
+                            name="ret-grn"
+                            label="Goods Receipt"
+                            value={selectedGrn?.id || ''}
+                            onChange={(e: any) => selectGrn(e.target.value)}
+                            options={[{ value: '', label: 'Select a receipt' }, ...grns.map(g => ({ value: g.id, label: g.grn_number }))]}
+                        />
+                        <Select
+                            name="ret-reason"
+                            label="Reason"
+                            value={form.reason}
+                            onChange={(e: any) => setForm({ ...form, reason: e.target.value })}
+                            options={REASONS}
+                        />
+                        <Select
+                            name="ret-resolution"
+                            label="Resolution"
+                            value={form.resolution}
+                            onChange={(e: any) => setForm({ ...form, resolution: e.target.value })}
+                            options={RESOLUTIONS}
+                        />
+                    </div>
 
-                            {lines.length === 0 ? (
-                                <div className="text-center py-6 text-fg-subtle text-sm border border-dashed border-line rounded-xl">
-                                    Select a receipt to choose what goes back.
-                                </div>
-                            ) : (
-                                <div className="space-y-3">
-                                    <label className="text-xs font-bold text-fg-subtle uppercase tracking-wider">Lines Returned</label>
-                                    {lines.map((l, idx) => (
-                                        <div key={l.grn_line_id} className="p-4 bg-bg border border-line rounded-2xl flex items-center gap-3">
-                                            <div className="flex-1 min-w-0">
-                                                <div className="text-sm text-fg truncate">{l.description}</div>
-                                                <div className="text-[10px] text-fg-subtle">
-                                                    {l.received} received{l.rejected > 0 ? ` · ${l.rejected} rejected on arrival` : ''}
-                                                </div>
-                                            </div>
-                                            <input
-                                                type="number" min="0"
-                                                aria-label={`Return quantity for ${l.description}`}
-                                                value={l.quantity}
-                                                onChange={e => updateLine(idx, 'quantity', e.target.value)}
-                                                className="w-28 bg-surface border border-line rounded-lg px-3 py-2 text-center text-rose-400 font-bold"
-                                            />
-                                            <input
-                                                type="number" min="0" step="0.01"
-                                                aria-label={`Unit cost for ${l.description}`}
-                                                value={l.unit_cost}
-                                                onChange={e => updateLine(idx, 'unit_cost', e.target.value)}
-                                                className="w-28 bg-surface border border-line rounded-lg px-3 py-2 text-center text-fg"
-                                            />
-                                            <label className="flex items-center gap-2 text-[10px] text-fg-subtle uppercase tracking-wider font-bold">
-                                                <input
-                                                    type="checkbox"
-                                                    aria-label={`Already excluded from stock for ${l.description}`}
-                                                    checked={l.already_excluded_from_stock}
-                                                    onChange={e => updateLine(idx, 'already_excluded_from_stock', e.target.checked)}
-                                                />
-                                                Never stocked
-                                            </label>
+                    {lines.length === 0 ? (
+                        <EmptyState title="Select a receipt to choose what goes back." />
+                    ) : (
+                        <div className="flex flex-col gap-nb-3">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-fg-subtle">Lines Returned</span>
+                            {lines.map((l, idx) => (
+                                <div key={l.grn_line_id} className="flex flex-wrap items-center gap-nb-3 rounded-xl border border-line p-nb-3">
+                                    <div className="min-w-0 flex-1">
+                                        <div className="truncate text-sm text-fg">{l.description}</div>
+                                        <div className="text-xs text-fg-subtle">
+                                            {l.received} received{l.rejected > 0 ? ` · ${l.rejected} rejected on arrival` : ''}
                                         </div>
-                                    ))}
+                                    </div>
+                                    <TextField
+                                        name={`ret-qty-${idx}`}
+                                        type="number"
+                                        min="0"
+                                        aria-label={`Return quantity for ${l.description}`}
+                                        value={l.quantity}
+                                        onChange={(e: any) => updateLine(idx, 'quantity', e.target.value)}
+                                    />
+                                    <TextField
+                                        name={`ret-cost-${idx}`}
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        aria-label={`Unit cost for ${l.description}`}
+                                        value={l.unit_cost}
+                                        onChange={(e: any) => updateLine(idx, 'unit_cost', e.target.value)}
+                                    />
+                                    <Checkbox
+                                        name={`ret-excl-${idx}`}
+                                        label="Never stocked"
+                                        aria-label={`Already excluded from stock for ${l.description}`}
+                                        checked={l.already_excluded_from_stock}
+                                        onChange={(e: any) => updateLine(idx, 'already_excluded_from_stock', e.target.checked)}
+                                    />
                                 </div>
-                            )}
-
-                            <div className="space-y-2">
-                                <label htmlFor="ret-remarks" className="text-xs font-bold text-fg-subtle uppercase tracking-wider">Remarks</label>
-                                <textarea
-                                    id="ret-remarks"
-                                    value={form.remarks}
-                                    onChange={e => setForm({ ...form, remarks: e.target.value })}
-                                    className="w-full bg-bg border border-line rounded-xl px-4 py-3 h-20 text-fg resize-none"
-                                />
-                            </div>
-
-                            <div className="flex gap-4">
-                                <button type="submit" disabled={saving} className="flex-1 px-6 py-4 bg-rose-600 hover:bg-rose-500 disabled:opacity-60 text-primary-fg rounded-2xl font-bold">
-                                    {saving ? 'Raising...' : 'Raise Return'}
-                                </button>
-                                <button type="button" onClick={() => setShowForm(false)} className="px-6 py-4 bg-surface-raised hover:bg-surface-high text-fg-muted rounded-2xl font-bold">
-                                    Cancel
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-
-            {settling && (
-                <div className="fixed inset-0 bg-bg/80 backdrop-blur-md flex items-center justify-center px-4 z-[600]">
-                    <div className="bg-surface border border-line rounded-3xl w-full max-w-md overflow-hidden">
-                        <div className="p-8 border-b border-line flex justify-between items-center">
-                            <h2 className="text-xl font-bold text-fg">Settle {settling.return_number}</h2>
-                            <button onClick={() => setSettling(null)} className="text-fg-subtle hover:text-fg text-2xl">×</button>
+                            ))}
                         </div>
-                        <form onSubmit={submitSettlement} className="p-8 space-y-6">
-                            <div className="space-y-2">
-                                <label htmlFor="cn-number" className="text-xs font-bold text-fg-subtle uppercase tracking-wider">Credit Note Number</label>
-                                <input
-                                    id="cn-number"
-                                    type="text"
-                                    value={creditNote.credit_note_number}
-                                    onChange={e => setCreditNote({ ...creditNote, credit_note_number: e.target.value })}
-                                    className="w-full bg-bg border border-line rounded-xl px-4 py-3 text-fg font-mono"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label htmlFor="cn-date" className="text-xs font-bold text-fg-subtle uppercase tracking-wider">Credit Note Date</label>
-                                <input
-                                    id="cn-date"
-                                    type="date"
-                                    value={creditNote.credit_note_date}
-                                    onChange={e => setCreditNote({ ...creditNote, credit_note_date: e.target.value })}
-                                    className="w-full bg-bg border border-line rounded-xl px-4 py-3 text-fg"
-                                />
-                            </div>
-                            <div className="flex gap-4">
-                                <button type="submit" className="flex-1 px-6 py-4 bg-success hover:bg-success text-primary-fg rounded-2xl font-bold">
-                                    Settle
-                                </button>
-                                <button type="button" onClick={() => setSettling(null)} className="px-6 py-4 bg-surface-raised hover:bg-surface-high text-fg-muted rounded-2xl font-bold">
-                                    Cancel
-                                </button>
-                            </div>
-                        </form>
-                    </div>
+                    )}
+
+                    <Textarea
+                        name="ret-remarks"
+                        label="Remarks"
+                        value={form.remarks}
+                        onChange={(e: any) => setForm({ ...form, remarks: e.target.value })}
+                    />
                 </div>
-            )}
-        </div>
+            </Modal>
+
+            <Modal
+                open={!!settling}
+                onClose={() => setSettling(null)}
+                title={`Settle ${settling?.return_number ?? ''}`}
+                size="sm"
+                name="settle-vendor-return"
+                footer={(
+                    <>
+                        <Button variant="secondary" onClick={() => setSettling(null)}>Cancel</Button>
+                        <Button onClick={submitSettlement}>Settle</Button>
+                    </>
+                )}
+            >
+                <div className="flex flex-col gap-nb-4">
+                    <TextField
+                        name="cn-number"
+                        label="Credit Note Number"
+                        value={creditNote.credit_note_number}
+                        onChange={(e: any) => setCreditNote({ ...creditNote, credit_note_number: e.target.value })}
+                    />
+                    <TextField
+                        name="cn-date"
+                        label="Credit Note Date"
+                        type="date"
+                        value={creditNote.credit_note_date}
+                        onChange={(e: any) => setCreditNote({ ...creditNote, credit_note_date: e.target.value })}
+                    />
+                </div>
+            </Modal>
+        </>
     );
 };
 

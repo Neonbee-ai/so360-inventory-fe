@@ -2,6 +2,7 @@ import React from 'react';
 import FormSection from '../components/FormSection';
 import { ITEM_CLASSIFICATIONS, ItemClassification } from '../../../types/itemTypes';
 import { Unit } from '../../../types/inventory';
+import { Badge, Button, Select, TextField, Textarea } from '@so360/design-system';
 import ProductTypePicker from '../../../components/attributes/ProductTypePicker';
 
 export type FieldErrors = Record<string, string | null>;
@@ -32,9 +33,6 @@ interface BasicInfoTabProps {
     onResetSku?: () => void;
 }
 
-const inputClass = 'w-full bg-surface-raised border border-line-strong rounded-lg px-4 py-2.5 text-fg focus:outline-none focus:ring-2 focus:ring-focus/50 focus:border-primary transition-all placeholder:text-fg-subtle';
-const labelClass = 'block text-sm font-medium text-fg-muted mb-1.5';
-
 const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
     name, sku, type, brand, barcode, description, unit_id, uoms, product_type_id,
     showNewUom, newUomName, newUomAbbr, isCreatingUom,
@@ -42,155 +40,125 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
     errors = {}, showErrors = false, isSkuAutoEnabled = true, isSkuManuallyEdited = false,
     onResetSku,
 }) => {
-    const errorFor = (field: string) => (showErrors ? errors[field] || null : null);
-    const cls = (field: string) =>
-        errorFor(field) ? inputClass.replace('border-line-strong', 'border-rose-500/60') : inputClass;
-    const FieldError = ({ field }: { field: string }) => {
-        const message = errorFor(field);
-        return message ? (
-            <p role="alert" data-testid={`error-${field}`} className="text-rose-400 text-xs mt-1">{message}</p>
-        ) : null;
-    };
+    const errorFor = (field: string) => (showErrors ? errors[field] || undefined : undefined);
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-nb-6">
             <FormSection title="Identification">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 wc-md:grid-cols-3 gap-nb-4">
+                    <TextField
+                        label="Item Name"
+                        name="name"
+                        required
+                        value={name}
+                        onChange={e => updateField('name', e.target.value)}
+                        error={errorFor('name')}
+                        placeholder="e.g. MacBook Pro 14"
+                    />
                     <div>
-                        <label className={labelClass}>Item Name *</label>
-                        <input
-                            type="text"
-                            value={name}
-                            onChange={e => updateField('name', e.target.value)}
-                            className={cls('name')}
-                            placeholder="e.g. MacBook Pro 14"
-                        />
-                        <FieldError field="name" />
-                    </div>
-                    <div>
-                        <div className="flex items-center justify-between mb-1.5">
-                            <label className="text-sm font-medium text-fg-muted">SKU *</label>
-                            <div className="flex items-center gap-1.5">
+                        {(isSkuAutoEnabled || (isSkuManuallyEdited && onResetSku)) && (
+                            <div className="flex items-center justify-end gap-nb-2 mb-nb-1">
                                 {isSkuAutoEnabled && (
-                                    <span
-                                        data-testid="sku-autogen-badge"
-                                        className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
-                                            isSkuManuallyEdited
-                                                ? 'bg-surface-raised text-fg-muted border border-line-strong'
-                                                : 'bg-primary/10 text-primary border border-primary/20'
-                                        }`}
-                                    >
-                                        {isSkuManuallyEdited ? 'Manual Override' : 'Auto-generated from Item Name'}
+                                    <span data-testid="sku-autogen-badge">
+                                        <Badge tone={isSkuManuallyEdited ? 'neutral' : 'primary'} size="sm">
+                                            {isSkuManuallyEdited ? 'Manual Override' : 'Auto-generated from Item Name'}
+                                        </Badge>
                                     </span>
                                 )}
                                 {isSkuManuallyEdited && onResetSku && (
-                                    <button
-                                        type="button"
-                                        data-testid="sku-reset-btn"
-                                        onClick={onResetSku}
-                                        className="text-[10px] text-primary hover:text-primary underline focus:outline-none"
-                                    >
+                                    <Button variant="ghost" size="sm" data-testid="sku-reset-btn" onClick={onResetSku}>
                                         Re-generate
-                                    </button>
+                                    </Button>
                                 )}
                             </div>
-                        </div>
-                        <input
-                            type="text"
+                        )}
+                        <TextField
+                            label="SKU"
+                            name="sku"
+                            required
                             value={sku}
                             onChange={e => updateField('sku', e.target.value)}
-                            className={cls('sku')}
+                            error={errorFor('sku')}
                             placeholder="e.g. LAP-001"
                         />
-                        <FieldError field="sku" />
                     </div>
-                    <div>
-                        <label className={labelClass}>Barcode / UPC</label>
-                        <input
-                            type="text"
-                            value={barcode}
-                            onChange={e => updateField('barcode', e.target.value)}
-                            className={cls('barcode')}
-                            placeholder="e.g. 012345678905"
-                        />
-                        <FieldError field="barcode" />
-                    </div>
+                    <TextField
+                        label="Barcode / UPC"
+                        name="barcode"
+                        value={barcode}
+                        onChange={e => updateField('barcode', e.target.value)}
+                        error={errorFor('barcode')}
+                        placeholder="e.g. 012345678905"
+                    />
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                    <div>
-                        <label className={labelClass}>Brand</label>
-                        <input
-                            type="text"
-                            value={brand}
-                            onChange={e => updateField('brand', e.target.value)}
-                            className={cls('brand')}
-                            placeholder="e.g. Apple"
+                <div className="grid grid-cols-1 wc-md:grid-cols-2 gap-nb-4 mt-nb-4">
+                    <TextField
+                        label="Brand"
+                        name="brand"
+                        value={brand}
+                        onChange={e => updateField('brand', e.target.value)}
+                        error={errorFor('brand')}
+                        placeholder="e.g. Apple"
+                    />
+                    {!showNewUom ? (
+                        <Select
+                            label="Unit of Measure"
+                            name="unit_id"
+                            required
+                            value={unit_id}
+                            onChange={(e: any) => {
+                                if (e.target.value === '__new__') {
+                                    setShowNewUom(true);
+                                } else {
+                                    updateField('unit_id', e.target.value);
+                                }
+                            }}
+                            error={errorFor('unit_id')}
+                            placeholder="Select unit..."
+                            options={[
+                                ...uoms.map(u => ({ value: u.id, label: `${u.name} (${u.abbreviation})` })),
+                                { value: '__new__', label: '+ Create new UoM' },
+                            ]}
                         />
-                        <FieldError field="brand" />
-                    </div>
-                    <div>
-                        <label className={labelClass}>Unit of Measure *</label>
-                        {!showNewUom ? (
-                            <select
-                                value={unit_id}
-                                onChange={e => {
-                                    if (e.target.value === '__new__') {
-                                        setShowNewUom(true);
-                                    } else {
-                                        updateField('unit_id', e.target.value);
-                                    }
-                                }}
-                                className={cls('unit_id')}
-                            >
-                                <option value="">Select unit...</option>
-                                {uoms.map(u => (
-                                    <option key={u.id} value={u.id}>{u.name} ({u.abbreviation})</option>
-                                ))}
-                                <option value="__new__">+ Create new UoM</option>
-                            </select>
-                        ) : (
-                            <div className="space-y-2 p-3 bg-surface-raised/50 border border-line-strong rounded-lg">
-                                <input
-                                    type="text"
-                                    value={newUomName}
-                                    onChange={e => setNewUomName(e.target.value)}
-                                    className={inputClass}
-                                    placeholder="Unit name *"
-                                    autoFocus
-                                />
-                                <input
-                                    type="text"
-                                    value={newUomAbbr}
-                                    onChange={e => setNewUomAbbr(e.target.value)}
-                                    className={inputClass}
-                                    placeholder="Abbreviation * (e.g. pcs, kg)"
-                                />
-                                <div className="flex gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => { setShowNewUom(false); setNewUomName(''); setNewUomAbbr(''); }}
-                                        className="flex-1 px-3 py-1.5 rounded-lg border border-line-strong text-fg-muted hover:bg-surface-raised text-sm transition-all"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={onCreateUom}
-                                        disabled={isCreatingUom || !newUomName.trim() || !newUomAbbr.trim()}
-                                        className="flex-1 px-3 py-1.5 rounded-lg bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-fg text-sm font-medium transition-all"
-                                    >
-                                        {isCreatingUom ? 'Creating...' : 'Create'}
-                                    </button>
-                                </div>
+                    ) : (
+                        <div className="space-y-nb-2 p-nb-3 bg-surface-raised border border-line-strong rounded-nb-md">
+                            <TextField
+                                name="new_uom_name"
+                                value={newUomName}
+                                onChange={e => setNewUomName(e.target.value)}
+                                placeholder="Unit name *"
+                                autoFocus
+                            />
+                            <TextField
+                                name="new_uom_abbr"
+                                value={newUomAbbr}
+                                onChange={e => setNewUomAbbr(e.target.value)}
+                                placeholder="Abbreviation * (e.g. pcs, kg)"
+                            />
+                            <div className="flex gap-nb-2">
+                                <Button
+                                    variant="secondary"
+                                    className="flex-1"
+                                    onClick={() => { setShowNewUom(false); setNewUomName(''); setNewUomAbbr(''); }}
+                                >
+                                    Cancel
+                                </Button>
+                                <Button
+                                    variant="primary"
+                                    className="flex-1"
+                                    onClick={onCreateUom}
+                                    disabled={isCreatingUom || !newUomName.trim() || !newUomAbbr.trim()}
+                                >
+                                    {isCreatingUom ? 'Creating...' : 'Create'}
+                                </Button>
                             </div>
-                        )}
-                        <FieldError field="unit_id" />
-                    </div>
+                        </div>
+                    )}
                 </div>
             </FormSection>
 
             <FormSection title="Classification *" description="Choose what kind of item this is">
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 wc-md:grid-cols-3 gap-nb-3">
                     {ITEM_CLASSIFICATIONS.map(cls => {
                         const Icon = cls.icon;
                         const isSelected = type === cls.value;
@@ -198,25 +166,22 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
                             <button
                                 key={cls.value}
                                 type="button"
+                                aria-pressed={isSelected}
                                 onClick={() => updateField('type', cls.value)}
-                                className={`
-                                    p-3 rounded-xl border text-left transition-all
-                                    ${isSelected
-                                        ? 'border-primary bg-primary/10 ring-1 ring-focus/30'
-                                        : 'border-line-strong bg-surface-raised/50 hover:border-line-strong hover:bg-surface-raised'
-                                    }
-                                `}
+                                className={`p-nb-3 rounded-nb-md border text-left ${
+                                    isSelected ? 'border-primary bg-surface-raised' : 'border-line-strong bg-surface hover:bg-surface-raised'
+                                }`}
                             >
-                                <div className="flex items-center gap-2 mb-1">
+                                <div className="flex items-center gap-nb-2 mb-nb-1">
                                     <Icon size={16} className={isSelected ? 'text-primary' : 'text-fg-subtle'} />
-                                    <span className={`text-sm font-semibold ${isSelected ? 'text-primary' : 'text-fg-muted'}`}>{cls.label}</span>
+                                    <span className={`text-nb-body font-semibold ${isSelected ? 'text-primary' : 'text-fg-muted'}`}>{cls.label}</span>
                                 </div>
-                                <p className="text-xs text-fg-subtle leading-tight">{cls.description}</p>
+                                <p className="text-nb-caption text-fg-subtle">{cls.description}</p>
                             </button>
                         );
                     })}
                 </div>
-                <FieldError field="type" />
+                {errorFor('type') && <p role="alert" data-testid="error-type" className="text-danger text-nb-caption mt-nb-1">{errorFor('type')}</p>}
             </FormSection>
 
             <FormSection title="Product Type" description="Optional — assigns dynamic attribute fields in the Attributes tab">
@@ -227,11 +192,11 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
             </FormSection>
 
             <FormSection title="Description">
-                <textarea
+                <Textarea
+                    name="description"
                     rows={4}
                     value={description}
                     onChange={e => updateField('description', e.target.value)}
-                    className={inputClass + ' resize-none'}
                     placeholder="Product description for e-commerce listings..."
                 />
             </FormSection>

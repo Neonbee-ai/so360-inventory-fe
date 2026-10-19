@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, Save, Loader2 } from 'lucide-react';
+import { Save } from 'lucide-react';
+import { Alert, Button, FormPageTemplate, Spinner } from '@so360/design-system';
 import { inventoryService } from '../../services/inventoryService';
 import { Unit, ItemCategory, Warehouse, ItemAttributeDefinition } from '../../types/inventory';
 import { TabId, ItemClassification } from '../../types/itemTypes';
@@ -548,87 +549,45 @@ const ItemCreatePage = () => {
     };
 
     return (
-        <div className="min-h-screen pb-24">
-            {/* Header */}
-            <div className="sticky top-0 z-10 bg-bg/80 backdrop-blur-xl border-b border-line">
-                <div className="px-8 py-4 flex items-center justify-between">
-                    <button
-                        onClick={() => navigate('/inventory/items')}
-                        className="flex items-center gap-2 text-fg-muted hover:text-fg transition-colors"
-                    >
-                        <ArrowLeft size={20} />
-                        <span className="font-medium">Back to Items</span>
-                    </button>
-                    <div className="flex items-center gap-3">
-                        <button
-                            type="button"
-                            onClick={() => navigate('/inventory/items')}
-                            className="px-4 py-2 rounded-lg border border-line-strong text-fg-muted hover:bg-surface-raised transition-all font-medium"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            onClick={() => handleSubmit()}
-                            disabled={isSubmitting || isTaxCodesLoading || !!taxCodesError}
-                            className="flex items-center gap-2 bg-primary hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed text-primary-fg px-5 py-2 rounded-lg font-semibold transition-all shadow-lg shadow-blue-900/20"
-                        >
-                            {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-                            {isSubmitting ? 'Saving...' : 'Save Item'}
-                        </button>
-                    </div>
+        <FormPageTemplate
+            title="Register New Item"
+            trail={[{ label: 'Items', to: '/inventory/items' }]}
+            onBack={() => navigate('/inventory/items')}
+            backLabel="Items"
+            onCancel={() => navigate('/inventory/items')}
+            primaryAction={
+                <Button
+                    variant="primary"
+                    onClick={() => handleSubmit()}
+                    disabled={isSubmitting || isTaxCodesLoading || !!taxCodesError}
+                >
+                    {isSubmitting ? <Spinner label="Saving" /> : <Save size={18} />}
+                    {isSubmitting ? 'Saving...' : 'Save Item'}
+                </Button>
+            }
+        >
+            {error && (
+                <div className="mb-nb-4">
+                    <Alert variant="error">{error}</Alert>
+                </div>
+            )}
+            {taxCodesError && (
+                <div className="mb-nb-4">
+                    <Alert variant="warning">{taxCodesError}</Alert>
+                </div>
+            )}
+
+            <div className="bg-surface border border-line rounded-nb-lg">
+                <TabNavigation
+                    activeTab={activeTab}
+                    onTabChange={setActiveTab}
+                    tabErrors={tabErrors}
+                />
+                <div className="p-nb-6 min-h-[24rem]">
+                    {renderTab()}
                 </div>
             </div>
-
-            <div className="px-8 pt-6">
-                <h1 className="text-2xl font-bold text-fg mb-6">Register New Item</h1>
-
-                {error && (
-                    <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 px-4 py-3 rounded-lg text-sm mb-6">
-                        {error}
-                    </div>
-                )}
-                {taxCodesError && (
-                    <div className="bg-warning/10 border border-warning/20 text-warning px-4 py-3 rounded-lg text-sm mb-6">
-                        {taxCodesError}
-                    </div>
-                )}
-
-                {/* Tab Bar */}
-                <div className="bg-surface/50 border border-line rounded-xl">
-                    <TabNavigation
-                        activeTab={activeTab}
-                        onTabChange={setActiveTab}
-                        tabErrors={tabErrors}
-                    />
-
-                    {/* Tab Content */}
-                    <div className="p-6 min-h-[24rem]">
-                        {renderTab()}
-                    </div>
-                </div>
-            </div>
-
-            {/* Sticky footer for mobile */}
-            <div className="fixed bottom-0 left-0 right-0 bg-bg/90 backdrop-blur-xl border-t border-line p-4 md:hidden">
-                <div className="flex gap-3">
-                    <button
-                        type="button"
-                        onClick={() => navigate('/inventory/items')}
-                        className="flex-1 px-4 py-2.5 rounded-lg border border-line-strong text-fg-muted hover:bg-surface-raised transition-all font-medium"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        onClick={() => handleSubmit()}
-                        disabled={isSubmitting || isTaxCodesLoading || !!taxCodesError}
-                        className="flex-1 flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-fg px-5 py-2.5 rounded-lg font-semibold transition-all"
-                    >
-                        {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-                        {isSubmitting ? 'Saving...' : 'Save Item'}
-                    </button>
-                </div>
-            </div>
-        </div>
+        </FormPageTemplate>
     );
 };
 

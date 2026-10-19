@@ -2,10 +2,6 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
 
-vi.mock('../common/Modal', () => ({
-  Modal: ({ isOpen, title, children }: any) =>
-    isOpen ? <div data-testid="modal"><h3>{title}</h3>{children}</div> : null,
-}));
 
 import { StageTransitionModal } from './StageTransitionModal';
 
@@ -32,7 +28,7 @@ describe('StageTransitionModal', () => {
           newStage="Qualification"
         />
       );
-      expect(screen.queryByTestId('modal')).not.toBeInTheDocument();
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
   });
 
@@ -47,7 +43,7 @@ describe('StageTransitionModal', () => {
           newStage="Qualification"
         />
       );
-      expect(screen.queryByTestId('modal')).not.toBeInTheDocument();
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
   });
 

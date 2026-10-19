@@ -3,20 +3,30 @@ import { useNavigate } from 'react-router-dom';
 import { qualityService } from '../../services/qualityService';
 import { procurementService } from '../../services/procurementService';
 import { useInventoryFormatters } from '../../utils/formatters';
-import { toast, getErrorMessage } from '@so360/design-system';
+import {
+    toast, getErrorMessage, Alert, Badge, Button, DataTable, DescriptionList, EmptyState, FieldGrid, FieldGridItem,
+    Grid, GridItem, KpiCard, ListPageTemplate, Modal, Select, Textarea, TextField,
+    type BadgeTone, type DataTableColumn, type FilterValues,
+} from '@so360/design-system';
 
-export const QC_STATUS_STYLES: Record<string, string> = {
-    pending: 'bg-warning/10 text-warning border-warning/20',
-    in_progress: 'bg-primary/10 text-primary border-primary/20',
-    completed: 'bg-success/10 text-success border-success/20',
-    cancelled: 'bg-surface-sunken text-fg-muted border-line-strong/20',
+export const QC_STATUS_TONES: Record<string, BadgeTone> = {
+    pending: 'warning',
+    in_progress: 'primary',
+    completed: 'success',
+    cancelled: 'neutral',
 };
 
-const RESULT_STYLES: Record<string, string> = {
-    passed: 'bg-success/10 text-success border-success/20',
-    partial: 'bg-warning/10 text-warning border-warning/20',
-    failed: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
+const RESULT_TONES: Record<string, BadgeTone> = {
+    passed: 'success',
+    partial: 'warning',
+    failed: 'danger',
 };
+
+const QC_STATUS_FILTER_OPTIONS = [
+    { value: 'pending', label: 'Pending' },
+    { value: 'completed', label: 'Completed' },
+    { value: 'cancelled', label: 'Cancelled' },
+];
 
 /**
  * Quality inspections queue.
@@ -146,264 +156,194 @@ const QualityInspectionPage = () => {
         { accepted: 0, rejected: 0 },
     );
 
-    return (
-        <div className="p-8 space-y-8 animate-in fade-in duration-700">
-            {fetchError && (
-                <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl flex items-center gap-3 text-rose-400 text-sm">
-                    <span>⚠</span> {fetchError}
-                </div>
-            )}
-
-            <div className="flex items-center justify-between gap-4">
+    const columns: DataTableColumn<any>[] = [
+        {
+            key: 'inspection',
+            header: 'Inspection',
+            alwaysVisible: true,
+            render: (i) => (
                 <div>
-                    <h1 className="text-4xl font-bold bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent">
-                        Quality Inspection
-                    </h1>
-                    <p className="text-fg-muted mt-2 font-medium">
-                        Receipts held for inspection. Stock is released only for what passes.
-                    </p>
+                    <div>{i.inspection_number}</div>
+                    <div className="text-nb-caption text-fg-subtle">{formatters.formatDate(i.created_at)}</div>
                 </div>
-                <button
-                    onClick={() => setShowOpenForm(true)}
-                    className="px-6 py-3 bg-amber-600 hover:bg-amber-500 text-primary-fg rounded-xl font-semibold transition-all shadow-lg shadow-amber-900/20 active:scale-95"
-                >
-                    + Open Inspection
-                </button>
-            </div>
+            ),
+        },
+        { key: 'receipt', header: 'Receipt', render: (i) => i.grn?.grn_number || '—' },
+        {
+            key: 'status',
+            header: 'Status',
+            render: (i) => <Badge tone={QC_STATUS_TONES[i.status] || 'warning'}>{String(i.status).replace(/_/g, ' ')}</Badge>,
+        },
+        {
+            key: 'result',
+            header: 'Result',
+            render: (i) => (i.result ? <Badge tone={RESULT_TONES[i.result] || 'neutral'}>{i.result}</Badge> : '—'),
+        },
+        { key: 'lines', header: 'Lines', align: 'right', render: (i) => i.quality_inspection_lines?.length || 0 },
+        {
+            key: 'action',
+            header: 'Action',
+            render: (i) => (i.status === 'pending' ? (
+                <Button variant="ghost" size="sm" onClick={() => startInspecting(i)}>Record Result →</Button>
+            ) : (
+                <Button variant="ghost" size="sm" onClick={() => navigate(`/procurement/grn/${i.grn_id}`)}>View Receipt</Button>
+            )),
+        },
+    ];
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                {[
-                    { label: 'Awaiting Inspection', value: inspections.filter(i => i.status === 'pending').length, icon: '⏳' },
-                    { label: 'Completed', value: inspections.filter(i => i.status === 'completed').length, icon: '✅' },
-                    { label: 'Failed', value: inspections.filter(i => i.result === 'failed').length, icon: '⛔' },
-                    { label: 'Partial', value: inspections.filter(i => i.result === 'partial').length, icon: '⚠️' },
-                ].map((s, i) => (
-                    <div key={i} className="bg-surface/50 border border-line p-6 rounded-2xl">
-                        <div className="flex justify-between items-start">
-                            <span className="text-2xl">{s.icon}</span>
-                            <span className="text-xs font-bold uppercase tracking-wider text-fg-subtle">{s.label}</span>
-                        </div>
-                        <div className="mt-4 text-3xl font-bold text-fg">{s.value}</div>
-                    </div>
-                ))}
-            </div>
+    const filterValues: FilterValues = { status: statusFilter };
 
-            <div className="flex items-center gap-3">
-                <label htmlFor="qc-status-filter" className="text-xs font-bold text-fg-subtle uppercase tracking-wider">Status</label>
-                <select
-                    id="qc-status-filter"
-                    value={statusFilter}
-                    onChange={e => setStatusFilter(e.target.value)}
-                    className="bg-bg border border-line rounded-xl px-4 py-2 text-sm text-fg focus:outline-none focus:ring-2 focus:ring-amber-500/40"
-                >
-                    <option value="">All</option>
-                    <option value="pending">Pending</option>
-                    <option value="completed">Completed</option>
-                    <option value="cancelled">Cancelled</option>
-                </select>
-            </div>
+    return (
+        <>
+            <ListPageTemplate
+                title="Quality Inspection"
+                description="Receipts held for inspection. Stock is released only for what passes."
+                primaryAction={<Button onClick={() => setShowOpenForm(true)}>+ Open Inspection</Button>}
+                kpis={
+                    <Grid gap="md">
+                        <GridItem span={{ md: 4, lg: 3 }}><KpiCard label="Awaiting Inspection" value={inspections.filter(i => i.status === 'pending').length} /></GridItem>
+                        <GridItem span={{ md: 4, lg: 3 }}><KpiCard label="Completed" value={inspections.filter(i => i.status === 'completed').length} /></GridItem>
+                        <GridItem span={{ md: 4, lg: 3 }}><KpiCard label="Failed" value={inspections.filter(i => i.result === 'failed').length} /></GridItem>
+                        <GridItem span={{ md: 4, lg: 3 }}><KpiCard label="Partial" value={inspections.filter(i => i.result === 'partial').length} /></GridItem>
+                    </Grid>
+                }
+                filterConfig={{
+                    fields: [{ key: 'status', label: 'Status', type: 'select', options: QC_STATUS_FILTER_OPTIONS }],
+                    values: filterValues,
+                    onChange: (v) => setStatusFilter(typeof v.status === 'string' ? v.status : ''),
+                    onClear: () => setStatusFilter(''),
+                }}
+                loading={loading}
+                isEmpty={!loading && !fetchError && inspections.length === 0}
+                empty={
+                    <EmptyState
+                        title="No inspections yet"
+                        description={'Post a receipt with "Required — pending" to route it here.'}
+                    />
+                }
+            >
+                {fetchError && <Alert variant="error">{fetchError}</Alert>}
+                <DataTable columns={columns} rows={inspections} rowKey={(i) => i.id} />
+            </ListPageTemplate>
 
-            <div className="bg-surface/50 border border-line rounded-2xl overflow-hidden">
-                <table className="w-full text-left border-collapse">
-                    <thead>
-                        <tr className="border-b border-line bg-surface-raised/30">
-                            <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-fg-muted">Inspection</th>
-                            <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-fg-muted">Receipt</th>
-                            <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-fg-muted">Status</th>
-                            <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-fg-muted">Result</th>
-                            <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-fg-muted">Lines</th>
-                            <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-fg-muted">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-line/50">
-                        {loading ? (
-                            <tr><td colSpan={6} className="px-6 py-12 text-center text-fg-subtle animate-pulse">Loading inspections...</td></tr>
-                        ) : inspections.length === 0 ? (
-                            <tr><td colSpan={6} className="px-6 py-12 text-center text-fg-subtle">No inspections yet. Post a receipt with "Required — pending" to route it here.</td></tr>
-                        ) : inspections.map(i => (
-                            <tr key={i.id} className="hover:bg-surface-raised/20 transition-colors">
-                                <td className="px-6 py-4">
-                                    <div className="font-semibold text-fg">{i.inspection_number}</div>
-                                    <div className="text-xs text-fg-subtle">{formatters.formatDate(i.created_at)}</div>
-                                </td>
-                                <td className="px-6 py-4 text-sm text-fg-muted">
-                                    {i.grn?.grn_number || '—'}
-                                </td>
-                                <td className="px-6 py-4">
-                                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border ${QC_STATUS_STYLES[i.status] || QC_STATUS_STYLES.pending}`}>
-                                        {i.status.replace(/_/g, ' ')}
-                                    </span>
-                                </td>
-                                <td className="px-6 py-4">
-                                    {i.result ? (
-                                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border ${RESULT_STYLES[i.result]}`}>
-                                            {i.result}
-                                        </span>
-                                    ) : <span className="text-fg-subtle text-xs">—</span>}
-                                </td>
-                                <td className="px-6 py-4 text-sm text-fg-muted font-mono">
-                                    {i.quality_inspection_lines?.length || 0}
-                                </td>
-                                <td className="px-6 py-4">
-                                    {i.status === 'pending' ? (
-                                        <button
-                                            onClick={() => startInspecting(i)}
-                                            className="text-warning hover:text-warning font-semibold text-sm transition-colors"
-                                        >
-                                            Record Result →
-                                        </button>
-                                    ) : (
-                                        <button
-                                            onClick={() => navigate(`/procurement/grn/${i.grn_id}`)}
-                                            className="text-primary hover:text-primary font-semibold text-sm transition-colors"
-                                        >
-                                            View Receipt
-                                        </button>
-                                    )}
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
+            <Modal
+                open={showOpenForm}
+                onClose={() => setShowOpenForm(false)}
+                title="Open Inspection"
+                size="md"
+                footer={
+                    <>
+                        <Button type="button" variant="secondary" onClick={() => setShowOpenForm(false)}>Cancel</Button>
+                        <Button type="submit" form="qc-open-form" loading={saving} disabled={saving}>Open Inspection</Button>
+                    </>
+                }
+            >
+                <form id="qc-open-form" onSubmit={openInspection}>
+                    <Select
+                        label="Goods Receipt"
+                        name="qc-grn"
+                        id="qc-grn"
+                        placeholder="Select a receipt"
+                        value={grnId}
+                        options={grns.map(g => ({ value: g.id, label: `${g.grn_number} — ${g.po?.po_number || 'PO'}` }))}
+                        onValueChange={setGrnId}
+                    />
+                </form>
+            </Modal>
 
-            {showOpenForm && (
-                <div className="fixed inset-0 bg-bg/80 backdrop-blur-md flex items-center justify-center px-4 pt-24 pb-6 z-[600]">
-                    <div className="bg-surface border border-line rounded-3xl w-full max-w-lg overflow-hidden">
-                        <div className="p-8 border-b border-line flex justify-between items-center">
-                            <h2 className="text-2xl font-bold text-fg">Open Inspection</h2>
-                            <button onClick={() => setShowOpenForm(false)} className="text-fg-subtle hover:text-fg text-2xl">×</button>
-                        </div>
-                        <form onSubmit={openInspection} className="p-8 space-y-6">
-                            <div className="space-y-2">
-                                <label htmlFor="qc-grn" className="text-xs font-bold text-fg-subtle uppercase tracking-wider">Goods Receipt</label>
-                                <select
-                                    id="qc-grn"
-                                    value={grnId}
-                                    onChange={e => setGrnId(e.target.value)}
-                                    className="w-full bg-bg border border-line rounded-xl px-4 py-3 text-fg"
-                                >
-                                    <option value="">Select a receipt</option>
-                                    {grns.map(g => (
-                                        <option key={g.id} value={g.id}>
-                                            {g.grn_number} — {g.po?.po_number || 'PO'}
-                                        </option>
-                                    ))}
-                                </select>
+            <Modal
+                open={!!active}
+                onClose={() => setActive(null)}
+                title="Record Inspection"
+                description={active ? `${active.inspection_number} · ${active.grn?.grn_number ?? ''}` : undefined}
+                size="3xl"
+                footer={
+                    <>
+                        <Button type="button" variant="secondary" onClick={() => setActive(null)}>Cancel</Button>
+                        <Button type="submit" form="qc-result-form" loading={saving} disabled={saving}>Record & Release Stock</Button>
+                    </>
+                }
+            >
+                <form id="qc-result-form" onSubmit={submitResult} className="flex flex-col gap-nb-4">
+                    <Alert variant="warning">
+                        Only the accepted quantity enters stock — rejected units stay off the books and can be sent back to the vendor.
+                    </Alert>
+
+                    {resultLines.map((l, idx) => (
+                        <div key={l.line_id} className="flex flex-col gap-nb-3 rounded-nb-md border border-line p-nb-4">
+                            <div className="flex items-center justify-between">
+                                <span className="text-nb-label text-fg">{l.description}</span>
+                                <span className="text-nb-caption text-fg-subtle">{l.submitted} submitted</span>
                             </div>
-                            <div className="flex gap-4">
-                                <button type="submit" disabled={saving} className="flex-1 px-6 py-4 bg-amber-600 hover:bg-amber-500 disabled:opacity-60 text-primary-fg rounded-2xl font-bold">
-                                    {saving ? 'Opening...' : 'Open Inspection'}
-                                </button>
-                                <button type="button" onClick={() => setShowOpenForm(false)} className="px-6 py-4 bg-surface-raised hover:bg-surface-high text-fg-muted rounded-2xl font-bold">
-                                    Cancel
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-
-            {active && (
-                <div className="fixed inset-0 bg-bg/80 backdrop-blur-md flex items-center justify-center px-4 pt-24 pb-6 z-[600]">
-                    <div className="bg-surface border border-line rounded-3xl w-full max-w-3xl max-h-[calc(100vh-7.5rem)] flex flex-col overflow-hidden">
-                        <div className="p-8 border-b border-line flex justify-between items-center">
-                            <div>
-                                <h2 className="text-2xl font-bold text-fg">Record Inspection</h2>
-                                <p className="text-sm text-fg-subtle mt-1">{active.inspection_number} · {active.grn?.grn_number}</p>
-                            </div>
-                            <button onClick={() => setActive(null)} className="text-fg-subtle hover:text-fg text-2xl">×</button>
-                        </div>
-                        <form onSubmit={submitResult} className="p-8 space-y-6 overflow-y-auto custom-scrollbar flex-1">
-                            <div className="p-4 bg-warning/10 border border-warning/20 rounded-2xl text-sm text-warning">
-                                Only the accepted quantity enters stock — rejected units stay off the books and can be sent back to the vendor.
-                            </div>
-
-                            {resultLines.map((l, idx) => (
-                                <div key={l.line_id} className="p-4 bg-bg border border-line rounded-2xl space-y-3">
-                                    <div className="flex items-center justify-between">
-                                        <div className="text-sm font-semibold text-fg">{l.description}</div>
-                                        <div className="text-[10px] uppercase tracking-wider font-bold text-fg-subtle">
-                                            {l.submitted} submitted
-                                        </div>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <div className="space-y-1">
-                                            <label className="text-[10px] font-bold text-fg-subtle uppercase tracking-wider">Accepted</label>
-                                            <input
-                                                type="number" min="0"
-                                                aria-label={`Accepted quantity for ${l.description}`}
-                                                value={l.accepted_quantity}
-                                                onChange={e => updateResult(idx, 'accepted_quantity', e.target.value)}
-                                                className="w-full bg-surface border border-line rounded-lg px-3 py-2 text-center text-success font-bold"
-                                            />
-                                        </div>
-                                        <div className="space-y-1">
-                                            <label className="text-[10px] font-bold text-fg-subtle uppercase tracking-wider">Rejected</label>
-                                            <input
-                                                type="number" min="0"
-                                                aria-label={`Rejected quantity for ${l.description}`}
-                                                value={l.rejected_quantity}
-                                                onChange={e => updateResult(idx, 'rejected_quantity', e.target.value)}
-                                                className="w-full bg-surface border border-line rounded-lg px-3 py-2 text-center text-rose-400 font-bold"
-                                            />
-                                        </div>
-                                    </div>
-                                    {(parseFloat(l.rejected_quantity) || 0) > 0 && (
-                                        <div className="grid grid-cols-2 gap-3 animate-in slide-in-from-top-2 duration-200">
-                                            <input
-                                                type="text"
+                            <FieldGrid columns={2}>
+                                <FieldGridItem>
+                                    <TextField
+                                        type="number"
+                                        min="0"
+                                        label="Accepted"
+                                        name={`accepted_${idx}`}
+                                        aria-label={`Accepted quantity for ${l.description}`}
+                                        value={l.accepted_quantity}
+                                        onChange={e => updateResult(idx, 'accepted_quantity', e.target.value)}
+                                    />
+                                </FieldGridItem>
+                                <FieldGridItem>
+                                    <TextField
+                                        type="number"
+                                        min="0"
+                                        label="Rejected"
+                                        name={`rejected_${idx}`}
+                                        aria-label={`Rejected quantity for ${l.description}`}
+                                        value={l.rejected_quantity}
+                                        onChange={e => updateResult(idx, 'rejected_quantity', e.target.value)}
+                                    />
+                                </FieldGridItem>
+                                {(parseFloat(l.rejected_quantity) || 0) > 0 && (
+                                    <>
+                                        <FieldGridItem>
+                                            <TextField
+                                                label="Defect code"
+                                                name={`defect_${idx}`}
                                                 placeholder="Defect code"
                                                 aria-label={`Defect code for ${l.description}`}
                                                 value={l.defect_code}
                                                 onChange={e => updateResult(idx, 'defect_code', e.target.value)}
-                                                className="bg-surface border border-line rounded-lg px-3 py-2 text-sm text-fg font-mono"
                                             />
-                                            <input
-                                                type="text"
+                                        </FieldGridItem>
+                                        <FieldGridItem>
+                                            <TextField
+                                                label="Rejection reason"
+                                                name={`reason_${idx}`}
                                                 placeholder="Rejection reason"
                                                 aria-label={`Rejection reason for ${l.description}`}
                                                 value={l.rejection_reason}
                                                 onChange={e => updateResult(idx, 'rejection_reason', e.target.value)}
-                                                className="bg-surface border border-line rounded-lg px-3 py-2 text-sm text-fg"
                                             />
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
+                                        </FieldGridItem>
+                                    </>
+                                )}
+                            </FieldGrid>
+                        </div>
+                    ))}
 
-                            <div className="flex items-center justify-between p-4 bg-bg border border-line rounded-2xl">
-                                <span className="text-xs font-bold uppercase tracking-wider text-fg-subtle">Totals</span>
-                                <span className="text-sm">
-                                    <span className="text-success font-bold">{totals.accepted} accepted</span>
-                                    <span className="text-fg-subtle mx-2">·</span>
-                                    <span className="text-rose-400 font-bold">{totals.rejected} rejected</span>
-                                </span>
-                            </div>
+                    <DescriptionList
+                        columns={2}
+                        items={[
+                            { label: 'Accepted', value: `${totals.accepted} accepted` },
+                            { label: 'Rejected', value: `${totals.rejected} rejected` },
+                        ]}
+                    />
 
-                            <div className="space-y-2">
-                                <label htmlFor="qc-remarks" className="text-xs font-bold text-fg-subtle uppercase tracking-wider">Inspector Remarks</label>
-                                <textarea
-                                    id="qc-remarks"
-                                    value={remarks}
-                                    onChange={e => setRemarks(e.target.value)}
-                                    className="w-full bg-bg border border-line rounded-xl px-4 py-3 h-20 text-fg resize-none"
-                                />
-                            </div>
-
-                            <div className="flex gap-4">
-                                <button type="submit" disabled={saving} className="flex-1 px-6 py-4 bg-success hover:bg-success disabled:opacity-60 text-primary-fg rounded-2xl font-bold">
-                                    {saving ? 'Recording...' : 'Record & Release Stock'}
-                                </button>
-                                <button type="button" onClick={() => setActive(null)} className="px-6 py-4 bg-surface-raised hover:bg-surface-high text-fg-muted rounded-2xl font-bold">
-                                    Cancel
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-        </div>
+                    <Textarea
+                        label="Inspector Remarks"
+                        name="qc-remarks"
+                        id="qc-remarks"
+                        value={remarks}
+                        onChange={e => setRemarks(e.target.value)}
+                    />
+                </form>
+            </Modal>
+        </>
     );
 };
 

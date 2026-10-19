@@ -1,6 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { Loader2, Upload, X, FileText } from 'lucide-react';
-import { Modal } from '../common/Modal';
+import React, { useState } from 'react';
+import { Alert, Button, FileUpload, Modal, Select, TextField } from '@so360/design-system';
 import { procurementService } from '../../services/procurementService';
 import { mediaService } from '../../services/mediaService';
 import { inventoryService } from '../../services/inventoryService';
@@ -30,8 +29,6 @@ export const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
     const [file, setFile] = useState<File | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [dragOver, setDragOver] = useState(false);
-    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const ALLOWED_TYPES = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg'];
     const MAX_SIZE = 5 * 1024 * 1024; // 5MB
@@ -71,18 +68,6 @@ export const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
         setFile(f);
     };
 
-    const handleDrop = (e: React.DragEvent) => {
-        e.preventDefault();
-        setDragOver(false);
-        const droppedFile = e.dataTransfer.files[0];
-        if (droppedFile) handleFileSelect(droppedFile);
-    };
-
-    const handleDragOver = (e: React.DragEvent) => {
-        e.preventDefault();
-        setDragOver(true);
-    };
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
@@ -119,159 +104,101 @@ export const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
         }
     };
 
-    const inputClass = 'w-full bg-surface-raised border border-line-strong rounded-lg px-4 py-2 text-fg placeholder-fg-subtle focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50';
+    const poOptions = [
+        { value: '', label: 'No PO (standalone invoice)' },
+        ...vendorPOs.map((po) => ({
+            value: po.id,
+            label: `${po.po_number} — ${formatters.formatCurrency(po.total_amount ?? 0)} (${po.status})`,
+        })),
+    ];
 
     return (
-        <Modal isOpen={isOpen} onClose={handleClose} title="Create Vendor Invoice" size="lg">
-            <form onSubmit={handleSubmit} className="space-y-5 text-fg">
-                {error && (
-                    <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 px-4 py-3 rounded-lg text-sm">
-                        {error}
-                    </div>
-                )}
+        <Modal
+            open={isOpen}
+            onClose={handleClose}
+            title="Create Vendor Invoice"
+            size="lg"
+            dismissible={!isSubmitting}
+            footer={
+                <>
+                    <Button type="button" variant="secondary" onClick={handleClose} disabled={isSubmitting}>
+                        Cancel
+                    </Button>
+                    <Button type="submit" form="create-vendor-invoice-form" loading={isSubmitting} disabled={isSubmitting}>
+                        {isSubmitting ? 'Creating...' : 'Create Invoice'}
+                    </Button>
+                </>
+            }
+        >
+            <form id="create-vendor-invoice-form" onSubmit={handleSubmit} className="flex flex-col gap-4">
+                {error && <Alert variant="error">{error}</Alert>}
 
-                {/* Invoice Number */}
-                <div>
-                    <label className="block text-sm font-medium text-fg-muted mb-1.5">Invoice Number *</label>
-                    <input
+                <TextField
+                    name="invoice_number"
+                    label="Invoice Number"
+                    required
+                    value={invoiceNumber}
+                    onChange={(e) => setInvoiceNumber(e.target.value)}
+                    placeholder="e.g. INV-2026-001"
+                />
+
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <TextField
+                        name="invoice_date"
+                        label="Invoice Date"
+                        type="date"
                         required
-                        type="text"
-                        value={invoiceNumber}
-                        onChange={(e) => setInvoiceNumber(e.target.value)}
-                        placeholder="e.g. INV-2026-001"
-                        className={inputClass}
+                        value={invoiceDate}
+                        onChange={(e) => setInvoiceDate(e.target.value)}
+                    />
+                    <TextField
+                        name="due_date"
+                        label="Due Date"
+                        type="date"
+                        value={dueDate}
+                        onChange={(e) => setDueDate(e.target.value)}
                     />
                 </div>
 
-                {/* Invoice Date + Due Date */}
-                <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <label className="block text-sm font-medium text-fg-muted mb-1.5">Invoice Date *</label>
-                        <input
-                            required
-                            type="date"
-                            value={invoiceDate}
-                            onChange={(e) => setInvoiceDate(e.target.value)}
-                            className={inputClass}
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-fg-muted mb-1.5">Due Date</label>
-                        <input
-                            type="date"
-                            value={dueDate}
-                            onChange={(e) => setDueDate(e.target.value)}
-                            className={inputClass}
-                        />
-                    </div>
-                </div>
+                <TextField
+                    name="total_amount"
+                    label="Total Amount"
+                    type="number"
+                    step="0.01"
+                    min="0.01"
+                    required
+                    value={totalAmount}
+                    onChange={(e) => setTotalAmount(e.target.value)}
+                    placeholder="0.00"
+                />
 
-                {/* Total Amount */}
-                <div>
-                    <label className="block text-sm font-medium text-fg-muted mb-1.5">Total Amount *</label>
-                    <div className="relative">
-                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-fg-subtle font-medium">$</span>
-                        <input
-                            required
-                            type="number"
-                            step="0.01"
-                            min="0.01"
-                            value={totalAmount}
-                            onChange={(e) => setTotalAmount(e.target.value)}
-                            placeholder="0.00"
-                            className={`${inputClass} pl-8`}
-                        />
-                    </div>
-                </div>
+                <Select
+                    name="po_id"
+                    label="Link to Purchase Order"
+                    value={selectedPO}
+                    onChange={(e) => setSelectedPO(e.target.value)}
+                    options={poOptions}
+                />
 
-                {/* Link to PO */}
-                <div>
-                    <label className="block text-sm font-medium text-fg-muted mb-1.5">Link to Purchase Order</label>
-                    <select
-                        value={selectedPO}
-                        onChange={(e) => setSelectedPO(e.target.value)}
-                        className={inputClass}
-                    >
-                        <option value="">No PO (standalone invoice)</option>
-                        {vendorPOs.map((po) => (
-                            <option key={po.id} value={po.id}>
-                                {po.po_number} — {formatters.formatCurrency(po.total_amount ?? 0)} ({po.status})
-                            </option>
-                        ))}
-                    </select>
-                </div>
-
-                {/* File Upload */}
-                <div>
-                    <label className="block text-sm font-medium text-fg-muted mb-1.5">Attach Document</label>
-                    {file ? (
-                        <div className="flex items-center gap-3 bg-surface-raised border border-line-strong rounded-lg px-4 py-3">
-                            <FileText size={20} className="text-purple-400 shrink-0" />
-                            <div className="flex-1 min-w-0">
-                                <p className="text-sm text-fg truncate">{file.name}</p>
-                                <p className="text-xs text-fg-subtle">{(file.size / 1024).toFixed(1)} KB</p>
-                            </div>
-                            <button
-                                type="button"
-                                onClick={() => setFile(null)}
-                                className="p-1 hover:bg-surface-high rounded text-fg-muted hover:text-fg transition-colors"
-                            >
-                                <X size={16} />
-                            </button>
-                        </div>
-                    ) : (
-                        <div
-                            onDrop={handleDrop}
-                            onDragOver={handleDragOver}
-                            onDragLeave={() => setDragOver(false)}
-                            onClick={() => fileInputRef.current?.click()}
-                            className={`border-2 border-dashed rounded-lg px-6 py-8 text-center cursor-pointer transition-all ${
-                                dragOver
-                                    ? 'border-purple-500 bg-purple-500/10'
-                                    : 'border-line-strong hover:border-line-strong hover:bg-surface-raised/50'
-                            }`}
-                        >
-                            <Upload size={24} className="mx-auto mb-2 text-fg-subtle" />
-                            <p className="text-sm text-fg-muted">
-                                Drag & drop or <span className="text-purple-400 font-medium">browse</span>
-                            </p>
-                            <p className="text-xs text-fg-subtle mt-1">PDF, PNG, JPG up to 5MB</p>
-                            <input
-                                ref={fileInputRef}
-                                type="file"
-                                accept=".pdf,.png,.jpg,.jpeg"
-                                onChange={(e) => {
-                                    const f = e.target.files?.[0];
-                                    if (f) handleFileSelect(f);
-                                }}
-                                className="hidden"
-                            />
-                        </div>
-                    )}
-                </div>
-
-                {/* Actions */}
-                <div className="flex gap-3 pt-2">
-                    <button
-                        type="button"
-                        onClick={handleClose}
-                        disabled={isSubmitting}
-                        className="flex-1 bg-surface-raised hover:bg-surface-high text-fg font-semibold py-2.5 rounded-lg transition-all"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        type="submit"
-                        disabled={isSubmitting}
-                        className="flex-1 bg-purple-600 hover:bg-purple-500 disabled:bg-purple-600/50 text-primary-fg font-semibold py-2.5 rounded-lg transition-all shadow-lg shadow-purple-900/20 flex items-center justify-center gap-2"
-                    >
-                        {isSubmitting ? (
-                            <><Loader2 size={18} className="animate-spin" /> Creating...</>
-                        ) : (
-                            <><FileText size={18} /> Create Invoice</>
-                        )}
-                    </button>
-                </div>
+                <FileUpload
+                    name="attachment"
+                    label="Attach Document (PDF, PNG, JPG up to 5MB)"
+                    accept=".pdf,.png,.jpg,.jpeg"
+                    maxSize={MAX_SIZE}
+                    value={file ? [file] : []}
+                    onChange={(files) => {
+                        const f = files[0];
+                        if (!f) {
+                            setFile(null);
+                            return;
+                        }
+                        handleFileSelect(f);
+                    }}
+                    onReject={(rejections) => {
+                        const r = rejections[0];
+                        setError(r?.reason === 'size' ? 'File size must be under 5MB' : 'Only PDF, PNG, and JPG files are allowed');
+                    }}
+                />
             </form>
         </Modal>
     );

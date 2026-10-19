@@ -69,8 +69,8 @@ describe('OpeningBalancePage', () => {
   describe('Given loading state', () => {
     it('When data is loading / Then shows spinner', () => {
       mockGetVendors.mockReturnValue(new Promise(() => {}));
-      const { container } = render(<OpeningBalancePage />);
-      expect(container.querySelector('.animate-spin')).toBeInTheDocument();
+      render(<OpeningBalancePage />);
+      expect(screen.getByRole('status')).toBeInTheDocument();
     });
   });
 
@@ -85,7 +85,7 @@ describe('OpeningBalancePage', () => {
     it('When loaded / Then shows Back to Purchase Orders link', async () => {
       render(<OpeningBalancePage />);
       await waitFor(() => {
-        expect(screen.getByText(/Back to Purchase Orders/i)).toBeInTheDocument();
+        expect(screen.getByLabelText('Back to Purchase Orders')).toBeInTheDocument();
       });
     });
 
@@ -115,7 +115,7 @@ describe('OpeningBalancePage', () => {
     it('When Back to Purchase Orders clicked / Then navigates to PO list', async () => {
       render(<OpeningBalancePage />);
       await waitFor(() => expect(screen.getByText('Opening Balance')).toBeInTheDocument());
-      fireEvent.click(screen.getByText(/Back to Purchase Orders/i));
+      fireEvent.click(screen.getByLabelText('Back to Purchase Orders'));
       expect(mockNavigate).toHaveBeenCalledWith('/procurement/po');
     });
   });

@@ -1,4 +1,5 @@
 import React from 'react';
+import { TextField, Textarea, Select, Checkbox, RadioGroup, Alert } from '@so360/design-system';
 import FormSection from '../components/FormSection';
 import CategoryPicker from '../../../components/categories/CategoryPicker';
 import { ItemCategory, ItemAttributeDefinition } from '../../../types/inventory';
@@ -13,8 +14,6 @@ interface CategoryTabProps {
     error?: string | null;
 }
 
-const inputClass = 'w-full bg-surface-raised border border-line-strong rounded-lg px-4 py-2.5 text-fg focus:outline-none focus:ring-2 focus:ring-focus/50 focus:border-primary transition-all placeholder:text-fg-subtle';
-const labelClass = 'block text-sm font-medium text-fg-muted mb-1.5';
 
 /**
  * Numeric range check shared between the inline per-field error and the
@@ -49,17 +48,28 @@ const CategoryTab: React.FC<CategoryTabProps> = ({
         updateField('metadata', { ...metadata, [key]: value });
     };
 
+    const fieldLabel = (def: ItemAttributeDefinition) =>
+        def.unit && def.attribute_type !== 'number' ? `${def.attribute_label} (${def.unit})` : def.attribute_label;
+
+    const rangeAlert = (def: ItemAttributeDefinition, rangeError: string | null) =>
+        rangeError ? (
+            <div data-testid={`error-attr-${def.attribute_key}`} className="mt-1.5">
+                <Alert variant="error">{rangeError}</Alert>
+            </div>
+        ) : null;
+
     const renderAttributeField = (def: ItemAttributeDefinition) => {
         const value = metadata[def.attribute_key];
+        const common = { name: def.attribute_key, label: fieldLabel(def), required: def.is_required };
 
         switch (def.attribute_type) {
             case 'text':
                 return (
-                    <input
+                    <TextField
+                        {...common}
                         type="text"
                         value={value || ''}
                         onChange={e => handleMetadataChange(def.attribute_key, e.target.value)}
-                        className={inputClass}
                         placeholder={def.attribute_label}
                     />
                 );
@@ -67,134 +77,126 @@ const CategoryTab: React.FC<CategoryTabProps> = ({
                 const rangeError = getAttributeRangeError(def, value);
                 return (
                     <div>
-                        <div className="flex items-center gap-2">
-                            <input
-                                type="number"
-                                min={def.min_value ?? undefined}
-                                max={def.max_value ?? undefined}
-                                value={value ?? ''}
-                                onChange={e => handleMetadataChange(def.attribute_key, e.target.value ? parseFloat(e.target.value) : '')}
-                                className={inputClass}
-                                placeholder={def.attribute_label}
-                            />
-                            {def.unit && <span className="text-sm text-fg-subtle whitespace-nowrap">{def.unit}</span>}
+                        <div className="flex items-end gap-2">
+                            <div className="flex-1">
+                                <TextField
+                                    {...common}
+                                    type="number"
+                                    min={def.min_value ?? undefined}
+                                    max={def.max_value ?? undefined}
+                                    value={value ?? ''}
+                                    onChange={e => handleMetadataChange(def.attribute_key, e.target.value ? parseFloat(e.target.value) : '')}
+                                    placeholder={def.attribute_label}
+                                />
+                            </div>
+                            {/* comb-exception: TextField has no suffix/unit node slot */}
+                            {def.unit && <span className="pb-2 text-sm text-fg-subtle whitespace-nowrap">{def.unit}</span>}
                         </div>
-                        {rangeError && (
-                            <p role="alert" data-testid={`error-attr-${def.attribute_key}`} className="text-rose-400 text-xs mt-1.5">
-                                {rangeError}
-                            </p>
-                        )}
+                        {rangeAlert(def, rangeError)}
                     </div>
                 );
             }
             case 'boolean':
                 return (
-                    <label className="flex items-center gap-3 cursor-pointer group">
-                        <input
-                            type="checkbox"
-                            checked={!!value}
-                            onChange={e => handleMetadataChange(def.attribute_key, e.target.checked)}
-                            className="w-4 h-4 rounded border-line-strong bg-surface-raised text-primary focus:ring-focus/50"
-                        />
-                        <span className="text-sm text-fg-muted group-hover:text-fg transition-colors">
-                            {def.attribute_label}
-                        </span>
-                    </label>
+                    <Checkbox
+                        name={def.attribute_key}
+                        label={def.attribute_label}
+                        checked={!!value}
+                        onChange={e => handleMetadataChange(def.attribute_key, e.target.checked)}
+                    />
                 );
             case 'currency': {
                 const rangeError = getAttributeRangeError(def, value);
                 return (
                     <div>
-                        <div className="flex items-center gap-2">
-                            {def.unit && <span className="text-sm text-fg-subtle whitespace-nowrap">{def.unit}</span>}
-                            <input
-                                type="number"
-                                step="0.01"
-                                min={def.min_value ?? undefined}
-                                max={def.max_value ?? undefined}
-                                value={value ?? ''}
-                                onChange={e => handleMetadataChange(def.attribute_key, e.target.value ? parseFloat(e.target.value) : '')}
-                                className={inputClass}
-                                placeholder={def.attribute_label}
-                            />
+                        <div className="flex items-end gap-2">
+                            {/* comb-exception: TextField has no prefix/unit node slot */}
+                            {def.unit && <span className="pb-2 text-sm text-fg-subtle whitespace-nowrap">{def.unit}</span>}
+                            <div className="flex-1">
+                                <TextField
+                                    {...common}
+                                    type="number"
+                                    step="0.01"
+                                    min={def.min_value ?? undefined}
+                                    max={def.max_value ?? undefined}
+                                    value={value ?? ''}
+                                    onChange={e => handleMetadataChange(def.attribute_key, e.target.value ? parseFloat(e.target.value) : '')}
+                                    placeholder={def.attribute_label}
+                                />
+                            </div>
                         </div>
-                        {rangeError && (
-                            <p role="alert" data-testid={`error-attr-${def.attribute_key}`} className="text-rose-400 text-xs mt-1.5">
-                                {rangeError}
-                            </p>
-                        )}
+                        {rangeAlert(def, rangeError)}
                     </div>
                 );
             }
             case 'date':
                 return (
-                    <input
+                    <TextField
+                        {...common}
                         type="date"
                         value={value || ''}
                         onChange={e => handleMetadataChange(def.attribute_key, e.target.value)}
-                        className={inputClass}
                     />
                 );
             case 'textarea':
                 return (
-                    <textarea
+                    <Textarea
+                        {...common}
                         rows={3}
                         value={value || ''}
                         onChange={e => handleMetadataChange(def.attribute_key, e.target.value)}
-                        className={inputClass + ' resize-none'}
                         placeholder={def.attribute_label}
                     />
                 );
             case 'file':
                 return (
-                    <input
+                    <TextField
+                        {...common}
                         type="text"
                         value={value || ''}
                         onChange={e => handleMetadataChange(def.attribute_key, e.target.value)}
-                        className={inputClass}
                         placeholder="File URL"
                     />
                 );
             case 'radio':
                 return (
-                    <div className="flex flex-wrap gap-3">
-                        {(def.options || []).map(opt => (
-                            <label key={opt.value} className="flex items-center gap-1.5 cursor-pointer">
-                                <input
-                                    type="radio"
-                                    name={def.attribute_key}
-                                    checked={value === opt.value}
-                                    onChange={() => handleMetadataChange(def.attribute_key, opt.value)}
-                                    className="w-4 h-4 border-line-strong bg-surface-raised text-primary focus:ring-focus/50"
-                                />
-                                <span className="text-sm text-fg-muted">{opt.label}</span>
-                            </label>
-                        ))}
-                    </div>
+                    <RadioGroup
+                        name={def.attribute_key}
+                        label={fieldLabel(def)}
+                        required={def.is_required}
+                        orientation="horizontal"
+                        value={value ?? ''}
+                        options={(def.options || []).map(opt => ({ value: opt.value, label: opt.label }))}
+                        onChange={v => handleMetadataChange(def.attribute_key, v)}
+                    />
                 );
             case 'select':
                 return (
-                    <select
+                    <Select
+                        {...common}
                         value={value || ''}
                         onChange={e => handleMetadataChange(def.attribute_key, e.target.value)}
-                        className={inputClass}
-                    >
-                        <option value="">Select...</option>
-                        {(def.options || []).map(opt => (
-                            <option key={opt.value} value={opt.value}>{opt.label}</option>
-                        ))}
-                    </select>
+                        placeholder="Select..."
+                        options={(def.options || []).map(opt => ({ value: opt.value, label: opt.label }))}
+                    />
                 );
             case 'multi_select': {
                 const selected: string[] = Array.isArray(value) ? value : [];
                 return (
-                    <div className="flex flex-wrap gap-2">
-                        {(def.options || []).map(opt => {
-                            const checked = selected.includes(opt.value);
-                            return (
-                                <label key={opt.value} className="flex items-center gap-1.5 cursor-pointer">
-                                    <input
-                                        type="checkbox"
+                    <div>
+                        {/* comb-exception: no DS multi-select group; a labelled Checkbox cluster is used */}
+                        <p className="mb-1.5 text-sm font-medium text-fg-muted">
+                            {fieldLabel(def)}
+                            {def.is_required && <span className="ml-1 text-rose-400">*</span>}
+                        </p>
+                        <div className="flex flex-wrap gap-3">
+                            {(def.options || []).map(opt => {
+                                const checked = selected.includes(opt.value);
+                                return (
+                                    <Checkbox
+                                        key={opt.value}
+                                        name={`${def.attribute_key}-${opt.value}`}
+                                        label={opt.label}
                                         checked={checked}
                                         onChange={e => {
                                             const next = e.target.checked
@@ -202,12 +204,10 @@ const CategoryTab: React.FC<CategoryTabProps> = ({
                                                 : selected.filter(v => v !== opt.value);
                                             handleMetadataChange(def.attribute_key, next);
                                         }}
-                                        className="w-4 h-4 rounded border-line-strong bg-surface-raised text-primary focus:ring-focus/50"
                                     />
-                                    <span className="text-sm text-fg-muted">{opt.label}</span>
-                                </label>
-                            );
-                        })}
+                                );
+                            })}
+                        </div>
                     </div>
                 );
             }
@@ -227,17 +227,15 @@ const CategoryTab: React.FC<CategoryTabProps> = ({
                 />
 
                 {error && (
-                    <p role="alert" data-testid="error-category_id" className="text-rose-400 text-xs mt-2">
-                        {error}
-                    </p>
+                    <div data-testid="error-category_id" className="mt-2">
+                        <Alert variant="error">{error}</Alert>
+                    </div>
                 )}
 
                 {category_id && (
-                    <div className="mt-4 p-3 bg-surface-raised/30 border border-line-strong/50 rounded-lg">
-                        <p className="text-xs text-fg-subtle">
-                            Selected: <span className="text-fg-muted font-medium">{categories.find(c => c.id === category_id)?.name || 'Unknown'}</span>
-                        </p>
-                    </div>
+                    <p className="mt-4 text-xs text-fg-subtle">
+                        Selected: <span className="text-fg-muted font-medium">{categories.find(c => c.id === category_id)?.name || 'Unknown'}</span>
+                    </p>
                 )}
             </FormSection>
 
@@ -248,18 +246,7 @@ const CategoryTab: React.FC<CategoryTabProps> = ({
                 >
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {attributeDefs.map(def => (
-                            <div key={def.id}>
-                                {def.attribute_type !== 'boolean' && (
-                                    <label className={labelClass}>
-                                        {def.attribute_label}
-                                        {def.is_required && <span className="text-rose-400 ml-1">*</span>}
-                                        {def.unit && def.attribute_type !== 'number' && (
-                                            <span className="text-fg-subtle ml-1">({def.unit})</span>
-                                        )}
-                                    </label>
-                                )}
-                                {renderAttributeField(def)}
-                            </div>
+                            <div key={def.id}>{renderAttributeField(def)}</div>
                         ))}
                     </div>
                 </FormSection>

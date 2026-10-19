@@ -24,11 +24,6 @@ vi.mock('../../services/inventoryService', () => ({
   },
 }));
 
-vi.mock('../common/Modal', () => ({
-  Modal: ({ isOpen, title, children }: any) =>
-    isOpen ? <div data-testid="modal"><h3>{title}</h3>{children}</div> : null,
-}));
-
 import { CreateInvoiceModal } from './CreateInvoiceModal';
 
 const makeProps = (overrides: any = {}) => ({
@@ -53,7 +48,7 @@ describe('CreateInvoiceModal', () => {
   describe('Given modal is closed', () => {
     it('When isOpen is false / Then modal not in DOM', () => {
       render(<CreateInvoiceModal {...makeProps({ isOpen: false })} />);
-      expect(screen.queryByTestId('modal')).not.toBeInTheDocument();
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
   });
 

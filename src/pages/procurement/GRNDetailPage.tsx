@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-    ArrowLeft, Package, AlertCircle, Clock, Building2,
-    FileText, CheckCircle, Truck
-} from 'lucide-react';
+    Alert, Badge, Button, Card, DataTable, DescriptionList, DetailPageTemplate, EmptyState,
+    type DataTableColumn, type BadgeTone,
+} from '@so360/design-system';
 import { procurementService } from '../../services/procurementService';
 import { useInventoryFormatters } from '../../utils/formatters';
 import ProcurementTrace from '../../components/ProcurementTrace';
@@ -49,6 +49,17 @@ interface GRN {
     received_by?: { full_name: string };
 }
 
+const GRN_TRAIL = [{ label: 'Goods Receipt Notes', to: '/procurement/grn' }];
+
+const INSPECTION_LABELS: Record<string, { label: string; tone: BadgeTone }> = {
+    not_required: { label: 'Not required', tone: 'neutral' },
+    pending: { label: 'Inspection pending', tone: 'warning' },
+    in_progress: { label: 'Inspection in progress', tone: 'primary' },
+    passed: { label: 'Passed', tone: 'success' },
+    partial: { label: 'Partially passed', tone: 'info' },
+    failed: { label: 'Failed', tone: 'danger' },
+};
+
 const GRNDetailPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -78,327 +89,177 @@ const GRNDetailPage = () => {
     const acceptedOf = (line: GRNLine) =>
         line.accepted_quantity == null ? line.quantity_received : line.accepted_quantity;
 
+    const rejectedOf = (line: GRNLine) => (line.rejected_quantity || 0) + (line.damaged_quantity || 0);
+
     const totalQuantityReceived = grn?.grn_lines?.reduce((sum, line) =>
         sum + line.quantity_received, 0) || 0;
 
     const totalAccepted = grn?.grn_lines?.reduce((sum, line) =>
         sum + acceptedOf(line), 0) || 0;
 
-    const totalRejected = grn?.grn_lines?.reduce((sum, line) =>
-        sum + (line.rejected_quantity || 0) + (line.damaged_quantity || 0), 0) || 0;
+    const totalRejected = grn?.grn_lines?.reduce((sum, line) => sum + rejectedOf(line), 0) || 0;
 
     // Only accepted stock is capitalised, so the GRN value follows accepted units.
     const totalValue = grn?.grn_lines?.reduce((sum, line) =>
         sum + (acceptedOf(line) * (line.po_line?.unit_price || 0)), 0) || 0;
 
-    const INSPECTION_LABELS: Record<string, { label: string; className: string }> = {
-        not_required: { label: 'Not required', className: 'bg-surface-high text-fg-muted border-line-strong' },
-        pending: { label: 'Inspection pending', className: 'bg-warning/10 text-warning border-warning/20' },
-        in_progress: { label: 'Inspection in progress', className: 'bg-primary/10 text-primary border-primary/20' },
-        passed: { label: 'Passed', className: 'bg-success/10 text-success border-success/20' },
-        partial: { label: 'Partially passed', className: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' },
-        failed: { label: 'Failed', className: 'bg-rose-500/10 text-rose-400 border-rose-500/20' },
-    };
-
     if (isLoading) {
-        return (
-            <div className="p-8 flex items-center justify-center min-h-[400px]">
-                <div className="w-8 h-8 border-2 border-violet-500/20 border-t-violet-500 rounded-full animate-spin" />
-            </div>
-        );
+        return <DetailPageTemplate title="Loading goods receipt" trail={GRN_TRAIL} loading />;
     }
 
     if (error || !grn) {
         return (
-            <div className="p-8 text-center">
-                <AlertCircle size={48} className="mx-auto text-rose-500 mb-4" />
-                <h2 className="text-2xl font-bold text-fg mb-2">{error || 'GRN not found'}</h2>
-                <button onClick={() => navigate('/procurement/grn')} className="text-violet-400 hover:underline">
-                    Back to GRNs
-                </button>
-            </div>
+            <DetailPageTemplate title="Goods receipt" trail={GRN_TRAIL}>
+                <EmptyState
+                    title={error || 'GRN not found'}
+                    action={{ label: 'Back to GRNs', onClick: () => navigate('/procurement/grn') }}
+                />
+            </DetailPageTemplate>
         );
     }
 
+    const linkButton = (label: string, to: string) => (
+        <Button variant="ghost" size="sm" onClick={() => navigate(to)}>{label}</Button>
+    );
+
+    const infoItems = [
+        grn.po && { label: 'Purchase Order', value: linkButton(`#${grn.po.po_number}`, `/procurement/po/${grn.po.id}`) },
+        grn.po?.vendor && { label: 'Vendor', value: linkButton(grn.po.vendor.name, `/vendors/${grn.po.vendor.id}`) },
+        grn.warehouse && { label: 'Receiving Warehouse', value: linkButton(grn.warehouse.name, `/inventory/warehouses/${grn.warehouse.id}`) },
+        {
+            label: 'Received Date',
+            value: grn.received_date
+                ? formatters.formatDate(grn.received_date)
+                : formatters.formatDateTime(grn.created_at),
+        },
+        grn.received_by && { label: 'Received By', value: grn.received_by.full_name },
+    ].filter(Boolean) as { label: string; value: React.ReactNode }[];
+
+    const deliveryItems = [
+        grn.supplier_delivery_note && { label: 'Delivery note', value: grn.supplier_delivery_note },
+        grn.vehicle_number && { label: 'Vehicle', value: grn.vehicle_number },
+        grn.transporter && { label: 'Transporter', value: grn.transporter },
+        grn.gate_entry_no && { label: 'Gate entry', value: grn.gate_entry_no },
+    ].filter(Boolean) as { label: string; value: React.ReactNode }[];
+
+    const summaryItems = [
+        { label: 'Received', value: `${totalQuantityReceived} units` },
+        { label: 'Accepted', value: `${totalAccepted} units` },
+        totalRejected > 0 && { label: 'Rejected / damaged', value: `${totalRejected} units` },
+        { label: 'Accepted value', value: formatters.formatCurrency(totalValue) },
+    ].filter(Boolean) as { label: string; value: React.ReactNode }[];
+
+    const columns: DataTableColumn<GRNLine>[] = [
+        {
+            key: 'item',
+            header: 'Item',
+            alwaysVisible: true,
+            render: (line) => (
+                <div>
+                    <div className="text-nb-body text-fg">
+                        {line.po_line?.items?.name || line.po_line?.description || 'Unknown Item'}
+                    </div>
+                    {line.po_line?.items?.sku && (
+                        <div className="text-nb-caption text-fg-subtle">{line.po_line.items.sku}</div>
+                    )}
+                    {(line.batch_number || line.expiry_date || (line.serial_numbers?.length)) && (
+                        <div className="text-nb-caption text-fg-subtle">
+                            {line.batch_number && <>Batch {line.batch_number} </>}
+                            {line.expiry_date && <>· Exp {formatters.formatDate(line.expiry_date)} </>}
+                            {!!line.serial_numbers?.length && <>· {line.serial_numbers.length} serials</>}
+                        </div>
+                    )}
+                    {line.rejection_reason && (
+                        <div className="text-nb-caption text-danger">Rejected: {line.rejection_reason}</div>
+                    )}
+                </div>
+            ),
+        },
+        { key: 'po_qty', header: 'PO Qty', align: 'right', render: (line) => line.po_line?.quantity || '-' },
+        { key: 'received', header: 'Received', align: 'right', render: (line) => line.quantity_received },
+        {
+            key: 'accepted',
+            header: 'Accepted',
+            align: 'right',
+            render: (line) => <span className="text-success">{acceptedOf(line)}</span>,
+        },
+        {
+            key: 'rejected',
+            header: 'Rejected',
+            align: 'right',
+            render: (line) => (
+                <span className={rejectedOf(line) > 0 ? 'text-danger' : 'text-fg-subtle'}>{rejectedOf(line)}</span>
+            ),
+        },
+        {
+            key: 'unit_price',
+            header: 'Unit Price',
+            align: 'right',
+            render: (line) => formatters.formatCurrency(line.po_line?.unit_price || 0),
+        },
+        {
+            key: 'line_value',
+            header: 'Line Value',
+            align: 'right',
+            render: (line) => formatters.formatCurrency(acceptedOf(line) * (line.po_line?.unit_price || 0)),
+        },
+    ];
+
     return (
-        <div className="p-8">
-            <button
-                onClick={() => navigate('/procurement/grn')}
-                className="flex items-center gap-2 text-fg-muted hover:text-fg mb-6 transition-colors group"
-            >
-                <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
-                Back to Goods Receipt Notes
-            </button>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Left Column - GRN Info */}
-                <div className="lg:col-span-1 space-y-6">
-                    <div className="bg-surface/50 border border-line rounded-2xl p-6">
-                        <div className="flex items-start gap-4 mb-6">
-                            <div className="w-14 h-14 rounded-2xl bg-violet-500/10 flex items-center justify-center border border-violet-500/20">
-                                <Package size={28} className="text-violet-400" />
-                            </div>
-                            <div>
-                                <h1 className="text-xl font-bold text-fg">
-                                    {grn.grn_number}
-                                </h1>
-                                <div className="flex flex-wrap gap-1.5 mt-1">
-                                    <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-success/10 text-success border border-success/20">
-                                        Received
-                                    </span>
-                                    {grn.is_partial && (
-                                        <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-warning/10 text-warning border border-warning/20">
-                                            Partial
-                                        </span>
-                                    )}
-                                    {grn.inspection_status && grn.inspection_status !== 'not_required' && (
-                                        <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${INSPECTION_LABELS[grn.inspection_status]?.className || ''}`}>
-                                            {INSPECTION_LABELS[grn.inspection_status]?.label || grn.inspection_status}
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="space-y-4">
-                            {grn.po && (
-                                <div className="flex items-center gap-3 p-3 bg-surface-raised/30 rounded-xl">
-                                    <FileText size={16} className="text-fg-subtle" />
-                                    <div>
-                                        <span className="text-xs text-fg-subtle block">Purchase Order</span>
-                                        <button
-                                            onClick={() => navigate(`/procurement/po/${grn.po?.id}`)}
-                                            className="text-sm text-primary hover:text-primary"
-                                        >
-                                            #{grn.po.po_number}
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-                            {grn.po?.vendor && (
-                                <div className="flex items-center gap-3 p-3 bg-surface-raised/30 rounded-xl">
-                                    <Truck size={16} className="text-fg-subtle" />
-                                    <div>
-                                        <span className="text-xs text-fg-subtle block">Vendor</span>
-                                        <button
-                                            onClick={() => navigate(`/vendors/${grn.po?.vendor?.id}`)}
-                                            className="text-sm text-primary hover:text-primary"
-                                        >
-                                            {grn.po.vendor.name}
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-                            {grn.warehouse && (
-                                <div className="flex items-center gap-3 p-3 bg-surface-raised/30 rounded-xl">
-                                    <Building2 size={16} className="text-fg-subtle" />
-                                    <div>
-                                        <span className="text-xs text-fg-subtle block">Receiving Warehouse</span>
-                                        <button
-                                            onClick={() => navigate(`/inventory/warehouses/${grn.warehouse?.id}`)}
-                                            className="text-sm text-primary hover:text-primary"
-                                        >
-                                            {grn.warehouse.name}
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-                            <div className="flex items-center gap-3 p-3 bg-surface-raised/30 rounded-xl">
-                                <Clock size={16} className="text-fg-subtle" />
-                                <div>
-                                    <span className="text-xs text-fg-subtle block">Received Date</span>
-                                    <span className="text-sm text-fg">
-                                        {grn.received_date
-                                            ? formatters.formatDate(grn.received_date)
-                                            : formatters.formatDateTime(grn.created_at)}
-                                    </span>
-                                </div>
-                            </div>
-                            {(grn.supplier_delivery_note || grn.vehicle_number || grn.transporter || grn.gate_entry_no) && (
-                                <div className="p-3 bg-surface-raised/30 rounded-xl space-y-2">
-                                    <span className="text-xs text-fg-subtle block">Delivery Details</span>
-                                    {grn.supplier_delivery_note && (
-                                        <div className="flex justify-between text-sm gap-3">
-                                            <span className="text-fg-subtle">Delivery note</span>
-                                            <span className="text-fg font-mono text-right">{grn.supplier_delivery_note}</span>
-                                        </div>
-                                    )}
-                                    {grn.vehicle_number && (
-                                        <div className="flex justify-between text-sm gap-3">
-                                            <span className="text-fg-subtle">Vehicle</span>
-                                            <span className="text-fg font-mono text-right">{grn.vehicle_number}</span>
-                                        </div>
-                                    )}
-                                    {grn.transporter && (
-                                        <div className="flex justify-between text-sm gap-3">
-                                            <span className="text-fg-subtle">Transporter</span>
-                                            <span className="text-fg text-right">{grn.transporter}</span>
-                                        </div>
-                                    )}
-                                    {grn.gate_entry_no && (
-                                        <div className="flex justify-between text-sm gap-3">
-                                            <span className="text-fg-subtle">Gate entry</span>
-                                            <span className="text-fg font-mono text-right">{grn.gate_entry_no}</span>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-                            {grn.received_by && (
-                                <div className="flex items-center gap-3 p-3 bg-surface-raised/30 rounded-xl">
-                                    <CheckCircle size={16} className="text-fg-subtle" />
-                                    <div>
-                                        <span className="text-xs text-fg-subtle block">Received By</span>
-                                        <span className="text-sm text-fg">{grn.received_by.full_name}</span>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-                        {grn.notes && (
-                            <div className="mt-6 pt-6 border-t border-line">
-                                <span className="text-xs text-fg-subtle block mb-2">Notes</span>
-                                <p className="text-sm text-fg-muted">{grn.notes}</p>
-                            </div>
+        <DetailPageTemplate
+            title={grn.grn_number}
+            trail={GRN_TRAIL}
+            status={
+                <>
+                    <Badge tone="success">Received</Badge>
+                    {grn.is_partial && <Badge tone="warning">Partial</Badge>}
+                    {grn.inspection_status && grn.inspection_status !== 'not_required' && (
+                        <Badge tone={INSPECTION_LABELS[grn.inspection_status]?.tone ?? 'neutral'}>
+                            {INSPECTION_LABELS[grn.inspection_status]?.label || grn.inspection_status}
+                        </Badge>
+                    )}
+                </>
+            }
+            sidePanel={
+                <>
+                    <Card title="Receipt details">
+                        <DescriptionList items={infoItems} columns={1} />
+                        {deliveryItems.length > 0 && (
+                            <DescriptionList title="Delivery Details" items={deliveryItems} columns={1} />
                         )}
-                    </div>
-
+                        {grn.notes && <DescriptionList title="Notes" items={[{ label: 'Remarks', value: grn.notes }]} columns={1} />}
+                    </Card>
                     <ProcurementTrace type="grn" id={grn.id} />
+                    <Card title="Receipt Summary">
+                        <DescriptionList items={summaryItems} columns={1} />
+                    </Card>
+                </>
+            }
+        >
+            <Card title="Received Items">
+                <DataTable
+                    columns={columns}
+                    rows={grn.grn_lines ?? []}
+                    rowKey={(line) => line.id}
+                    footer={
+                        <div className="flex flex-wrap items-center justify-end gap-nb-4 text-nb-label text-fg-muted">
+                            <span>Totals:</span>
+                            <span>{totalQuantityReceived}</span>
+                            <span className="text-success">{totalAccepted}</span>
+                            <span className={totalRejected > 0 ? 'text-danger' : 'text-fg-subtle'}>{totalRejected}</span>
+                            <span className="text-nb-section-title text-fg">{formatters.formatCurrency(totalValue)}</span>
+                        </div>
+                    }
+                />
+            </Card>
 
-                    {/* Summary Card */}
-                    <div className="bg-violet-600 rounded-2xl p-6 text-primary-fg">
-                        <span className="text-violet-100 text-[10px] font-bold uppercase tracking-wider">Receipt Summary</span>
-                        <div className="text-4xl font-black mt-2">
-                            {totalQuantityReceived} units
-                        </div>
-                        <div className="mt-3 space-y-1">
-                            <div className="flex justify-between text-sm text-violet-200">
-                                <span>Accepted</span>
-                                <span>{totalAccepted} units</span>
-                            </div>
-                            {totalRejected > 0 && (
-                                <div className="flex justify-between text-sm text-violet-200">
-                                    <span>Rejected / damaged</span>
-                                    <span>{totalRejected} units</span>
-                                </div>
-                            )}
-                            <div className="flex justify-between text-sm text-violet-200">
-                                <span>Accepted value</span>
-                                <span>{formatters.formatCurrency(totalValue)}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Right Column - Line Items */}
-                <div className="lg:col-span-2 space-y-6">
-                    <div className="bg-surface/50 border border-line rounded-2xl p-6">
-                        <h2 className="text-lg font-bold text-fg mb-4 flex items-center gap-2">
-                            <Package size={20} className="text-violet-400" />
-                            Received Items
-                        </h2>
-                        <div className="overflow-x-auto">
-                            <table className="w-full">
-                                <thead>
-                                    <tr className="text-left text-xs font-bold uppercase tracking-wider text-fg-subtle border-b border-line">
-                                        <th className="pb-3">Item</th>
-                                        <th className="pb-3 text-center">PO Qty</th>
-                                        <th className="pb-3 text-center">Received</th>
-                                        <th className="pb-3 text-center">Accepted</th>
-                                        <th className="pb-3 text-center">Rejected</th>
-                                        <th className="pb-3 text-right">Unit Price</th>
-                                        <th className="pb-3 text-right">Line Value</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {grn.grn_lines?.map((line) => (
-                                        <tr key={line.id} className="border-b border-line/50">
-                                            <td className="py-3">
-                                                <span className="text-fg font-medium">
-                                                    {line.po_line?.items?.name || line.po_line?.description || 'Unknown Item'}
-                                                </span>
-                                                {line.po_line?.items?.sku && (
-                                                    <span className="block text-xs text-fg-subtle font-mono">{line.po_line.items.sku}</span>
-                                                )}
-                                                {(line.batch_number || line.expiry_date || (line.serial_numbers?.length)) && (
-                                                    <span className="block text-[10px] text-fg-subtle mt-1">
-                                                        {line.batch_number && <>Batch {line.batch_number} </>}
-                                                        {line.expiry_date && <>· Exp {formatters.formatDate(line.expiry_date)} </>}
-                                                        {!!line.serial_numbers?.length && <>· {line.serial_numbers.length} serials</>}
-                                                    </span>
-                                                )}
-                                                {line.rejection_reason && (
-                                                    <span className="block text-[10px] text-rose-400/80 mt-1">Rejected: {line.rejection_reason}</span>
-                                                )}
-                                            </td>
-                                            <td className="py-3 text-center text-fg-muted">
-                                                {line.po_line?.quantity || '-'}
-                                            </td>
-                                            <td className="py-3 text-center">
-                                                <span className="text-fg-muted font-bold">{line.quantity_received}</span>
-                                            </td>
-                                            <td className="py-3 text-center">
-                                                <span className="text-success font-bold">{acceptedOf(line)}</span>
-                                            </td>
-                                            <td className="py-3 text-center">
-                                                <span className={((line.rejected_quantity || 0) + (line.damaged_quantity || 0)) > 0 ? 'text-rose-400 font-bold' : 'text-fg-subtle'}>
-                                                    {(line.rejected_quantity || 0) + (line.damaged_quantity || 0)}
-                                                </span>
-                                            </td>
-                                            <td className="py-3 text-right text-fg-muted">
-                                                {formatters.formatCurrency(line.po_line?.unit_price || 0)}
-                                            </td>
-                                            <td className="py-3 text-right font-bold text-fg">
-                                                {formatters.formatCurrency(acceptedOf(line) * (line.po_line?.unit_price || 0))}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                                <tfoot>
-                                    <tr className="border-t border-line-strong">
-                                        <td colSpan={2} className="py-4 text-right font-bold text-fg-muted">
-                                            Totals:
-                                        </td>
-                                        <td className="py-4 text-center font-bold text-fg-muted">
-                                            {totalQuantityReceived}
-                                        </td>
-                                        <td className="py-4 text-center font-bold text-success">
-                                            {totalAccepted}
-                                        </td>
-                                        <td className={`py-4 text-center font-bold ${totalRejected > 0 ? 'text-rose-400' : 'text-fg-subtle'}`}>
-                                            {totalRejected}
-                                        </td>
-                                        <td></td>
-                                        <td className="py-4 text-right font-black text-xl text-fg">
-                                            {formatters.formatCurrency(totalValue)}
-                                        </td>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                        </div>
-                    </div>
-
-                    {/* Stock Impact */}
-                    <div className="bg-surface/50 border border-line rounded-2xl p-6">
-                        <h2 className="text-lg font-bold text-fg mb-4 flex items-center gap-2">
-                            <CheckCircle size={20} className="text-success" />
-                            Stock Impact
-                        </h2>
-                        <div className="bg-success/10 border border-success/20 rounded-xl p-4">
-                            <div className="flex items-start gap-3">
-                                <CheckCircle size={20} className="text-success mt-0.5" />
-                                <div>
-                                    <p className="text-success font-medium">Stock Updated Successfully</p>
-                                    <p className="text-sm text-fg-muted mt-1">
-                                        {totalQuantityReceived} units were added to {grn.warehouse?.name || 'warehouse'} inventory
-                                        on {formatters.formatDate(grn.created_at)}.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+            <Card title="Stock Impact">
+                <Alert variant="success" title="Stock Updated Successfully">
+                    {totalQuantityReceived} units were added to {grn.warehouse?.name || 'warehouse'} inventory
+                    on {formatters.formatDate(grn.created_at)}.
+                </Alert>
+            </Card>
+        </DetailPageTemplate>
     );
 };
 

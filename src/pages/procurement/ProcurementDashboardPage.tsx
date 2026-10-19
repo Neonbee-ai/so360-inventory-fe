@@ -2,13 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { procurementInsightsService } from '../../services/procurementInsightsService';
 import { useInventoryFormatters } from '../../utils/formatters';
-import { getErrorMessage } from '@so360/design-system';
-
-const ALERT_STYLES: Record<string, string> = {
-    critical: 'bg-rose-500/10 text-rose-300 border-rose-500/20',
-    warning: 'bg-warning/10 text-warning border-warning/20',
-    info: 'bg-primary/10 text-primary border-primary/20',
-};
+import { Alert, Button, DashboardPageTemplate, DataTable, EmptyState, KpiCard, Progress, SectionCard, Spinner, getErrorMessage, type DataTableColumn } from '@so360/design-system';
 
 /** Where each alert type takes the buyer when they act on it. */
 const ALERT_ROUTES: Record<string, string> = {
@@ -54,21 +48,23 @@ const ProcurementDashboardPage = () => {
         }
     };
 
+    const refreshAction = <Button variant="secondary" onClick={load}>Refresh</Button>;
+    const title = 'Procurement Dashboard';
+    const description = 'The whole purchasing pipeline — requisition to payment — in one place.';
+
     if (loading) {
         return (
-            <div className="p-8 flex items-center justify-center min-h-[400px]">
-                <div className="w-8 h-8 border-2 border-primary/20 border-t-blue-500 rounded-full animate-spin" />
-            </div>
+            <DashboardPageTemplate title={title} description={description}>
+                <div className="flex min-h-[400px] items-center justify-center"><Spinner label="Loading dashboard" /></div>
+            </DashboardPageTemplate>
         );
     }
 
     if (error) {
         return (
-            <div className="p-8">
-                <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-400 text-sm flex items-center gap-3">
-                    <span>⚠</span> {error}
-                </div>
-            </div>
+            <DashboardPageTemplate title={title} description={description} primaryAction={refreshAction}>
+                <Alert variant="error">{error}</Alert>
+            </DashboardPageTemplate>
         );
     }
 
@@ -112,188 +108,124 @@ const ProcurementDashboardPage = () => {
         },
     ];
 
+    const alerts: any[] = data?.alerts || [];
+    const vendors: any[] = data?.spend_by_vendor || [];
+    const topVendor = vendors[0]?.amount || 1;
+    const months: any[] = trends?.monthly_spend || [];
+    const maxMonth = Math.max(0, ...months.map((x: any) => x.value)) || 1;
+    const topItems: any[] = trends?.top_items || [];
+
+    const itemColumns: DataTableColumn<any>[] = [
+        {
+            key: 'item',
+            header: 'Item',
+            render: (item: any) => (
+                <>
+                    {item.item_name || item.item_id.slice(0, 8)}
+                    {item.sku && <span className="block font-mono text-xs text-fg-subtle">{item.sku}</span>}
+                </>
+            ),
+        },
+        { key: 'quantity', header: 'Quantity', align: 'center', render: (item: any) => item.quantity },
+        { key: 'value', header: 'Value', align: 'right', render: (item: any) => formatters.formatCurrency(item.value) },
+    ];
+
     return (
-        <div className="p-8 space-y-8 animate-in fade-in duration-700">
-            <div className="flex items-start justify-between gap-4">
-                <div>
-                    <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-                        Procurement Dashboard
-                    </h1>
-                    <p className="text-fg-muted mt-2 font-medium">
-                        The whole purchasing pipeline — requisition to payment — in one place.
-                    </p>
-                </div>
-                <button
-                    onClick={load}
-                    className="px-4 py-2 bg-surface-raised hover:bg-surface-high text-fg-muted rounded-xl text-sm font-semibold transition-colors"
-                >
-                    Refresh
-                </button>
-            </div>
-
-            {/* Alerts first — they are the things a human must act on today. */}
-            {(data?.alerts || []).length > 0 && (
-                <div className="space-y-3">
-                    <h2 className="text-xs font-bold uppercase tracking-wider text-fg-subtle">Needs Attention</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {data.alerts.map((alert: any) => (
-                            <button
-                                key={alert.type}
-                                onClick={() => navigate(ALERT_ROUTES[alert.type] || '/procurement/pr')}
-                                className={`text-left p-4 rounded-2xl border transition-all hover:scale-[1.01] ${ALERT_STYLES[alert.severity] || ALERT_STYLES.info}`}
-                            >
-                                <div className="flex items-center justify-between gap-3">
-                                    <span className="text-sm font-medium">{alert.message}</span>
-                                    <span className="text-xl font-black">{alert.count}</span>
-                                </div>
-                            </button>
-                        ))}
-                    </div>
+        <DashboardPageTemplate
+            title={title}
+            description={description}
+            primaryAction={refreshAction}
+            secondaryActions={[
+                <Button key="reports" variant="secondary" onClick={() => navigate('/procurement/reports')}>Open Reports</Button>,
+                <Button key="vp" variant="secondary" onClick={() => navigate('/procurement/vendor-performance')}>Vendor Performance</Button>,
+            ]}
+            kpis={(
+                <div className="grid grid-cols-1 gap-nb-4 md:grid-cols-4">
+                    <KpiCard label="Total Procurement Value" value={formatters.formatCurrency(k.total_procurement_value || 0)} hint={`${k.po_issued || 0} orders issued · ${k.completed_orders || 0} completed`} />
+                    <KpiCard label="Cost Savings" value={formatters.formatCurrency(k.cost_savings || 0)} hint="Won against higher competing quotes" />
+                    <KpiCard
+                        label="Budget Utilisation"
+                        value={k.budget_utilisation_percent != null ? `${k.budget_utilisation_percent}%` : '—'}
+                        hint={k.budget_allocated ? `of ${formatters.formatCurrency(k.budget_allocated)} allocated` : 'No budgets set on requisitions'}
+                    />
                 </div>
             )}
-
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div className="md:col-span-2 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl p-6 text-primary-fg">
-                    <span className="text-primary text-[10px] font-bold uppercase tracking-wider">Total Procurement Value</span>
-                    <div className="text-4xl font-black mt-2">{formatters.formatCurrency(k.total_procurement_value || 0)}</div>
-                    <p className="mt-2 text-sm text-primary">{k.po_issued || 0} orders issued · {k.completed_orders || 0} completed</p>
-                </div>
-                <div className="bg-surface/50 border border-line rounded-2xl p-6">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-fg-subtle">Cost Savings</span>
-                    <div className="text-3xl font-bold text-success mt-2">{formatters.formatCurrency(k.cost_savings || 0)}</div>
-                    <p className="mt-2 text-xs text-fg-subtle">Won against higher competing quotes</p>
-                </div>
-                <div className="bg-surface/50 border border-line rounded-2xl p-6">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-fg-subtle">Budget Utilisation</span>
-                    <div className="text-3xl font-bold text-fg mt-2">
-                        {k.budget_utilisation_percent != null ? `${k.budget_utilisation_percent}%` : '—'}
-                    </div>
-                    <p className="mt-2 text-xs text-fg-subtle">
-                        {k.budget_allocated ? `of ${formatters.formatCurrency(k.budget_allocated)} allocated` : 'No budgets set on requisitions'}
-                    </p>
-                </div>
-            </div>
-
-            <div>
-                <h2 className="text-xs font-bold uppercase tracking-wider text-fg-subtle mb-3">Pipeline</h2>
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                    {pipeline.map(tile => (
-                        <button
-                            key={tile.label}
-                            onClick={() => navigate(tile.route)}
-                            className="text-left bg-surface/50 border border-line hover:border-line-strong rounded-2xl p-5 transition-colors"
-                        >
-                            <div className="text-2xl font-bold text-fg">{tile.value}</div>
-                            <div className="text-[10px] font-bold uppercase tracking-wider text-fg-subtle mt-1">{tile.label}</div>
-                        </button>
-                    ))}
-                </div>
-            </div>
-
-            <div>
-                <h2 className="text-xs font-bold uppercase tracking-wider text-fg-subtle mb-3">Process Health</h2>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {health.map(tile => (
-                        <div key={tile.label} className="bg-surface/50 border border-line rounded-2xl p-5">
-                            <div className={`text-2xl font-bold ${tile.danger ? 'text-rose-400' : 'text-fg'}`}>{tile.value}</div>
-                            <div className="text-[10px] font-bold uppercase tracking-wider text-fg-subtle mt-1">{tile.label}</div>
-                            <div className="text-[10px] text-fg-subtle mt-1">{tile.hint}</div>
-                        </div>
-                    ))}
-                </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-surface/50 border border-line rounded-2xl p-6">
-                    <h2 className="text-sm font-bold text-fg-muted mb-4">Spend by Vendor</h2>
-                    {(data?.spend_by_vendor || []).length === 0 ? (
-                        <p className="text-sm text-fg-subtle">No purchase orders yet.</p>
-                    ) : (
-                        <div className="space-y-3">
-                            {data.spend_by_vendor.map((row: any) => {
-                                const top = data.spend_by_vendor[0]?.amount || 1;
-                                return (
-                                    <div key={row.vendor_id}>
-                                        <div className="flex justify-between text-sm mb-1">
-                                            <span className="text-fg-muted truncate max-w-[60%]">{row.vendor_name || row.vendor_id.slice(0, 8)}</span>
-                                            <span className="text-fg font-bold">{formatters.formatCurrency(row.amount)}</span>
-                                        </div>
-                                        <div className="h-1.5 bg-surface-raised rounded-full overflow-hidden">
-                                            <div className="h-full bg-primary" style={{ width: `${Math.max(2, (row.amount / top) * 100)}%` }} />
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
+            primary={(
+                <div className="flex flex-col gap-nb-4">
+                    {alerts.length > 0 && (
+                        <SectionCard title="Needs Attention">
+                            <div className="grid grid-cols-1 gap-nb-3 md:grid-cols-2">
+                                {alerts.map((alert: any) => (
+                                    <KpiCard
+                                        key={alert.type}
+                                        label={alert.message}
+                                        value={alert.count}
+                                        onClick={() => navigate(ALERT_ROUTES[alert.type] || '/procurement/pr')}
+                                    />
+                                ))}
+                            </div>
+                        </SectionCard>
                     )}
-                </div>
-
-                <div className="bg-surface/50 border border-line rounded-2xl p-6">
-                    <h2 className="text-sm font-bold text-fg-muted mb-4">Monthly Spend</h2>
-                    {!(trends?.monthly_spend || []).length ? (
-                        <p className="text-sm text-fg-subtle">Not enough history yet.</p>
-                    ) : (
-                        <div className="flex items-end gap-2 h-40">
-                            {trends.monthly_spend.map((m: any) => {
-                                const max = Math.max(...trends.monthly_spend.map((x: any) => x.value)) || 1;
-                                return (
-                                    <div key={m.month} className="flex-1 flex flex-col items-center gap-2">
-                                        <div
-                                            className="w-full bg-gradient-to-t from-blue-600 to-cyan-500 rounded-t"
-                                            style={{ height: `${Math.max(4, (m.value / max) * 120)}px` }}
-                                            title={`${m.month}: ${formatters.formatCurrency(m.value)}`}
-                                        />
-                                        <span className="text-[9px] text-fg-subtle">{m.month.slice(5)}</span>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            {(trends?.top_items || []).length > 0 && (
-                <div className="bg-surface/50 border border-line rounded-2xl p-6">
-                    <h2 className="text-sm font-bold text-fg-muted mb-4">Top Purchased Items</h2>
-                    <table className="w-full text-sm">
-                        <thead>
-                            <tr className="text-left text-[10px] font-bold uppercase tracking-wider text-fg-subtle border-b border-line">
-                                <th className="pb-2">Item</th>
-                                <th className="pb-2 text-center">Quantity</th>
-                                <th className="pb-2 text-right">Value</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {trends.top_items.map((item: any) => (
-                                <tr key={item.item_id} className="border-b border-line/50">
-                                    <td className="py-2 text-fg">
-                                        {item.item_name || item.item_id.slice(0, 8)}
-                                        {item.sku && <span className="block text-[10px] text-fg-subtle font-mono">{item.sku}</span>}
-                                    </td>
-                                    <td className="py-2 text-center text-fg-muted">{item.quantity}</td>
-                                    <td className="py-2 text-right text-fg font-bold">{formatters.formatCurrency(item.value)}</td>
-                                </tr>
+                    <SectionCard title="Pipeline">
+                        <div className="grid grid-cols-2 gap-nb-3 md:grid-cols-5">
+                            {pipeline.map(tile => (
+                                <KpiCard key={tile.label} label={tile.label} value={tile.value} onClick={() => navigate(tile.route)} />
                             ))}
-                        </tbody>
-                    </table>
+                        </div>
+                    </SectionCard>
+                    <SectionCard title="Process Health">
+                        <div className="grid grid-cols-2 gap-nb-3 md:grid-cols-4">
+                            {health.map(tile => (
+                                <KpiCard key={tile.label} label={tile.label} value={tile.value} hint={tile.hint} />
+                            ))}
+                        </div>
+                    </SectionCard>
                 </div>
             )}
-
-            <div className="flex gap-3">
-                <button
-                    onClick={() => navigate('/procurement/reports')}
-                    className="px-6 py-3 bg-surface-raised hover:bg-surface-high text-fg rounded-xl font-semibold transition-colors"
-                >
-                    Open Reports
-                </button>
-                <button
-                    onClick={() => navigate('/procurement/vendor-performance')}
-                    className="px-6 py-3 bg-surface-raised hover:bg-surface-high text-fg rounded-xl font-semibold transition-colors"
-                >
-                    Vendor Performance
-                </button>
-            </div>
-        </div>
+            secondary={(
+                <div className="grid grid-cols-1 gap-nb-4 lg:grid-cols-2">
+                    <SectionCard title="Spend by Vendor">
+                        {vendors.length === 0 ? (
+                            <EmptyState title="No purchase orders yet." />
+                        ) : (
+                            <div className="flex flex-col gap-nb-3">
+                                {vendors.map((row: any) => (
+                                    <div key={row.vendor_id}>
+                                        <div className="mb-1 flex justify-between text-sm">
+                                            <span className="max-w-[60%] truncate text-fg-muted">{row.vendor_name || row.vendor_id.slice(0, 8)}</span>
+                                            <span className="font-semibold text-fg">{formatters.formatCurrency(row.amount)}</span>
+                                        </div>
+                                        <Progress value={Math.max(2, (row.amount / topVendor) * 100)} />
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </SectionCard>
+                    <SectionCard title="Monthly Spend">
+                        {months.length === 0 ? (
+                            <EmptyState title="Not enough history yet." />
+                        ) : (
+                            <div className="flex flex-col gap-nb-3">
+                                {months.map((m: any) => (
+                                    <div key={m.month} title={`${m.month}: ${formatters.formatCurrency(m.value)}`}>
+                                        <div className="mb-1 flex justify-between text-xs text-fg-subtle">
+                                            <span>{m.month}</span>
+                                            <span className="font-semibold text-fg" data-testid="monthly-spend-value">{formatters.formatCurrency(m.value)}</span>
+                                        </div>
+                                        <Progress value={Math.max(4, (m.value / maxMonth) * 100)} />
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </SectionCard>
+                </div>
+            )}
+            bottom={topItems.length > 0 ? (
+                <SectionCard title="Top Purchased Items">
+                    <DataTable columns={itemColumns} rows={topItems} rowKey={(item: any) => item.item_id} />
+                </SectionCard>
+            ) : undefined}
+        />
     );
 };
 

@@ -3,7 +3,7 @@ import { Plus, Pencil, Trash2, X, Check, Info } from 'lucide-react';
 import { inventoryService } from '../../services/inventoryService';
 import { ItemAttributeDefinition, ItemCategory } from '../../types/inventory';
 import { toBound } from '../../utils/attributeBounds';
-import { useConfirm } from '@so360/design-system';
+import { useConfirm, Button, IconButton, TextField, Textarea, Select, Checkbox, Alert, Card, EmptyState, Badge, DataTable, type DataTableColumn } from '@so360/design-system';
 
 interface Props {
     categories: ItemCategory[];
@@ -60,9 +60,6 @@ const emptyForm = (): FormState => ({
     max_value: '',
 });
 
-
-const inputClass = 'w-full bg-surface-raised border border-line-strong rounded-lg px-3 py-2 text-fg text-sm focus:outline-none focus:ring-2 focus:ring-focus/50 focus:border-primary transition-all placeholder:text-fg-subtle';
-const labelClass = 'block text-xs font-medium text-fg-muted mb-1';
 
 const ItemAttributeSettingsSection: React.FC<Props> = ({ categories, canManage }) => {
     const [confirm, confirmDialog] = useConfirm();
@@ -204,268 +201,204 @@ const ItemAttributeSettingsSection: React.FC<Props> = ({ categories, canManage }
     const categoryName = (id?: string | null) =>
         id ? (categories.find(c => c.id === id)?.name || id) : 'All items';
 
+    const attributeColumns: DataTableColumn<ItemAttributeDefinition>[] = [
+        {
+            key: 'attribute_label',
+            header: 'Label',
+            render: (def) => (
+                <span className="inline-flex items-center gap-1.5 font-medium text-fg">
+                    {def.attribute_label}
+                    {def.description && (
+                        <span className="inline-flex text-fg-subtle shrink-0 cursor-help" title={def.description} aria-label={def.description}>
+                            <Info size={13} />
+                        </span>
+                    )}
+                </span>
+            ),
+        },
+        { key: 'attribute_key', header: 'Key', render: (def) => <span className="font-mono text-xs text-fg-muted">{def.attribute_key}</span> },
+        { key: 'attribute_type', header: 'Type', render: (def) => ATTRIBUTE_TYPES.find(t => t.value === def.attribute_type)?.label || def.attribute_type },
+        { key: 'category_id', header: 'Category', render: (def) => categoryName(def.category_id) },
+        { key: 'unit', header: 'Unit', render: (def) => def.unit || '—' },
+        {
+            key: 'is_required',
+            header: 'Required',
+            render: (def) => def.is_required
+                ? <Badge tone="danger" size="sm">Yes</Badge>
+                : <Badge tone="neutral" size="sm">No</Badge>,
+        },
+        { key: 'sort_order', header: 'Order', render: (def) => def.sort_order },
+        ...(canManage ? [{
+            key: 'actions',
+            header: '',
+            alwaysVisible: true,
+            render: (def: ItemAttributeDefinition) => (
+                <div className="flex items-center gap-2">
+                    <IconButton label="Edit" variant="ghost" size="sm" icon={<Pencil size={14} />} onClick={() => openEdit(def)} />
+                    <IconButton label="Delete" variant="ghost" size="sm" icon={<Trash2 size={14} />} onClick={() => handleDelete(def.id)} disabled={deletingId === def.id} />
+                </div>
+            ),
+        } as DataTableColumn<ItemAttributeDefinition>] : []),
+    ];
+
     return (
         <div>
             {confirmDialog}
             {error && (
-                <div className="mb-4 text-sm text-rose-400 bg-rose-500/10 border border-rose-500/20 px-3 py-2 rounded-lg">
-                    {error}
+                <div className="mb-4">
+                    <Alert variant="error">{error}</Alert>
                 </div>
             )}
 
             {loading ? (
-                <div className="text-sm text-fg-subtle animate-pulse">Loading...</div>
+                <p className="text-sm text-fg-subtle animate-pulse">Loading...</p>
             ) : (
                 <>
                     {defs.length > 0 ? (
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
-                                <thead>
-                                    <tr className="border-b border-line">
-                                        <th className="text-left py-2 pr-4 text-xs font-medium text-fg-subtle uppercase tracking-wide">Label</th>
-                                        <th className="text-left py-2 pr-4 text-xs font-medium text-fg-subtle uppercase tracking-wide">Key</th>
-                                        <th className="text-left py-2 pr-4 text-xs font-medium text-fg-subtle uppercase tracking-wide">Type</th>
-                                        <th className="text-left py-2 pr-4 text-xs font-medium text-fg-subtle uppercase tracking-wide">Category</th>
-                                        <th className="text-left py-2 pr-4 text-xs font-medium text-fg-subtle uppercase tracking-wide">Unit</th>
-                                        <th className="text-left py-2 pr-4 text-xs font-medium text-fg-subtle uppercase tracking-wide">Required</th>
-                                        <th className="text-left py-2 pr-4 text-xs font-medium text-fg-subtle uppercase tracking-wide">Order</th>
-                                        {canManage && <th className="py-2 w-16" />}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {defs.map(def => (
-                                        <tr key={def.id} className="border-b border-line/50 hover:bg-surface-raised/20 transition-colors">
-                                            <td className="py-2.5 pr-4 text-fg font-medium">
-                                                <span className="inline-flex items-center gap-1.5">
-                                                    {def.attribute_label}
-                                                    {def.description && (
-                                                        <span
-                                                            className="inline-flex text-fg-subtle shrink-0 cursor-help"
-                                                            title={def.description}
-                                                            aria-label={def.description}
-                                                        >
-                                                            <Info size={13} />
-                                                        </span>
-                                                    )}
-                                                </span>
-                                            </td>
-                                            <td className="py-2.5 pr-4 text-fg-muted font-mono text-xs">{def.attribute_key}</td>
-                                            <td className="py-2.5 pr-4 text-fg-muted">
-                                                {ATTRIBUTE_TYPES.find(t => t.value === def.attribute_type)?.label || def.attribute_type}
-                                            </td>
-                                            <td className="py-2.5 pr-4 text-fg-muted">{categoryName(def.category_id)}</td>
-                                            <td className="py-2.5 pr-4 text-fg-subtle">{def.unit || '—'}</td>
-                                            <td className="py-2.5 pr-4">
-                                                {def.is_required
-                                                    ? <span className="text-xs font-medium text-rose-400">Yes</span>
-                                                    : <span className="text-xs text-fg-subtle">No</span>}
-                                            </td>
-                                            <td className="py-2.5 pr-4 text-fg-subtle">{def.sort_order}</td>
-                                            {canManage && (
-                                                <td className="py-2.5">
-                                                    <div className="flex items-center gap-2">
-                                                        <button
-                                                            onClick={() => openEdit(def)}
-                                                            className="text-fg-subtle hover:text-primary transition-colors"
-                                                            title="Edit"
-                                                        >
-                                                            <Pencil size={14} />
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleDelete(def.id)}
-                                                            disabled={deletingId === def.id}
-                                                            className="text-fg-subtle hover:text-rose-400 transition-colors disabled:opacity-50"
-                                                            title="Delete"
-                                                        >
-                                                            <Trash2 size={14} />
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            )}
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                        <DataTable<ItemAttributeDefinition>
+                            data-testid="attribute-definitions-table"
+                            rows={defs}
+                            rowKey={(def) => def.id}
+                            columns={attributeColumns}
+                        />
                     ) : (
-                        <p className="text-sm text-fg-subtle italic">No attribute definitions yet.</p>
+                        <EmptyState title="No attribute definitions yet." />
                     )}
 
                     {canManage && !showForm && (
-                        <button
-                            onClick={openCreate}
-                            className="mt-4 flex items-center gap-2 text-sm text-primary hover:text-primary transition-colors"
-                        >
-                            <Plus size={16} /> Add Attribute
-                        </button>
+                        <div className="mt-4">
+                            <Button type="button" variant="ghost" onClick={openCreate}>
+                                <Plus size={16} /> Add Attribute
+                            </Button>
+                        </div>
                     )}
 
                     {showForm && (
-                        <div className="mt-4 p-4 bg-surface-raised/50 border border-line-strong rounded-xl space-y-3">
-                            <div className="flex items-center justify-between mb-1">
-                                <span className="text-sm font-semibold text-fg">
-                                    {editingId ? 'Edit Attribute' : 'New Attribute'}
-                                </span>
-                                <button onClick={closeForm} className="text-fg-subtle hover:text-fg transition-colors">
-                                    <X size={16} />
-                                </button>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <div>
-                                    <label className={labelClass}>Label *</label>
-                                    <input
-                                        type="text"
-                                        value={form.attribute_label}
-                                        onChange={e => {
-                                            const label = e.target.value;
-                                            const derivedKey = label.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
-                                            setForm(f => ({
-                                                ...f,
-                                                attribute_label: label,
-                                                // Auto-fill key from label when creating and key is empty
-                                                ...(!editingId && !f.attribute_key ? { attribute_key: derivedKey } : {}),
-                                            }));
-                                        }}
-                                        className={inputClass}
-                                        placeholder="e.g. Material"
-                                    />
-                                </div>
-                                <div>
-                                    <label className={labelClass}>Key * <span className="text-fg-subtle font-normal">(lowercase, numbers, underscore only)</span></label>
-                                    <input
-                                        type="text"
-                                        value={form.attribute_key}
-                                        onChange={e => setForm(f => ({ ...f, attribute_key: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '') }))}
-                                        className={inputClass}
-                                        placeholder="e.g. material"
-                                        disabled={!!editingId}
-                                    />
-                                    {!editingId && (
-                                        <p className="mt-1 text-xs text-fg-subtle">Auto-generated from label. Edit if needed.</p>
-                                    )}
-                                </div>
-                                <div>
-                                    <label className={labelClass}>Type</label>
-                                    <select
-                                        value={form.attribute_type}
-                                        onChange={e => setForm(f => ({ ...f, attribute_type: e.target.value as AttributeType }))}
-                                        className={inputClass}
-                                    >
-                                        {ATTRIBUTE_TYPES.map(t => (
-                                            <option key={t.value} value={t.value}>{t.label}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className={labelClass}>Category (blank = all items)</label>
-                                    <select
-                                        value={form.category_id}
-                                        onChange={e => setForm(f => ({ ...f, category_id: e.target.value }))}
-                                        className={inputClass}
-                                    >
-                                        <option value="">All items</option>
-                                        {categories.map(c => (
-                                            <option key={c.id} value={c.id}>{c.name}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className={labelClass}>Unit (optional)</label>
-                                    <input
-                                        type="text"
-                                        value={form.unit}
-                                        onChange={e => setForm(f => ({ ...f, unit: e.target.value }))}
-                                        className={inputClass}
-                                        placeholder="e.g. cm, kg, days"
-                                    />
-                                </div>
-                                {NUMERIC_TYPES.includes(form.attribute_type) && (
-                                    <>
-                                        <div>
-                                            <label className={labelClass}>Minimum value (optional)</label>
-                                            <input
-                                                type="number"
-                                                value={form.min_value}
-                                                onChange={e => setForm(f => ({ ...f, min_value: e.target.value }))}
-                                                className={inputClass}
-                                                placeholder="No minimum"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className={labelClass}>Maximum value (optional)</label>
-                                            <input
-                                                type="number"
-                                                value={form.max_value}
-                                                onChange={e => setForm(f => ({ ...f, max_value: e.target.value }))}
-                                                className={inputClass}
-                                                placeholder="No maximum"
-                                            />
-                                        </div>
-                                    </>
+                        <div className="mt-4">
+                            <Card
+                                title={editingId ? 'Edit Attribute' : 'New Attribute'}
+                                actions={<IconButton label="Close" variant="ghost" size="sm" icon={<X size={16} />} onClick={closeForm} />}
+                                footer={(
+                                    <div className="flex items-center gap-2">
+                                        <Button type="button" variant="tonal" onClick={handleSave} disabled={saving}>
+                                            <Check size={14} />
+                                            {saving ? 'Saving...' : 'Save'}
+                                        </Button>
+                                        <Button type="button" variant="secondary" onClick={closeForm}>Cancel</Button>
+                                    </div>
                                 )}
-                                <div>
-                                    <label className={labelClass}>Sort Order</label>
-                                    <input
-                                        type="number"
-                                        value={form.sort_order}
-                                        onChange={e => setForm(f => ({ ...f, sort_order: e.target.value }))}
-                                        className={inputClass}
-                                        min={0}
-                                    />
-                                </div>
-                            </div>
+                            >
+                                <div className="space-y-3">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        <TextField
+                                            name="attribute_label"
+                                            label="Label"
+                                            required
+                                            type="text"
+                                            value={form.attribute_label}
+                                            onChange={e => {
+                                                const label = e.target.value;
+                                                const derivedKey = label.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+                                                setForm(f => ({
+                                                    ...f,
+                                                    attribute_label: label,
+                                                    // Auto-fill key from label when creating and key is empty
+                                                    ...(!editingId && !f.attribute_key ? { attribute_key: derivedKey } : {}),
+                                                }));
+                                            }}
+                                            placeholder="e.g. Material"
+                                        />
+                                        <TextField
+                                            name="attribute_key"
+                                            label="Key (lowercase, numbers, underscore only)"
+                                            required
+                                            type="text"
+                                            value={form.attribute_key}
+                                            onChange={e => setForm(f => ({ ...f, attribute_key: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '') }))}
+                                            placeholder="e.g. material"
+                                            disabled={!!editingId}
+                                            hint={!editingId ? 'Auto-generated from label. Edit if needed.' : undefined}
+                                        />
+                                        <Select
+                                            name="attribute_type"
+                                            label="Type"
+                                            value={form.attribute_type}
+                                            onChange={e => setForm(f => ({ ...f, attribute_type: e.target.value as AttributeType }))}
+                                            options={ATTRIBUTE_TYPES.map(t => ({ value: t.value, label: t.label }))}
+                                        />
+                                        <Select
+                                            name="category_id"
+                                            label="Category (blank = all items)"
+                                            value={form.category_id}
+                                            onChange={e => setForm(f => ({ ...f, category_id: e.target.value }))}
+                                            options={[{ value: '', label: 'All items' }, ...categories.map(c => ({ value: c.id, label: c.name }))]}
+                                        />
+                                        <TextField
+                                            name="unit"
+                                            label="Unit (optional)"
+                                            type="text"
+                                            value={form.unit}
+                                            onChange={e => setForm(f => ({ ...f, unit: e.target.value }))}
+                                            placeholder="e.g. cm, kg, days"
+                                        />
+                                        {NUMERIC_TYPES.includes(form.attribute_type) && (
+                                            <>
+                                                <TextField
+                                                    name="min_value"
+                                                    label="Minimum value (optional)"
+                                                    type="number"
+                                                    value={form.min_value}
+                                                    onChange={e => setForm(f => ({ ...f, min_value: e.target.value }))}
+                                                    placeholder="No minimum"
+                                                />
+                                                <TextField
+                                                    name="max_value"
+                                                    label="Maximum value (optional)"
+                                                    type="number"
+                                                    value={form.max_value}
+                                                    onChange={e => setForm(f => ({ ...f, max_value: e.target.value }))}
+                                                    placeholder="No maximum"
+                                                />
+                                            </>
+                                        )}
+                                        <TextField
+                                            name="sort_order"
+                                            label="Sort Order"
+                                            type="number"
+                                            value={form.sort_order}
+                                            onChange={e => setForm(f => ({ ...f, sort_order: e.target.value }))}
+                                            min={0}
+                                        />
+                                    </div>
 
-                            <div>
-                                <label className={labelClass}>Description / Notes (optional)</label>
-                                <textarea
-                                    rows={4}
-                                    value={form.description}
-                                    onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                                    className={inputClass + ' resize-y'}
-                                    placeholder="e.g. Used to specify the upholstery material for furniture products."
-                                />
-                            </div>
-
-                            {OPTION_TYPES.includes(form.attribute_type) && (
-                                <div>
-                                    <label className={labelClass}>Options (one per line, format: value:Label)</label>
-                                    <textarea
+                                    <Textarea
+                                        name="description"
+                                        label="Description / Notes (optional)"
                                         rows={4}
-                                        value={form.options_raw}
-                                        onChange={e => setForm(f => ({ ...f, options_raw: e.target.value }))}
-                                        className={inputClass + ' resize-none'}
-                                        placeholder={'wood:Wood\nmetal:Metal\nplastic:Plastic'}
+                                        value={form.description}
+                                        onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+                                        placeholder="e.g. Used to specify the upholstery material for furniture products."
+                                    />
+
+                                    {OPTION_TYPES.includes(form.attribute_type) && (
+                                        <Textarea
+                                            name="options_raw"
+                                            label="Options (one per line, format: value:Label)"
+                                            rows={4}
+                                            value={form.options_raw}
+                                            onChange={e => setForm(f => ({ ...f, options_raw: e.target.value }))}
+                                            placeholder={'wood:Wood\nmetal:Metal\nplastic:Plastic'}
+                                        />
+                                    )}
+
+                                    <Checkbox
+                                        name="is_required"
+                                        label="Required field"
+                                        checked={form.is_required}
+                                        onChange={e => setForm(f => ({ ...f, is_required: e.target.checked }))}
                                     />
                                 </div>
-                            )}
-
-                            <label className="flex items-center gap-2 cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    checked={form.is_required}
-                                    onChange={e => setForm(f => ({ ...f, is_required: e.target.checked }))}
-                                    className="w-4 h-4 rounded border-line-strong bg-surface-raised text-primary focus:ring-focus/50"
-                                />
-                                <span className="text-sm text-fg-muted">Required field</span>
-                            </label>
-
-                            <div className="flex items-center gap-2 pt-1">
-                                <button
-                                    onClick={handleSave}
-                                    disabled={saving}
-                                    className="flex items-center gap-1.5 bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-fg px-4 py-2 rounded-lg text-sm font-medium transition-all"
-                                >
-                                    <Check size={14} />
-                                    {saving ? 'Saving...' : 'Save'}
-                                </button>
-                                <button
-                                    onClick={closeForm}
-                                    className="px-4 py-2 rounded-lg border border-line-strong text-fg-muted hover:text-fg hover:border-line-strong text-sm transition-all"
-                                >
-                                    Cancel
-                                </button>
-                            </div>
+                            </Card>
                         </div>
                     )}
                 </>

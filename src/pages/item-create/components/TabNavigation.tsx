@@ -1,5 +1,6 @@
 import React from 'react';
 import { Package, Image, DollarSign, Tag, BarChart3, Truck, Sliders } from 'lucide-react';
+import { Tabs } from '@so360/design-system';
 import { TabId } from '../../../types/itemTypes';
 
 interface TabItem {
@@ -25,33 +26,14 @@ interface TabNavigationProps {
 }
 
 const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, onTabChange, tabErrors }) => {
+    const errored = tabs.filter(t => tabErrors?.[t.id]).map(t => t.id);
     return (
-        <div className="flex gap-1 border-b border-line overflow-x-auto overflow-y-hidden scrollbar-hide rounded-t-xl">
-            {tabs.map(tab => {
-                const isActive = activeTab === tab.id;
-                const hasError = tabErrors?.[tab.id];
-                return (
-                    <button
-                        key={tab.id}
-                        type="button"
-                        onClick={() => onTabChange(tab.id)}
-                        className={`
-                            flex items-center gap-1.5 px-4 py-3 text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all relative
-                            ${isActive
-                                ? 'text-primary border-b-2 border-primary bg-primary/5'
-                                : 'text-fg-subtle hover:text-fg-muted border-b-2 border-transparent'
-                            }
-                            ${hasError ? 'text-rose-400' : ''}
-                        `}
-                    >
-                        {tab.icon}
-                        {tab.label}
-                        {hasError && (
-                            <span className="w-1.5 h-1.5 rounded-full bg-rose-500 absolute top-2 right-1" />
-                        )}
-                    </button>
-                );
-            })}
+        <div data-testid="item-tab-navigation" data-tab-errors={errored.join(',')}>
+            <Tabs
+                items={tabs.map(t => ({ id: t.id, label: t.label, icon: t.icon, badge: tabErrors?.[t.id] ? '!' : undefined }))}
+                value={activeTab}
+                onChange={(id: string) => onTabChange(id as TabId)}
+            />
         </div>
     );
 };

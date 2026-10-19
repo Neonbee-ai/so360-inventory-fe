@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { FormPageTemplate } from '@so360/design-system';
 import { inventoryService } from '../../services/inventoryService';
 import { useShellBridge } from '@so360/shell-context';
 import StepIndicator from './components/StepIndicator';
@@ -96,19 +96,13 @@ const BulkImportPage: React.FC = () => {
     };
 
     return (
-        <div className="p-8">
-            <header className="mb-8">
-                <button
-                    onClick={() => navigate('/inventory/items')}
-                    className="flex items-center gap-2 text-fg-subtle hover:text-fg-muted text-sm mb-4 transition-colors"
-                >
-                    <ArrowLeft size={15} />
-                    Back to Items
-                </button>
-                <h1 className="text-3xl font-bold text-fg tracking-tight">Bulk Import</h1>
-                <p className="text-fg-muted mt-1">Import multiple inventory items from a CSV file with optional images</p>
-            </header>
-
+        <FormPageTemplate
+            title="Bulk Import"
+            description="Import multiple inventory items from a CSV file with optional images"
+            trail={[{ label: 'Items', to: '/inventory/items' }]}
+            onBack={() => navigate('/inventory/items')}
+            backLabel="Items"
+        >
             <StepIndicator steps={STEPS} current={step} />
 
             {step === 0 && (
@@ -145,7 +139,7 @@ const BulkImportPage: React.FC = () => {
                     onNavigateToItem={(id) => navigate(`/inventory/items/${id}`)}
                 />
             )}
-        </div>
+        </FormPageTemplate>
     );
 };
 

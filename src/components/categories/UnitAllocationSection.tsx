@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Loader2 } from 'lucide-react';
+import { Alert, Button } from '@so360/design-system';
 import { inventoryService } from '../../services/inventoryService';
 import type { ItemCategory, UnitAllocation } from '../../types/inventory';
 import { inheritedAllocation } from '../../utils/unitAllocation';
@@ -62,15 +63,17 @@ export const UnitAllocationSection: React.FC<UnitAllocationSectionProps> = ({ it
     return (
         <div className="border-t border-line pt-2 space-y-2" data-testid="unit-allocation">
             <AssignedAgentsPanel value={draft} onChange={setDraft} inherited={inherited} disabled={!canManage} scope="unit" />
-            {error && <p className="text-rose-400">{error}</p>}
+            {error && <Alert variant="error">{error}</Alert>}
             {canManage && (
-                <button
+                <Button
+                    type="button"
+                    variant="primary"
+                    size="sm"
                     onClick={save}
                     disabled={!dirty || saving}
-                    className="px-3 py-1.5 rounded-lg bg-primary text-primary-fg disabled:opacity-50"
                 >
                     {saving ? 'Saving…' : 'Save agents'}
-                </button>
+                </Button>
             )}
         </div>
     );

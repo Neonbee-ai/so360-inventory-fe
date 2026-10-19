@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Loader2, AlertCircle, RefreshCw, X, ExternalLink } from 'lucide-react';
+import { Loader2, X, ExternalLink } from 'lucide-react';
+import { Alert, Button, Card, EmptyState, IconButton, Select, Tabs, TextField } from '@so360/design-system';
 import { useBusinessSettings } from '@so360/shell-context';
 import { inventoryService } from '../../services/inventoryService';
 import {
@@ -125,14 +126,17 @@ const UnitPanel: React.FC<UnitPanelProps> = ({ unit, orgCurrency, canManage, onC
     };
 
     return (
-        <div className="rounded-xl border border-line-strong bg-surface/80 p-4 space-y-3 text-xs" data-testid="unit-panel">
-            <div className="flex items-center gap-2">
-                <h4 className="text-sm font-semibold text-fg">Unit {unit.unit_number}</h4>
-                <span className={`px-2 py-0.5 rounded-md border ${st.cls}`}>{st.label}</span>
-                <button onClick={onClose} aria-label="Close unit" className="ml-auto text-fg-subtle hover:text-fg">
-                    <X size={14} />
-                </button>
-            </div>
+        <div data-testid="unit-panel">
+        <Card
+            title={`Unit ${unit.unit_number}`}
+            actions={(
+                <>
+                    <span className={`px-2 py-0.5 rounded-md border text-xs ${st.cls}`}>{st.label}</span>
+                    <IconButton label="Close unit" icon={<X size={14} />} variant="ghost" size="sm" onClick={onClose} />
+                </>
+            )}
+        >
+        <div className="space-y-3 text-xs">
             {unit.status_override_reason && unit.status_override && (
                 <p className="text-fg-muted" data-testid="unit-override-reason">Reason: {unit.status_override_reason}</p>
             )}
@@ -164,38 +168,33 @@ const UnitPanel: React.FC<UnitPanelProps> = ({ unit, orgCurrency, canManage, onC
             )}
             {canManage && (
                 <div className="border-t border-line pt-2 space-y-2" data-testid="unit-override-form">
-                    <label className="block text-fg-muted">
-                        Manual status
-                        <select
-                            aria-label="Manual status"
-                            value={override}
-                            onChange={(e) => setOverride(e.target.value)}
-                            className="mt-1 w-full bg-bg border border-line rounded-lg px-2 py-1.5 text-fg"
-                        >
-                            <option value="">None (use live status)</option>
-                            {UNIT_STATUS_OVERRIDES.map((o) => (
-                                <option key={o} value={o}>{OVERRIDE_LABEL[o]}</option>
-                            ))}
-                        </select>
-                    </label>
+                    <Select
+                        label="Manual status"
+                        name="manual_status"
+                        size="sm"
+                        aria-label="Manual status"
+                        value={override}
+                        options={[
+                            { value: '', label: 'None (use live status)' },
+                            ...UNIT_STATUS_OVERRIDES.map((o) => ({ value: o, label: OVERRIDE_LABEL[o] })),
+                        ]}
+                        onValueChange={(v: string) => setOverride(v)}
+                    />
                     {override && (
-                        <input
+                        <TextField
+                            name="status_reason"
+                            size="sm"
                             aria-label="Reason"
                             placeholder="Reason (optional)"
                             maxLength={500}
                             value={reason}
                             onChange={(e) => setReason(e.target.value)}
-                            className="w-full bg-bg border border-line rounded-lg px-2 py-1.5 text-fg"
                         />
                     )}
-                    {saveError && <p className="text-rose-400">{saveError}</p>}
-                    <button
-                        onClick={save}
-                        disabled={!dirty || saving}
-                        className="px-3 py-1.5 rounded-lg bg-primary text-primary-fg disabled:opacity-50"
-                    >
+                    {saveError && <Alert variant="error">{saveError}</Alert>}
+                    <Button variant="primary" size="sm" onClick={save} disabled={!dirty || saving}>
                         {saving ? 'Saving…' : 'Save status'}
-                    </button>
+                    </Button>
                 </div>
             )}
             {allocation && (
@@ -206,9 +205,11 @@ const UnitPanel: React.FC<UnitPanelProps> = ({ unit, orgCurrency, canManage, onC
                     canManage={canManage}
                 />
             )}
-            <button onClick={onOpen} className="flex items-center gap-1 text-primary hover:text-primary">
-                <ExternalLink size={12} /> Open unit
-            </button>
+            <Button variant="ghost" size="sm" leftIcon={<ExternalLink size={12} />} onClick={onOpen}>
+                Open unit
+            </Button>
+        </div>
+        </Card>
         </div>
     );
 };
@@ -300,12 +301,9 @@ export const AvailabilityMatrix: React.FC<AvailabilityMatrixProps> = ({
 
     if (error) {
         return (
-            <div className="flex items-center gap-3 bg-rose-500/10 border border-rose-500/20 text-rose-400 px-4 py-3 rounded-lg text-sm">
-                <AlertCircle size={16} /> {error}
-                <button onClick={load} className="ml-auto flex items-center gap-1 text-rose-300 hover:text-rose-200">
-                    <RefreshCw size={14} /> Retry
-                </button>
-            </div>
+            <Alert variant="error" action={{ label: 'Retry', onClick: load }}>
+                {error}
+            </Alert>
         );
     }
 
@@ -314,19 +312,12 @@ export const AvailabilityMatrix: React.FC<AvailabilityMatrixProps> = ({
             <CountsSummary counts={projectCounts} />
 
             {towers.length > 0 && (
-                <div className="flex flex-wrap gap-1" role="tablist" aria-label="Towers">
-                    {towers.map((t) => (
-                        <button
-                            key={t.category_id}
-                            role="tab"
-                            aria-selected={activeTower === t.category_id}
-                            onClick={() => setActiveTower(t.category_id)}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${activeTower === t.category_id ? 'bg-primary text-primary-fg' : 'bg-surface-raised text-fg-muted hover:text-fg'}`}
-                        >
-                            {t.name} <span className="opacity-70">({towerCounts(t).available}/{towerCounts(t).total})</span>
-                        </button>
-                    ))}
-                </div>
+                <Tabs
+                    name="Towers"
+                    value={activeTower ?? undefined}
+                    onChange={(id: string) => setActiveTower(id)}
+                    items={towers.map((t) => ({ id: t.category_id, label: `${t.name} (${towerCounts(t).available}/${towerCounts(t).total})` }))}
+                />
             )}
 
             {towerLoading ? (
@@ -334,11 +325,12 @@ export const AvailabilityMatrix: React.FC<AvailabilityMatrixProps> = ({
                     <Loader2 size={16} className="animate-spin" /> Loading tower…
                 </div>
             ) : grid.floors.length === 0 ? (
-                <p className="text-sm text-fg-subtle py-6 text-center" data-testid="availability-empty">
-                    No units yet. Use Generate units on a tower to create them.
-                </p>
+                <div data-testid="availability-empty">
+                    <EmptyState title="No units yet" description="Use Generate units on a tower to create them." />
+                </div>
             ) : (
                 <div className="overflow-x-auto">
+                    {/* comb-exception: floor x unit-type matrix with per-cell toggles; DataTable cannot express a sparse 2-D cell grid */}
                     <table className="border-separate border-spacing-1 text-xs" data-testid="availability-grid">
                         <thead>
                             <tr>
@@ -358,15 +350,17 @@ export const AvailabilityMatrix: React.FC<AvailabilityMatrixProps> = ({
                                         const st = STATUS_STYLE[u.status] || STATUS_STYLE.available;
                                         return (
                                             <td key={stack}>
-                                                <button
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
                                                     onClick={() => setSelectedUnitId(u.item_id)}
                                                     aria-pressed={selectedUnitId === u.item_id}
                                                     title={`${u.unit_number} · ${st.label}${u.bedrooms != null ? ` · ${u.bedrooms} BR` : ''}`}
                                                     aria-label={`Unit ${u.unit_number} ${st.label}`}
-                                                    className={`min-w-[52px] px-2 py-1 rounded-md border font-mono transition-colors ${st.cls}`}
+                                                    className={`min-w-[52px] border font-mono ${st.cls}`}
                                                 >
                                                     {u.unit_number} <span className="opacity-70">{st.short}</span>
-                                                </button>
+                                                </Button>
                                             </td>
                                         );
                                     })}

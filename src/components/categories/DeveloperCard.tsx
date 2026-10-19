@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Building2, Globe, Mail, Phone, MapPin, User, Loader2, AlertCircle, RefreshCw, Pencil } from 'lucide-react';
+import { Building2, Globe, Mail, Phone, MapPin, User, Loader2, Pencil } from 'lucide-react';
+import { Alert, Button, IconButton, Select, TextField } from '@so360/design-system';
 import { inventoryService } from '../../services/inventoryService';
 import type { DeveloperProfile, DeveloperUpdate } from '../../types/inventory';
 
@@ -21,9 +22,6 @@ interface EditDraft {
     status: '' | 'active' | 'inactive';
     account_manager_user_id: string;
 }
-
-const inputCls =
-    'w-full bg-surface-raised border border-line-strong rounded-lg px-2 py-1.5 text-xs text-fg placeholder-fg-subtle focus:outline-none focus:border-primary';
 
 const toDraft = (d: DeveloperProfile): EditDraft => {
     const st = (d.status || '').toLowerCase();
@@ -109,11 +107,10 @@ export const DeveloperCard: React.FC<DeveloperCardProps> = ({ partnerId, project
 
     if (error || !dev) {
         return (
-            <div className="flex items-center gap-2 text-xs text-rose-300 p-4" data-testid="developer-error">
-                <AlertCircle size={14} /> {error || 'Failed to load developer'}
-                <button onClick={retry} className="ml-2 flex items-center gap-1 text-fg-muted hover:text-primary-fg">
-                    <RefreshCw size={12} /> Retry
-                </button>
+            <div className="p-4" data-testid="developer-error">
+                <Alert variant="error" action={{ label: 'Retry', onClick: retry }}>
+                    {error || 'Failed to load developer'}
+                </Alert>
             </div>
         );
     }
@@ -166,56 +163,47 @@ export const DeveloperCard: React.FC<DeveloperCardProps> = ({ partnerId, project
                     <span className={`ml-auto px-2 py-0.5 rounded-md capitalize ${statusCls}`} data-testid="developer-status">{dev.status}</span>
                 )}
                 {canEdit && !draft && (
-                    <button
-                        type="button"
-                        aria-label="Edit developer"
-                        onClick={() => { setSaveError(null); setDraft(toDraft(dev)); }}
-                        className={`${dev.status ? '' : 'ml-auto '}p-1 text-fg-subtle hover:text-fg`}
-                    >
-                        <Pencil size={12} />
-                    </button>
+                    <span className={dev.status ? '' : 'ml-auto'}>
+                        <IconButton
+                            label="Edit developer"
+                            icon={<Pencil size={12} />}
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => { setSaveError(null); setDraft(toDraft(dev)); }}
+                        />
+                    </span>
                 )}
             </div>
 
             {draft && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2 border border-line rounded-lg p-3" data-testid="developer-edit">
-                    <label className="block text-fg-muted">
-                        Website
-                        <input aria-label="Developer website" className={inputCls} value={draft.website} placeholder="https://"
-                            onChange={(e) => setDraft({ ...draft, website: e.target.value })} />
-                    </label>
-                    <label className="block text-fg-muted">
-                        Logo URL
-                        <input aria-label="Developer logo URL" className={inputCls} value={draft.logo_url} placeholder="https://"
-                            onChange={(e) => setDraft({ ...draft, logo_url: e.target.value })} />
-                    </label>
-                    <label className="block text-fg-muted">
-                        Status
-                        <select aria-label="Developer status" className={inputCls} value={draft.status}
-                            onChange={(e) => {
-                                const v = e.target.value;
-                                setDraft({ ...draft, status: v === 'active' || v === 'inactive' ? v : '' });
-                            }}>
-                            <option value="">Not set</option>
-                            <option value="active">Active</option>
-                            <option value="inactive">Inactive</option>
-                        </select>
-                    </label>
-                    <label className="block text-fg-muted">
-                        Account manager (user ID)
-                        <input aria-label="Account manager user ID" className={inputCls} value={draft.account_manager_user_id}
-                            onChange={(e) => setDraft({ ...draft, account_manager_user_id: e.target.value })} />
-                    </label>
-                    {saveError && <p className="text-rose-400 md:col-span-2">{saveError}</p>}
+                    <TextField label="Website" name="developer_website" aria-label="Developer website" size="sm" value={draft.website} placeholder="https://"
+                        onChange={(e) => setDraft({ ...draft, website: e.target.value })} />
+                    <TextField label="Logo URL" name="developer_logo_url" aria-label="Developer logo URL" size="sm" value={draft.logo_url} placeholder="https://"
+                        onChange={(e) => setDraft({ ...draft, logo_url: e.target.value })} />
+                    <Select
+                        label="Status"
+                        name="developer_status"
+                        aria-label="Developer status"
+                        size="sm"
+                        value={draft.status}
+                        options={[
+                            { value: '', label: 'Not set' },
+                            { value: 'active', label: 'Active' },
+                            { value: 'inactive', label: 'Inactive' },
+                        ]}
+                        onValueChange={(v: string) => setDraft({ ...draft, status: v === 'active' || v === 'inactive' ? v : '' })}
+                    />
+                    <TextField label="Account manager (user ID)" name="developer_account_manager" aria-label="Account manager user ID" size="sm" value={draft.account_manager_user_id}
+                        onChange={(e) => setDraft({ ...draft, account_manager_user_id: e.target.value })} />
+                    {saveError && <div className="md:col-span-2"><Alert variant="error">{saveError}</Alert></div>}
                     <div className="flex gap-2 md:col-span-2">
-                        <button type="button" onClick={saveEdit} disabled={saving}
-                            className="px-3 py-1.5 rounded-lg bg-primary text-primary-fg disabled:opacity-50">
+                        <Button type="button" variant="primary" size="sm" onClick={saveEdit} disabled={saving}>
                             {saving ? 'Saving…' : 'Save developer'}
-                        </button>
-                        <button type="button" onClick={() => setDraft(null)} disabled={saving}
-                            className="px-3 py-1.5 rounded-lg bg-surface-raised text-fg-muted">
+                        </Button>
+                        <Button type="button" variant="secondary" size="sm" onClick={() => setDraft(null)} disabled={saving}>
                             Cancel
-                        </button>
+                        </Button>
                     </div>
                 </div>
             )}
@@ -249,14 +237,15 @@ export const DeveloperCard: React.FC<DeveloperCardProps> = ({ partnerId, project
                     <ul className="flex flex-wrap gap-1.5" data-testid="developer-projects">
                         {projects.map((p) => (
                             <li key={p.id}>
-                                <button
+                                <Button
                                     type="button"
+                                    variant={p.id === currentProjectId ? 'tonal' : 'ghost'}
+                                    size="sm"
                                     onClick={() => onSelectProject?.(p.id)}
                                     aria-current={p.id === currentProjectId ? 'true' : undefined}
-                                    className={`px-2 py-1 rounded-lg border ${p.id === currentProjectId ? 'border-primary text-primary' : 'border-line-strong text-fg-muted hover:border-line-strong'}`}
                                 >
                                     {p.name}
-                                </button>
+                                </Button>
                             </li>
                         ))}
                     </ul>

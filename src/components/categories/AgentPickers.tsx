@@ -2,9 +2,7 @@ import React, { useEffect, useId, useRef, useState } from 'react';
 import { Loader2, X } from 'lucide-react';
 import { inventoryService } from '../../services/inventoryService';
 import type { AgentOption } from '../../types/inventory';
-
-const inputCls =
-    'w-full bg-surface-raised border border-line-strong rounded-lg px-3 py-2 text-sm text-fg placeholder-fg-subtle focus:outline-none focus:border-primary disabled:opacity-50';
+import { Alert, IconButton, TextField } from '@so360/design-system';
 
 /** Debounce for server-side user search while typing. */
 export const USER_SEARCH_DEBOUNCE_MS = 200;
@@ -74,10 +72,7 @@ export const AgentMultiSelect: React.FC<AgentMultiSelectProps> = ({
                             className="inline-flex items-center gap-1 rounded-full bg-surface-high px-2 py-0.5 text-xs text-fg">
                             {text}
                             {!disabled && (
-                                <button type="button" aria-label={`Remove ${text}`} onClick={() => remove(id)}
-                                    className="text-fg-muted hover:text-fg">
-                                    <X size={12} />
-                                </button>
+                                <IconButton label={`Remove ${text}`} size="sm" icon={<X size={12} />} onClick={() => remove(id)} />
                             )}
                         </span>
                     );
@@ -86,11 +81,11 @@ export const AgentMultiSelect: React.FC<AgentMultiSelectProps> = ({
             </div>
             {!disabled && (
                 <div className="relative">
-                    <input
+                    <TextField
+                        name={`agent-search-${labelId}`}
                         aria-label={`Search ${label}`}
                         role="combobox"
                         aria-expanded={open}
-                        className={inputCls}
                         value={query}
                         placeholder="Search…"
                         onFocus={() => setOpen(true)}
@@ -130,7 +125,7 @@ export const AgentMultiSelect: React.FC<AgentMultiSelectProps> = ({
                     )}
                 </div>
             )}
-            {error && <span role="alert" className="block text-[11px] text-warning mt-1">{error}</span>}
+            {error && <Alert variant="warning">{error}</Alert>}
         </div>
     );
 };
@@ -195,7 +190,7 @@ const IdListFallback: React.FC<PickerProps & { label: string }> = ({ value, onCh
     const [draft, setDraft] = useState(joined);
     useEffect(() => { setDraft(joined); }, [joined]);
     return (
-        <input aria-label={label} className={inputCls} value={draft} disabled={disabled}
+        <TextField name="agent-id-list" aria-label={label} value={draft} disabled={disabled}
             onChange={(e) => setDraft(e.target.value)}
             onBlur={() => {
                 const list = draft.split(',').map((x) => x.trim()).filter(Boolean);
@@ -229,9 +224,9 @@ export const TeamAgentPicker: React.FC<PickerProps> = ({ value, onChange, disabl
             <div>
                 <span className="block text-xs text-fg-muted mb-1">{label}</span>
                 <IdListFallback label="Assigned team IDs" value={value} onChange={onChange} disabled={disabled} />
-                <span role="alert" className="block text-[11px] text-warning mt-1">
+                <Alert variant="warning">
                     Could not load teams ({failed}). Enter team IDs separated by commas.
-                </span>
+                </Alert>
             </div>
         );
     }

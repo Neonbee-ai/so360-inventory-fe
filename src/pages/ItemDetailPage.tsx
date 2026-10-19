@@ -1,18 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-    ArrowLeft, Package, Info, AlertCircle,
+    Package, Info, AlertCircle,
     ArrowDownLeft, ArrowUpRight, ArrowRightLeft,
     History, MapPin, DollarSign,
-    Edit2, Trash2, Save, Loader2, ScanLine,
+    Edit2, Trash2, Save, ScanLine,
     AlertTriangle, RefreshCcw, Truck, Sliders,
-    Image as ImageIcon, Tag, X, BarChart3, TrendingUp, FileText
+    Image as ImageIcon, Tag, BarChart3, TrendingUp, FileText
 } from 'lucide-react';
 import { inventoryService } from '../services/inventoryService';
 import { Item, StockMovement, Unit, ItemCategory, Warehouse } from '../types/inventory';
 import { TabId, ITEM_CLASSIFICATIONS, ItemClassification } from '../types/itemTypes';
-import { Table } from '../components/common/Table';
-import { TableSkeleton } from '../components/common/Skeleton';
+import {
+    DetailPageTemplate, DataTable, Button, Modal, Alert, Badge, EmptyState, Tabs,
+    type DataTableColumn,
+} from '@so360/design-system';
 import { useAuth } from '../hooks/useAuth';
 import TabNavigation from './item-create/components/TabNavigation';
 import FormSection from './item-create/components/FormSection';
@@ -361,13 +363,13 @@ const ItemDetailPage = () => {
     };
 
     // ── Loading / Error States ────────────────────────
-    if (isLoading) return <div className="p-8"><TableSkeleton /></div>;
+    if (isLoading) return <DetailPageTemplate title="Item" loading>{null}</DetailPageTemplate>;
     if (error && !item) return (
-        <div className="p-8 text-center">
-            <AlertCircle size={48} className="mx-auto text-rose-500 mb-4" />
-            <h2 className="text-2xl font-bold text-fg mb-2">{error}</h2>
-            <button onClick={() => navigate('/inventory/items')} className="text-primary hover:underline">Back to Items</button>
-        </div>
+        <EmptyState
+            icon={AlertCircle}
+            title={error}
+            action={<Button variant="secondary" onClick={() => navigate('/inventory/items')}>Back to Items</Button>}
+        />
     );
     if (!item) return null;
 
@@ -389,16 +391,18 @@ const ItemDetailPage = () => {
         : (item.tax_class ? `Legacy tax class: ${item.tax_class}` : null);
 
     // ── Movement Table Columns ────────────────────────
-    const columns = [
+    const columns: DataTableColumn<StockMovement>[] = [
         {
+            key: 'date',
             header: 'Date',
-            accessor: (entry: StockMovement) => (
+            render: (entry: StockMovement) => (
                 <span className="text-fg-muted text-xs">{formatters.formatDateTime(entry.created_at)}</span>
             )
         },
         {
+            key: 'activity',
             header: 'Activity',
-            accessor: (entry: StockMovement) => {
+            render: (entry: StockMovement) => {
                 const getIcon = () => {
                     if (entry.type === 'inbound' || (entry.type === 'adjustment' && entry.quantity > 0)) return <ArrowDownLeft size={14} className="text-success" />;
                     if (entry.type === 'outbound' || (entry.type === 'adjustment' && entry.quantity < 0)) return <ArrowUpRight size={14} className="text-rose-400" />;
@@ -413,16 +417,18 @@ const ItemDetailPage = () => {
             }
         },
         {
+            key: 'quantity',
             header: 'Quantity',
-            accessor: (entry: StockMovement) => (
+            render: (entry: StockMovement) => (
                 <span className={`font-bold ${entry.quantity > 0 ? 'text-success' : 'text-rose-400'}`}>
                     {entry.quantity > 0 ? '+' : ''}{entry.quantity}
                 </span>
             )
         },
         {
+            key: 'warehouse',
             header: 'Warehouse',
-            accessor: (entry: StockMovement) => (
+            render: (entry: StockMovement) => (
                 <div className="flex items-center gap-1.5">
                     <MapPin size={12} className="text-fg-subtle" />
                     <span className="text-fg-muted">{entry.warehouses?.name}</span>
@@ -430,8 +436,9 @@ const ItemDetailPage = () => {
             )
         },
         {
+            key: 'reference',
             header: 'Reference/Reason',
-            accessor: (entry: StockMovement) => (
+            render: (entry: StockMovement) => (
                 <span className="text-fg-subtle text-xs italic">{entry.reason_code || entry.reference_type || '-'}</span>
             )
         }
@@ -439,83 +446,22 @@ const ItemDetailPage = () => {
 
     // ── Render ────────────────────────────────────────
     return (
-        <div className="min-h-screen">
-            {/* Error Banner */}
-            {error && (
-                <div className="px-8 pt-4">
-                    <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 px-4 py-3 rounded-lg text-sm flex items-center justify-between">
-                        <span>{error}</span>
-                        <button onClick={() => setError(null)} className="text-rose-400 hover:text-rose-300"><X size={16} /></button>
-                    </div>
-                </div>
-            )}
-            {taxCodesError && (
-                <div className="px-8 pt-4">
-                    <div className="bg-warning/10 border border-warning/20 text-warning px-4 py-3 rounded-lg text-sm">
-                        {taxCodesError}
-                    </div>
-                </div>
-            )}
-
-            {/* ═══ STICKY HEADER BAR ═══ */}
-            <div className="sticky top-0 z-10 bg-bg/80 backdrop-blur-xl border-b border-line">
-                <div className="px-8 py-4 flex items-center justify-between">
-                    {isEditing ? (
-                        <>
-                            <button
-                                onClick={handleCancelEdit}
-                                className="flex items-center gap-2 text-fg-muted hover:text-fg transition-colors group"
-                            >
-                                <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
-                                Cancel Editing
-                            </button>
-                            <div className="flex items-center gap-3">
-                                <button
-                                    onClick={handleCancelEdit}
-                                    className="px-4 py-2 bg-surface-raised hover:bg-surface-high text-fg text-sm font-semibold rounded-lg transition-all"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={handleSaveEdit}
-                                    disabled={isSaving || isTaxCodesLoading || !!taxCodesError}
-                                    className="px-5 py-2 bg-primary hover:bg-primary-hover disabled:bg-primary/50 text-primary-fg text-sm font-semibold rounded-lg transition-all shadow-lg shadow-blue-900/20 flex items-center gap-2"
-                                >
-                                    {isSaving ? <><Loader2 size={16} className="animate-spin" /> Saving...</> : <><Save size={16} /> Save Changes</>}
-                                </button>
-                            </div>
-                        </>
-                    ) : (
-                        <>
-                            <button
-                                onClick={() => navigate('/inventory/items')}
-                                className="flex items-center gap-2 text-fg-muted hover:text-fg transition-colors group"
-                            >
-                                <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
-                                Back to Catalog
-                            </button>
-                            <div className="flex items-center gap-3">
-                                {can('items.update') && (
-                                    <button
-                                        onClick={handleEditClick}
-                                        className="px-4 py-2 bg-surface-raised hover:bg-surface-high text-fg text-sm font-semibold rounded-lg transition-all flex items-center gap-2"
-                                    >
-                                        <Edit2 size={16} /> Edit
-                                    </button>
-                                )}
-                                {can('items.delete') && (
-                                    <button
-                                        onClick={() => setShowDeleteConfirm(true)}
-                                        className="px-4 py-2 bg-surface-raised hover:bg-rose-600/20 text-fg-muted hover:text-rose-400 text-sm font-semibold rounded-lg transition-all flex items-center gap-2 border border-line-strong hover:border-rose-500/30"
-                                    >
-                                        <Trash2 size={16} /> Delete
-                                    </button>
-                                )}
-                            </div>
-                        </>
-                    )}
-                </div>
-            </div>
+        <>
+            <DetailPageTemplate
+                title={item.name}
+                trail={[{ label: 'Catalog', onClick: () => navigate('/inventory/items') }]}
+                status={isEditing
+                    ? <Badge tone="info">Editing</Badge>
+                    : <Badge tone={item.is_active ? 'success' : 'neutral'}>{item.is_active ? 'Active' : 'Inactive'}</Badge>}
+                secondaryActions={isEditing ? [
+                    <Button key="cancel-editing" variant="secondary" size="sm" onClick={handleCancelEdit}>Cancel Editing</Button>,
+                ] : [
+                    ...(can('items.update') ? [<Button key="edit" variant="secondary" size="sm" leftIcon={<Edit2 size={16} />} onClick={handleEditClick}>Edit</Button>] : []),
+                    ...(can('items.delete') ? [<Button key="delete" variant="danger" size="sm" leftIcon={<Trash2 size={16} />} onClick={() => setShowDeleteConfirm(true)}>Delete</Button>] : []),
+                ]}
+            >
+            {error && <Alert variant="error" action={<Button variant="ghost" size="sm" onClick={() => setError(null)}>Dismiss</Button>}>{error}</Alert>}
+            {taxCodesError && <Alert variant="warning">{taxCodesError}</Alert>}
 
             <div className="p-8">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -524,13 +470,6 @@ const ItemDetailPage = () => {
 
                         {/* Section A: Image Gallery + Hero Card */}
                         <div className="bg-surface/50 border border-line rounded-2xl p-6 relative overflow-hidden hover:border-line-strong transition-colors">
-                            {/* Active/Inactive badge */}
-                            <div className="absolute top-4 right-4 z-10">
-                                <span className={`px-2 py-1 rounded text-[10px] uppercase font-bold border ${item.is_active ? 'bg-success/10 text-success border-success/20' : 'bg-surface-sunken text-fg-muted border-line-strong'}`}>
-                                    {item.is_active ? 'Active' : 'Inactive'}
-                                </span>
-                            </div>
-
                             {/* Hero Image */}
                             {hasImages ? (
                                 <div className="mb-4">
@@ -742,8 +681,8 @@ const ItemDetailPage = () => {
                             </div>
                             <div className="bg-surface/50 border border-line rounded-xl">
                                 {/* View Tab Bar — 8 tabs */}
-                                <div className="flex gap-1 border-b border-line overflow-x-auto overflow-y-hidden rounded-t-xl">
-                                    {([
+                                <Tabs
+                                    items={[
                                         { id: 'basic' as ViewTabId, label: 'Basic Info', icon: <Package size={14} /> },
                                         { id: 'media' as ViewTabId, label: 'Media', icon: <ImageIcon size={14} /> },
                                         { id: 'pricing' as ViewTabId, label: 'Pricing', icon: <DollarSign size={14} /> },
@@ -753,20 +692,10 @@ const ItemDetailPage = () => {
                                         { id: 'attributes' as ViewTabId, label: 'Attributes', icon: <Sliders size={14} /> },
                                         { id: 'ledger' as ViewTabId, label: 'Ledger', icon: <History size={14} /> },
                                         { id: 'sales' as ViewTabId, label: 'Sales History', icon: <TrendingUp size={14} /> },
-                                    ]).map(tab => (
-                                        <button
-                                            key={tab.id}
-                                            onClick={() => setViewTab(tab.id)}
-                                            className={`flex items-center gap-1.5 px-4 py-3 text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all border-b-2 ${
-                                                viewTab === tab.id
-                                                    ? 'text-primary border-primary bg-primary/5'
-                                                    : 'text-fg-subtle hover:text-fg-muted border-transparent'
-                                            }`}
-                                        >
-                                            {tab.icon} {tab.label}
-                                        </button>
-                                    ))}
-                                </div>
+                                    ]}
+                                    value={viewTab}
+                                    onChange={(id: string) => setViewTab(id as ViewTabId)}
+                                />
 
                                 {/* View Tab Content */}
                                 <div className="p-6 min-h-[24rem]">
@@ -1013,7 +942,7 @@ const ItemDetailPage = () => {
                                                     Audit Trail
                                                 </span>
                                             </div>
-                                            <Table data={ledger} columns={columns} emptyMessage="No movements recorded for this item." />
+                                            <DataTable columns={columns} rows={ledger} rowKey={(m: StockMovement) => m.id} emptyState={<EmptyState title="No movements recorded for this item." />} />
                                             <div className="mt-6 flex items-start gap-3 p-4 bg-surface/30 border border-line rounded-xl">
                                                 <Info size={16} className="text-fg-subtle mt-1" />
                                                 <p className="text-xs text-fg-subtle leading-relaxed">
@@ -1088,48 +1017,49 @@ const ItemDetailPage = () => {
                 </div>
             </div>
 
-            {/* ═══ DELETE CONFIRMATION ═══ */}
-            {showDeleteConfirm && (
-                <div className="fixed inset-0 bg-overlay/60 backdrop-blur-sm flex items-center justify-center z-[600]">
-                    <div className="bg-surface border border-line rounded-2xl p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto shadow-2xl">
-                        <div className="flex items-center gap-4 mb-4">
-                            <div className="w-12 h-12 rounded-full bg-rose-500/10 flex items-center justify-center">
-                                <Trash2 size={24} className="text-rose-500" />
-                            </div>
-                            <div>
-                                <h3 className="text-lg font-bold text-fg">Delete Item</h3>
-                                <p className="text-fg-muted text-sm">This action cannot be undone</p>
-                            </div>
-                        </div>
-                        <p className="text-fg-muted mb-6">
-                            Are you sure you want to delete <strong className="text-fg">{item.name}</strong>?
-                            Items with stock movements or balances cannot be deleted.
-                        </p>
-                        <div className="flex gap-3">
-                            <button onClick={() => setShowDeleteConfirm(false)} disabled={isDeleting} className="flex-1 bg-surface-raised hover:bg-surface-high text-fg font-semibold py-2.5 rounded-lg transition-all">Cancel</button>
-                            <button onClick={handleDeleteItem} disabled={isDeleting} className="flex-1 bg-rose-600 hover:bg-rose-500 disabled:bg-rose-600/50 text-primary-fg font-semibold py-2.5 rounded-lg transition-all flex items-center justify-center gap-2">
-                                {isDeleting ? <><Loader2 size={18} className="animate-spin" /> Deleting...</> : <><Trash2 size={18} /> Delete</>}
-                            </button>
-                        </div>
-                    </div>
+            {isEditing && (
+                <div className="flex justify-end gap-nb-3 px-8 pb-8">
+                    <Button variant="secondary" onClick={handleCancelEdit}>Cancel</Button>
+                    <Button
+                        variant="primary"
+                        onClick={handleSaveEdit}
+                        disabled={isSaving || isTaxCodesLoading || !!taxCodesError}
+                        loading={isSaving}
+                        leftIcon={<Save size={16} />}
+                    >
+                        {isSaving ? 'Saving...' : 'Save Changes'}
+                    </Button>
                 </div>
             )}
+            </DetailPageTemplate>
+
+            {/* ═══ DELETE CONFIRMATION ═══ */}
+            <Modal
+                open={showDeleteConfirm}
+                onClose={() => !isDeleting && setShowDeleteConfirm(false)}
+                title="Delete Item"
+                description="This action cannot be undone"
+                size="sm"
+                footer={
+                    <>
+                        <Button variant="secondary" onClick={() => setShowDeleteConfirm(false)} disabled={isDeleting}>Cancel</Button>
+                        <Button variant="danger" onClick={handleDeleteItem} disabled={isDeleting} loading={isDeleting} leftIcon={<Trash2 size={16} />}>
+                            {isDeleting ? 'Deleting...' : 'Delete'}
+                        </Button>
+                    </>
+                }
+            >
+                <p className="text-fg-muted">
+                    Are you sure you want to delete <strong className="text-fg">{item.name}</strong>?
+                    Items with stock movements or balances cannot be deleted.
+                </p>
+            </Modal>
 
             {/* ═══ IMAGE PREVIEW MODAL ═══ */}
-            {previewImage && (
-                <div className="fixed inset-0 bg-overlay/80 backdrop-blur-sm flex items-center justify-center z-[600]" onClick={() => setPreviewImage(null)}>
-                    <div className="relative max-w-4xl max-h-[90vh] w-full mx-4">
-                        <button
-                            onClick={() => setPreviewImage(null)}
-                            className="absolute -top-10 right-0 text-fg/70 hover:text-fg transition-colors"
-                        >
-                            <X size={24} />
-                        </button>
-                        <img src={previewImage} alt="Preview" className="w-full h-full object-contain rounded-xl" />
-                    </div>
-                </div>
-            )}
-        </div>
+            <Modal open={!!previewImage} onClose={() => setPreviewImage(null)} title="Image preview" size="lg">
+                {previewImage && <img src={previewImage} alt="Preview" className="w-full h-full object-contain rounded-xl" />}
+            </Modal>
+        </>
     );
 };
 

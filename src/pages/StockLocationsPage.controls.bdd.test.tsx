@@ -38,24 +38,10 @@ vi.mock('@so360/shell-context', () => ({
     useQuota: () => ({ getQuota: () => ({ current_usage: 0, limit: 10, is_unlimited: false }) }),
 }));
 
-vi.mock('@so360/design-system', () => ({
-    QuotaBar: () => null,
-    QuotaGate: ({ children }: any) => <>{children}</>,
-    FeatureGate: ({ children }: any) => <>{children}</>,
-}));
 
 vi.mock('../hooks/useAuth', () => ({ useAuth: () => ({ can: () => true }) }));
 
-vi.mock('../components/common/Modal', () => ({
-    Modal: ({ isOpen, title, children }: any) =>
-        isOpen ? (
-            <div role="dialog" aria-label={title}>
-                {children}
-            </div>
-        ) : null,
-}));
 
-vi.mock('../components/common/Skeleton', () => ({ TableSkeleton: () => null }));
 vi.mock('react-router-dom', () => ({ useNavigate: () => vi.fn() }));
 
 import StockLocationsPage from './StockLocationsPage';

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Loader2, Sparkles } from 'lucide-react';
+import { Alert, Button, DataTable, TextField, type DataTableColumn } from '@so360/design-system';
 import { Modal } from '../common/Modal';
 import { inventoryService } from '../../services/inventoryService';
 import type { GenerateUnitsResult, UnitStackSpec } from '../../types/inventory';
@@ -26,11 +27,6 @@ interface StackRow {
     view: string;
     price: string;
 }
-
-const inputCls =
-    'w-full bg-surface-raised border border-line-strong rounded-lg px-3 py-2 text-sm text-fg placeholder-fg-subtle focus:outline-none focus:border-primary';
-const cellCls =
-    'w-full bg-surface-raised border border-line-strong rounded px-2 py-1 text-xs text-fg focus:outline-none focus:border-primary';
 
 export function suggestSkuPrefix(name: string): string {
     const clean = String(name || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -125,6 +121,25 @@ export const GenerateUnitsDialog: React.FC<GenerateUnitsDialogProps> = ({ isOpen
         }
     };
 
+    const stackField = (field: 'bedrooms' | 'area_sqft' | 'view' | 'price', ariaSuffix: string, type?: string) =>
+        (r: StackRow) => (
+            <TextField
+                name={`stack_${r.stack}_${field}`}
+                aria-label={`Stack ${r.stack} ${ariaSuffix}`}
+                type={type}
+                size="sm"
+                value={r[field]}
+                onChange={(e) => updateRow(rows.findIndex((x) => x.stack === r.stack), { [field]: e.target.value })}
+            />
+        );
+    const stackColumns: DataTableColumn<StackRow>[] = [
+        { key: 'stack', header: 'Stack', render: (r) => <span className="text-fg-muted font-mono">{r.stack}</span> },
+        { key: 'bedrooms', header: 'Bedrooms', interactive: true, render: stackField('bedrooms', 'bedrooms', 'number') },
+        { key: 'area_sqft', header: 'Area (sq ft)', interactive: true, render: stackField('area_sqft', 'area', 'number') },
+        { key: 'view', header: 'View', interactive: true, render: stackField('view', 'view') },
+        { key: 'price', header: 'Price', interactive: true, render: stackField('price', 'price', 'number') },
+    ];
+
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={`Generate units — ${tower.name}`} size="lg">
             {result ? (
@@ -137,65 +152,30 @@ export const GenerateUnitsDialog: React.FC<GenerateUnitsDialogProps> = ({ isOpen
                         .
                     </p>
                     <div className="flex justify-end">
-                        <button onClick={onClose} className="bg-primary hover:bg-primary-hover text-primary-fg px-4 py-2 rounded-lg text-sm font-medium">
-                            Done
-                        </button>
+                        <Button variant="primary" onClick={onClose}>Done</Button>
                     </div>
                 </div>
             ) : (
                 <div className="space-y-5">
                     <div className="grid grid-cols-3 gap-3">
-                        <label className="block">
-                            <span className="block text-xs text-fg-muted mb-1">Floor from</span>
-                            <input aria-label="Floor from" type="number" className={inputCls} value={floorFrom} onChange={(e) => setFloorFrom(e.target.value)} />
-                        </label>
-                        <label className="block">
-                            <span className="block text-xs text-fg-muted mb-1">Floor to</span>
-                            <input aria-label="Floor to" type="number" className={inputCls} value={floorTo} onChange={(e) => setFloorTo(e.target.value)} />
-                        </label>
-                        <label className="block">
-                            <span className="block text-xs text-fg-muted mb-1">Units per floor</span>
-                            <input aria-label="Units per floor" type="number" min={1} max={99} className={inputCls} value={unitsPerFloor} onChange={(e) => handleUnitsPerFloor(e.target.value)} />
-                        </label>
+                        <TextField label="Floor from" name="floor_from" aria-label="Floor from" type="number" value={floorFrom} onChange={(e) => setFloorFrom(e.target.value)} />
+                        <TextField label="Floor to" name="floor_to" aria-label="Floor to" type="number" value={floorTo} onChange={(e) => setFloorTo(e.target.value)} />
+                        <TextField label="Units per floor" name="units_per_floor" aria-label="Units per floor" type="number" min={1} max={99} value={unitsPerFloor} onChange={(e) => handleUnitsPerFloor(e.target.value)} />
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
-                        <label className="block">
-                            <span className="block text-xs text-fg-muted mb-1">Numbering pattern</span>
-                            <input aria-label="Numbering pattern" className={inputCls} value={pattern} onChange={(e) => setPattern(e.target.value)} />
-                            <span className="block text-[11px] text-fg-subtle mt-1">Use {'{floor}'} and {'{stack:02}'}</span>
-                        </label>
-                        <label className="block">
-                            <span className="block text-xs text-fg-muted mb-1">SKU prefix</span>
-                            <input aria-label="SKU prefix" className={inputCls} value={skuPrefix} onChange={(e) => setSkuPrefix(e.target.value)} />
-                        </label>
+                        <TextField label="Numbering pattern" name="numbering_pattern" aria-label="Numbering pattern" hint="Use {floor} and {stack:02}" value={pattern} onChange={(e) => setPattern(e.target.value)} />
+                        <TextField label="SKU prefix" name="sku_prefix" aria-label="SKU prefix" value={skuPrefix} onChange={(e) => setSkuPrefix(e.target.value)} />
                     </div>
 
                     {rows.length > 0 && (
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-xs">
-                                <thead>
-                                    <tr className="text-fg-subtle text-left">
-                                        <th className="py-1 pr-2 font-medium">Stack</th>
-                                        <th className="py-1 pr-2 font-medium">Bedrooms</th>
-                                        <th className="py-1 pr-2 font-medium">Area (sq ft)</th>
-                                        <th className="py-1 pr-2 font-medium">View</th>
-                                        <th className="py-1 font-medium">Price</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {rows.map((r, i) => (
-                                        <tr key={r.stack}>
-                                            <td className="py-1 pr-2 text-fg-muted font-mono">{r.stack}</td>
-                                            <td className="py-1 pr-2"><input aria-label={`Stack ${r.stack} bedrooms`} type="number" className={cellCls} value={r.bedrooms} onChange={(e) => updateRow(i, { bedrooms: e.target.value })} /></td>
-                                            <td className="py-1 pr-2"><input aria-label={`Stack ${r.stack} area`} type="number" className={cellCls} value={r.area_sqft} onChange={(e) => updateRow(i, { area_sqft: e.target.value })} /></td>
-                                            <td className="py-1 pr-2"><input aria-label={`Stack ${r.stack} view`} className={cellCls} value={r.view} onChange={(e) => updateRow(i, { view: e.target.value })} /></td>
-                                            <td className="py-1"><input aria-label={`Stack ${r.stack} price`} type="number" className={cellCls} value={r.price} onChange={(e) => updateRow(i, { price: e.target.value })} /></td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                        <DataTable<StackRow>
+                            data-testid="generate-units-stacks"
+                            density="compact"
+                            rows={rows}
+                            rowKey={(r) => r.stack}
+                            columns={stackColumns}
+                        />
                     )}
 
                     <div className="flex items-center justify-between gap-3 pt-2 border-t border-line">
@@ -205,20 +185,20 @@ export const GenerateUnitsDialog: React.FC<GenerateUnitsDialogProps> = ({ isOpen
                                 <span className="text-fg-subtle ml-2">({examples.join(' … ')})</span>
                             )}
                             {tooMany && (
-                                <span className="block text-[11px] text-rose-400">At most {MAX_UNITS_PER_RUN} units per run</span>
+                                <span className="block text-[11px] text-danger">At most {MAX_UNITS_PER_RUN} units per run</span>
                             )}
-                            {error && <span className="block text-[11px] text-rose-400">{error}</span>}
+                            {error && <Alert variant="error">{error}</Alert>}
                         </div>
                         <div className="flex items-center gap-2">
-                            <button onClick={onClose} className="px-4 py-2 text-sm text-fg-muted hover:text-fg">Cancel</button>
-                            <button
+                            <Button variant="secondary" onClick={onClose}>Cancel</Button>
+                            <Button
+                                variant="primary"
                                 onClick={handleSubmit}
                                 disabled={!canSubmit}
-                                className="flex items-center gap-2 bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-fg px-4 py-2 rounded-lg text-sm font-medium"
+                                leftIcon={submitting ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
                             >
-                                {submitting ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
                                 Create {count} units
-                            </button>
+                            </Button>
                         </div>
                     </div>
                 </div>

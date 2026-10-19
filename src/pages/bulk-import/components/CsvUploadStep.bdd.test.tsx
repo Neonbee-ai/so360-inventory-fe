@@ -17,9 +17,9 @@ describe('CsvUploadStep', () => {
     });
 
     describe('GIVEN the step is rendered', () => {
-        it('WHEN rendered THEN the drop zone is visible', () => {
+        it('WHEN rendered THEN the Comb file upload prompt is visible', () => {
             render(<CsvUploadStep onParsed={onParsed} onParse={onParse} />);
-            expect(screen.getByText('Drop your CSV here')).toBeInTheDocument();
+            expect(screen.getByText('Choose a CSV file')).toBeInTheDocument();
         });
 
         it('WHEN rendered THEN the required columns reference is shown', () => {
@@ -96,18 +96,6 @@ describe('CsvUploadStep', () => {
             fireEvent.change(input, { target: { files: [makeFile()] } });
             await waitFor(() => expect(screen.getByText('Server error: malformed CSV')).toBeInTheDocument());
             expect(onParsed).not.toHaveBeenCalled();
-        });
-    });
-
-    describe('GIVEN a file is dropped on the drop zone', () => {
-        it('WHEN a CSV file is dropped THEN onParse is called', async () => {
-            render(<CsvUploadStep onParsed={onParsed} onParse={onParse} />);
-            const dropZone = screen.getByText('Drop your CSV here').closest('div')!;
-            const file = makeFile();
-            fireEvent.drop(dropZone, {
-                dataTransfer: { files: [file] },
-            });
-            await waitFor(() => expect(onParse).toHaveBeenCalledWith(file));
         });
     });
 });

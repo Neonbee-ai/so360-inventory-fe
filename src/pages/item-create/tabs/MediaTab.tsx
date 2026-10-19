@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Image, Plus } from 'lucide-react';
+import { Button, TextField } from '@so360/design-system';
 import FormSection from '../components/FormSection';
 import MediaUploader from '../../../components/media/MediaUploader';
 import { upsertImageMeta, type ImageMetaEntry } from '../../../utils/imageMeta';
@@ -10,8 +11,6 @@ interface MediaTabProps {
     image_meta?: ImageMetaEntry[];
     updateField: (field: string, value: any) => void;
 }
-
-const inputClass = 'w-full bg-surface-raised border border-line-strong rounded-lg px-4 py-2.5 text-fg focus:outline-none focus:ring-2 focus:ring-focus/50 focus:border-primary transition-all placeholder:text-fg-subtle';
 
 const MediaTab: React.FC<MediaTabProps> = ({ image_urls, image_meta, updateField }) => {
     const [imageUrlInput, setImageUrlInput] = useState('');
@@ -49,25 +48,21 @@ const MediaTab: React.FC<MediaTabProps> = ({ image_urls, image_meta, updateField
             </FormSection>
 
             <FormSection title="Or Paste Image URL" description="Add images by URL if upload isn't available">
-                <div className="flex gap-2">
-                    <div className="relative flex-1">
-                        <Image className="absolute left-3.5 top-1/2 -translate-y-1/2 text-fg-subtle pointer-events-none" size={16} />
-                        <input
+                <div className="flex items-end gap-2">
+                    <div className="flex-1">
+                        <TextField
+                            name="image_url"
                             type="url"
+                            leadingIcon={Image}
                             value={imageUrlInput}
                             onChange={e => setImageUrlInput(e.target.value)}
                             onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addImageUrl(); } }}
-                            className={inputClass + ' pl-10'}
                             placeholder="Paste image URL..."
                         />
                     </div>
-                    <button
-                        type="button"
-                        onClick={addImageUrl}
-                        className="px-4 py-2.5 bg-surface-raised hover:bg-surface-high border border-line-strong rounded-lg text-fg-muted transition-all flex items-center gap-1.5"
-                    >
+                    <Button type="button" variant="secondary" onClick={addImageUrl}>
                         <Plus size={16} /> Add
-                    </button>
+                    </Button>
                 </div>
             </FormSection>
         </div>

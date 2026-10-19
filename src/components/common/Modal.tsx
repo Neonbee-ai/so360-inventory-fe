@@ -1,5 +1,5 @@
 import React from 'react';
-import { X } from 'lucide-react';
+import { Modal as CombModal } from '@so360/design-system';
 
 interface ModalProps {
     isOpen: boolean;
@@ -9,36 +9,9 @@ interface ModalProps {
     size?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
-const sizeClasses: Record<string, string> = {
-    sm: 'max-w-sm',
-    md: 'max-w-md',
-    lg: 'max-w-2xl',
-    xl: 'max-w-4xl',
-};
-
-export const Modal = ({ isOpen, onClose, title, children, size = 'md' }: ModalProps) => {
-    if (!isOpen) return null;
-
-    return (
-        <div className="fixed inset-0 z-[600] flex items-center justify-center px-4 pt-20 pb-6">
-            <div
-                className="absolute inset-0 bg-bg/80 backdrop-blur-sm"
-                onClick={onClose}
-            />
-            <div className={`relative bg-surface border border-line rounded-2xl w-full ${sizeClasses[size]} max-h-[88vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200`}>
-                <div className="flex items-center justify-between px-6 py-4 border-b border-line flex-shrink-0">
-                    <h3 className="text-xl font-bold text-fg">{title}</h3>
-                    <button
-                        onClick={onClose}
-                        className="p-1 hover:bg-surface-raised rounded-lg text-fg-muted hover:text-fg transition-colors"
-                    >
-                        <X size={20} />
-                    </button>
-                </div>
-                <div className="p-6 overflow-y-auto flex-1">
-                    {children}
-                </div>
-            </div>
-        </div>
-    );
-};
+/** Thin wrapper over the Comb Modal; keeps the legacy `isOpen` prop API. */
+export const Modal = ({ isOpen, onClose, title, children, size = 'md' }: ModalProps) => (
+    <CombModal open={isOpen} onClose={onClose} title={title} size={size === 'lg' ? '2xl' : size === 'xl' ? '4xl' : size}>
+        {children}
+    </CombModal>
+);

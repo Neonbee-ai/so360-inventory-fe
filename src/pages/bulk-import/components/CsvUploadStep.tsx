@@ -1,5 +1,6 @@
-import React, { useRef, useState } from 'react';
-import { Upload, FileText, AlertCircle } from 'lucide-react';
+import React, { useState } from 'react';
+import { Upload } from 'lucide-react';
+import { Alert, FileUpload, Spinner } from '@so360/design-system';
 
 interface Props {
     onParsed: (result: any) => void;
@@ -7,8 +8,6 @@ interface Props {
 }
 
 const CsvUploadStep: React.FC<Props> = ({ onParsed, onParse }) => {
-    const inputRef = useRef<HTMLInputElement>(null);
-    const [dragging, setDragging] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -29,53 +28,35 @@ const CsvUploadStep: React.FC<Props> = ({ onParsed, onParse }) => {
         }
     };
 
-    const onDrop = (e: React.DragEvent) => {
-        e.preventDefault();
-        setDragging(false);
-        const file = e.dataTransfer.files[0];
-        if (file) handle(file);
-    };
-
     return (
         <div className="max-w-2xl mx-auto">
-            <div
-                onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
-                onDragLeave={() => setDragging(false)}
-                onDrop={onDrop}
-                onClick={() => inputRef.current?.click()}
-                className={`border-2 border-dashed rounded-xl p-12 flex flex-col items-center gap-4 cursor-pointer transition-all ${
-                    dragging
-                        ? 'border-primary bg-primary/5'
-                        : 'border-line-strong bg-surface/40 hover:border-line-strong hover:bg-surface/60'
-                }`}
-            >
-                <div className="w-14 h-14 rounded-xl bg-surface-raised flex items-center justify-center border border-line-strong">
-                    <FileText size={28} className="text-primary" />
-                </div>
-                <div className="text-center">
-                    <p className="text-fg font-semibold text-lg">Drop your CSV here</p>
-                    <p className="text-fg-subtle text-sm mt-1">or click to browse — max 2 MB</p>
-                </div>
-                <input ref={inputRef} type="file" accept=".csv" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handle(f); }} />
-            </div>
+            <FileUpload
+                name="bulk-import-csv"
+                aria-label="CSV file"
+                accept=".csv"
+                prompt="Choose a CSV file"
+                disabled={loading}
+                onChange={(files) => { const f = files[0]; if (f) handle(f); }}
+                onReject={() => setError('Please upload a .csv file')}
+            />
+            <p className="mt-nb-2 text-center text-fg-subtle text-nb-caption">max 2 MB</p>
 
             {loading && (
-                <div className="mt-6 flex items-center gap-3 text-fg-muted text-sm">
-                    <div className="w-5 h-5 border-2 border-primary/30 border-t-blue-500 rounded-full animate-spin" />
+                <div className="mt-nb-6 flex items-center gap-nb-3 text-fg-muted text-nb-caption">
+                    <Spinner label="Parsing" />
                     Parsing CSV…
                 </div>
             )}
 
             {error && (
-                <div className="mt-4 flex items-center gap-2 bg-rose-500/10 border border-rose-500/20 text-rose-400 px-4 py-3 rounded-lg text-sm">
-                    <AlertCircle size={16} />
-                    {error}
+                <div className="mt-nb-4">
+                    <Alert variant="error">{error}</Alert>
                 </div>
             )}
 
-            <div className="mt-8 bg-surface/50 border border-line rounded-xl p-5">
-                <p className="text-fg-muted text-xs font-semibold uppercase tracking-wider mb-3">Required CSV columns</p>
-                <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 text-sm">
+            <div className="mt-nb-6 bg-surface border border-line rounded-nb-lg p-nb-4">
+                <p className="text-fg-muted text-nb-caption font-semibold uppercase mb-nb-3">Required CSV columns</p>
+                <div className="grid grid-cols-2 gap-x-nb-6 gap-y-nb-1 text-nb-caption">
                     {[
                         ['name', 'Item name (required)'],
                         ['type', 'product / service / raw_material…'],
@@ -86,27 +67,27 @@ const CsvUploadStep: React.FC<Props> = ({ onParsed, onParse }) => {
                         ['product_status', 'draft / active / archived'],
                         ['description', 'Product description (optional)'],
                     ].map(([col, desc]) => (
-                        <div key={col} className="flex gap-2">
-                            <span className="font-mono text-primary text-xs mt-0.5">{col}</span>
-                            <span className="text-fg-subtle text-xs">{desc}</span>
+                        <div key={col} className="flex gap-nb-2">
+                            <span className="font-mono text-primary text-nb-caption">{col}</span>
+                            <span className="text-fg-subtle text-nb-caption">{desc}</span>
                         </div>
                     ))}
                 </div>
-                <p className="mt-3 text-fg-subtle text-xs">
+                <p className="mt-nb-3 text-fg-subtle text-nb-caption">
                     <span className="font-semibold text-fg-muted">SKU:</span> not needed — each item gets its SKU automatically.
                     In the next step, name each image after its product (e.g. <span className="font-mono text-primary">Namur Sofa.jpg</span>); for several images add _2, _3… (<span className="font-mono text-primary">Namur Sofa_2.jpg</span>).
                 </p>
-                <p className="mt-3 text-fg-subtle text-xs">
+                <p className="mt-nb-3 text-fg-subtle text-nb-caption">
                     <span className="font-semibold text-fg-muted">Description:</span> add the product description in the{' '}
                     <span className="font-mono text-primary">description</span> column. It will be automatically saved to the product.
                 </p>
-                <div className="mt-4 flex items-center gap-2">
+                <div className="mt-nb-4 flex items-center gap-nb-2">
                     <Upload size={13} className="text-fg-subtle" />
                     <a
                         href="data:text/csv;charset=utf-8,name,type,price,cost,category_name,unit_name,is_batch_tracked,is_serial_tracked,is_online_visible,product_status,barcode,brand,weight,weight_unit,description"
                         download="bulk-import-template.csv"
                         onClick={(e) => e.stopPropagation()}
-                        className="text-primary hover:text-primary text-xs underline"
+                        className="text-primary text-nb-caption underline"
                     >
                         Download CSV template
                     </a>

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Button, Badge } from '@so360/design-system';
 import { procurementService } from '../services/procurementService';
 import { useInventoryFormatters } from '../utils/formatters';
 
@@ -56,12 +57,14 @@ const ProcurementTrace: React.FC<{ type: TraceDocType; id: string }> = ({ type, 
                     const meta = TYPE_META[node.type] || TYPE_META.po;
                     const isFocus = node.type === trace.focus?.type && node.id === trace.focus?.id;
                     return (
-                        <button
+                        <Button
                             key={`${node.type}-${node.id}`}
+                            variant="ghost"
+                            fullWidth
                             onClick={() => !isFocus && navigate(node.route)}
                             disabled={isFocus}
                             aria-current={isFocus ? 'step' : undefined}
-                            className={`w-full text-left p-3 rounded-xl border transition-all flex items-center gap-3 ${meta.className} ${isFocus ? 'ring-1 ring-line-strong cursor-default' : 'hover:scale-[1.01]'}`}
+                            className={`justify-start gap-nb-3 text-left ${meta.className}`}
                         >
                             <span className="text-lg">{meta.icon}</span>
                             <div className="flex-1 min-w-0">
@@ -81,7 +84,7 @@ const ProcurementTrace: React.FC<{ type: TraceDocType; id: string }> = ({ type, 
                                 <div className="text-[10px] text-fg-subtle">{node.status}</div>
                                 {node.date && <div className="text-[10px] text-fg-subtle">{formatters.formatDate(node.date)}</div>}
                             </div>
-                        </button>
+                        </Button>
                     );
                 })}
             </div>
@@ -89,19 +92,13 @@ const ProcurementTrace: React.FC<{ type: TraceDocType; id: string }> = ({ type, 
             {(trace.links?.sales_order_ref || trace.links?.manufacturing_order_id || trace.links?.project_id) && (
                 <div className="mt-4 pt-4 border-t border-line flex flex-wrap gap-2">
                     {trace.links.sales_order_ref && (
-                        <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wide border bg-success/10 text-success border-success/20">
-                            SO {trace.links.sales_order_ref}
-                        </span>
+                        <Badge tone="success" size="sm">SO {trace.links.sales_order_ref}</Badge>
                     )}
                     {trace.links.manufacturing_order_id && (
-                        <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wide border bg-purple-500/10 text-purple-300 border-purple-500/20">
-                            Manufacturing Order
-                        </span>
+                        <Badge tone="info" size="sm">Manufacturing Order</Badge>
                     )}
                     {trace.links.project_id && (
-                        <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wide border bg-cyan-500/10 text-cyan-300 border-cyan-500/20">
-                            Project
-                        </span>
+                        <Badge tone="info" size="sm">Project</Badge>
                     )}
                 </div>
             )}

@@ -1,5 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import {
+    Alert, Button, Card, DataTable, DescriptionList, DatePicker, EmptyState, FieldGrid, FieldGridItem,
+    FormPageTemplate, FormSection, Select, Spinner, TextField, type DataTableColumn,
+} from '@so360/design-system';
 import { procurementService } from '../../services/procurementService';
 import { vendorService } from '../../services/vendorService';
 import { inventoryService } from '../../services/inventoryService';
@@ -17,6 +21,7 @@ interface LineItem {
 
 const OpeningBalancePage = () => {
     const navigate = useNavigate();
+    const poListTrail = [{ label: 'Purchase Orders', to: '/procurement/po', onClick: () => navigate('/procurement/po') }];
     const formatters = useInventoryFormatters();
     // Org business date, not the UTC day: an opening balance dated a day
     // early lands in the wrong stock period.
@@ -134,8 +139,8 @@ const OpeningBalancePage = () => {
 
     const totalValue = items.reduce((s, i) => s + i.quantity * i.unit_cost, 0);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSubmit = async (e?: React.FormEvent) => {
+        e?.preventDefault();
         setError(null);
 
         const validItems = items.filter(i => i.item_id && i.warehouse_id && i.quantity > 0);
@@ -176,344 +181,242 @@ const OpeningBalancePage = () => {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center min-h-[60vh]">
-                <div className="w-10 h-10 border-4 border-primary/20 border-t-blue-500 rounded-full animate-spin"></div>
-            </div>
+            <FormPageTemplate title="Opening Balance" trail={poListTrail}>
+                <Spinner label="Loading opening balance form" />
+            </FormPageTemplate>
         );
     }
 
     if (result) {
         return (
-            <div className="p-8 max-w-3xl mx-auto">
-                <div className="bg-success/10 border border-success/30 rounded-3xl p-8">
-                    <div className="text-success text-4xl mb-4">✓</div>
-                    <h2 className="text-2xl font-bold text-success mb-2">Opening Balance Created</h2>
-                    <p className="text-fg-muted mb-6">Procurement documents have been created and stock movements linked.</p>
-
-                    <div className="grid grid-cols-3 gap-4 mb-6">
-                        <div className="bg-surface/60 border border-line rounded-xl p-4">
-                            <div className="text-[10px] text-fg-subtle uppercase font-bold tracking-widest mb-1">PO Number</div>
-                            <div className="font-bold text-fg">{result.po?.po_number}</div>
-                            <div className="text-[10px] text-success mt-1">Status: {result.po?.status}</div>
-                        </div>
-                        <div className="bg-surface/60 border border-line rounded-xl p-4">
-                            <div className="text-[10px] text-fg-subtle uppercase font-bold tracking-widest mb-1">GRN Number</div>
-                            <div className="font-bold text-fg">{result.grn?.grn_number}</div>
-                            <div className="text-[10px] text-fg-muted mt-1">{result.grn?.received_at?.split('T')[0]}</div>
-                        </div>
-                        <div className="bg-surface/60 border border-line rounded-xl p-4">
-                            <div className="text-[10px] text-fg-subtle uppercase font-bold tracking-widest mb-1">Movements Linked</div>
-                            <div className="font-bold text-fg">{result.movements_linked}</div>
-                            <div className="text-[10px] text-fg-muted mt-1">stock records</div>
-                        </div>
-                    </div>
-
-                    <div className="flex gap-4">
-                        <button
-                            onClick={() => navigate(`/procurement/po/${result.po?.id}`)}
-                            className="px-5 py-2.5 bg-primary hover:bg-primary-hover text-primary-fg rounded-xl font-semibold text-sm transition-all"
-                        >
-                            View PO
-                        </button>
-                        <button
-                            onClick={() => navigate(`/procurement/grn/${result.grn?.id}`)}
-                            className="px-5 py-2.5 bg-surface-high hover:bg-surface-high text-fg rounded-xl font-semibold text-sm transition-all"
-                        >
-                            View GRN
-                        </button>
-                        <button
-                            onClick={() => navigate('/procurement/po')}
-                            className="px-5 py-2.5 bg-surface border border-line-strong hover:border-line-strong text-fg-muted rounded-xl font-semibold text-sm transition-all"
-                        >
-                            Back to PO List
-                        </button>
-                    </div>
-                </div>
-            </div>
+            <FormPageTemplate
+                title="Opening Balance Created"
+                description="Procurement documents have been created and stock movements linked."
+                trail={poListTrail}
+                onCancel={() => navigate('/procurement/po')}
+                cancelLabel="Back to PO List"
+                secondaryAction={<Button variant="secondary" onClick={() => navigate(`/procurement/grn/${result.grn?.id}`)}>View GRN</Button>}
+                primaryAction={<Button onClick={() => navigate(`/procurement/po/${result.po?.id}`)}>View PO</Button>}
+            >
+                <Alert variant="success">
+                    Stock quantities were not changed; audit trail documents were created.
+                </Alert>
+                <Card title="Created documents">
+                    <DescriptionList
+                        columns={3}
+                        items={[
+                            { label: 'PO Number', value: `${result.po?.po_number ?? '-'} (Status: ${result.po?.status ?? '-'})` },
+                            { label: 'GRN Number', value: `${result.grn?.grn_number ?? '-'} ${result.grn?.received_at?.split('T')[0] ?? ''}`.trim() },
+                            { label: 'Movements Linked', value: `${result.movements_linked} stock records` },
+                        ]}
+                    />
+                </Card>
+            </FormPageTemplate>
         );
     }
 
+    const warehouseOptions = warehouses.map(w => ({ value: w.id, label: w.name }));
+    const completeLines = items.filter(i => i.item_id).length;
+
+    const lineColumns: DataTableColumn<LineItem>[] = [
+        {
+            key: 'item',
+            header: 'Item',
+            alwaysVisible: true,
+            render: (item) => {
+                const idx = items.indexOf(item);
+                return item.item_id ? (
+                    <span>{item._selectedName}</span>
+                ) : (
+                    <ItemSearchSelector
+                        value={item.item_id}
+                        selectedName={item._selectedName}
+                        onSelect={selected => updateItemWithProduct(idx, selected)}
+                    />
+                );
+            },
+        },
+        {
+            key: 'warehouse',
+            header: 'Warehouse',
+            render: (item) => {
+                const idx = items.indexOf(item);
+                return (
+                    <Select
+                        aria-label="Warehouse"
+                        placeholder="Select warehouse"
+                        value={item.warehouse_id}
+                        options={warehouseOptions}
+                        onValueChange={v => {
+                            const wh = warehouses.find(w => w.id === v);
+                            updateLine(idx, 'warehouse_id', v);
+                            updateLine(idx, '_warehouseName', wh?.name || v);
+                        }}
+                    />
+                );
+            },
+        },
+        {
+            key: 'quantity',
+            header: 'Qty on Hand',
+            align: 'right',
+            render: (item) => (
+                <TextField
+                    type="number"
+                    min="0.001"
+                    step="0.001"
+                    aria-label="Quantity on hand"
+                    value={item.quantity}
+                    onChange={e => updateLine(items.indexOf(item), 'quantity', parseFloat(e.target.value) || 0)}
+                />
+            ),
+        },
+        {
+            key: 'unit_cost',
+            header: 'Unit Cost',
+            align: 'right',
+            render: (item) => (
+                <TextField
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    aria-label="Unit cost"
+                    value={item.unit_cost}
+                    onChange={e => updateLine(items.indexOf(item), 'unit_cost', parseFloat(e.target.value) || 0)}
+                />
+            ),
+        },
+        {
+            key: 'total',
+            header: 'Total Value',
+            align: 'right',
+            render: (item) => (item.quantity * item.unit_cost).toFixed(2),
+        },
+    ];
+
     return (
-        <div className="p-8 max-w-5xl mx-auto">
-            {/* Header */}
-            <div className="flex items-center justify-between mb-8">
-                <div>
-                    <button
-                        onClick={() => navigate('/procurement/po')}
-                        className="text-fg-subtle hover:text-fg-muted text-sm mb-3 flex items-center gap-1 transition-colors"
-                    >
-                        ← Back to Purchase Orders
-                    </button>
-                    <h1 className="text-3xl font-bold bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent">
-                        Opening Balance
-                    </h1>
-                    <p className="text-fg-muted mt-1 text-sm">
-                        Create backdated procurement documents for existing stock — without double-counting quantities.
-                    </p>
-                </div>
-            </div>
+        <FormPageTemplate
+            title="Opening Balance"
+            description="Create backdated procurement documents for existing stock — without double-counting quantities."
+            trail={poListTrail}
+            onCancel={() => navigate('/procurement/po')}
+            primaryAction={
+                <Button
+                    type="submit"
+                    form="opening-balance-form"
+                    loading={submitting}
+                    disabled={submitting || completeLines === 0}
+                >
+                    Create Opening Balance
+                </Button>
+            }
+        >
+            <Alert variant="warning" title="How this works">
+                This creates a Purchase Order (status: Received) and a Goods Receipt Note linked to your existing stock.
+                Stock quantities are NOT changed — only audit trail documents are created.
+                Use Load Unlinked Stock to auto-fill items that currently have no GRN.
+            </Alert>
 
-            {/* Info banner */}
-            <div className="mb-6 bg-warning/10 border border-warning/30 rounded-2xl p-4 text-sm text-warning">
-                <strong className="font-bold">How this works:</strong> This creates a Purchase Order (status: Received) and a Goods Receipt Note linked to your existing stock.
-                Stock quantities are <strong>NOT</strong> changed — only audit trail documents are created.
-                Use <em>Load Unlinked Stock</em> to auto-fill items that currently have no GRN.
-            </div>
-
-            <form onSubmit={handleSubmit}>
-                {/* Section A: Document Info */}
-                <div className="bg-surface/60 border border-line rounded-2xl p-6 mb-6">
-                    <h2 className="text-sm font-bold text-fg-muted uppercase tracking-widest mb-5">Section A — Document Info</h2>
-                    <div className="grid grid-cols-2 gap-5">
-                        {/* Vendor */}
-                        <div className="col-span-2">
-                            <label className="block text-xs font-bold text-fg-subtle uppercase tracking-widest mb-2">Vendor</label>
-                            <div className="flex gap-3">
-                                <select
-                                    value={formData.vendor_id}
-                                    onChange={e => setFormData(prev => ({ ...prev, vendor_id: e.target.value, vendor_name: '' }))}
-                                    className="flex-1 bg-surface-raised border border-line-strong text-fg rounded-xl px-4 py-2.5 text-sm"
-                                >
-                                    <option value="">-- Auto-create placeholder --</option>
-                                    {vendors.map(v => (
-                                        <option key={v.id} value={v.id}>{v.name}</option>
-                                    ))}
-                                </select>
-                                {!formData.vendor_id && (
-                                    <input
-                                        type="text"
-                                        placeholder="Placeholder vendor name"
-                                        value={formData.vendor_name}
-                                        onChange={e => setFormData(prev => ({ ...prev, vendor_name: e.target.value }))}
-                                        className="flex-1 bg-surface-raised border border-line-strong text-fg rounded-xl px-4 py-2.5 text-sm placeholder-fg-subtle"
-                                    />
-                                )}
-                            </div>
-                        </div>
-
-                        {/* PO Number */}
-                        <div>
-                            <label className="block text-xs font-bold text-fg-subtle uppercase tracking-widest mb-2">PO Number</label>
-                            <input
-                                type="text"
+            <form id="opening-balance-form" onSubmit={handleSubmit} className="flex flex-col gap-nb-6">
+                <FormSection title="Section A — Document Info">
+                    <FieldGrid columns={2}>
+                        <FieldGridItem>
+                            <Select
+                                label="Vendor"
+                                name="vendor_id"
+                                value={formData.vendor_id}
+                                options={[
+                                    { value: '', label: '-- Auto-create placeholder --' },
+                                    ...vendors.map(v => ({ value: v.id, label: v.name })),
+                                ]}
+                                onValueChange={v => setFormData(prev => ({ ...prev, vendor_id: v, vendor_name: '' }))}
+                            />
+                        </FieldGridItem>
+                        {!formData.vendor_id && (
+                            <FieldGridItem>
+                                <TextField
+                                    label="Placeholder vendor name"
+                                    name="vendor_name"
+                                    placeholder="Placeholder vendor name"
+                                    value={formData.vendor_name}
+                                    onChange={e => setFormData(prev => ({ ...prev, vendor_name: e.target.value }))}
+                                />
+                            </FieldGridItem>
+                        )}
+                        <FieldGridItem>
+                            <TextField
+                                label="PO Number"
+                                name="po_number"
+                                placeholder="OB-2026-001"
                                 value={formData.po_number}
                                 onChange={e => setFormData(prev => ({ ...prev, po_number: e.target.value }))}
-                                placeholder="OB-2026-001"
-                                className="w-full bg-surface-raised border border-line-strong text-fg rounded-xl px-4 py-2.5 text-sm placeholder-fg-subtle"
                             />
-                        </div>
-
-                        {/* GRN Number */}
-                        <div>
-                            <label className="block text-xs font-bold text-fg-subtle uppercase tracking-widest mb-2">GRN Number</label>
-                            <input
-                                type="text"
+                        </FieldGridItem>
+                        <FieldGridItem>
+                            <TextField
+                                label="GRN Number"
+                                name="grn_number"
+                                placeholder="GRN-OB-2026-001"
                                 value={formData.grn_number}
                                 onChange={e => setFormData(prev => ({ ...prev, grn_number: e.target.value }))}
-                                placeholder="GRN-OB-2026-001"
-                                className="w-full bg-surface-raised border border-line-strong text-fg rounded-xl px-4 py-2.5 text-sm placeholder-fg-subtle"
                             />
-                        </div>
-
-                        {/* Effective Date */}
-                        <div>
-                            <label className="block text-xs font-bold text-fg-subtle uppercase tracking-widest mb-2">Effective Date (Backdated)</label>
-                            <input
-                                type="date"
+                        </FieldGridItem>
+                        <FieldGridItem>
+                            <DatePicker
+                                label="Effective Date (Backdated)"
+                                name="effective_date"
                                 value={formData.effective_date}
-                                onChange={e => setFormData(prev => ({ ...prev, effective_date: e.target.value }))}
-                                className="w-full bg-surface-raised border border-line-strong text-fg rounded-xl px-4 py-2.5 text-sm"
+                                onChange={v => setFormData(prev => ({ ...prev, effective_date: v }))}
                             />
-                        </div>
-
-                        {/* Note */}
-                        <div>
-                            <label className="block text-xs font-bold text-fg-subtle uppercase tracking-widest mb-2">Note</label>
-                            <input
-                                type="text"
+                        </FieldGridItem>
+                        <FieldGridItem>
+                            <TextField
+                                label="Note"
+                                name="note"
+                                placeholder="e.g. Initial inventory setup Jan 2026"
                                 value={formData.note}
                                 onChange={e => setFormData(prev => ({ ...prev, note: e.target.value }))}
-                                placeholder="e.g. Initial inventory setup Jan 2026"
-                                className="w-full bg-surface-raised border border-line-strong text-fg rounded-xl px-4 py-2.5 text-sm placeholder-fg-subtle"
                             />
-                        </div>
-                    </div>
-                </div>
+                        </FieldGridItem>
+                    </FieldGrid>
+                </FormSection>
 
-                {/* Section B: Item Lines */}
-                <div className="bg-surface/60 border border-line rounded-2xl p-6 mb-6">
-                    <div className="flex items-center justify-between mb-5">
-                        <h2 className="text-sm font-bold text-fg-muted uppercase tracking-widest">Section B — Item Lines</h2>
-                        <button
-                            type="button"
-                            onClick={loadUnlinkedStock}
-                            disabled={loadingUnlinked}
-                            className="px-4 py-2 bg-primary/20 border border-primary/50 text-primary rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-primary/30 transition-all disabled:opacity-50 flex items-center gap-2"
-                        >
-                            {loadingUnlinked ? (
-                                <><span className="w-3 h-3 border-2 border-primary/20 border-t-indigo-400 rounded-full animate-spin inline-block"></span> Loading...</>
-                            ) : (
-                                '⟳ Load Unlinked Stock'
-                            )}
-                        </button>
-                    </div>
-
-                    {items.length === 0 ? (
-                        <div className="text-center py-10 text-fg-subtle text-sm">
-                            Click <strong className="text-fg-muted">Load Unlinked Stock</strong> to auto-fill items,
-                            or <button type="button" onClick={addEmptyLine} className="text-primary hover:underline">add a line manually</button>.
-                        </div>
-                    ) : (
-                        <>
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-sm">
-                                    <thead>
-                                        <tr className="border-b border-line">
-                                            <th className="pb-3 text-left text-[10px] font-bold uppercase text-fg-subtle tracking-widest pr-3">Item</th>
-                                            <th className="pb-3 text-left text-[10px] font-bold uppercase text-fg-subtle tracking-widest pr-3">Warehouse</th>
-                                            <th className="pb-3 text-left text-[10px] font-bold uppercase text-fg-subtle tracking-widest pr-3 w-28">Qty on Hand</th>
-                                            <th className="pb-3 text-left text-[10px] font-bold uppercase text-fg-subtle tracking-widest pr-3 w-32">Unit Cost</th>
-                                            <th className="pb-3 text-left text-[10px] font-bold uppercase text-fg-subtle tracking-widest w-32">Total Value</th>
-                                            <th className="pb-3 w-10"></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-line/50">
-                                        {items.map((item, idx) => (
-                                            <tr key={idx}>
-                                                <td className="py-3 pr-3">
-                                                    {item.item_id ? (
-                                                        <div className="text-fg-muted font-medium">{item._selectedName}</div>
-                                                    ) : (
-                                                        <ItemSearchSelector
-                                                            value={item.item_id}
-                                                            selectedName={item._selectedName}
-                                                            onSelect={selected => updateItemWithProduct(idx, selected)}
-                                                        />
-                                                    )}
-                                                </td>
-                                                <td className="py-3 pr-3">
-                                                    {item._warehouseName && item.warehouse_id ? (
-                                                        <select
-                                                            value={item.warehouse_id}
-                                                            onChange={e => {
-                                                                const wh = warehouses.find(w => w.id === e.target.value);
-                                                                updateLine(idx, 'warehouse_id', e.target.value);
-                                                                updateLine(idx, '_warehouseName', wh?.name || e.target.value);
-                                                            }}
-                                                            className="bg-surface-raised border border-line-strong text-fg-muted rounded-lg px-3 py-1.5 text-sm w-full"
-                                                        >
-                                                            {warehouses.map(w => (
-                                                                <option key={w.id} value={w.id}>{w.name}</option>
-                                                            ))}
-                                                        </select>
-                                                    ) : (
-                                                        <select
-                                                            value={item.warehouse_id}
-                                                            onChange={e => {
-                                                                const wh = warehouses.find(w => w.id === e.target.value);
-                                                                updateLine(idx, 'warehouse_id', e.target.value);
-                                                                updateLine(idx, '_warehouseName', wh?.name || e.target.value);
-                                                            }}
-                                                            className="bg-surface-raised border border-line-strong text-fg-muted rounded-lg px-3 py-1.5 text-sm w-full"
-                                                        >
-                                                            <option value="">Select warehouse</option>
-                                                            {warehouses.map(w => (
-                                                                <option key={w.id} value={w.id}>{w.name}</option>
-                                                            ))}
-                                                        </select>
-                                                    )}
-                                                </td>
-                                                <td className="py-3 pr-3">
-                                                    <input
-                                                        type="number"
-                                                        min="0.001"
-                                                        step="0.001"
-                                                        value={item.quantity}
-                                                        onChange={e => updateLine(idx, 'quantity', parseFloat(e.target.value) || 0)}
-                                                        className="w-full bg-surface-raised border border-line-strong text-fg rounded-lg px-3 py-1.5 text-sm"
-                                                    />
-                                                </td>
-                                                <td className="py-3 pr-3">
-                                                    <input
-                                                        type="number"
-                                                        min="0"
-                                                        step="0.01"
-                                                        value={item.unit_cost}
-                                                        onChange={e => updateLine(idx, 'unit_cost', parseFloat(e.target.value) || 0)}
-                                                        className="w-full bg-surface-raised border border-line-strong text-fg rounded-lg px-3 py-1.5 text-sm"
-                                                    />
-                                                </td>
-                                                <td className="py-3 pr-3">
-                                                    <span className="font-mono text-fg-muted">
-                                                        {(item.quantity * item.unit_cost).toFixed(2)}
-                                                    </span>
-                                                </td>
-                                                <td className="py-3">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => removeLine(idx)}
-                                                        className="text-fg-subtle hover:text-rose-400 transition-colors text-lg"
-                                                    >
-                                                        ×
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            {/* Totals */}
-                            <div className="mt-5 flex justify-between items-center pt-4 border-t border-line">
-                                <button
-                                    type="button"
-                                    onClick={addEmptyLine}
-                                    className="text-xs text-primary hover:text-primary font-semibold transition-colors"
-                                >
-                                    + Add line manually
-                                </button>
-                                <div className="text-right">
-                                    <div className="text-[10px] text-fg-subtle uppercase font-bold tracking-widest mb-1">Total Inventory Value</div>
-                                    <div className="text-2xl font-bold text-fg font-mono">
-                                        {totalValue.toFixed(2)}
-                                    </div>
-                                    <div className="text-[10px] text-fg-subtle">{items.filter(i => i.item_id).length} items • stock unchanged</div>
+                <FormSection
+                    title="Section B — Item Lines"
+                    actions={
+                        <Button type="button" variant="secondary" size="sm" onClick={loadUnlinkedStock} loading={loadingUnlinked} disabled={loadingUnlinked}>
+                            {loadingUnlinked ? 'Loading...' : '⟳ Load Unlinked Stock'}
+                        </Button>
+                    }
+                >
+                    <DataTable
+                        columns={lineColumns}
+                        rows={items}
+                        rowKey={(_item) => String(items.indexOf(_item))}
+                        rowActions={(item) => [{ label: 'Remove line', onSelect: () => removeLine(items.indexOf(item)) }]}
+                        emptyState={
+                            <EmptyState
+                                title="No item lines yet"
+                                description="Use Load Unlinked Stock to auto-fill items, or add a line manually."
+                                action={<Button type="button" variant="ghost" onClick={addEmptyLine}>add a line manually</Button>}
+                            />
+                        }
+                        footer={
+                            <div className="flex flex-wrap items-center justify-between gap-nb-4">
+                                <Button type="button" variant="ghost" size="sm" onClick={addEmptyLine}>+ Add line manually</Button>
+                                <div className="text-right text-nb-caption text-fg-subtle">
+                                    <div>Total Inventory Value</div>
+                                    <div className="text-nb-section-title text-fg">{totalValue.toFixed(2)}</div>
+                                    <div>{completeLines} items • stock unchanged</div>
                                 </div>
                             </div>
-                        </>
-                    )}
-                </div>
+                        }
+                    />
+                </FormSection>
 
-                {/* Error */}
-                {error && (
-                    <div className="mb-4 bg-rose-500/10 border border-rose-500/30 rounded-xl p-4 text-rose-400 text-sm">
-                        {error}
-                    </div>
-                )}
-
-                {/* Submit */}
-                <div className="flex justify-end gap-4">
-                    <button
-                        type="button"
-                        onClick={() => navigate('/procurement/po')}
-                        className="px-6 py-3 bg-surface-raised border border-line-strong text-fg-muted rounded-xl font-semibold transition-all hover:border-line-strong"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        type="submit"
-                        disabled={submitting || items.filter(i => i.item_id).length === 0}
-                        className="px-8 py-3 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-primary-fg rounded-xl font-bold transition-all shadow-lg shadow-amber-900/20 active:scale-95 flex items-center gap-2"
-                    >
-                        {submitting ? (
-                            <><span className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin inline-block"></span> Creating...</>
-                        ) : (
-                            'Create Opening Balance'
-                        )}
-                    </button>
-                </div>
+                {error && <Alert variant="error">{error}</Alert>}
             </form>
-        </div>
+        </FormPageTemplate>
     );
 };
 

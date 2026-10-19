@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Tag, Plus, Upload, X, Loader2, AlertCircle, ImageIcon, Save, ChevronDown, ChevronRight, Building2, LayoutGrid, Sparkles } from 'lucide-react';
+import { Tag, Plus, Upload, X, Loader2, ImageIcon, Save, ChevronDown, ChevronRight, Building2, LayoutGrid, Sparkles } from 'lucide-react';
 import { inventoryService } from '../services/inventoryService';
 import { mediaService } from '../services/mediaService';
 import { useAuth } from '../hooks/useAuth';
@@ -29,7 +29,7 @@ import {
 import { fitImageFile, describeFit, IMAGE_FIT_SLOTS, type ImageFitSlot } from '../utils/imageFit';
 import ImageSpecChip from '../components/media/ImageSpecChip';
 import { useActivity, useShellBridge } from '@so360/shell-context';
-import { FeatureGate } from '@so360/design-system';
+import { Alert, Button, FeatureGate, IconButton, TextField, Textarea } from '@so360/design-system';
 
 const PRESET_COLORS = ['#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#EC4899', '#06B6D4', '#64748B'];
 
@@ -113,6 +113,7 @@ const ImageUploadZone: React.FC<{
     return (
         <div>
             <div className="mb-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+                {/* comb-exception: caption for the upload zone (not a form control); Comb has no standalone caption primitive */}
                 {label && <label className="text-xs font-medium text-fg-muted">{label}</label>}
                 <ImageSpecChip slot={fitSlot} />
             </div>
@@ -139,21 +140,10 @@ const ImageUploadZone: React.FC<{
                         </div>
                     )}
                     <div className="absolute inset-0 bg-overlay/0 hover:bg-overlay/40 transition-colors flex items-center justify-center gap-2 opacity-0 hover:opacity-100">
-                        <button
-                            type="button"
-                            onClick={() => fileRef.current?.click()}
-                            className="bg-white/10 backdrop-blur-sm border border-white/20 text-fg px-3 py-1.5 rounded-lg text-xs hover:bg-white/20 transition-colors flex items-center gap-1.5"
-                        >
-                            <Upload size={12} /> Replace
-                        </button>
-                        <button
-                            type="button"
-                            onClick={onRemove}
-                            className="bg-rose-500/80 backdrop-blur-sm text-primary-fg px-3 py-1.5 rounded-lg text-xs hover:bg-rose-500 transition-colors flex items-center gap-1.5"
-                        >
-                            <X size={12} /> Remove
-                        </button>
+                        <Button type="button" variant="secondary" size="sm" leftIcon={<Upload size={12} />} onClick={() => fileRef.current?.click()}>Replace</Button>
+                        <Button type="button" variant="danger" size="sm" leftIcon={<X size={12} />} onClick={onRemove}>Remove</Button>
                     </div>
+                    {/* comb-exception: hidden native file input driven by the Comb Replace button / drop zone */}
                     <input ref={fileRef} type="file" accept={IMAGE_ACCEPT} className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ''; }} />
                 </div>
             ) : (
@@ -172,11 +162,12 @@ const ImageUploadZone: React.FC<{
                             <span className="text-xs text-fg-subtle text-center px-4">{subLabel || 'Click or drag to upload'}</span>
                         </>
                     )}
+                    {/* comb-exception: hidden native file input driven by the Comb Replace button / drop zone */}
                     <input ref={fileRef} type="file" accept={IMAGE_ACCEPT} className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ''; }} />
                 </div>
             )}
             {uploadError && (
-                <p className="text-xs text-rose-400 mt-1">{uploadError}</p>
+                <p className="text-xs text-danger mt-1">{uploadError}</p>
             )}
             {fitNote && !uploadError && (
                 <p data-testid="image-fit-note" className="text-[11px] text-fg-subtle mt-1 break-words">{fitNote}</p>
@@ -524,25 +515,24 @@ const CategoriesPage = () => {
                 </div>
                 {canManage && (
                     <FeatureGate state={createState} loading={(shell?.effectiveFlagsLoaded === false)} onUpgradeClick={() => navigate('/org/billing')}>
-                    <button
+                    <Button
+                        variant="primary"
+                        leftIcon={<Plus size={16} />}
                         onClick={() => {
                             setSelectedId(null);
                             setViewMode('tree');
                             setShowAddRoot(true);
                         }}
-                        className="flex items-center gap-2 bg-primary hover:bg-primary-hover text-primary-fg px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                     >
-                        <Plus size={16} /> {`New ${labels.category}`}
-                    </button>
+                        {`New ${labels.category}`}
+                    </Button>
                     </FeatureGate>
                 )}
             </header>
 
             {error && (
-                <div className="mb-4 bg-rose-500/10 border border-rose-500/20 text-rose-400 px-4 py-3 rounded-lg flex items-center gap-3 text-sm">
-                    <AlertCircle size={16} />
-                    {error}
-                    <button onClick={() => setError(null)} className="ml-auto"><X size={14} /></button>
+                <div className="mb-4">
+                    <Alert variant="error" action={{ label: 'Dismiss', onClick: () => setError(null) }}>{error}</Alert>
                 </div>
             )}
 
@@ -552,14 +542,8 @@ const CategoriesPage = () => {
                     <div className="flex items-center justify-between mb-1">
                         <h2 className="text-sm font-semibold text-fg-muted uppercase tracking-wider">{labels.categories}</h2>
                         <div className="flex items-center gap-1">
-                            <button
-                                onClick={() => setViewMode('tree')}
-                                className={`px-2 py-0.5 rounded text-xs transition-colors ${viewMode === 'tree' ? 'bg-surface-high text-fg' : 'text-fg-subtle hover:text-fg-muted'}`}
-                            >Tree</button>
-                            <button
-                                onClick={() => setViewMode('cards')}
-                                className={`px-2 py-0.5 rounded text-xs transition-colors ${viewMode === 'cards' ? 'bg-surface-high text-fg' : 'text-fg-subtle hover:text-fg-muted'}`}
-                            >Cards</button>
+                            <Button size="sm" variant={viewMode === 'tree' ? 'tonal' : 'ghost'} onClick={() => setViewMode('tree')}>Tree</Button>
+                            <Button size="sm" variant={viewMode === 'cards' ? 'tonal' : 'ghost'} onClick={() => setViewMode('cards')}>Cards</Button>
                         </div>
                     </div>
                     <p className="text-[10px] text-fg-subtle mb-3">
@@ -605,14 +589,15 @@ const CategoriesPage = () => {
                                 <div className="flex items-center gap-2">
                                     {saveSuccess && <span className="text-xs text-success">Saved!</span>}
                                     {saveError && <span className="text-xs text-rose-400">{saveError}</span>}
-                                    <button
+                                    <Button
+                                        variant="primary"
                                         onClick={handleSaveDetail}
                                         disabled={isSaving || !editName.trim() || !!slugError}
-                                        className="flex items-center gap-2 bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-fg px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                                        loading={isSaving}
+                                        leftIcon={<Save size={14} />}
                                     >
-                                        {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
                                         Save
-                                    </button>
+                                    </Button>
                                 </div>
                             </div>
 
@@ -649,22 +634,26 @@ const CategoriesPage = () => {
                                         />
                                     )}
                                     <div className="flex flex-wrap items-center gap-2">
-                                        <button
+                                        <Button
                                             type="button"
+                                            variant="secondary"
+                                            size="sm"
                                             onClick={() => setShowAvailability(v => !v)}
                                             aria-pressed={showAvailability}
-                                            className="flex items-center gap-2 bg-surface-raised hover:bg-surface-high text-fg px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                                            leftIcon={<LayoutGrid size={14} />}
                                         >
-                                            <LayoutGrid size={14} /> {showAvailability ? 'Hide availability' : 'Availability'}
-                                        </button>
+                                            {showAvailability ? 'Hide availability' : 'Availability'}
+                                        </Button>
                                         {selectedCategory.parent_id && canCreate && (
-                                            <button
+                                            <Button
                                                 type="button"
+                                                variant="primary"
+                                                size="sm"
                                                 onClick={() => setShowGenerate(true)}
-                                                className="flex items-center gap-2 bg-primary hover:bg-primary-hover text-primary-fg px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                                                leftIcon={<Sparkles size={14} />}
                                             >
-                                                <Sparkles size={14} /> Generate units
-                                            </button>
+                                                Generate units
+                                            </Button>
                                         )}
                                     </div>
                                     {showAvailability && (
@@ -710,20 +699,19 @@ const CategoriesPage = () => {
                                 alt={editBannerAlt}
                             />
                             <div className="-mt-3">
-                                <div className="flex items-center justify-between mb-1">
-                                    <label htmlFor="category-banner-alt" className="text-xs font-medium text-fg-muted">Banner alt text</label>
+                                <div className="flex justify-end mb-1">
                                     <CharCount value={editBannerAlt} max={CATEGORY_SEO_LIMITS.bannerAlt} testId="banner-alt-count" />
                                 </div>
-                                <input
+                                <TextField
+                                    name="category-banner-alt"
                                     id="category-banner-alt"
-                                    type="text"
+                                    label="Banner alt text"
                                     value={editBannerAlt}
                                     maxLength={CATEGORY_SEO_LIMITS.bannerAlt}
-                                    onChange={e => setEditBannerAlt(e.target.value)}
-                                    className="w-full bg-surface-raised border border-line-strong rounded-lg px-3 py-2 text-sm text-fg focus:outline-none focus:border-primary placeholder:text-fg-subtle"
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditBannerAlt(e.target.value)}
                                     placeholder={`Describe the banner, e.g. "${editName || 'Category'} collection on display"`}
+                                    hint="Read by screen readers and search engines. Blank uses the category name."
                                 />
-                                <p className="text-[11px] text-fg-subtle mt-1">Read by screen readers and search engines. Blank uses the category name.</p>
                             </div>
                             <div className="w-48">
                                 <ImageUploadZone
@@ -743,19 +731,21 @@ const CategoriesPage = () => {
                                 {/* Icon — preset preview OR upload zone */}
                                 {editIconUrl && isPresetUrl(editIconUrl) ? (
                                     <div className="flex-shrink-0">
+                                        {/* comb-exception: caption for a non-input preview tile */}
                                         <label className="text-xs font-medium text-fg-muted mb-1 block">Icon</label>
                                         <div
                                             className="w-20 h-20 rounded-xl flex items-center justify-center relative group"
                                             style={{ background: editColor || 'rgb(var(--s-700))' }}
                                         >
                                             {renderCategoryIcon({ iconUrl: editIconUrl, name: editName, color: editColor, size: 48 })}
-                                            <button
-                                                type="button"
+                                            <IconButton
+                                                label="Remove icon"
+                                                variant="danger"
+                                                size="sm"
+                                                icon={<X size={10} />}
                                                 onClick={() => setEditIconUrl(null)}
-                                                className="absolute -top-1 -right-1 w-5 h-5 bg-rose-500 rounded-full text-primary-fg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                                            >
-                                                <X size={10} />
-                                            </button>
+                                                className="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                            />
                                         </div>
                                     </div>
                                 ) : (
@@ -774,26 +764,21 @@ const CategoriesPage = () => {
 
                                 {/* Name + Description */}
                                 <div className="flex-1 space-y-3">
-                                    <div>
-                                        <label className="text-xs font-medium text-fg-muted mb-1 block">Name *</label>
-                                        <input
-                                            type="text"
-                                            value={editName}
-                                            onChange={e => setEditName(e.target.value)}
-                                            className="w-full bg-surface-raised border border-line-strong rounded-lg px-3 py-2 text-sm text-fg focus:outline-none focus:border-primary placeholder:text-fg-subtle"
-                                            placeholder="Category name"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="text-xs font-medium text-fg-muted mb-1 block">Description</label>
-                                        <textarea
-                                            value={editDesc}
-                                            onChange={e => setEditDesc(e.target.value)}
-                                            rows={2}
-                                            className="w-full bg-surface-raised border border-line-strong rounded-lg px-3 py-2 text-sm text-fg focus:outline-none focus:border-primary placeholder:text-fg-subtle resize-none"
-                                            placeholder="Brief description..."
-                                        />
-                                    </div>
+                                    <TextField
+                                        name="category-name"
+                                        label="Name *"
+                                        value={editName}
+                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditName(e.target.value)}
+                                        placeholder="Category name"
+                                    />
+                                    <Textarea
+                                        name="category-description"
+                                        label="Description"
+                                        value={editDesc}
+                                        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setEditDesc(e.target.value)}
+                                        rows={2}
+                                        placeholder="Brief description..."
+                                    />
                                 </div>
                             </div>
 
@@ -807,6 +792,7 @@ const CategoriesPage = () => {
                             {/* Color picker + Sort order */}
                             <div className="flex items-start gap-6">
                                 <div>
+                                    {/* comb-exception: Comb ColorPicker adds a hex field and cannot toggle-off a selected preset; swatch row keeps existing click-to-clear behaviour */}
                                     <label className="text-xs font-medium text-fg-muted mb-2 block">Color</label>
                                     <div className="flex items-center gap-2 flex-wrap">
                                         {PRESET_COLORS.map(c => (
@@ -819,9 +805,7 @@ const CategoriesPage = () => {
                                             />
                                         ))}
                                         {editColor && (
-                                            <button type="button" onClick={() => setEditColor('')} className="text-xs text-fg-subtle hover:text-fg-muted">
-                                                Clear
-                                            </button>
+                                            <Button type="button" variant="ghost" size="sm" onClick={() => setEditColor('')}>Clear</Button>
                                         )}
                                     </div>
                                     {editColor && (
@@ -833,20 +817,23 @@ const CategoriesPage = () => {
                                 </div>
 
                                 <div>
-                                    <label className="text-xs font-medium text-fg-muted mb-2 block">Sort Order</label>
-                                    <input
-                                        type="number"
-                                        value={editSortOrder}
-                                        onChange={e => setEditSortOrder(parseInt(e.target.value) || 0)}
-                                        className="w-24 bg-surface-raised border border-line-strong rounded-lg px-3 py-2 text-sm text-fg focus:outline-none focus:border-primary"
-                                        min={0}
-                                    />
-                                    <p className="text-xs text-fg-subtle mt-1">Lower = appears first</p>
+                                    <div className="w-32">
+                                        <TextField
+                                            name="category-sort-order"
+                                            label="Sort Order"
+                                            type="number"
+                                            value={editSortOrder}
+                                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditSortOrder(parseInt(e.target.value) || 0)}
+                                            min={0}
+                                            hint="Lower = appears first"
+                                        />
+                                    </div>
                                 </div>
                             </div>
 
                             {/* Search engine listing (storefront /c/<slug>) */}
                             <div className="border-t border-line pt-5">
+                                {/* comb-exception: disclosure header needs aria-expanded/aria-controls on the trigger plus an inline collapsed URL hint; Comb Collapsible owns its own trigger */}
                                 <button
                                     type="button"
                                     onClick={() => setSeoOpen(o => !o)}
@@ -876,55 +863,49 @@ const CategoriesPage = () => {
                                         </div>
 
                                         <div>
-                                            <label htmlFor="category-slug" className="text-xs font-medium text-fg-muted mb-1 block">URL slug</label>
-                                            <div className="flex items-center rounded-lg border border-line-strong bg-surface-raised focus-within:border-primary">
-                                                <span className="pl-3 text-sm text-fg-subtle">/c/</span>
-                                                <input
-                                                    id="category-slug"
-                                                    type="text"
-                                                    value={editSlug}
-                                                    maxLength={CATEGORY_SEO_LIMITS.slug}
-                                                    onChange={e => setEditSlug(e.target.value)}
-                                                    aria-invalid={!!slugError}
-                                                    className="w-full bg-transparent px-1 py-2 text-sm text-fg focus:outline-none placeholder:text-fg-subtle"
-                                                    placeholder={slugFromName(editName)}
-                                                />
-                                            </div>
-                                            {slugError ? (
-                                                <p data-testid="slug-error" className="text-[11px] text-rose-400 mt-1">{slugError}</p>
-                                            ) : (
-                                                <p className="text-[11px] text-fg-subtle mt-1">Leave blank to generate it from the name. Changing it changes the page address.</p>
+                                            <TextField
+                                                name="category-slug"
+                                                id="category-slug"
+                                                label="URL slug"
+                                                value={editSlug}
+                                                maxLength={CATEGORY_SEO_LIMITS.slug}
+                                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditSlug(e.target.value)}
+                                                aria-invalid={!!slugError}
+                                                placeholder={slugFromName(editName)}
+                                                hint={slugError ? undefined : 'Leave blank to generate it from the name. Changing it changes the page address.'}
+                                            />
+                                            {slugError && (
+                                                <p data-testid="slug-error" className="text-[11px] text-danger mt-1">{slugError}</p>
                                             )}
                                         </div>
 
                                         <div>
-                                            <div className="flex items-center justify-between mb-1">
-                                                <label htmlFor="category-meta-title" className="text-xs font-medium text-fg-muted">Meta title</label>
+                                            <div className="flex justify-end mb-1">
                                                 <CharCount value={editMetaTitle} max={CATEGORY_SEO_LIMITS.metaTitle} testId="meta-title-count" />
                                             </div>
-                                            <input
+                                            <TextField
+                                                name="category-meta-title"
                                                 id="category-meta-title"
-                                                type="text"
+                                                label="Meta title"
                                                 value={editMetaTitle}
                                                 maxLength={CATEGORY_SEO_LIMITS.metaTitle}
-                                                onChange={e => setEditMetaTitle(e.target.value)}
-                                                className="w-full bg-surface-raised border border-line-strong rounded-lg px-3 py-2 text-sm text-fg focus:outline-none focus:border-primary placeholder:text-fg-subtle"
+                                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditMetaTitle(e.target.value)}
                                                 placeholder={editName || 'Category name'}
                                             />
                                         </div>
 
                                         <div>
-                                            <div className="flex items-center justify-between mb-1">
-                                                <label htmlFor="category-meta-description" className="text-xs font-medium text-fg-muted">Meta description</label>
+                                            <div className="flex justify-end mb-1">
                                                 <CharCount value={editMetaDesc} max={CATEGORY_SEO_LIMITS.metaDescription} testId="meta-description-count" />
                                             </div>
-                                            <textarea
+                                            <Textarea
+                                                name="category-meta-description"
                                                 id="category-meta-description"
+                                                label="Meta description"
                                                 value={editMetaDesc}
                                                 maxLength={CATEGORY_SEO_LIMITS.metaDescription}
-                                                onChange={e => setEditMetaDesc(e.target.value)}
+                                                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setEditMetaDesc(e.target.value)}
                                                 rows={3}
-                                                className="w-full bg-surface-raised border border-line-strong rounded-lg px-3 py-2 text-sm text-fg focus:outline-none focus:border-primary placeholder:text-fg-subtle resize-none"
                                                 placeholder="A one- or two-sentence summary shown under the title in search results"
                                             />
                                         </div>

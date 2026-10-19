@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { inventoryService } from '../../services/inventoryService';
+import { Button } from '@so360/design-system';
 import {
     Shield, CheckCircle2, XCircle, ArrowRight,
     Loader2, AlertTriangle, Archive, Play, RotateCcw,
@@ -91,18 +92,6 @@ const LifecycleStatusPanel: React.FC<LifecycleStatusPanelProps> = ({
         }
     };
 
-    const buttonClass = (variant: 'primary' | 'secondary' | 'danger') => {
-        const base = 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed';
-        switch (variant) {
-            case 'primary':
-                return `${base} bg-primary hover:bg-primary-hover text-primary-fg`;
-            case 'secondary':
-                return `${base} bg-surface-raised hover:bg-surface-high text-fg-muted border border-line-strong`;
-            case 'danger':
-                return `${base} bg-rose-600/10 hover:bg-rose-600/20 text-rose-400 border border-rose-500/20`;
-        }
-    };
-
     // State machine visual
     const states = ['draft', 'pending_review', 'active', 'archived'];
     const currentIndex = states.indexOf(currentStatus);
@@ -184,15 +173,17 @@ const LifecycleStatusPanel: React.FC<LifecycleStatusPanelProps> = ({
             {availableTransitions.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                     {availableTransitions.map(transition => (
-                        <button
+                        <Button
                             key={transition.code}
+                            size="sm"
+                            variant={transition.variant}
                             onClick={() => handleTransition(transition.code)}
                             disabled={isTransitioning}
-                            className={buttonClass(transition.variant)}
+                            loading={isTransitioning}
+                            leftIcon={isTransitioning ? undefined : transition.icon}
                         >
-                            {isTransitioning ? <Loader2 size={14} className="animate-spin" /> : transition.icon}
                             {transition.label}
-                        </button>
+                        </Button>
                     ))}
                 </div>
             )}

@@ -20,10 +20,6 @@ vi.mock('@so360/shell-context', () => ({
     }),
 }));
 
-vi.mock('@so360/design-system', () => ({
-    FeatureGate: ({ children }: any) => <>{children}</>,
-}));
-
 const mockGetWarehouse = vi.fn();
 const mockUpdateWarehouse = vi.fn();
 const mockCreateLocation = vi.fn();
@@ -47,16 +43,6 @@ vi.mock('react-router-dom', () => ({
 
 vi.mock('../hooks/useAuth', () => ({ useAuth: () => ({ can: () => true }) }));
 
-vi.mock('../components/common/Modal', () => ({
-    Modal: ({ isOpen, title, children }: any) =>
-        isOpen ? (
-            <div role="dialog" aria-label={title}>
-                {children}
-            </div>
-        ) : null,
-}));
-
-vi.mock('../components/common/Skeleton', () => ({ TableSkeleton: () => null }));
 
 import WarehouseDetailPage from './WarehouseDetailPage';
 

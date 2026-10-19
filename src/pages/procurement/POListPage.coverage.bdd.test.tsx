@@ -104,7 +104,8 @@ vi.mock('../../components/ItemSearchSelector', () => ({
   ),
 }));
 
-vi.mock('@so360/design-system', () => ({
+vi.mock('@so360/design-system', async () => ({
+  ...(await import('../../test/__mocks__/design-system')),
   toast: h.toast,
   getErrorMessage: (err: any, fallback: string) => err?.message || fallback,
   QuotaBar: ({ label, used, limit, isUnlimited }: any) => (
@@ -179,6 +180,11 @@ const openForm = async () => {
   fireEvent.click(screen.getByText('New PO'));
   await waitFor(() => expect(screen.getAllByText('Create Purchase Order').length).toBeGreaterThan(0));
 };
+const openConvert = async () => {
+  await waitFor(() => expect(screen.getByText('Convert Approved PRs')).toBeInTheDocument());
+  fireEvent.click(screen.getByText('Convert Approved PRs'));
+  await waitFor(() => expect(screen.getByText('Convert')).toBeInTheDocument());
+};
 const selects = () => Array.from(document.querySelectorAll('select')) as HTMLSelectElement[];
 
 describe('POListPage — permission-aware loading', () => {
@@ -224,7 +230,7 @@ describe('POListPage — permission-aware loading', () => {
       renderPage();
       await settled();
       expect(h.getPOs).not.toHaveBeenCalled();
-      expect(screen.getByText('Loading orders...')).toBeInTheDocument();
+      expect(document.querySelector('[data-slot="skeleton"]')).toBeInTheDocument();
     });
   });
 
@@ -428,14 +434,14 @@ describe('POListPage — converting an approved requisition', () => {
 
   it('Given approved PRs / When rendered / Then the conversion shortcut shows the count', async () => {
     renderPage();
-    await waitFor(() => expect(screen.getByText('Convert Approved PRs')).toBeInTheDocument());
+    await openConvert();
     expect(screen.getByText('2 items')).toBeInTheDocument();
   });
 
   it('Given a PR already fully converted / When Convert is clicked / Then the user is warned and no form opens', async () => {
     h.getConversionPayload.mockResolvedValue({ is_fully_converted: true });
     renderPage();
-    await waitFor(() => expect(screen.getByText('Convert')).toBeInTheDocument());
+    await openConvert();
     fireEvent.click(screen.getByText('Convert'));
     await waitFor(() => expect(h.toast.warning).toHaveBeenCalledWith(expect.stringMatching(/fully converted/i)));
     expect(screen.queryAllByText('Create Purchase Order').length).toBe(0);
@@ -459,7 +465,7 @@ describe('POListPage — converting an approved requisition', () => {
       ],
     });
     renderPage();
-    await waitFor(() => expect(screen.getByText('Convert')).toBeInTheDocument());
+    await openConvert();
     fireEvent.click(screen.getByText('Convert'));
     await waitFor(() => expect(screen.getByText(/Converting from PR #/)).toBeInTheDocument());
     expect(screen.getByDisplayValue('PO-2025-0042')).toBeInTheDocument();
@@ -473,7 +479,7 @@ describe('POListPage — converting an approved requisition', () => {
     h.getPOs.mockResolvedValue([makePO()]);
     h.getConversionPayload.mockResolvedValue({ pr_id: 'pr-11111111-2222' });
     renderPage();
-    await waitFor(() => expect(screen.getByText('Convert')).toBeInTheDocument());
+    await openConvert();
     fireEvent.click(screen.getByText('Convert'));
     await waitFor(() => expect(screen.getByText(/Converting from PR #/)).toBeInTheDocument());
     expect(screen.getByDisplayValue(`PO-${new Date().getFullYear()}-0002`)).toBeInTheDocument();
@@ -487,7 +493,7 @@ describe('POListPage — converting an approved requisition', () => {
       available_lines: [{ item_id: 'i1', remaining_quantity: 6, estimated_unit_price: 2, pr_line_id: 'l1' }],
     });
     renderPage();
-    await waitFor(() => expect(screen.getByText('Convert')).toBeInTheDocument());
+    await openConvert();
     fireEvent.click(screen.getByText('Convert'));
     await waitFor(() => expect(screen.getByTestId('item-search')).toBeInTheDocument());
     expect(screen.getByTestId('item-name')).toHaveTextContent('');
@@ -504,7 +510,7 @@ describe('POListPage — converting an approved requisition', () => {
   it('Given the conversion call fails / When Convert is clicked / Then the reason is surfaced', async () => {
     h.getConversionPayload.mockRejectedValue(new Error('PR is locked'));
     renderPage();
-    await waitFor(() => expect(screen.getByText('Convert')).toBeInTheDocument());
+    await openConvert();
     fireEvent.click(screen.getByText('Convert'));
     await waitFor(() => expect(h.toast.error).toHaveBeenCalledWith('PR is locked'));
   });
@@ -512,7 +518,7 @@ describe('POListPage — converting an approved requisition', () => {
   it('Given the conversion fails without a message / When Convert is clicked / Then a fallback is shown', async () => {
     h.getConversionPayload.mockRejectedValue({});
     renderPage();
-    await waitFor(() => expect(screen.getByText('Convert')).toBeInTheDocument());
+    await openConvert();
     fireEvent.click(screen.getByText('Convert'));
     await waitFor(() => expect(h.toast.error).toHaveBeenCalledWith('Conversion failed'));
   });
@@ -591,10 +597,10 @@ describe('POListPage — the create purchase order form', () => {
     expect(screen.getByDisplayValue(`PO-${new Date().getFullYear()}-0002`)).toBeInTheDocument();
   });
 
-  it('Given the form is open / When × is clicked / Then it closes', async () => {
+  it('Given the form is open / When Close is clicked / Then it closes', async () => {
     renderPage();
     await openForm();
-    fireEvent.click(screen.getByText('×'));
+    fireEvent.click(screen.getByLabelText('Close'));
     expect(screen.queryAllByText('Create Purchase Order').length).toBe(0);
   });
 
@@ -803,7 +809,8 @@ describe('POListPage — the requisition picker inside the form', () => {
     await openForm();
     const picker = selects()[1];
     expect(within(picker).getByText(/2 items — approved/)).toBeInTheDocument();
-    expect(picker.querySelector('optgroup[label="⏳ Pending Approval (Not Available)"]')).not.toBeNull();
+    const pending = within(picker).getByText(/pending_approval|pending approval/) as HTMLOptionElement;
+    expect(pending.disabled).toBe(true);
   });
 
   it('Given only pending PRs / When the form opens / Then the user is told they must be approved first', async () => {

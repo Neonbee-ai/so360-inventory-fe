@@ -37,21 +37,6 @@ vi.mock('../hooks/useAuth', () => ({
   useAuth: () => ({ can: mockCanWD }),
 }));
 
-vi.mock('../components/common/Modal', () => ({
-  Modal: ({ isOpen, title, children, onClose }: any) =>
-    isOpen ? (
-      <div data-testid="modal">
-        <h3>{title}</h3>
-        {children}
-        <button onClick={onClose} data-testid="modal-close">Close</button>
-      </div>
-    ) : null,
-}));
-
-vi.mock('../components/common/Skeleton', () => ({
-  TableSkeleton: () => <div data-testid="skeleton">Loading...</div>,
-}));
-
 import WarehouseDetailPage from './WarehouseDetailPage';
 
 const makeWarehouse = (overrides: any = {}) => ({
@@ -91,8 +76,8 @@ describe('WarehouseDetailPage', () => {
   describe('Given loading state', () => {
     it('When page is loading / Then shows skeleton', () => {
       mockGetWarehouse.mockReturnValue(new Promise(() => {}));
-      render(<WarehouseDetailPage />);
-      expect(screen.getByTestId('skeleton')).toBeInTheDocument();
+      const { container } = render(<WarehouseDetailPage />);
+      expect(container.querySelector('[data-slot="skeleton"]')).toBeInTheDocument();
     });
   });
 
@@ -124,7 +109,7 @@ describe('WarehouseDetailPage', () => {
     it('When loaded / Then shows back button with "Back to Warehouses" text', async () => {
       render(<WarehouseDetailPage />);
       await waitFor(() => {
-        expect(screen.getByText('Back to Warehouses')).toBeInTheDocument();
+        expect(screen.getByLabelText('Back to Warehouses')).toBeInTheDocument();
       });
     });
 
@@ -166,7 +151,7 @@ describe('WarehouseDetailPage', () => {
       render(<WarehouseDetailPage />);
       await waitFor(() => expect(screen.getByText('Main Warehouse')).toBeInTheDocument());
       fireEvent.click(screen.getByText('Add Location'));
-      expect(screen.getByTestId('modal')).toBeInTheDocument();
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
     });
   });
 
@@ -176,7 +161,7 @@ describe('WarehouseDetailPage', () => {
       await waitFor(() => expect(screen.getByText('Main Warehouse')).toBeInTheDocument());
       // Edit button has title="Edit Warehouse"
       fireEvent.click(screen.getByTitle('Edit Warehouse'));
-      expect(screen.getByTestId('modal')).toBeInTheDocument();
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
     });
   });
 
@@ -195,7 +180,7 @@ describe('WarehouseDetailPage', () => {
     it('When Back to Warehouses clicked / Then navigates to locations', async () => {
       render(<WarehouseDetailPage />);
       await waitFor(() => expect(screen.getByText('Main Warehouse')).toBeInTheDocument());
-      fireEvent.click(screen.getByText('Back to Warehouses'));
+      fireEvent.click(screen.getByLabelText('Back to Warehouses'));
       expect(mockNavigate).toHaveBeenCalledWith('/inventory/locations');
     });
   });

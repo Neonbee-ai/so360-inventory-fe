@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { procurementInsightsService, type ProcurementReport } from '../../services/procurementInsightsService';
 import { useInventoryFormatters } from '../../utils/formatters';
-import { getErrorMessage, toast } from '@so360/design-system';
+import { Alert, Button, DataTable, EmptyState, ListPageTemplate, Tabs, TextField, getErrorMessage, toast, type DataTableColumn } from '@so360/design-system';
 
 const REPORTS: Array<{ key: ProcurementReport; label: string; hint: string }> = [
     { key: 'purchase_register', label: 'Purchase Register', hint: 'Every purchase order with its value' },
@@ -83,110 +83,72 @@ const ProcurementReportsPage = () => {
         toast.success(`Exported ${rows.length} row(s)`);
     };
 
-    const columns = rows.length ? Object.keys(rows[0]) : [];
+    const columnKeys = rows.length ? Object.keys(rows[0]) : [];
     const active = REPORTS.find(r => r.key === report);
 
+    const columns: DataTableColumn<any>[] = columnKeys.map(c => ({
+        key: c,
+        header: humanise(c),
+        render: (row: any) =>
+            typeof row[c] === 'number' && CURRENCY_KEYS.has(c)
+                ? formatters.formatCurrency(row[c])
+                : typeof row[c] === 'boolean'
+                    ? (row[c] ? 'Yes' : 'No')
+                    : row[c] == null || row[c] === ''
+                        ? '—'
+                        : String(row[c]),
+    }));
+
     return (
-        <div className="p-8 space-y-8 animate-in fade-in duration-700">
-            <div>
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-400 to-blue-400 bg-clip-text text-transparent">
-                    Procurement Reports
-                </h1>
-                <p className="text-fg-muted mt-2 font-medium">{active?.hint}</p>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-                {REPORTS.map(r => (
-                    <button
-                        key={r.key}
-                        onClick={() => setReport(r.key)}
-                        aria-pressed={report === r.key}
-                        className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider border transition-all ${report === r.key
-                            ? 'bg-primary/10 text-primary border-primary/40'
-                            : 'bg-bg text-fg-subtle border-line hover:border-line-strong'}`}
-                    >
-                        {r.label}
-                    </button>
-                ))}
-            </div>
-
-            <div className="flex flex-wrap items-end gap-4">
-                <div className="space-y-1">
-                    <label htmlFor="rep-from" className="text-[10px] font-bold text-fg-subtle uppercase tracking-wider">From</label>
-                    <input
-                        id="rep-from"
+        <ListPageTemplate
+            title="Procurement Reports"
+            description={active?.hint}
+            count={rows.length > 0 ? `${rows.length} row(s)` : undefined}
+            primaryAction={<Button onClick={run}>Run</Button>}
+            headerSecondaryActions={[<Button key="export" variant="secondary" onClick={exportCsv}>Export CSV</Button>]}
+            views={(
+                <Tabs
+                    name="report"
+                    variant="pill"
+                    maxVisible={5}
+                    items={REPORTS.map(r => ({ id: r.key, label: r.label }))}
+                    value={report}
+                    onChange={id => setReport(id as ProcurementReport)}
+                />
+            )}
+            toolbar={(
+                <div className="flex flex-wrap items-end gap-nb-3">
+                    <TextField
+                        name="rep-from"
+                        label="From"
                         type="date"
                         value={range.from}
                         onChange={e => setRange({ ...range, from: e.target.value })}
-                        className="bg-bg border border-line rounded-xl px-4 py-2 text-sm text-fg"
                     />
-                </div>
-                <div className="space-y-1">
-                    <label htmlFor="rep-to" className="text-[10px] font-bold text-fg-subtle uppercase tracking-wider">To</label>
-                    <input
-                        id="rep-to"
+                    <TextField
+                        name="rep-to"
+                        label="To"
                         type="date"
                         value={range.to}
                         onChange={e => setRange({ ...range, to: e.target.value })}
-                        className="bg-bg border border-line rounded-xl px-4 py-2 text-sm text-fg"
                     />
                 </div>
-                <button onClick={run} className="px-6 py-2 bg-primary hover:bg-primary-hover text-primary-fg rounded-xl text-sm font-bold transition-colors">
-                    Run
-                </button>
-                <button onClick={exportCsv} className="px-6 py-2 bg-surface-raised hover:bg-surface-high text-fg rounded-xl text-sm font-bold transition-colors">
-                    Export CSV
-                </button>
-            </div>
-
-            {error && (
-                <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-400 text-sm">{error}</div>
             )}
-
-            <div className="bg-surface/50 border border-line rounded-2xl overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                        <thead>
-                            <tr className="border-b border-line bg-surface-raised/30">
-                                {columns.map(c => (
-                                    <th key={c} className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-fg-muted whitespace-nowrap">
-                                        {humanise(c)}
-                                    </th>
-                                ))}
-                                {columns.length === 0 && (
-                                    <th className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-fg-muted">Result</th>
-                                )}
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-line/50">
-                            {loading ? (
-                                <tr><td colSpan={Math.max(1, columns.length)} className="px-4 py-12 text-center text-fg-subtle animate-pulse">Running report...</td></tr>
-                            ) : rows.length === 0 ? (
-                                <tr><td colSpan={Math.max(1, columns.length)} className="px-4 py-12 text-center text-fg-subtle">No rows for this report.</td></tr>
-                            ) : rows.map((row, i) => (
-                                <tr key={i} className="hover:bg-surface-raised/20 transition-colors">
-                                    {columns.map(c => (
-                                        <td key={c} className="px-4 py-3 text-fg-muted whitespace-nowrap">
-                                            {typeof row[c] === 'number' && CURRENCY_KEYS.has(c)
-                                                ? formatters.formatCurrency(row[c])
-                                                : typeof row[c] === 'boolean'
-                                                    ? (row[c] ? 'Yes' : 'No')
-                                                    : row[c] == null || row[c] === ''
-                                                        ? '—'
-                                                        : String(row[c])}
-                                        </td>
-                                    ))}
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+            loading={loading}
+            isEmpty={!loading && !error && rows.length === 0}
+            empty={<EmptyState title="No rows for this report." />}
+        >
+            <div className="flex flex-col gap-nb-4">
+                {error && <Alert variant="error">{error}</Alert>}
+                <DataTable
+                    data-testid="procurement-report-table"
+                    columns={columns}
+                    rows={rows}
+                    rowKey={(_row: any) => String(rows.indexOf(_row))}
+                    loading={loading}
+                />
             </div>
-
-            {rows.length > 0 && (
-                <p className="text-xs text-fg-subtle">{rows.length} row(s)</p>
-            )}
-        </div>
+        </ListPageTemplate>
     );
 };
 

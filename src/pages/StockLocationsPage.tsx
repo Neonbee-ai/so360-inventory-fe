@@ -1,10 +1,8 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, Plus, Home, Edit2, AlertCircle, Trash2, Loader2, X, Save } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { inventoryService } from '../services/inventoryService';
 import { Warehouse } from '../types/inventory';
-import { Modal } from '../components/common/Modal';
-import { TableSkeleton } from '../components/common/Skeleton';
 import { useAuth } from '../hooks/useAuth';
 import {
     firstError,
@@ -18,7 +16,11 @@ import {
     ValidationResult,
 } from '../utils/validators';
 import { useActivity, useShellBridge, useQuota } from '@so360/shell-context';
-import { QuotaBar, QuotaGate, FeatureGate } from '@so360/design-system';
+import {
+    QuotaBar, QuotaGate, FeatureGate, ListPageTemplate, DataTable, Button, Modal, TextField, Select,
+    Checkbox, Alert, Badge, EmptyState, Tooltip,
+    type DataTableColumn,
+} from '@so360/design-system';
 
 const StockLocationsPage = () => {
     const navigate = useNavigate();
@@ -227,496 +229,266 @@ const StockLocationsPage = () => {
     /** Error text rendered directly beneath the field it belongs to. */
     const FieldErr = ({ show, message, field }: { show: boolean; message: ValidationResult; field: string }) =>
         show && message ? (
-            <p role="alert" data-testid={`error-${field}`} className="text-rose-400 text-xs mt-1">
+            <p role="alert" data-testid={`error-${field}`} className="text-nb-caption text-danger">
                 {message}
             </p>
         ) : null;
 
-    return (
-        <div className="p-8">
-            <header className="mb-8 flex items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold text-fg tracking-tight">Warehouses</h1>
-                    <p className="text-fg-muted mt-1">Manage physical storage facilities and fulfillment centers</p>
-                </div>
-                {can('warehouses.create') && (
-                    <FeatureGate state={createWarehouseState} loading={(shell?.effectiveFlagsLoaded === false)} onUpgradeClick={() => navigate('/org/billing')}>
-                    <QuotaGate
-                        quotaKey="max_warehouses"
-                        moduleCode="inventory"
-                        used={whUsed}
-                        limit={quotaData?.limit ?? 0}
-                        isUnlimited={whUnlimited}
-                        disableOnExceeded
-                    >
-                        <button
-                            onClick={() => !atWarehouseLimit && setIsCreateModalOpen(true)}
-                            disabled={atWarehouseLimit}
-                            title={atWarehouseLimit ? `Used ${whUsed} of ${whLimit} warehouses — upgrade your plan to add more` : undefined}
-                            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold transition-all shadow-lg active:scale-95 ${atWarehouseLimit ? 'bg-surface-high text-fg-muted cursor-not-allowed shadow-none' : 'bg-primary hover:bg-primary-hover text-fg shadow-blue-900/20'}`}
-                        >
-                            <Plus size={20} />
-                            New Warehouse
-                            {atWarehouseLimit && <span className="text-xs font-normal ml-1">({whUsed}/{whLimit})</span>}
-                        </button>
-                    </QuotaGate>
-                    </FeatureGate>
-                )}
-            </header>
+    const TYPE_OPTIONS = [
+        { value: 'general', label: 'General' },
+        { value: 'distribution', label: 'Distribution' },
+        { value: 'cold_storage', label: 'Cold Storage' },
+        { value: 'manufacturing', label: 'Manufacturing' },
+        { value: 'transit', label: 'Transit / Cross-dock' },
+    ];
 
-            {quotaData && (
-                <QuotaBar
-                    label="Warehouses"
-                    used={whUsed}
-                    limit={quotaData.limit}
-                    isUnlimited={whUnlimited}
-                    className="mb-6"
+    /** Shared field set for the create and edit modals. */
+    const renderFields = (
+        form: typeof newWarehouse,
+        setForm: (f: typeof newWarehouse) => void,
+        errors: Record<string, ValidationResult>,
+        show: boolean,
+    ) => {
+        const text = (key: keyof typeof newWarehouse, label: string, placeholder: string, extra: Record<string, any> = {}) => (
+            <div className={extra.wide ? 'wc-large:col-span-2' : undefined}>
+                <TextField
+                    name={key}
+                    label={label}
+                    required={extra.required}
+                    type={extra.type ?? 'text'}
+                    value={form[key] as string}
+                    placeholder={placeholder}
+                    onChange={(e: any) => setForm({ ...form, [key]: extra.upper ? e.target.value.toUpperCase() : e.target.value })}
                 />
+                <FieldErr show={show} message={errors[key]} field={key} />
+            </div>
+        );
+        return (
+            <div className="grid grid-cols-1 gap-nb-4 wc-large:grid-cols-2">
+                {text('name', 'Warehouse Name', 'e.g. Dubai South Hub', { wide: true, required: true })}
+                {text('code', 'Short Code', 'e.g. DXB-01', { required: true, upper: true })}
+                <div>
+                    <Select
+                        name="warehouse_type"
+                        label="Warehouse Type"
+                        value={form.warehouse_type}
+                        options={TYPE_OPTIONS}
+                        onChange={(e: any) => setForm({ ...form, warehouse_type: e.target.value })}
+                    />
+                    <FieldErr show={show} message={errors.warehouse_type} field="warehouse_type" />
+                </div>
+                {text('address', 'Street Address', 'Street address', { wide: true })}
+                {text('city', 'City', 'City')}
+                {text('state', 'State / Region', 'State / Province')}
+                {text('country', 'Country', 'Country')}
+                {text('contact_person', 'Contact Person', 'Manager / Supervisor name')}
+                {text('contact_phone', 'Contact Phone', '+971 50 000 0000', { wide: true, type: 'tel' })}
+            </div>
+        );
+    };
+
+    const limitTitle = atWarehouseLimit ? `Used ${whUsed} of ${whLimit} warehouses — upgrade your plan to add more` : undefined;
+    const canManage = can('warehouses.create') && canCreateWarehouse;
+
+    const columns: DataTableColumn<any>[] = [
+        {
+            key: 'name',
+            header: 'Warehouse',
+            alwaysVisible: true,
+            render: (wh) => (
+                <div className="flex flex-col">
+                    <span className="text-nb-body font-semibold text-fg">{wh.name}</span>
+                    <span className="text-nb-caption text-fg-subtle">{wh.address || 'Address not set'}</span>
+                </div>
+            ),
+        },
+        { key: 'code', header: 'Code', render: (wh) => <Badge tone="neutral">{wh.code}</Badge> },
+        {
+            key: 'layout',
+            header: 'Storage Layout',
+            render: (wh) =>
+                wh.warehouse_locations?.length > 0 ? (
+                    <div className="flex flex-col gap-nb-1">
+                        {wh.warehouse_locations.map((loc: any) => (
+                            <div key={loc.id} className="flex flex-wrap items-center gap-nb-2 text-nb-caption text-fg-muted">
+                                <span>{loc.name}</span>
+                                <span className="text-fg-subtle">{loc.code}</span>
+                                {loc.warehouse_bins?.map((bin: any) => (
+                                    <Badge key={bin.id} tone="primary" size="sm">{bin.code}</Badge>
+                                ))}
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <span className="text-nb-caption text-fg-subtle">No locations defined</span>
+                ),
+        },
+        {
+            key: 'status',
+            header: 'Status',
+            render: (wh) => <Badge tone={wh.is_active ? 'success' : 'neutral'}>{wh.is_active ? 'Operational' : 'Inactive'}</Badge>,
+        },
+        {
+            key: 'actions',
+            header: '',
+            alwaysVisible: true,
+            align: 'right',
+            render: (wh) => (
+                <div className="flex justify-end gap-nb-2">
+                    <Button variant="ghost" size="sm" onClick={() => navigate(`/inventory/warehouses/${wh.id}`)}>View</Button>
+                    {canManage && (
+                        <>
+                            <Button variant="ghost" size="sm" onClick={() => handleEditClick(wh)}>Edit</Button>
+                            <Button variant="ghost" size="sm" onClick={() => setDeletingWarehouse(wh)}>Delete</Button>
+                        </>
+                    )}
+                </div>
+            ),
+        },
+    ];
+
+    const emptyState = (
+        <EmptyState
+            title="No warehouses yet"
+            description="Add a warehouse to start tracking stock locations."
+            action={
+                canManage ? (
+                    <Button
+                        data-testid="empty-state-add-warehouse"
+                        variant="primary"
+                        leftIcon={<Plus size={16} />}
+                        disabled={atWarehouseLimit}
+                        title={limitTitle}
+                        onClick={() => !atWarehouseLimit && setIsCreateModalOpen(true)}
+                    >
+                        Add New Warehouse
+                    </Button>
+                ) : undefined
+            }
+        />
+    );
+
+    const primaryAction = can('warehouses.create') ? (
+        <FeatureGate state={createWarehouseState} loading={(shell?.effectiveFlagsLoaded === false)} onUpgradeClick={() => navigate('/org/billing')}>
+            <QuotaGate
+                quotaKey="max_warehouses"
+                moduleCode="inventory"
+                used={whUsed}
+                limit={quotaData?.limit ?? 0}
+                isUnlimited={whUnlimited}
+                disableOnExceeded
+            >
+                <Tooltip content={limitTitle ?? 'New Warehouse'}>
+                    <Button
+                        variant="primary"
+                        leftIcon={<Plus size={16} />}
+                        disabled={atWarehouseLimit}
+                        title={limitTitle}
+                        onClick={() => !atWarehouseLimit && setIsCreateModalOpen(true)}
+                    >
+                        New Warehouse
+                        {atWarehouseLimit && <span> ({whUsed}/{whLimit})</span>}
+                    </Button>
+                </Tooltip>
+            </QuotaGate>
+        </FeatureGate>
+    ) : undefined;
+
+    return (
+        <ListPageTemplate
+            title="Warehouses"
+            description="Manage physical storage facilities and fulfillment centers"
+            count={warehouses.length}
+            primaryAction={primaryAction}
+        >
+            {quotaData && (
+                <QuotaBar label="Warehouses" used={whUsed} limit={quotaData.limit} isUnlimited={whUnlimited} />
             )}
 
             {whLimit !== null && (
-                <p data-testid="warehouse-limit-banner" className="text-xs text-fg-subtle mb-4">
+                <p data-testid="warehouse-limit-banner" className="text-nb-caption text-fg-subtle">
                     {whUsed} of {whLimit} used
                 </p>
             )}
 
             {error && (
-                <div className="mb-6 bg-rose-500/10 border border-rose-500/20 text-rose-400 px-4 py-3 rounded-lg flex items-center gap-3">
-                    <AlertCircle size={18} />
-                    <span>{error}</span>
-                    <button onClick={() => setError(null)} className="ml-auto hover:text-rose-300">
-                        <X size={16} />
-                    </button>
-                </div>
+                <Alert variant="error" action={{ label: 'Dismiss', onClick: () => setError(null) }}>
+                    {error}
+                </Alert>
             )}
 
-            {successMessage && (
-                <div className="mb-6 bg-success/10 border border-success/20 text-success px-4 py-3 rounded-lg flex items-center gap-3">
-                    <span>{successMessage}</span>
-                </div>
-            )}
+            {successMessage && <Alert variant="success">{successMessage}</Alert>}
 
-            {isLoading ? (
-                <TableSkeleton />
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {warehouses.map((wh) => (
-                        <div key={wh.id} className="bg-surface/50 border border-line rounded-2xl p-6 hover:border-line-strong transition-all group flex flex-col">
-                            <div className="flex items-start justify-between mb-4">
-                                <div className={`p-3 rounded-xl border bg-surface-raised border-line-strong text-fg-muted group-hover:text-primary group-hover:border-primary/30 transition-colors`}>
-                                    <Home size={24} />
-                                </div>
-                                <span className="text-[10px] font-bold uppercase tracking-wider bg-surface-raised text-fg-subtle border border-line-strong px-2 py-1 rounded">
-                                    {wh.code}
-                                </span>
-                            </div>
-                            <h3 className="text-xl font-bold text-fg mb-1 uppercase tracking-tight">{wh.name}</h3>
-                            <p className="text-fg-subtle text-xs mb-6 flex-grow uppercase font-bold tracking-widest">{wh.address || 'Address not set'}</p>
-
-                            {/* Locations & Bins Mini View */}
-                            <div className="space-y-3 mb-6">
-                                <label className="text-[10px] font-bold text-fg-subtle uppercase tracking-widest">Storage Layout</label>
-                                {(wh as any).warehouse_locations?.length > 0 ? (
-                                    <div className="space-y-2">
-                                        {(wh as any).warehouse_locations.map((loc: any) => (
-                                            <div key={loc.id} className="bg-bg/50 rounded-lg p-2 border border-line/50">
-                                                <div className="text-[11px] font-bold text-fg-muted flex justify-between">
-                                                    <span>📍 {loc.name}</span>
-                                                    <span className="text-fg-subtle">{loc.code}</span>
-                                                </div>
-                                                {loc.warehouse_bins?.length > 0 && (
-                                                    <div className="mt-2 flex flex-wrap gap-1">
-                                                        {loc.warehouse_bins.map((bin: any) => (
-                                                            <span key={bin.id} className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded border border-primary/20">
-                                                                {bin.code}
-                                                            </span>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <div className="text-[10px] text-fg-subtle italic">No locations defined</div>
-                                )}
-                            </div>
-
-                            <div className="flex items-center justify-between border-t border-line pt-4 mt-auto">
-                                <span className={`text-[10px] font-bold uppercase ${wh.is_active ? 'text-success' : 'text-fg-subtle'}`}>
-                                    {wh.is_active ? 'Operational' : 'Inactive'}
-                                </span>
-                                <div className="flex gap-4">
-                                    <button
-                                        onClick={() => navigate(`/inventory/warehouses/${wh.id}`)}
-                                        className="text-fg-muted hover:text-primary text-[10px] font-bold uppercase tracking-widest transition-colors"
-                                    >
-                                        View
-                                    </button>
-                                    {can('warehouses.create') && canCreateWarehouse && (
-                                        <>
-                                            <button
-                                                onClick={() => handleEditClick(wh)}
-                                                className="text-fg-muted hover:text-fg text-[10px] font-bold uppercase tracking-widest transition-colors"
-                                            >
-                                                Edit
-                                            </button>
-                                            <button
-                                                onClick={() => setDeletingWarehouse(wh)}
-                                                className="text-fg-muted hover:text-rose-400 text-[10px] font-bold uppercase tracking-widest transition-colors"
-                                            >
-                                                Delete
-                                            </button>
-                                        </>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    ))}
-
-
-                    {/* One primary call to action. The "+ New Warehouse" button in the
-                        header owns warehouse creation; this tile is the empty state and
-                        disappears the moment a warehouse exists, so the two never compete. */}
-                    {warehouses.length === 0 && can('warehouses.create') && canCreateWarehouse && (
-                        <button
-                            data-testid="empty-state-add-warehouse"
-                            onClick={() => !atWarehouseLimit && setIsCreateModalOpen(true)}
-                            disabled={atWarehouseLimit}
-                            title={atWarehouseLimit ? `Used ${whUsed} of ${whLimit} warehouses — upgrade your plan to add more` : undefined}
-                            className={`border-2 border-dashed rounded-2xl p-6 flex flex-col items-center justify-center transition-all gap-3 h-full min-h-[200px] ${atWarehouseLimit ? 'border-line text-fg-subtle cursor-not-allowed' : 'border-line text-fg-subtle hover:border-fg-subtle hover:bg-surface/30'}`}
-                        >
-                            <div className="p-3 rounded-full bg-surface-raised/50">
-                                <Plus size={24} />
-                            </div>
-                            <span className="font-semibold text-sm">Add New Warehouse</span>
-                            {atWarehouseLimit && <span className="text-xs text-amber-500/70">Plan limit reached</span>}
-                        </button>
-                    )}
-                </div>
-            )}
+            <DataTable
+                columns={columns}
+                rows={warehouses as any[]}
+                rowKey={(wh: any) => wh.id}
+                loading={isLoading}
+                emptyState={emptyState}
+            />
 
             <Modal
-                isOpen={isCreateModalOpen}
+                open={isCreateModalOpen}
                 onClose={() => setIsCreateModalOpen(false)}
                 title="Register New Warehouse"
+                footer={
+                    <div className="flex justify-end gap-nb-2">
+                        <Button variant="secondary" onClick={() => setIsCreateModalOpen(false)} disabled={isCreating}>Cancel</Button>
+                        <Button variant="primary" type="submit" form="create-warehouse-form" disabled={isCreating} loading={isCreating}>
+                            {isCreating ? 'Creating...' : 'Register Warehouse'}
+                        </Button>
+                    </div>
+                }
             >
-                <form onSubmit={handleCreateWarehouse} className="space-y-4 text-fg">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="col-span-2">
-                            <label className="block text-sm font-medium text-fg-muted mb-1.5">Warehouse Name *</label>
-                            <input
-                                type="text"
-                                value={newWarehouse.name}
-                                onChange={(e) => setNewWarehouse({ ...newWarehouse, name: e.target.value })}
-                                className={`w-full bg-surface-raised border ${showCreateErrors && createErrors.name ? 'border-rose-500/60' : 'border-line-strong'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-focus/50`}
-                                placeholder="e.g. Dubai South Hub"
-                            />
-                            <FieldErr show={showCreateErrors} message={createErrors.name} field="name" />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-fg-muted mb-1.5">Short Code *</label>
-                            <input
-                                type="text"
-                                value={newWarehouse.code}
-                                onChange={(e) => setNewWarehouse({ ...newWarehouse, code: e.target.value.toUpperCase() })}
-                                className={`w-full bg-surface-raised border ${showCreateErrors && createErrors.code ? 'border-rose-500/60' : 'border-line-strong'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-focus/50 font-mono`}
-                                placeholder="e.g. DXB-01"
-                            />
-                            <FieldErr show={showCreateErrors} message={createErrors.code} field="code" />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-fg-muted mb-1.5">Warehouse Type</label>
-                            <select
-                                value={newWarehouse.warehouse_type}
-                                onChange={(e) => setNewWarehouse({ ...newWarehouse, warehouse_type: e.target.value })}
-                                className={`w-full bg-surface-raised border ${showCreateErrors && createErrors.warehouse_type ? 'border-rose-500/60' : 'border-line-strong'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-focus/50 text-fg`}
-                            >
-                                <option value="general">General</option>
-                                <option value="distribution">Distribution</option>
-                                <option value="cold_storage">Cold Storage</option>
-                                <option value="manufacturing">Manufacturing</option>
-                                <option value="transit">Transit / Cross-dock</option>
-                            </select>
-                            <FieldErr show={showCreateErrors} message={createErrors.warehouse_type} field="warehouse_type" />
-                        </div>
-
-                        <div className="col-span-2">
-                            <label className="block text-sm font-medium text-fg-muted mb-1.5">Street Address</label>
-                            <input
-                                type="text"
-                                value={newWarehouse.address}
-                                onChange={(e) => setNewWarehouse({ ...newWarehouse, address: e.target.value })}
-                                className={`w-full bg-surface-raised border ${showCreateErrors && createErrors.address ? 'border-rose-500/60' : 'border-line-strong'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-focus/50`}
-                                placeholder="Street address"
-                            />
-                            <FieldErr show={showCreateErrors} message={createErrors.address} field="address" />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-fg-muted mb-1.5">City</label>
-                            <input
-                                type="text"
-                                value={newWarehouse.city}
-                                onChange={(e) => setNewWarehouse({ ...newWarehouse, city: e.target.value })}
-                                className={`w-full bg-surface-raised border ${showCreateErrors && createErrors.city ? 'border-rose-500/60' : 'border-line-strong'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-focus/50`}
-                                placeholder="City"
-                            />
-                            <FieldErr show={showCreateErrors} message={createErrors.city} field="city" />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-fg-muted mb-1.5">State / Region</label>
-                            <input
-                                type="text"
-                                value={newWarehouse.state}
-                                onChange={(e) => setNewWarehouse({ ...newWarehouse, state: e.target.value })}
-                                className={`w-full bg-surface-raised border ${showCreateErrors && createErrors.state ? 'border-rose-500/60' : 'border-line-strong'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-focus/50`}
-                                placeholder="State / Province"
-                            />
-                            <FieldErr show={showCreateErrors} message={createErrors.state} field="state" />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-fg-muted mb-1.5">Country</label>
-                            <input
-                                type="text"
-                                value={newWarehouse.country}
-                                onChange={(e) => setNewWarehouse({ ...newWarehouse, country: e.target.value })}
-                                className={`w-full bg-surface-raised border ${showCreateErrors && createErrors.country ? 'border-rose-500/60' : 'border-line-strong'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-focus/50`}
-                                placeholder="Country"
-                            />
-                            <FieldErr show={showCreateErrors} message={createErrors.country} field="country" />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-fg-muted mb-1.5">Contact Person</label>
-                            <input
-                                type="text"
-                                value={newWarehouse.contact_person}
-                                onChange={(e) => setNewWarehouse({ ...newWarehouse, contact_person: e.target.value })}
-                                className={`w-full bg-surface-raised border ${showCreateErrors && createErrors.contact_person ? 'border-rose-500/60' : 'border-line-strong'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-focus/50`}
-                                placeholder="Manager / Supervisor name"
-                            />
-                            <FieldErr show={showCreateErrors} message={createErrors.contact_person} field="contact_person" />
-                        </div>
-
-                        <div className="col-span-2">
-                            <label className="block text-sm font-medium text-fg-muted mb-1.5">Contact Phone</label>
-                            <input
-                                type="tel"
-                                value={newWarehouse.contact_phone}
-                                onChange={(e) => setNewWarehouse({ ...newWarehouse, contact_phone: e.target.value })}
-                                className={`w-full bg-surface-raised border ${showCreateErrors && createErrors.contact_phone ? 'border-rose-500/60' : 'border-line-strong'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-focus/50`}
-                                placeholder="+971 50 000 0000"
-                            />
-                            <FieldErr show={showCreateErrors} message={createErrors.contact_phone} field="contact_phone" />
-                        </div>
-                    </div>
-
-                    <div className="flex gap-3 mt-8">
-                        <button
-                            type="button"
-                            onClick={() => setIsCreateModalOpen(false)}
-                            disabled={isCreating}
-                            className="flex-1 bg-surface-raised hover:bg-surface-high text-fg font-semibold py-2.5 rounded-lg transition-all"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            type="submit"
-                            disabled={isCreating}
-                            className="flex-1 bg-primary hover:bg-primary-hover disabled:bg-primary/50 text-primary-fg font-semibold py-2.5 rounded-lg transition-all shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2"
-                        >
-                            {isCreating ? <><Loader2 size={18} className="animate-spin" /> Creating...</> : 'Register Warehouse'}
-                        </button>
-                    </div>
+                <form id="create-warehouse-form" onSubmit={handleCreateWarehouse}>
+                    {renderFields(newWarehouse, setNewWarehouse, createErrors as any, showCreateErrors)}
                 </form>
             </Modal>
 
-            {/* Edit Modal */}
             <Modal
-                isOpen={!!editingWarehouse}
+                open={!!editingWarehouse}
                 onClose={() => setEditingWarehouse(null)}
                 title="Edit Warehouse"
+                footer={
+                    <div className="flex justify-end gap-nb-2">
+                        <Button variant="secondary" onClick={() => setEditingWarehouse(null)} disabled={isSaving}>Cancel</Button>
+                        <Button variant="primary" type="submit" form="edit-warehouse-form" disabled={isSaving} loading={isSaving}>
+                            {isSaving ? 'Saving...' : 'Save Changes'}
+                        </Button>
+                    </div>
+                }
             >
-                <form onSubmit={handleSaveEdit} className="space-y-4 text-fg">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="col-span-2">
-                            <label className="block text-sm font-medium text-fg-muted mb-1.5">Warehouse Name *</label>
-                            <input
-                                type="text"
-                                value={editForm.name}
-                                onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                                className={`w-full bg-surface-raised border ${showEditErrors && editErrors.name ? 'border-rose-500/60' : 'border-line-strong'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-focus/50`}
-                            />
-                            <FieldErr show={showEditErrors} message={editErrors.name} field="name" />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-fg-muted mb-1.5">Short Code *</label>
-                            <input
-                                type="text"
-                                value={editForm.code}
-                                onChange={(e) => setEditForm({ ...editForm, code: e.target.value.toUpperCase() })}
-                                className={`w-full bg-surface-raised border ${showEditErrors && editErrors.code ? 'border-rose-500/60' : 'border-line-strong'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-focus/50 font-mono`}
-                            />
-                            <FieldErr show={showEditErrors} message={editErrors.code} field="code" />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-fg-muted mb-1.5">Warehouse Type</label>
-                            <select
-                                value={editForm.warehouse_type}
-                                onChange={(e) => setEditForm({ ...editForm, warehouse_type: e.target.value })}
-                                className={`w-full bg-surface-raised border ${showEditErrors && editErrors.warehouse_type ? 'border-rose-500/60' : 'border-line-strong'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-focus/50 text-fg`}
-                            >
-                                <option value="general">General</option>
-                                <option value="distribution">Distribution</option>
-                                <option value="cold_storage">Cold Storage</option>
-                                <option value="manufacturing">Manufacturing</option>
-                                <option value="transit">Transit / Cross-dock</option>
-                            </select>
-                            <FieldErr show={showEditErrors} message={editErrors.warehouse_type} field="warehouse_type" />
-                        </div>
-
-                        <div className="col-span-2">
-                            <label className="block text-sm font-medium text-fg-muted mb-1.5">Street Address</label>
-                            <input
-                                type="text"
-                                value={editForm.address}
-                                onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
-                                className={`w-full bg-surface-raised border ${showEditErrors && editErrors.address ? 'border-rose-500/60' : 'border-line-strong'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-focus/50`}
-                            />
-                            <FieldErr show={showEditErrors} message={editErrors.address} field="address" />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-fg-muted mb-1.5">City</label>
-                            <input
-                                type="text"
-                                value={editForm.city}
-                                onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
-                                className={`w-full bg-surface-raised border ${showEditErrors && editErrors.city ? 'border-rose-500/60' : 'border-line-strong'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-focus/50`}
-                            />
-                            <FieldErr show={showEditErrors} message={editErrors.city} field="city" />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-fg-muted mb-1.5">State / Region</label>
-                            <input
-                                type="text"
-                                value={editForm.state}
-                                onChange={(e) => setEditForm({ ...editForm, state: e.target.value })}
-                                className={`w-full bg-surface-raised border ${showEditErrors && editErrors.state ? 'border-rose-500/60' : 'border-line-strong'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-focus/50`}
-                            />
-                            <FieldErr show={showEditErrors} message={editErrors.state} field="state" />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-fg-muted mb-1.5">Country</label>
-                            <input
-                                type="text"
-                                value={editForm.country}
-                                onChange={(e) => setEditForm({ ...editForm, country: e.target.value })}
-                                className={`w-full bg-surface-raised border ${showEditErrors && editErrors.country ? 'border-rose-500/60' : 'border-line-strong'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-focus/50`}
-                            />
-                            <FieldErr show={showEditErrors} message={editErrors.country} field="country" />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-fg-muted mb-1.5">Contact Person</label>
-                            <input
-                                type="text"
-                                value={editForm.contact_person}
-                                onChange={(e) => setEditForm({ ...editForm, contact_person: e.target.value })}
-                                className={`w-full bg-surface-raised border ${showEditErrors && editErrors.contact_person ? 'border-rose-500/60' : 'border-line-strong'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-focus/50`}
-                            />
-                            <FieldErr show={showEditErrors} message={editErrors.contact_person} field="contact_person" />
-                        </div>
-
-                        <div className="col-span-2">
-                            <label className="block text-sm font-medium text-fg-muted mb-1.5">Contact Phone</label>
-                            <input
-                                type="tel"
-                                value={editForm.contact_phone}
-                                onChange={(e) => setEditForm({ ...editForm, contact_phone: e.target.value })}
-                                className={`w-full bg-surface-raised border ${showEditErrors && editErrors.contact_phone ? 'border-rose-500/60' : 'border-line-strong'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-focus/50`}
-                            />
-                            <FieldErr show={showEditErrors} message={editErrors.contact_phone} field="contact_phone" />
-                        </div>
-                    </div>
-
-                    <label className="flex items-center gap-2 cursor-pointer group">
-                        <input
-                            type="checkbox"
-                            checked={editForm.is_active}
-                            onChange={(e) => setEditForm({ ...editForm, is_active: e.target.checked })}
-                            className="w-4 h-4 rounded border-line-strong bg-surface-raised text-primary focus:ring-focus/50"
-                        />
-                        <span className="text-sm text-fg-muted group-hover:text-fg transition-colors">Active / Operational</span>
-                    </label>
-
-                    <div className="flex gap-3 mt-8">
-                        <button
-                            type="button"
-                            onClick={() => setEditingWarehouse(null)}
-                            disabled={isSaving}
-                            className="flex-1 bg-surface-raised hover:bg-surface-high text-fg font-semibold py-2.5 rounded-lg transition-all"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            type="submit"
-                            disabled={isSaving}
-                            className="flex-1 bg-primary hover:bg-primary-hover disabled:bg-primary/50 text-primary-fg font-semibold py-2.5 rounded-lg transition-all shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2"
-                        >
-                            {isSaving ? <><Loader2 size={18} className="animate-spin" /> Saving...</> : <><Save size={18} /> Save Changes</>}
-                        </button>
-                    </div>
+                <form id="edit-warehouse-form" onSubmit={handleSaveEdit} className="flex flex-col gap-nb-4">
+                    {renderFields(editForm as any, setEditForm as any, editErrors as any, showEditErrors)}
+                    <Checkbox
+                        name="is_active"
+                        label="Active / Operational"
+                        checked={editForm.is_active}
+                        onChange={(e: any) => setEditForm({ ...editForm, is_active: e.target.checked })}
+                    />
                 </form>
             </Modal>
 
-            {/* Delete Confirmation */}
-            {deletingWarehouse && (
-                <div className="fixed inset-0 bg-overlay/60 backdrop-blur-sm flex items-center justify-center z-[600]">
-                    <div className="bg-surface border border-line rounded-2xl p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto shadow-2xl">
-                        <div className="flex items-center gap-4 mb-4">
-                            <div className="w-12 h-12 rounded-full bg-rose-500/10 flex items-center justify-center">
-                                <Trash2 size={24} className="text-rose-500" />
-                            </div>
-                            <div>
-                                <h3 className="text-lg font-bold text-fg">Delete Warehouse</h3>
-                                <p className="text-fg-muted text-sm">This action cannot be undone</p>
-                            </div>
-                        </div>
-
-                        <p className="text-fg-muted mb-6">
-                            Are you sure you want to delete <strong className="text-fg">{deletingWarehouse.name}</strong>?
-                            Warehouses with stock cannot be deleted.
-                        </p>
-
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => setDeletingWarehouse(null)}
-                                disabled={isDeleting}
-                                className="flex-1 bg-surface-raised hover:bg-surface-high text-fg font-semibold py-2.5 rounded-lg transition-all"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleDeleteWarehouse}
-                                disabled={isDeleting}
-                                className="flex-1 bg-rose-600 hover:bg-rose-500 disabled:bg-rose-600/50 text-primary-fg font-semibold py-2.5 rounded-lg transition-all flex items-center justify-center gap-2"
-                            >
-                                {isDeleting ? <><Loader2 size={18} className="animate-spin" /> Deleting...</> : <><Trash2 size={18} /> Delete</>}
-                            </button>
-                        </div>
+            <Modal
+                open={!!deletingWarehouse}
+                onClose={() => setDeletingWarehouse(null)}
+                title="Delete Warehouse"
+                description="This action cannot be undone"
+                footer={
+                    <div className="flex justify-end gap-nb-2">
+                        <Button variant="secondary" onClick={() => setDeletingWarehouse(null)} disabled={isDeleting}>Cancel</Button>
+                        <Button variant="danger" onClick={handleDeleteWarehouse} disabled={isDeleting} loading={isDeleting}>
+                            {isDeleting ? 'Deleting...' : 'Delete'}
+                        </Button>
                     </div>
-                </div>
-            )}
-        </div>
+                }
+            >
+                <p className="text-nb-body text-fg-muted">
+                    Are you sure you want to delete <strong className="text-fg">{deletingWarehouse?.name}</strong>?
+                    Warehouses with stock cannot be deleted.
+                </p>
+            </Modal>
+        </ListPageTemplate>
     );
 };
 
