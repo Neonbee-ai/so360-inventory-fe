@@ -356,11 +356,10 @@ const StockLocationsPage = () => {
                     <Button
                         data-testid="empty-state-add-warehouse"
                         variant="primary"
-                        leftIcon={<Plus size={16} />}
                         disabled={atWarehouseLimit}
                         title={limitTitle}
                         onClick={() => !atWarehouseLimit && setIsCreateModalOpen(true)}
-                    >
+                    ><Plus size={16} />
                         Add New Warehouse
                     </Button>
                 ) : undefined
@@ -381,11 +380,10 @@ const StockLocationsPage = () => {
                 <Tooltip content={limitTitle ?? 'New Warehouse'}>
                     <Button
                         variant="primary"
-                        leftIcon={<Plus size={16} />}
                         disabled={atWarehouseLimit}
                         title={limitTitle}
                         onClick={() => !atWarehouseLimit && setIsCreateModalOpen(true)}
-                    >
+                    ><Plus size={16} />
                         New Warehouse
                         {atWarehouseLimit && <span> ({whUsed}/{whLimit})</span>}
                     </Button>

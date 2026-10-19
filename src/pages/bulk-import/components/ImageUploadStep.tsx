@@ -159,7 +159,7 @@ const ImageUploadStep: React.FC<Props> = ({ parsedRows, onImagesUploaded, onUplo
                             const failedEntry = failed.find(u => u.filename === f.name);
                             return (
                                 <div key={f.name} className="flex items-center gap-nb-3 px-nb-3 py-nb-2 rounded-nb-md bg-surface border border-line">
-                                    {(status === 'uploading' || status === 'optimising') && !uploadedEntry && !failedEntry && <Spinner label="Uploading" />}
+                                    {(status === 'uploading' || status === 'optimising') && !uploadedEntry && !failedEntry && <Spinner aria-label="Uploading" />}
                                     {uploadedEntry && <CheckCircle2 size={14} className="text-success shrink-0" />}
                                     {failedEntry && <XCircle size={14} className="text-danger shrink-0" />}
                                     {status === 'idle' && (isMatch
@@ -198,7 +198,7 @@ const ImageUploadStep: React.FC<Props> = ({ parsedRows, onImagesUploaded, onUplo
                 )}
                 {(status === 'uploading' || status === 'optimising') && (
                     <div className="flex items-center gap-nb-2 text-fg-muted text-nb-caption">
-                        <Spinner label="Uploading" />
+                        <Spinner aria-label="Uploading" />
                         {status === 'optimising' ? 'Optimising photos…' : 'Uploading…'}
                     </div>
                 )}

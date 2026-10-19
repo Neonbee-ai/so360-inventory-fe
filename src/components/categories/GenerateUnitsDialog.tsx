@@ -195,8 +195,7 @@ export const GenerateUnitsDialog: React.FC<GenerateUnitsDialogProps> = ({ isOpen
                                 variant="primary"
                                 onClick={handleSubmit}
                                 disabled={!canSubmit}
-                                leftIcon={submitting ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
-                            >
+                            >{submitting ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
                                 Create {count} units
                             </Button>
                         </div>

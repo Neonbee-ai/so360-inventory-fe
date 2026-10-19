@@ -278,7 +278,7 @@ const WarehouseDetailPage = () => {
                     title="Storage Locations"
                     actions={
                         canManageLocations ? (
-                            <Button variant="primary" size="sm" leftIcon={<Plus size={16} />} onClick={() => openLocationModal()}>
+                            <Button variant="primary" size="sm" onClick={() => openLocationModal()}><Plus size={16} />
                                 Add Location
                             </Button>
                         ) : undefined
@@ -330,7 +330,7 @@ const WarehouseDetailPage = () => {
                         columns={stockColumns}
                         rows={warehouse.stock_balances ?? []}
                         rowKey={(b: any) => b.id}
-                        emptyState={<EmptyState title="No stock in this warehouse" />}
+                        emptyState=<EmptyState title="No stock in this warehouse" />
                     />
                 </Card>
             </div>

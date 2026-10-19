@@ -202,8 +202,7 @@ const ItemSearchSelect = ({
                             key={i.id}
                             type="button"
                             variant="ghost"
-                            fullWidth
-                            className="justify-start text-left"
+                            className="w-full justify-start text-left"
                             onClick={() => { onSelect(i); setOpen(false); }}
                         >
                             <span className="font-medium">{i.name}</span>
@@ -765,9 +764,8 @@ const StockMovementRegisterPage = () => {
                     >
                         <Button
                             variant="primary"
-                            leftIcon={<Plus size={16} />}
                             onClick={() => { resetForm(); setIsModalOpen(true); }}
-                        >
+                        ><Plus size={16} />
                             New Transaction
                         </Button>
                     </FeatureGate>
@@ -816,7 +814,7 @@ const StockMovementRegisterPage = () => {
                 rows={movements}
                 rowKey={(m: StockMovement) => m.id}
                 loading={isLoading}
-                emptyState={<EmptyState title="No stock movements found." />}
+                emptyState=<EmptyState title="No stock movements found." />
             />
 
             <Modal

@@ -263,7 +263,7 @@ const VendorDetailPage = () => {
                                 data-testid="vendor-pos-table"
                                 rowKey={(po: any) => po.id}
                                 rows={pos}
-                                emptyState={<EmptyState title="No purchase orders yet" />}
+                                emptyState=<EmptyState title="No purchase orders yet" />
                                 columns={[
                                     { key: 'po_number', header: 'PO Number', render: (po: any) => <span className="font-mono text-sm">{po.po_number}</span> },
                                     { key: 'status', header: 'Status', render: (po: any) => <StatusBadge status={po.status} /> },
@@ -277,7 +277,7 @@ const VendorDetailPage = () => {
                             <div className="flex items-center justify-between mb-4">
                                 <h2 className="text-xl font-bold text-fg">Vendor Invoices</h2>
                                 {canManage && (
-                                    <Button variant="primary" leftIcon={<Plus size={16} />} onClick={() => setIsInvoiceModalOpen(true)}>
+                                    <Button variant="primary" onClick={() => setIsInvoiceModalOpen(true)}><Plus size={16} />
                                         Create Invoice
                                     </Button>
                                 )}
@@ -286,7 +286,7 @@ const VendorDetailPage = () => {
                                 data-testid="vendor-invoices-table"
                                 rowKey={(inv: any) => inv.id}
                                 rows={invoices}
-                                emptyState={<EmptyState title="No invoices yet" />}
+                                emptyState=<EmptyState title="No invoices yet" />
                                 columns={[
                                     { key: 'invoice_number', header: 'Invoice', render: (inv: any) => <span className="font-mono text-sm">{inv.invoice_number}</span> },
                                     { key: 'status', header: 'Status', render: (inv: any) => <StatusBadge status={inv.status} /> },

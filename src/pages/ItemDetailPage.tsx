@@ -368,7 +368,7 @@ const ItemDetailPage = () => {
         <EmptyState
             icon={AlertCircle}
             title={error}
-            action={<Button variant="secondary" onClick={() => navigate('/inventory/items')}>Back to Items</Button>}
+            action={{ label: 'Back to Items', onClick: () => navigate('/inventory/items') }}
         />
     );
     if (!item) return null;
@@ -456,11 +456,11 @@ const ItemDetailPage = () => {
                 secondaryActions={isEditing ? [
                     <Button key="cancel-editing" variant="secondary" size="sm" onClick={handleCancelEdit}>Cancel Editing</Button>,
                 ] : [
-                    ...(can('items.update') ? [<Button key="edit" variant="secondary" size="sm" leftIcon={<Edit2 size={16} />} onClick={handleEditClick}>Edit</Button>] : []),
-                    ...(can('items.delete') ? [<Button key="delete" variant="danger" size="sm" leftIcon={<Trash2 size={16} />} onClick={() => setShowDeleteConfirm(true)}>Delete</Button>] : []),
+                    ...(can('items.update') ? [<Button key="edit" variant="secondary" size="sm" onClick={handleEditClick}>{<Edit2 size={16} />} Edit</Button>] : []),
+                    ...(can('items.delete') ? [<Button key="delete" variant="danger" size="sm" onClick={() => setShowDeleteConfirm(true)}>{<Trash2 size={16} />} Delete</Button>] : []),
                 ]}
             >
-            {error && <Alert variant="error" action={<Button variant="ghost" size="sm" onClick={() => setError(null)}>Dismiss</Button>}>{error}</Alert>}
+            {error && <Alert variant="error" action={{ label: 'Dismiss', onClick: () => setError(null) }}>{error}</Alert>}
             {taxCodesError && <Alert variant="warning">{taxCodesError}</Alert>}
 
             <div className="p-8">
@@ -942,7 +942,7 @@ const ItemDetailPage = () => {
                                                     Audit Trail
                                                 </span>
                                             </div>
-                                            <DataTable columns={columns} rows={ledger} rowKey={(m: StockMovement) => m.id} emptyState={<EmptyState title="No movements recorded for this item." />} />
+                                            <DataTable columns={columns} rows={ledger} rowKey={(m: StockMovement) => m.id} emptyState=<EmptyState title="No movements recorded for this item." /> />
                                             <div className="mt-6 flex items-start gap-3 p-4 bg-surface/30 border border-line rounded-xl">
                                                 <Info size={16} className="text-fg-subtle mt-1" />
                                                 <p className="text-xs text-fg-subtle leading-relaxed">
@@ -1025,8 +1025,7 @@ const ItemDetailPage = () => {
                         onClick={handleSaveEdit}
                         disabled={isSaving || isTaxCodesLoading || !!taxCodesError}
                         loading={isSaving}
-                        leftIcon={<Save size={16} />}
-                    >
+                    ><Save size={16} />
                         {isSaving ? 'Saving...' : 'Save Changes'}
                     </Button>
                 </div>
@@ -1043,7 +1042,7 @@ const ItemDetailPage = () => {
                 footer={
                     <>
                         <Button variant="secondary" onClick={() => setShowDeleteConfirm(false)} disabled={isDeleting}>Cancel</Button>
-                        <Button variant="danger" onClick={handleDeleteItem} disabled={isDeleting} loading={isDeleting} leftIcon={<Trash2 size={16} />}>
+                        <Button variant="danger" onClick={handleDeleteItem} disabled={isDeleting} loading={isDeleting}>{<Trash2 size={16} />}
                             {isDeleting ? 'Deleting...' : 'Delete'}
                         </Button>
                     </>

@@ -180,8 +180,7 @@ const LifecycleStatusPanel: React.FC<LifecycleStatusPanelProps> = ({
                             onClick={() => handleTransition(transition.code)}
                             disabled={isTransitioning}
                             loading={isTransitioning}
-                            leftIcon={isTransitioning ? undefined : transition.icon}
-                        >
+                        >{isTransitioning ? undefined : transition.icon}
                             {transition.label}
                         </Button>
                     ))}

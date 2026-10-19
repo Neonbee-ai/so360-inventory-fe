@@ -124,7 +124,7 @@ const ItemsPage = () => {
             headerSecondaryActions={importAllowed ? [
                 <FeatureGate key="bulk" state={bulkImportState} loading={(shell?.effectiveFlagsLoaded === false)} onUpgradeClick={() => navigate('/org/billing')}>
                     <Tooltip content="Upload a CSV of items, name image files after the SKU, preview the rows, then confirm.">
-                        <Button variant="secondary" leftIcon={<Upload size={16} />} onClick={() => navigate('/inventory/items/bulk-import')}>
+                        <Button variant="secondary" onClick={() => navigate('/inventory/items/bulk-import')}><Upload size={16} />
                             Bulk Import
                         </Button>
                     </Tooltip>
@@ -140,7 +140,7 @@ const ItemsPage = () => {
                         isUnlimited={quotaData?.is_unlimited}
                         disableOnExceeded
                     >
-                        <Button leftIcon={<Plus size={18} />} onClick={() => navigate('/inventory/items/new')}>
+                        <Button onClick={() => navigate('/inventory/items/new')}><Plus size={18} />
                             Register Item
                         </Button>
                     </QuotaGate>

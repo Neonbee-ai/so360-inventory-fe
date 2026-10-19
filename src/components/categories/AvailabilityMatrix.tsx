@@ -205,7 +205,7 @@ const UnitPanel: React.FC<UnitPanelProps> = ({ unit, orgCurrency, canManage, onC
                     canManage={canManage}
                 />
             )}
-            <Button variant="ghost" size="sm" leftIcon={<ExternalLink size={12} />} onClick={onOpen}>
+            <Button variant="ghost" size="sm" onClick={onOpen}><ExternalLink size={12} />
                 Open unit
             </Button>
         </div>

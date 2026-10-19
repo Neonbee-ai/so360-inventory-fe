@@ -55,7 +55,7 @@ const ProcurementDashboardPage = () => {
     if (loading) {
         return (
             <DashboardPageTemplate title={title} description={description}>
-                <div className="flex min-h-[400px] items-center justify-center"><Spinner label="Loading dashboard" /></div>
+                <div className="flex min-h-[400px] items-center justify-center"><Spinner aria-label="Loading dashboard" /></div>
             </DashboardPageTemplate>
         );
     }

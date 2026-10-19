@@ -155,7 +155,7 @@ const StockOverviewPage = () => {
             title="Stock Overview"
             description="Real-time physical stock levels and valuation"
             headerSecondaryActions={[
-                <Button key="refresh" variant="secondary" leftIcon={<RefreshCcw size={16} />} onClick={() => { setError(null); fetchStock(); }}>
+                <Button key="refresh" variant="secondary" onClick={() => { setError(null); fetchStock(); }}><RefreshCcw size={16} />
                     Refresh
                 </Button>,
             ]}
@@ -189,7 +189,7 @@ const StockOverviewPage = () => {
                 rows={paginatedData}
                 rowKey={(sl) => sl.id}
                 loading={isLoading}
-                emptyState={<EmptyState title="No stock balances found. Perform an adjustment or transfer to see stock here." />}
+                emptyState=<EmptyState title="No stock balances found. Perform an adjustment or transfer to see stock here." />
             />
         </ListPageTemplate>
     );

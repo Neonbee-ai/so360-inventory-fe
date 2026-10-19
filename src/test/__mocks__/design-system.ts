@@ -1,7 +1,7 @@
 // Stub for @so360/design-system — vi.mock() in each test overrides these
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-export const Button = ({ children, onClick, type, disabled, leftIcon: _l, rightIcon: _r, variant, size, loading, fullWidth: _f, ...rest }: any) =>
+export const Button = ({ children, onClick, type, disabled, variant, size, loading, ...rest }: any) =>
   React.createElement('button', { onClick, type, disabled, 'data-comb': 'button', 'data-variant': variant, 'data-size': size, 'data-loading': loading ? 'true' : undefined, ...rest }, children);
 // ---- Form primitives: render native elements carrying label, testid, value/onChange ----
 const FieldWrap = ({ id, label, hint, error, children }: any) =>
@@ -342,7 +342,7 @@ export const Progress = ({ value, max = 100, label, showValue, 'data-testid': te
 const h = React.createElement;
 
 export const Input = ({ 'data-testid': testId, ...rest }: any) => h('input', { 'data-testid': testId, ...rest });
-export const Spinner = ({ label = 'Loading', 'data-testid': testId }: any) => h('span', { role: 'status', 'aria-label': label, 'data-testid': testId });
+export const Spinner = ({ 'aria-label': label = 'Loading', 'data-testid': testId }: any) => h('span', { role: 'status', 'aria-label': label, 'data-testid': testId });
 export const Tooltip = ({ children }: any) => h(React.Fragment, null, children);
 export const QuotaBar = ({ children }: any) => h('div', { 'data-testid': 'quota-bar' }, children);
 export const QuotaGate = ({ children }: any) => h('div', { 'data-testid': 'quota-gate' }, children);

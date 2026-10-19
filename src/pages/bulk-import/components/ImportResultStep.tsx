@@ -23,7 +23,7 @@ const ImportResultStep: React.FC<Props> = ({ result, loading, submittedRows, onG
     if (loading) {
         return (
             <div className="flex flex-col items-center gap-nb-4 py-nb-10">
-                <Spinner label="Importing" />
+                <Spinner aria-label="Importing" />
                 <p className="text-fg-muted text-nb-caption" aria-busy="true">Importing {submittedRows.length} items…</p>
             </div>
         );

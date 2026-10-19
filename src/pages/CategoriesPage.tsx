@@ -140,8 +140,8 @@ const ImageUploadZone: React.FC<{
                         </div>
                     )}
                     <div className="absolute inset-0 bg-overlay/0 hover:bg-overlay/40 transition-colors flex items-center justify-center gap-2 opacity-0 hover:opacity-100">
-                        <Button type="button" variant="secondary" size="sm" leftIcon={<Upload size={12} />} onClick={() => fileRef.current?.click()}>Replace</Button>
-                        <Button type="button" variant="danger" size="sm" leftIcon={<X size={12} />} onClick={onRemove}>Remove</Button>
+                        <Button type="button" variant="secondary" size="sm" onClick={() => fileRef.current?.click()}><Upload size={12} /> Replace</Button>
+                        <Button type="button" variant="danger" size="sm" onClick={onRemove}><X size={12} /> Remove</Button>
                     </div>
                     {/* comb-exception: hidden native file input driven by the Comb Replace button / drop zone */}
                     <input ref={fileRef} type="file" accept={IMAGE_ACCEPT} className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ''; }} />
@@ -517,13 +517,12 @@ const CategoriesPage = () => {
                     <FeatureGate state={createState} loading={(shell?.effectiveFlagsLoaded === false)} onUpgradeClick={() => navigate('/org/billing')}>
                     <Button
                         variant="primary"
-                        leftIcon={<Plus size={16} />}
                         onClick={() => {
                             setSelectedId(null);
                             setViewMode('tree');
                             setShowAddRoot(true);
                         }}
-                    >
+                    ><Plus size={16} />
                         {`New ${labels.category}`}
                     </Button>
                     </FeatureGate>
@@ -594,8 +593,7 @@ const CategoriesPage = () => {
                                         onClick={handleSaveDetail}
                                         disabled={isSaving || !editName.trim() || !!slugError}
                                         loading={isSaving}
-                                        leftIcon={<Save size={14} />}
-                                    >
+                                    ><Save size={14} />
                                         Save
                                     </Button>
                                 </div>
@@ -640,8 +638,7 @@ const CategoriesPage = () => {
                                             size="sm"
                                             onClick={() => setShowAvailability(v => !v)}
                                             aria-pressed={showAvailability}
-                                            leftIcon={<LayoutGrid size={14} />}
-                                        >
+                                        ><LayoutGrid size={14} />
                                             {showAvailability ? 'Hide availability' : 'Availability'}
                                         </Button>
                                         {selectedCategory.parent_id && canCreate && (
@@ -650,8 +647,7 @@ const CategoriesPage = () => {
                                                 variant="primary"
                                                 size="sm"
                                                 onClick={() => setShowGenerate(true)}
-                                                leftIcon={<Sparkles size={14} />}
-                                            >
+                                            ><Sparkles size={14} />
                                                 Generate units
                                             </Button>
                                         )}

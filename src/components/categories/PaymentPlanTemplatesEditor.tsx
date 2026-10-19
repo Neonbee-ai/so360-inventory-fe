@@ -96,11 +96,10 @@ export const PaymentPlanTemplatesEditor: React.FC<PaymentPlanTemplatesEditorProp
                         type="button"
                         variant="secondary"
                         size="sm"
-                        leftIcon={<Plus size={12} />}
                         onClick={() => emit([...templates, newPaymentPlanTemplate(templates.length === 0)])}
                         disabled={atMax}
                         title={atMax ? `At most ${MAX_PAYMENT_PLAN_TEMPLATES} payment plans` : undefined}
-                    >
+                    ><Plus size={12} />
                         Add payment plan
                     </Button>
                 )}
@@ -240,10 +239,9 @@ export const PaymentPlanTemplatesEditor: React.FC<PaymentPlanTemplatesEditorProp
                                     variant="ghost"
                                     size="sm"
                                     aria-label={`Add instalment to payment plan ${n}`}
-                                    leftIcon={<Plus size={12} />}
                                     disabled={t.lines.length >= MAX_PAYMENT_PLAN_LINES}
                                     onClick={() => patchTemplate(ti, { lines: [...t.lines, newPaymentPlanLine()] })}
-                                >
+                                ><Plus size={12} />
                                     Add instalment
                                 </Button>
                             )}

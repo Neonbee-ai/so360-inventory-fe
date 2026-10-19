@@ -43,7 +43,7 @@ const CsvUploadStep: React.FC<Props> = ({ onParsed, onParse }) => {
 
             {loading && (
                 <div className="mt-nb-6 flex items-center gap-nb-3 text-fg-muted text-nb-caption">
-                    <Spinner label="Parsing" />
+                    <Spinner aria-label="Parsing" />
                     Parsing CSV…
                 </div>
             )}

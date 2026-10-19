@@ -182,7 +182,7 @@ const OpeningBalancePage = () => {
     if (loading) {
         return (
             <FormPageTemplate title="Opening Balance" trail={poListTrail}>
-                <Spinner label="Loading opening balance form" />
+                <Spinner aria-label="Loading opening balance form" />
             </FormPageTemplate>
         );
     }

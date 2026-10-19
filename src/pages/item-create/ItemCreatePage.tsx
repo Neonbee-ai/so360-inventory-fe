@@ -561,7 +561,7 @@ const ItemCreatePage = () => {
                     onClick={() => handleSubmit()}
                     disabled={isSubmitting || isTaxCodesLoading || !!taxCodesError}
                 >
-                    {isSubmitting ? <Spinner label="Saving" /> : <Save size={18} />}
+                    {isSubmitting ? <Spinner aria-label="Saving" /> : <Save size={18} />}
                     {isSubmitting ? 'Saving...' : 'Save Item'}
                 </Button>
             }

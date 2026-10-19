@@ -21,7 +21,7 @@ const ImageThumbnail: React.FC<ImageThumbnailProps> = ({ url, isLoading, error, 
         <div className="relative group w-24 h-24 rounded-nb-md overflow-hidden border border-line-strong bg-surface-raised">
             {isLoading ? (
                 <div className="w-full h-full flex items-center justify-center">
-                    <Spinner label="Uploading" />
+                    <Spinner aria-label="Uploading" />
                 </div>
             ) : error ? (
                 <div className="w-full h-full flex flex-col items-center justify-center p-2">

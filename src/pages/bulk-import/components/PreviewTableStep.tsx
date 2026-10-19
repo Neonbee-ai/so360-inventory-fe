@@ -33,6 +33,7 @@ const PreviewTableStep: React.FC<Props> = ({ rows, onConfirm, onBack }) => {
     const withImage = validRows.filter(r => r.data.image_urls?.length > 0);
 
     const display = showErrors ? errorRows : rows;
+    const toggleLabel = showErrors ? 'Show all rows' : errorRows.length > 0 ? 'Show errors only' : '';
 
     const rowColor = (status: string) =>
         status === 'error'
