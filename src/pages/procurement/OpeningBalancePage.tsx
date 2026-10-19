@@ -242,7 +242,7 @@ const OpeningBalancePage = () => {
             render: (item) => {
                 const idx = items.indexOf(item);
                 return (
-                    <Select
+                    <Select name="warehouse"
                         aria-label="Warehouse"
                         placeholder="Select warehouse"
                         value={item.warehouse_id}
@@ -261,7 +261,7 @@ const OpeningBalancePage = () => {
             header: 'Qty on Hand',
             align: 'right',
             render: (item) => (
-                <TextField
+                <TextField name="quantity-on-hand"
                     type="number"
                     min="0.001"
                     step="0.001"
@@ -276,7 +276,7 @@ const OpeningBalancePage = () => {
             header: 'Unit Cost',
             align: 'right',
             render: (item) => (
-                <TextField
+                <TextField name="unit-cost"
                     type="number"
                     min="0"
                     step="0.01"
@@ -398,7 +398,7 @@ const OpeningBalancePage = () => {
                             <EmptyState
                                 title="No item lines yet"
                                 description="Use Load Unlinked Stock to auto-fill items, or add a line manually."
-                                action={<Button type="button" variant="ghost" onClick={addEmptyLine}>add a line manually</Button>}
+                                action={{ label: 'add a line manually', onClick: addEmptyLine }}
                             />
                         }
                         footer={

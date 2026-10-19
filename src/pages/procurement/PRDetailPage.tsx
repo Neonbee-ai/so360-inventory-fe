@@ -202,7 +202,7 @@ const PRDetailPage = () => {
         return (
             <EmptyState
                 title={error || 'PR not found'}
-                action={<Button variant="secondary" onClick={() => navigate('/procurement/pr')}>Back to PRs</Button>}
+                action={{ label: 'Back to PRs', onClick: () => navigate('/procurement/pr') }}
             />
         );
     }

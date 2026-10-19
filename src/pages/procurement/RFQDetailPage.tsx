@@ -167,7 +167,7 @@ const RFQDetailPage = () => {
         return (
             <EmptyState
                 title={error || 'RFQ not found'}
-                action={<Button variant="secondary" onClick={() => navigate('/procurement/rfq')}>Back to RFQs</Button>}
+                action={{ label: 'Back to RFQs', onClick: () => navigate('/procurement/rfq') }}
             />
         );
     }
@@ -324,12 +324,12 @@ const RFQDetailPage = () => {
                                     <div className="text-sm text-fg truncate">{l.description || 'Line'}</div>
                                     <div className="text-xs text-fg-subtle">Qty {l.quantity} {l.uom}</div>
                                 </div>
-                                <TextField
+                                <TextField name="unit-price"
                                     type="number" min="0" step="0.01" placeholder="Unit price"
                                     aria-label={`Unit price for ${l.description || `line ${idx + 1}`}`}
                                     value={l.unit_price} onChange={(e: any) => setLine(idx, { unit_price: e.target.value })}
                                 />
-                                <TextField
+                                <TextField name="tax"
                                     type="number" min="0" step="0.01" placeholder="Tax %"
                                     aria-label={`Tax rate for ${l.description || `line ${idx + 1}`}`}
                                     value={l.tax_rate} onChange={(e: any) => setLine(idx, { tax_rate: e.target.value })}

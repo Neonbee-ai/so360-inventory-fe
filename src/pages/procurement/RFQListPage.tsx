@@ -190,7 +190,7 @@ const RFQListPage = () => {
                 onClearFilters={() => setStatusFilter('')}
                 empty={<EmptyState title="No RFQs yet. Create one to start sourcing quotes." />}
             >
-                {fetchError && <Alert variant="danger">{fetchError}</Alert>}
+                {fetchError && <Alert variant="error">{fetchError}</Alert>}
                 <DataTable
                     data-testid="rfq-table"
                     columns={[
@@ -327,20 +327,20 @@ const RFQListPage = () => {
                                         />
                                     </div>
                                     <div className="w-24">
-                                        <TextField type="number" aria-label={`Quantity for line ${idx + 1}`} placeholder="Qty" min="1" value={line.quantity}
+                                        <TextField name="qty" type="number" aria-label={`Quantity for line ${idx + 1}`} placeholder="Qty" min="1" value={line.quantity}
                                             onChange={(e: any) => updateLine(idx, 'quantity', e.target.value)} />
                                     </div>
                                     <div className="w-24">
-                                        <TextField aria-label={`Unit of measure for line ${idx + 1}`} placeholder="UOM" value={line.uom}
+                                        <TextField name="uom" aria-label={`Unit of measure for line ${idx + 1}`} placeholder="UOM" value={line.uom}
                                             onChange={(e: any) => updateLine(idx, 'uom', e.target.value)} />
                                     </div>
                                     <div className="w-28">
-                                        <TextField type="number" aria-label={`Target price for line ${idx + 1}`} placeholder="Target" value={line.target_unit_price}
+                                        <TextField name="target" type="number" aria-label={`Target price for line ${idx + 1}`} placeholder="Target" value={line.target_unit_price}
                                             onChange={(e: any) => updateLine(idx, 'target_unit_price', e.target.value)} />
                                     </div>
                                     <Button type="button" variant="ghost" size="sm" title="Remove line" aria-label="Remove line" onClick={() => setLines(lines.filter((_, i) => i !== idx))}>×</Button>
                                 </div>
-                                <TextField aria-label={`Description for line ${idx + 1}`} placeholder="Description / specification (optional)" value={line.description}
+                                <TextField name="description-specification-optional" aria-label={`Description for line ${idx + 1}`} placeholder="Description / specification (optional)" value={line.description}
                                     onChange={(e: any) => updateLine(idx, 'description', e.target.value)} />
                             </div>
                         ))}

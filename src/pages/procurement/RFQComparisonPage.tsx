@@ -73,7 +73,7 @@ const RFQComparisonPage = () => {
         return (
             <EmptyState
                 title={error || 'Comparison unavailable'}
-                action={<Button variant="secondary" onClick={() => navigate('/procurement/rfq')}>Back to RFQs</Button>}
+                action={{ label: 'Back to RFQs', onClick: () => navigate('/procurement/rfq') }}
             />
         );
     }

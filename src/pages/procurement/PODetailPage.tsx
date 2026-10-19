@@ -185,7 +185,7 @@ const PODetailPage = () => {
         return (
             <EmptyState
                 title={error || 'PO not found'}
-                action={<Button variant="secondary" onClick={backToList}>Back to Purchase Orders</Button>}
+                action={{ label: 'Back to Purchase Orders', onClick: backToList }}
             />
         );
     }

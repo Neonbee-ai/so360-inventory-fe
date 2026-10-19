@@ -351,19 +351,11 @@ const StockLocationsPage = () => {
         <EmptyState
             title="No warehouses yet"
             description="Add a warehouse to start tracking stock locations."
-            action={
-                canManage ? (
-                    <Button
-                        data-testid="empty-state-add-warehouse"
-                        variant="primary"
-                        disabled={atWarehouseLimit}
-                        title={limitTitle}
-                        onClick={() => !atWarehouseLimit && setIsCreateModalOpen(true)}
-                    ><Plus size={16} />
-                        Add New Warehouse
-                    </Button>
-                ) : undefined
-            }
+            action={canManage ? {
+                label: 'Add New Warehouse',
+                onClick: () => !atWarehouseLimit && setIsCreateModalOpen(true),
+                'data-testid': 'empty-state-add-warehouse',
+            } : undefined}
         />
     );
 

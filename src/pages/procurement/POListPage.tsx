@@ -338,7 +338,7 @@ const POListPage = () => {
 
     const renderNotice = (n: PageNotice) => n && (
         <Alert
-            variant={n.kind === 'permission' ? 'warning' : 'danger'}
+            variant={n.kind === 'permission' ? 'warning' : 'error'}
             action={n.kind === 'error' ? { label: 'Retry', onClick: fetchData } : undefined}
         >
             {n.message}

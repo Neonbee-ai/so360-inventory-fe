@@ -186,7 +186,7 @@ const ItemSearchSelect = ({
                 disabled={disabled}
                 placeholder="Search by item code or name..."
                 aria-label="Search items"
-                leadingIcon={<Search size={16} />}
+                leadingIcon={Search}
                 value={query}
                 onFocus={() => setOpen(true)}
                 onChange={(e: any) => setQuery(e.target.value)}

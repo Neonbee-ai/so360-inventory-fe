@@ -263,7 +263,7 @@ const PRListPage = () => {
                 isEmpty={!loading && !fetchError && prs.length === 0}
                 empty={<EmptyState title="No purchase requisitions found." />}
             >
-                {fetchError && <Alert variant="danger">{fetchError}</Alert>}
+                {fetchError && <Alert variant="error">{fetchError}</Alert>}
                 <DataTable
                     data-testid="pr-table"
                     columns={[
@@ -451,7 +451,7 @@ const PRListPage = () => {
                                         />
                                     </div>
                                     <div className="w-24">
-                                        <TextField
+                                        <TextField name="qty"
                                             type="number"
                                             placeholder="Qty"
                                             aria-label="Quantity"
@@ -461,7 +461,7 @@ const PRListPage = () => {
                                         />
                                     </div>
                                     <div className="w-32">
-                                        <TextField
+                                        <TextField name="est-price"
                                             type="number"
                                             placeholder="Est. Price"
                                             aria-label="Estimated price"
@@ -475,7 +475,7 @@ const PRListPage = () => {
                                 </div>
                                 <div className="flex gap-nb-3">
                                     <div className="flex-1">
-                                        <TextField
+                                        <TextField name="description-optional"
                                             placeholder="Description (optional)"
                                             aria-label="Item description"
                                             value={item.description}
@@ -483,7 +483,7 @@ const PRListPage = () => {
                                         />
                                     </div>
                                     <div className="w-24">
-                                        <TextField
+                                        <TextField name="uom"
                                             placeholder="UOM"
                                             aria-label="Unit of measure"
                                             value={item.uom || ''}
@@ -491,7 +491,7 @@ const PRListPage = () => {
                                         />
                                     </div>
                                     <div className="w-40">
-                                        <TextField
+                                        <TextField name="required-delivery-date"
                                             type="date"
                                             aria-label="Required delivery date"
                                             title="Required delivery date"

@@ -203,7 +203,7 @@ const WarehouseDetailPage = () => {
             <DetailPageTemplate title="Warehouse">
                 <EmptyState
                     title={error || 'Warehouse not found'}
-                    action={<Button variant="secondary" onClick={() => navigate('/inventory/locations')}>Back to Warehouses</Button>}
+                    action={{ label: 'Back to Warehouses', onClick: () => navigate('/inventory/locations') }}
                 />
             </DetailPageTemplate>
         );
@@ -316,11 +316,7 @@ const WarehouseDetailPage = () => {
                     ) : (
                         <EmptyState
                             title="No storage locations defined"
-                            action={
-                                canManageLocations ? (
-                                    <Button variant="secondary" size="sm" onClick={() => openLocationModal()}>Add your first location</Button>
-                                ) : undefined
-                            }
+                            action={canManageLocations ? { label: 'Add your first location', onClick: () => openLocationModal() } : undefined}
                         />
                     )}
                 </Card>
