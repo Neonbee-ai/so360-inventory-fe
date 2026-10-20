@@ -9,7 +9,7 @@ import { Plus } from 'lucide-react';
 import {
     FeatureGate, toast, getErrorMessage, DepartmentSelector, useConfirm,
     ListPageTemplate, Button, DataTable, KpiCard, EmptyState, Alert, Badge, StatusBadge,
-    Modal, TextField, Select, Textarea,
+    Modal, TextField, Select, Textarea, FieldGrid, Grid,
 } from '@so360/design-system';
 
 interface PRLine {
@@ -236,12 +236,12 @@ const PRListPage = () => {
                         : 'neutral';
 
     const kpis = (
-        <div className="grid grid-cols-1 wc-medium:grid-cols-4 gap-nb-4">
+        <Grid columns={4} gap="sm">
             <KpiCard label="Total PRs" value={prs.length} />
             <KpiCard label="Pending Approval" value={prs.filter(p => p.status === 'pending_approval').length} />
             <KpiCard label="Approved" value={prs.filter(p => p.status === 'approved').length} />
             <KpiCard label="Converted" value={prs.filter(p => ['converted_to_po', 'partially_converted', 'fully_converted'].includes(p.status)).length} />
-        </div>
+        </Grid>
     );
 
     const closeForm = () => setShowForm(false);
@@ -328,7 +328,7 @@ const PRListPage = () => {
                 }
             >
                 <form id="pr-form" onSubmit={handleSubmit} className="space-y-nb-4">
-                    <div className="grid grid-cols-1 wc-medium:grid-cols-2 gap-nb-4">
+                    <FieldGrid columns={2}>
                         <TextField
                             label="Title"
                             name="title"
@@ -344,7 +344,7 @@ const PRListPage = () => {
                             value={formData.required_date}
                             onChange={(e: any) => setFormData(prev => ({ ...prev, required_date: e.target.value }))}
                         />
-                    </div>
+                    </FieldGrid>
 
                     <div className="space-y-nb-1">
                         <div className="text-nb-label font-medium text-fg-muted">Priority</div>
@@ -364,7 +364,7 @@ const PRListPage = () => {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 wc-medium:grid-cols-2 gap-nb-4">
+                    <FieldGrid columns={2}>
                         <div className="space-y-nb-1">
                             <div className="text-nb-label font-medium text-fg-muted">Department</div>
                             <DepartmentSelector
@@ -413,7 +413,7 @@ const PRListPage = () => {
                             placeholder="e.g. CC-OPS-2026"
                             onChange={(e: any) => setFormData(prev => ({ ...prev, budget_code: e.target.value }))}
                         />
-                    </div>
+                    </FieldGrid>
 
                     <Textarea
                         label="Description"

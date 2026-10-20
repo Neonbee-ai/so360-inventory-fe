@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useActivity, useShellBridge } from '@so360/shell-context';
 import {
-    Alert, Button, EmptyState, FeatureGate, IconButton, SettingsCard, SettingsPageTemplate, Skeleton, StatusBadge, TextField, useConfirm,
+    Alert, Button, EmptyState, FeatureGate, IconButton, SettingsCard, SettingsPageTemplate, Skeleton, StatusBadge, TextField, useConfirm, Grid,
 } from '@so360/design-system';
 import { Plus, Trash2, ChevronRight, Sliders } from 'lucide-react';
 import { ProductType, ProductTypeAttribute } from '../../types/productTypes';
@@ -134,56 +134,58 @@ const ProductTypeSettingsPage = () => {
             {error && <Alert variant="error">{error}</Alert>}
             {success && <Alert variant="success">Saved successfully</Alert>}
 
-            <div className="grid grid-cols-1 gap-nb-region md:grid-cols-3">
+            <Grid>
                 {/* Left: Type list */}
-                <SettingsCard
-                    title="Types"
-                    actions={
-                        <FeatureGate state={manageProductTypesState} loading={(shell?.effectiveFlagsLoaded === false)} onUpgradeClick={() => navigate('/org/billing')}>
-                            <Button variant="secondary" size="sm" onClick={() => setShowCreateForm(true)}><Plus size={14} /> New</Button>
-                        </FeatureGate>
-                    }
-                >
-                    <div className="flex flex-col gap-nb-2">
-                        {showCreateForm && (
-                            <div className="flex flex-col gap-nb-2 rounded-nb-lg border border-line bg-surface p-nb-3">
-                                <TextField
-                                    name="product-type-name"
-                                    aria-label="Name"
-                                    value={newName}
-                                    onChange={e => { setNewName(e.target.value); setNewCode(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '_')); }}
-                                    placeholder="Name *"
-                                    autoFocus
-                                />
-                                <TextField name="product-type-code" aria-label="Code" value={newCode} onChange={e => setNewCode(e.target.value)} placeholder="Code *" />
-                                <TextField name="product-type-description" aria-label="Description" value={newDesc} onChange={e => setNewDesc(e.target.value)} placeholder="Description" />
-                                <div className="flex justify-end gap-nb-2">
-                                    <Button variant="secondary" size="sm" onClick={() => setShowCreateForm(false)}>Cancel</Button>
-                                    <Button size="sm" onClick={handleCreate} disabled={isCreating || !newName.trim() || !newCode.trim()} loading={isCreating}>Create</Button>
+                <Grid.Item span={4}>
+                    <SettingsCard
+                        title="Types"
+                        actions={
+                            <FeatureGate state={manageProductTypesState} loading={(shell?.effectiveFlagsLoaded === false)} onUpgradeClick={() => navigate('/org/billing')}>
+                                <Button variant="secondary" size="sm" onClick={() => setShowCreateForm(true)}><Plus size={14} /> New</Button>
+                            </FeatureGate>
+                        }
+                    >
+                        <div className="flex flex-col gap-nb-2">
+                            {showCreateForm && (
+                                <div className="flex flex-col gap-nb-2 border-b border-line pb-nb-3">
+                                    <TextField
+                                        name="product-type-name"
+                                        aria-label="Name"
+                                        value={newName}
+                                        onChange={e => { setNewName(e.target.value); setNewCode(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '_')); }}
+                                        placeholder="Name *"
+                                        autoFocus
+                                    />
+                                    <TextField name="product-type-code" aria-label="Code" value={newCode} onChange={e => setNewCode(e.target.value)} placeholder="Code *" />
+                                    <TextField name="product-type-description" aria-label="Description" value={newDesc} onChange={e => setNewDesc(e.target.value)} placeholder="Description" />
+                                    <div className="flex justify-end gap-nb-2">
+                                        <Button variant="secondary" size="sm" onClick={() => setShowCreateForm(false)}>Cancel</Button>
+                                        <Button size="sm" onClick={handleCreate} disabled={isCreating || !newName.trim() || !newCode.trim()} loading={isCreating}>Create</Button>
+                                    </div>
                                 </div>
-                            </div>
-                        )}
+                            )}
 
-                        {types.map(pt => (
-                            <Button
-                                key={pt.id}
-                                variant={selectedType?.id === pt.id ? 'tonal' : 'ghost'}
-                                className="w-full justify-between"
-                                onClick={() => loadTypeDetail(pt.id)}
-                            >
-                                <span className="flex flex-col items-start text-left">
-                                    <span className="text-nb-body font-medium text-fg">{pt.name}</span>
-                                    <span className="text-nb-caption text-fg-subtle">{pt.code}</span>
-                                </span>
-                                {pt.is_system && <StatusBadge status="System" />}
-                                <ChevronRight size={14} className="text-fg-subtle" />
-                            </Button>
-                        ))}
-                    </div>
-                </SettingsCard>
+                            {types.map(pt => (
+                                <Button
+                                    key={pt.id}
+                                    variant={selectedType?.id === pt.id ? 'tonal' : 'ghost'}
+                                    className="w-full justify-between"
+                                    onClick={() => loadTypeDetail(pt.id)}
+                                >
+                                    <span className="flex flex-col items-start text-left">
+                                        <span className="text-nb-body font-medium text-fg">{pt.name}</span>
+                                        <span className="text-nb-caption text-fg-subtle">{pt.code}</span>
+                                    </span>
+                                    {pt.is_system && <StatusBadge status="System" />}
+                                    <ChevronRight size={14} className="text-fg-subtle" />
+                                </Button>
+                            ))}
+                        </div>
+                    </SettingsCard>
+                </Grid.Item>
 
                 {/* Right: Type detail + attributes */}
-                <div className="md:col-span-2">
+                <Grid.Item span={8}>
                     {selectedType ? (
                         <SettingsCard
                             title={selectedType.name}
@@ -243,8 +245,8 @@ const ProductTypeSettingsPage = () => {
                             description="Choose a type from the left panel to view and manage its attributes"
                         />
                     )}
-                </div>
-            </div>
+                </Grid.Item>
+            </Grid>
         </SettingsPageTemplate>
     );
 };

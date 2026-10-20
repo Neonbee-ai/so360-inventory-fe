@@ -8,7 +8,7 @@ import { useInventoryFormatters } from '../../utils/formatters';
 import { Plus } from 'lucide-react';
 import {
     toast, getErrorMessage, ListPageTemplate, Button, DataTable, KpiCard, EmptyState, Alert, StatusBadge,
-    Modal, TextField, Select,
+    Modal, TextField, Select, FieldGrid, Grid,
 } from '@so360/design-system';
 
 interface RFQ {
@@ -152,12 +152,12 @@ const RFQListPage = () => {
     };
 
     const kpis = (
-        <div className="grid grid-cols-1 wc-medium:grid-cols-4 gap-nb-4">
+        <Grid columns={4} gap="sm">
             <KpiCard label="Total RFQs" value={rfqs.length} />
             <KpiCard label="Awaiting Quotes" value={rfqs.filter(r => r.status === 'sent').length} />
             <KpiCard label="Quotes Received" value={rfqs.reduce((s, r) => s + (r.quotation_count || 0), 0)} />
             <KpiCard label="Awarded" value={rfqs.filter(r => r.status === 'awarded').length} />
-        </div>
+        </Grid>
     );
 
     const closeForm = () => setShowForm(false);
@@ -245,7 +245,7 @@ const RFQListPage = () => {
                 }
             >
                 <form id="rfq-form" onSubmit={handleSubmit} className="space-y-nb-4">
-                    <div className="grid grid-cols-1 wc-medium:grid-cols-2 gap-nb-4">
+                    <FieldGrid columns={2}>
                         <TextField
                             id="rfq-title" name="rfq-title" label="Title" value={form.title} placeholder="e.g. Q4 cement supply"
                             onChange={(e: any) => setForm({ ...form, title: e.target.value })}
@@ -274,7 +274,7 @@ const RFQListPage = () => {
                             id="rfq-incoterms" name="rfq-incoterms" label="Incoterms" value={form.incoterms} placeholder="e.g. DDP"
                             onChange={(e: any) => setForm({ ...form, incoterms: e.target.value })}
                         />
-                    </div>
+                    </FieldGrid>
 
                     <div className="space-y-nb-1">
                         <div className="text-nb-label font-medium text-fg-muted">Invite Vendors</div>

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Loader2, Sparkles } from 'lucide-react';
-import { Alert, Button, DataTable, TextField, type DataTableColumn } from '@so360/design-system';
+import { Alert, Button, DataTable, TextField, type DataTableColumn, FieldGrid } from '@so360/design-system';
 import { Modal } from '../common/Modal';
 import { inventoryService } from '../../services/inventoryService';
 import type { GenerateUnitsResult, UnitStackSpec } from '../../types/inventory';
@@ -157,16 +157,16 @@ export const GenerateUnitsDialog: React.FC<GenerateUnitsDialogProps> = ({ isOpen
                 </div>
             ) : (
                 <div className="space-y-5">
-                    <div className="grid grid-cols-3 gap-3">
+                    <FieldGrid columns={3}>
                         <TextField label="Floor from" name="floor_from" aria-label="Floor from" type="number" value={floorFrom} onChange={(e) => setFloorFrom(e.target.value)} />
                         <TextField label="Floor to" name="floor_to" aria-label="Floor to" type="number" value={floorTo} onChange={(e) => setFloorTo(e.target.value)} />
                         <TextField label="Units per floor" name="units_per_floor" aria-label="Units per floor" type="number" min={1} max={99} value={unitsPerFloor} onChange={(e) => handleUnitsPerFloor(e.target.value)} />
-                    </div>
+                    </FieldGrid>
 
-                    <div className="grid grid-cols-2 gap-3">
+                    <FieldGrid>
                         <TextField label="Numbering pattern" name="numbering_pattern" aria-label="Numbering pattern" hint="Use {floor} and {stack:02}" value={pattern} onChange={(e) => setPattern(e.target.value)} />
                         <TextField label="SKU prefix" name="sku_prefix" aria-label="SKU prefix" value={skuPrefix} onChange={(e) => setSkuPrefix(e.target.value)} />
-                    </div>
+                    </FieldGrid>
 
                     {rows.length > 0 && (
                         <DataTable<StackRow>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Alert, Button, Checkbox, IconButton, Select, TextField } from '@so360/design-system';
+import { Alert, Button, Checkbox, IconButton, Select, TextField, FieldGrid, Grid } from '@so360/design-system';
 import { Plus, Trash2, Wallet } from 'lucide-react';
 import {
     BILLING_MODES,
@@ -147,7 +147,7 @@ export const PaymentPlanTemplatesEditor: React.FC<PaymentPlanTemplatesEditorProp
                             )}
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        <FieldGrid>
                             <Select
                                 name={`payment_plan_${n}_billing`}
                                 aria-label={`Payment plan ${n} billing`}
@@ -181,14 +181,14 @@ export const PaymentPlanTemplatesEditor: React.FC<PaymentPlanTemplatesEditorProp
                                     );
                                 })}
                             </div>
-                        </div>
+                        </FieldGrid>
 
                         <div className="space-y-2">
                             {t.lines.map((l, li) => {
                                 const field = triggerField(l.trigger);
                                 const ln = `Payment plan ${n} instalment ${li + 1}`;
                                 return (
-                                    <div key={li} className="grid grid-cols-2 md:grid-cols-[2fr_1fr_1fr_2fr_2fr_auto] gap-2 items-center">
+                                    <Grid template="2fr 1fr 1fr 2fr 2fr auto" gap="sm" className="items-center" key={li}>
                                         <TextField name={`payment_plan_${n}_line_${li + 1}_label`} aria-label={`${ln} label`} size="sm" value={l.label} disabled={disabled} placeholder="e.g. Down payment"
                                             onChange={(e) => patchLine(ti, li, { ...l, label: e.target.value })} />
                                         <Select name={`payment_plan_${n}_line_${li + 1}_type`} aria-label={`${ln} type`} size="sm" value={l.type} disabled={disabled}
@@ -227,7 +227,7 @@ export const PaymentPlanTemplatesEditor: React.FC<PaymentPlanTemplatesEditorProp
                                         ) : (
                                             <span />
                                         )}
-                                    </div>
+                                    </Grid>
                                 );
                             })}
                         </div>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Select, TextField } from '@so360/design-system';
+import { Select, TextField, FieldGrid } from '@so360/design-system';
 import FormSection from '../components/FormSection';
 
 export interface TaxCodeOption {
@@ -43,7 +43,7 @@ const PricingTab: React.FC<PricingTabProps> = ({
     return (
         <div className="space-y-nb-6">
             <FormSection title="Pricing">
-                <div className="grid grid-cols-1 wc-md:grid-cols-2 gap-nb-4">
+                <FieldGrid columns={2}>
                     <TextField
                         label={`Selling Price (${currencySymbol})`}
                         name="price"
@@ -64,7 +64,7 @@ const PricingTab: React.FC<PricingTabProps> = ({
                         onChange={e => updateField('cost', e.target.value)}
                         placeholder="0.00"
                     />
-                </div>
+                </FieldGrid>
                 {price && cost && parseFloat(price) > 0 && parseFloat(cost) > 0 && (
                     <div className="mt-nb-4 p-nb-3 bg-surface-raised border border-line rounded-nb-md">
                         <div className="flex items-center justify-between text-nb-body">
@@ -78,7 +78,7 @@ const PricingTab: React.FC<PricingTabProps> = ({
             </FormSection>
 
             <FormSection title="Tax Information">
-                <div className="grid grid-cols-1 wc-md:grid-cols-2 gap-nb-4">
+                <FieldGrid columns={2}>
                     <div>
                         <Select
                             label="Tax Code"
@@ -105,7 +105,7 @@ const PricingTab: React.FC<PricingTabProps> = ({
                         onChange={e => updateField('hsn_code', e.target.value)}
                         placeholder="e.g. 8471"
                     />
-                </div>
+                </FieldGrid>
             </FormSection>
         </div>
     );

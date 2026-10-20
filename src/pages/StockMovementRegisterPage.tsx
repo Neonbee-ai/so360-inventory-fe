@@ -13,7 +13,7 @@ import { optional, validateReference } from '../utils/validators';
 import {
     FeatureGate, ListPageTemplate, DataTable, Button, IconButton, Modal, TextField, Textarea, Select,
     SegmentedControl, Alert, Card, EmptyState,
-    type DataTableColumn,
+    type DataTableColumn, FieldGrid, FieldGridItem, Grid,
 } from '@so360/design-system';
 
 type TransactionType = 'stock_in' | 'stock_out' | 'adjustment' | 'transfer';
@@ -841,8 +841,8 @@ const StockMovementRegisterPage = () => {
                     {error && <Alert variant="error">{error}</Alert>}
 
                     <Card title={sectionTitle('Transaction Information')}>
-                        <div className="grid grid-cols-1 gap-nb-4 md:grid-cols-3">
-                            <div className="md:col-span-2">
+                        <FieldGrid columns={3}>
+                            <FieldGridItem span={2}>
                                 <p className="mb-nb-1 text-nb-caption font-medium text-fg-muted">Transaction Type *</p>
                                 <SegmentedControl
                                     aria-label="Transaction type"
@@ -851,7 +851,7 @@ const StockMovementRegisterPage = () => {
                                     onChange={(val: string) => setForm({ ...form, transaction_type: val as TransactionType, reason_code: '' })}
                                     options={typeOptions.map((t) => ({ value: t.value, label: t.label }))}
                                 />
-                            </div>
+                            </FieldGridItem>
                             <div>
                                 <TextField
                                     name="transaction-date"
@@ -868,8 +868,8 @@ const StockMovementRegisterPage = () => {
                                     </p>
                                 )}
                             </div>
-                        </div>
-                        <div className="mt-nb-4 grid grid-cols-1 gap-nb-4 md:grid-cols-2">
+                        </FieldGrid>
+                        <FieldGrid className="mt-nb-4">
                             {form.transaction_type !== 'transfer' && (
                                 <div>
                                     <Select
@@ -887,12 +887,12 @@ const StockMovementRegisterPage = () => {
                                 </div>
                             )}
                             <TextField name="reference-number" label="Reference Number" disabled value="Auto-generated on save" onChange={() => {}} />
-                        </div>
+                        </FieldGrid>
                     </Card>
 
                     <Card title={sectionTitle('Item Details')}>
-                        <div className="grid grid-cols-1 gap-nb-4 md:grid-cols-3">
-                            <div className="md:col-span-2">
+                        <FieldGrid columns={3}>
+                            <FieldGridItem span={2}>
                                 <p className="mb-nb-1 text-nb-caption font-medium text-fg-muted">Item *</p>
                                 <ItemSearchSelect
                                     value={form.item_id}
@@ -903,7 +903,7 @@ const StockMovementRegisterPage = () => {
                                     }}
                                 />
                                 <FieldError field="item" />
-                            </div>
+                            </FieldGridItem>
                             <TextField
                                 name="unit"
                                 label="Unit"
@@ -911,11 +911,11 @@ const StockMovementRegisterPage = () => {
                                 value={(selectedItem as any)?.units?.abbreviation || (selectedItem as any)?.unit || '—'}
                                 onChange={() => {}}
                             />
-                        </div>
+                        </FieldGrid>
                     </Card>
 
                     <Card title={sectionTitle('Movement Details')}>
-                        <div className="grid grid-cols-1 gap-nb-4 md:grid-cols-3">
+                        <FieldGrid columns={3}>
                             <div>
                                 <Select
                                     name="warehouse"
@@ -956,8 +956,8 @@ const StockMovementRegisterPage = () => {
                                 />
                                 <FieldError field="quantity" />
                             </div>
-                        </div>
-                        <div className="mt-nb-4 grid grid-cols-2 gap-nb-4">
+                        </FieldGrid>
+                        <Grid columns={2} className="mt-nb-4">
                             <div className="rounded-nb-md bg-surface-sunken px-nb-4 py-nb-3">
                                 <p className="text-nb-caption text-fg-subtle">Current balance</p>
                                 <p className="text-nb-h3 font-bold text-fg">{currentBalance === null ? '—' : currentBalance}</p>
@@ -968,7 +968,7 @@ const StockMovementRegisterPage = () => {
                                     {projectedBalance === null ? '—' : projectedBalance}
                                 </p>
                             </div>
-                        </div>
+                        </Grid>
                         {insufficientStock && (
                             <p role="alert" data-testid="error-stock" className="mt-nb-2 flex items-center gap-nb-2 text-nb-caption text-danger">
                                 <AlertCircle size={14} />
@@ -978,7 +978,7 @@ const StockMovementRegisterPage = () => {
                     </Card>
 
                     <Card title={sectionTitle('Allocation')}>
-                        <div className="grid grid-cols-1 gap-nb-4 md:grid-cols-2">
+                        <FieldGrid>
                             <Select
                                 name="source-type"
                                 label={form.transaction_type === 'stock_in' ? 'Received From' : 'Issued To'}
@@ -1058,7 +1058,7 @@ const StockMovementRegisterPage = () => {
                                 )}
                                 <FieldError field="work_order" />
                             </div>
-                        </div>
+                        </FieldGrid>
                     </Card>
 
                     <Card title={sectionTitle('Remarks')}>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, X } from 'lucide-react';
-import { Button, Checkbox, IconButton, Select, TextField } from '@so360/design-system';
+import { Button, Checkbox, IconButton, Select, TextField, FieldGrid } from '@so360/design-system';
 import { AttributeFieldType } from '../../../types/productTypes';
 
 interface AttributeEditorProps {
@@ -90,7 +90,7 @@ const AttributeEditor: React.FC<AttributeEditorProps> = ({ onSave, onCancel, ini
 
     return (
         <div className="p-nb-4 bg-surface-raised border border-line-strong rounded-nb-md flex flex-col gap-nb-3">
-            <div className="grid grid-cols-1 wc-md:grid-cols-2 gap-nb-3">
+            <FieldGrid>
                 <TextField
                     label="Label *"
                     name="attr-label"
@@ -106,9 +106,9 @@ const AttributeEditor: React.FC<AttributeEditorProps> = ({ onSave, onCancel, ini
                     onChange={e => setFieldName(e.target.value)}
                     placeholder="e.g. screen_size"
                 />
-            </div>
+            </FieldGrid>
 
-            <div className="grid grid-cols-1 wc-md:grid-cols-3 gap-nb-3">
+            <FieldGrid columns={3}>
                 <Select
                     label="Type"
                     name="attr-type"
@@ -118,7 +118,7 @@ const AttributeEditor: React.FC<AttributeEditorProps> = ({ onSave, onCancel, ini
                 />
                 <TextField label="Placeholder" name="attr-placeholder" value={placeholder} onChange={e => setPlaceholder(e.target.value)} placeholder="e.g. Enter value" />
                 <TextField label="Unit" name="attr-unit" value={unit} onChange={e => setUnit(e.target.value)} placeholder="e.g. inches, kg" />
-            </div>
+            </FieldGrid>
 
             {fieldType === 'select' && (
                 <div className="flex flex-col gap-nb-2">

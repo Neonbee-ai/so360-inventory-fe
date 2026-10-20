@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card } from '@so360/design-system';
+import { Card, FieldGrid } from '@so360/design-system';
 import { TeamAgentPicker, UserAgentPicker } from './AgentPickers';
 import type { UnitAllocation } from '../../types/inventory';
 import type { InheritedAllocation, InheritedList } from '../../utils/unitAllocation';
@@ -30,7 +30,7 @@ export const AssignedAgentsPanel: React.FC<AssignedAgentsPanelProps> = ({ value,
     <section aria-label="Assigned agents">
         <Card title="Assigned agents/teams">
         <p className="text-xs text-fg-subtle mb-3">Leave empty to use the parent&apos;s agents for this {scope}.</p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <FieldGrid>
             <div>
                 <UserAgentPicker value={value.assigned_user_ids} disabled={disabled}
                     onChange={(v) => onChange({ ...value, assigned_user_ids: v })} />
@@ -41,7 +41,7 @@ export const AssignedAgentsPanel: React.FC<AssignedAgentsPanelProps> = ({ value,
                     onChange={(v) => onChange({ ...value, assigned_team_ids: v })} />
                 <Hint own={value.assigned_team_ids} inherited={inherited.teams} testId="inherited-teams" />
             </div>
-        </div>
+        </FieldGrid>
         </Card>
     </section>
 );

@@ -3,7 +3,7 @@ import { Plus, Pencil, Trash2, X, Check, Info } from 'lucide-react';
 import { inventoryService } from '../../services/inventoryService';
 import { ItemAttributeDefinition, ItemCategory } from '../../types/inventory';
 import { toBound } from '../../utils/attributeBounds';
-import { useConfirm, Button, IconButton, TextField, Textarea, Select, Checkbox, Alert, Card, EmptyState, Badge, DataTable, type DataTableColumn } from '@so360/design-system';
+import { useConfirm, Button, IconButton, TextField, Textarea, Select, Checkbox, Alert, Card, EmptyState, Badge, DataTable, type DataTableColumn, FieldGrid } from '@so360/design-system';
 
 interface Props {
     categories: ItemCategory[];
@@ -289,7 +289,7 @@ const ItemAttributeSettingsSection: React.FC<Props> = ({ categories, canManage }
                                 )}
                             >
                                 <div className="space-y-3">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <FieldGrid>
                                         <TextField
                                             name="attribute_label"
                                             label="Label"
@@ -369,7 +369,7 @@ const ItemAttributeSettingsSection: React.FC<Props> = ({ categories, canManage }
                                             onChange={e => setForm(f => ({ ...f, sort_order: e.target.value }))}
                                             min={0}
                                         />
-                                    </div>
+                                    </FieldGrid>
 
                                     <Textarea
                                         name="description"

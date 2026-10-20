@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Alert, Button, Checkbox, Modal, Select, TextField } from '@so360/design-system';
+import { Alert, Button, Checkbox, Modal, Select, TextField, FieldGrid } from '@so360/design-system';
 import { crmService } from '../../services/crmService';
 import { CustomFieldDefinition } from '../../types/crm';
 
@@ -104,7 +104,7 @@ export const CreateLeadModal = ({ isOpen, onClose, onSuccess, existingLeads }: C
                     placeholder="e.g. Acme Corp"
                 />
 
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <FieldGrid>
                     <TextField
                         name="contact_name"
                         label="Contact Name"
@@ -120,7 +120,7 @@ export const CreateLeadModal = ({ isOpen, onClose, onSuccess, existingLeads }: C
                         value={formData.contact_email}
                         onChange={(e) => setFormData({ ...formData, contact_email: e.target.value })}
                     />
-                </div>
+                </FieldGrid>
 
                 <TextField
                     name="phone"
@@ -141,7 +141,7 @@ export const CreateLeadModal = ({ isOpen, onClose, onSuccess, existingLeads }: C
                 {customFieldDefs.length > 0 && (
                     <section className="flex flex-col gap-4 border-t border-line pt-4">
                         <h3 className="text-xs font-semibold text-fg-subtle">Additional Details</h3>
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <FieldGrid>
                             {customFieldDefs.map((field) =>
                                 field.type === 'boolean' ? (
                                     <Checkbox
@@ -163,7 +163,7 @@ export const CreateLeadModal = ({ isOpen, onClose, onSuccess, existingLeads }: C
                                     />
                                 ),
                             )}
-                        </div>
+                        </FieldGrid>
                     </section>
                 )}
             </form>

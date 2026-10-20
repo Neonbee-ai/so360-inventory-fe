@@ -10,7 +10,7 @@ import ItemSearchSelector from '../../components/ItemSearchSelector';
 import {
     QuotaBar, QuotaGate, FeatureGate, toast, getErrorMessage,
     ListPageTemplate, Button, DataTable, EmptyState, Alert, Badge, StatusBadge,
-    Modal, TextField, Select, Textarea, Progress, SectionCard,
+    Modal, TextField, Select, Textarea, Progress, SectionCard, FieldGrid,
 } from '@so360/design-system';
 
 /**
@@ -469,7 +469,7 @@ const POListPage = () => {
                         </Alert>
                     )}
 
-                    <div className="grid grid-cols-1 wc-medium:grid-cols-2 gap-nb-4">
+                    <FieldGrid columns={2}>
                         <Select
                             label="Vendor"
                             name="vendor_id"
@@ -486,7 +486,7 @@ const POListPage = () => {
                             value={formData.po_number}
                             onChange={(e: any) => setFormData(prev => ({ ...prev, po_number: e.target.value }))}
                         />
-                    </div>
+                    </FieldGrid>
 
                     <div className="space-y-nb-1">
                         <Select

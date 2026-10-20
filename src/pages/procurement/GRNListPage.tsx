@@ -4,7 +4,7 @@ import { Plus } from 'lucide-react';
 import { procurementService } from '../../services/procurementService';
 import { useShellBridge } from '@so360/shell-context';
 import { useInventoryFormatters } from '../../utils/formatters';
-import { FeatureGate, ListPageTemplate, Button, DataTable, SearchInput, KpiCard, EmptyState } from '@so360/design-system';
+import { FeatureGate, ListPageTemplate, Button, DataTable, SearchInput, KpiCard, EmptyState, Grid } from '@so360/design-system';
 
 interface GRN {
     id: string;
@@ -46,11 +46,11 @@ const GRNListPage = () => {
     );
 
     const kpis = (
-        <div className="grid grid-cols-1 wc-medium:grid-cols-3 gap-nb-4">
+        <Grid columns={3} gap="sm">
             <KpiCard label="Total GRNs" value={grns.length} data-testid="grn-kpi-total" />
             <KpiCard label="This Month" value={grns.filter(g => new Date(g.created_at).getMonth() === new Date().getMonth()).length} data-testid="grn-kpi-month" />
             <KpiCard label="Total Items Received" value={grns.reduce((sum, g) => sum + (g.grn_lines?.reduce((s, l) => s + l.quantity_received, 0) || 0), 0)} data-testid="grn-kpi-items" />
-        </div>
+        </Grid>
     );
 
     return (

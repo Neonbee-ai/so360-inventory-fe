@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { FileText, Upload, Loader2, X } from 'lucide-react';
-import { Alert, Button, Card, IconButton, Select, Textarea, TextField } from '@so360/design-system';
+import { Alert, Button, Card, IconButton, Select, Textarea, TextField, FieldGrid } from '@so360/design-system';
 import { inventoryService } from '../../services/inventoryService';
 import { mediaService } from '../../services/mediaService';
 import { PROJECT_STATUSES, type CategoryMetadata, type DeveloperOption, type DeveloperRole, type ProjectStatus } from '../../types/inventory';
@@ -138,7 +138,7 @@ export const ProjectDetailsSection: React.FC<ProjectDetailsSectionProps> = ({ va
             <Card title="Project details">
             <div className="space-y-4">
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FieldGrid>
                 <div className="space-y-1">
                     <Select
                         label="Developer"
@@ -228,9 +228,9 @@ export const ProjectDetailsSection: React.FC<ProjectDetailsSectionProps> = ({ va
                     )}
                     {uploadError && <div className="mt-1"><Alert variant="error">{uploadError}</Alert></div>}
                 </div>
-            </div>
+            </FieldGrid>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4" data-testid="project-fields">
+            <FieldGrid data-testid="project-fields">
                 <TextField label="Project code" name="project_code" size="sm" aria-label="Project code" value={value.project_code || ''} disabled={disabled}
                         onChange={(e) => set({ project_code: textOrNull(e.target.value) })} />
                 <Select label="Project status" name="project_status" size="sm" aria-label="Project status" value={value.project_status || ''} disabled={disabled}
@@ -270,7 +270,7 @@ export const ProjectDetailsSection: React.FC<ProjectDetailsSectionProps> = ({ va
                         onChange={(e) => set({ map: compact({ ...(value.map || {}), lng: numberOrNull(e.target.value) }) })} />
                 <TextField label="Map link" name="map_link" size="sm" aria-label="Map link" value={value.map?.url || ''} disabled={disabled} placeholder="https://"
                         onChange={(e) => set({ map: compact({ ...(value.map || {}), url: e.target.value.trim() || null }) })} />
-            </div>
+            </FieldGrid>
 
             <PaymentPlanTemplatesEditor
                 value={value.payment_plan_templates}

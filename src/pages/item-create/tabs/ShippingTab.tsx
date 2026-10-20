@@ -1,5 +1,5 @@
 import React from 'react';
-import { Select, TextField } from '@so360/design-system';
+import { Select, TextField, FieldGrid } from '@so360/design-system';
 import FormSection from '../components/FormSection';
 
 interface ShippingTabProps {
@@ -33,7 +33,7 @@ const ShippingTab: React.FC<ShippingTabProps> = ({
     return (
         <div className="space-y-nb-6">
             <FormSection title="Weight" description="Used for shipping cost calculations">
-                <div className="grid grid-cols-2 gap-nb-4">
+                <FieldGrid columns={2}>
                     <TextField
                         label="Weight"
                         name="weight"
@@ -51,7 +51,7 @@ const ShippingTab: React.FC<ShippingTabProps> = ({
                         onChange={(e: any) => updateField('weight_unit', e.target.value)}
                         options={['kg', 'g', 'lb', 'oz'].map(u => ({ value: u, label: u }))}
                     />
-                </div>
+                </FieldGrid>
             </FormSection>
 
             <FormSection title="Dimensions (L x W x H)" description="Package dimensions for shipping">

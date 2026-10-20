@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Sliders } from 'lucide-react';
+import { FieldGrid } from '@so360/design-system';
 import { ProductType, ProductTypeAttribute } from '../../../types/productTypes';
 import { productTypeService } from '../../../services/productTypeService';
 import DynamicAttributeField from '../../../components/attributes/DynamicAttributeField';
@@ -75,7 +76,7 @@ const AttributesTab: React.FC<AttributesTabProps> = ({ product_type_id, custom_a
                 title={`${productType.name} Attributes`}
                 description={`Fill in the type-specific fields for ${productType.name.toLowerCase()}`}
             >
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FieldGrid columns={2}>
                     {productType.product_type_attributes.map((attr: ProductTypeAttribute) => (
                         <DynamicAttributeField
                             key={attr.id}
@@ -84,7 +85,7 @@ const AttributesTab: React.FC<AttributesTabProps> = ({ product_type_id, custom_a
                             onChange={handleAttributeChange}
                         />
                     ))}
-                </div>
+                </FieldGrid>
             </FormSection>
         </div>
     );

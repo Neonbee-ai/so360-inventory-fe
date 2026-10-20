@@ -6,7 +6,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 // Instagram/Facebook/Globe are not used anywhere else here to vouch for them.
 import { Check, Loader2 } from 'lucide-react';
 import { inventoryService } from '../../services/inventoryService';
-import { Alert, Badge, Button, Checkbox, Switch } from '@so360/design-system';
+import { Alert, Badge, Button, Checkbox, Switch, FieldGrid } from '@so360/design-system';
 
 export interface ChannelVisibilityRow {
     category_id: string;
@@ -220,7 +220,7 @@ const CategoryChannelsPanel: React.FC<Props> = ({ categoryId, canManage, onSaved
             {error && <Alert variant="error">{error}</Alert>}
             {saved && !isDirty && <Alert variant="success">Channel visibility saved</Alert>}
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <FieldGrid>
                 {CHANNEL_META.map(({ code, label, hint, Icon }) => {
                     const on = draft[code] ?? false;
                     const inherited = inheritedChannels.has(code);
@@ -241,7 +241,7 @@ const CategoryChannelsPanel: React.FC<Props> = ({ categoryId, canManage, onSaved
                         </div>
                     );
                 })}
-            </div>
+            </FieldGrid>
 
             {canManage && (
                 <Checkbox

@@ -29,7 +29,7 @@ import {
 import { fitImageFile, describeFit, IMAGE_FIT_SLOTS, type ImageFitSlot } from '../utils/imageFit';
 import ImageSpecChip from '../components/media/ImageSpecChip';
 import { useActivity, useShellBridge } from '@so360/shell-context';
-import { Alert, Button, FeatureGate, IconButton, TextField, Textarea } from '@so360/design-system';
+import { Alert, Button, FeatureGate, IconButton, TextField, Textarea, Grid } from '@so360/design-system';
 
 const PRESET_COLORS = ['#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#EC4899', '#06B6D4', '#64748B'];
 
@@ -262,9 +262,9 @@ const CategoryCardsView: React.FC<{
     }
 
     return (
-        <div className="grid grid-cols-2 gap-2">
+        <Grid columns={2} gap="sm">
             {orderedCards.map(cat => renderCard(cat))}
-        </div>
+        </Grid>
     );
 };
 

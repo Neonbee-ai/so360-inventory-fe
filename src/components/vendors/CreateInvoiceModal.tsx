@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Alert, Button, FileUpload, Modal, Select, TextField } from '@so360/design-system';
+import { Alert, Button, FileUpload, Modal, Select, TextField, FieldGrid } from '@so360/design-system';
 import { procurementService } from '../../services/procurementService';
 import { mediaService } from '../../services/mediaService';
 import { inventoryService } from '../../services/inventoryService';
@@ -142,7 +142,7 @@ export const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
                     placeholder="e.g. INV-2026-001"
                 />
 
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <FieldGrid>
                     <TextField
                         name="invoice_date"
                         label="Invoice Date"
@@ -158,7 +158,7 @@ export const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
                         value={dueDate}
                         onChange={(e) => setDueDate(e.target.value)}
                     />
-                </div>
+                </FieldGrid>
 
                 <TextField
                     name="total_amount"

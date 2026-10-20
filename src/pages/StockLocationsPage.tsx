@@ -19,7 +19,7 @@ import { useActivity, useShellBridge, useQuota } from '@so360/shell-context';
 import {
     QuotaBar, QuotaGate, FeatureGate, ListPageTemplate, DataTable, Button, Modal, TextField, Select,
     Checkbox, Alert, Badge, EmptyState, Tooltip,
-    type DataTableColumn,
+    type DataTableColumn, FieldGrid, FieldGridItem,
 } from '@so360/design-system';
 
 const StockLocationsPage = () => {
@@ -250,7 +250,7 @@ const StockLocationsPage = () => {
         show: boolean,
     ) => {
         const text = (key: keyof typeof newWarehouse, label: string, placeholder: string, extra: Record<string, any> = {}) => (
-            <div className={extra.wide ? 'wc-large:col-span-2' : undefined}>
+            <FieldGridItem span={extra.wide ? 'full' : 1}>
                 <TextField
                     name={key}
                     label={label}
@@ -261,10 +261,10 @@ const StockLocationsPage = () => {
                     onChange={(e: any) => setForm({ ...form, [key]: extra.upper ? e.target.value.toUpperCase() : e.target.value })}
                 />
                 <FieldErr show={show} message={errors[key]} field={key} />
-            </div>
+            </FieldGridItem>
         );
         return (
-            <div className="grid grid-cols-1 gap-nb-4 wc-large:grid-cols-2">
+            <FieldGrid>
                 {text('name', 'Warehouse Name', 'e.g. Dubai South Hub', { wide: true, required: true })}
                 {text('code', 'Short Code', 'e.g. DXB-01', { required: true, upper: true })}
                 <div>
@@ -283,7 +283,7 @@ const StockLocationsPage = () => {
                 {text('country', 'Country', 'Country')}
                 {text('contact_person', 'Contact Person', 'Manager / Supervisor name')}
                 {text('contact_phone', 'Contact Phone', '+971 50 000 0000', { wide: true, type: 'tel' })}
-            </div>
+            </FieldGrid>
         );
     };
 

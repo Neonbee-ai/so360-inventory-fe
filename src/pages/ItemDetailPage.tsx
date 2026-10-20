@@ -12,7 +12,7 @@ import { inventoryService } from '../services/inventoryService';
 import { Item, StockMovement, Unit, ItemCategory, Warehouse } from '../types/inventory';
 import { TabId, ITEM_CLASSIFICATIONS, ItemClassification } from '../types/itemTypes';
 import {
-    DetailPageTemplate, DataTable, Button, Modal, Alert, Badge, EmptyState, Tabs,
+    DetailPageTemplate, DataTable, Button, Modal, Alert, Badge, EmptyState, Tabs, Grid, FieldGrid,
     type DataTableColumn,
 } from '@so360/design-system';
 import { useAuth } from '../hooks/useAuth';
@@ -464,9 +464,9 @@ const ItemDetailPage = () => {
             {taxCodesError && <Alert variant="warning">{taxCodesError}</Alert>}
 
             <div className="p-8">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <Grid>
                     {/* ═══ LEFT COLUMN ═══ */}
-                    <div className="lg:col-span-1 space-y-6">
+                    <Grid.Item span={4} className="space-y-6">
 
                         {/* Section A: Image Gallery + Hero Card */}
                         <div className="bg-surface/50 border border-line rounded-2xl p-6 relative overflow-hidden hover:border-line-strong transition-colors">
@@ -539,14 +539,14 @@ const ItemDetailPage = () => {
                             </div>
                         </div>
 
-                    </div>
+                    </Grid.Item>
 
                     {/* ═══ RIGHT COLUMN ═══ */}
                     {isEditing ? (
                         /* ── EDIT MODE ── */
-                        <div className="lg:col-span-2 space-y-4">
+                        <Grid.Item span={8} className="space-y-4">
                             {/* ═══ 3 Summary Cards ═══ */}
-                            <div className="grid grid-cols-3 gap-4">
+                            <Grid columns={3} gap="sm">
                                 {/* Card 1: Available Physical Stock */}
                                 <div className="bg-primary rounded-2xl p-5 text-primary-fg shadow-lg shadow-blue-900/40 relative overflow-hidden">
                                     <div className="absolute -right-3 -bottom-3 opacity-10">
@@ -606,19 +606,19 @@ const ItemDetailPage = () => {
                                         }}
                                     />
                                 </div>
-                            </div>
+                            </Grid>
                             <div className="bg-surface/50 border border-line rounded-xl ring-1 ring-focus/20">
                                 <TabNavigation activeTab={editTab} onTabChange={setEditTab} tabErrors={tabErrors} />
                                 <div className="p-6 min-h-[24rem]">
                                     {renderEditTab()}
                                 </div>
                             </div>
-                        </div>
+                        </Grid.Item>
                     ) : (
                         /* ── VIEW MODE ── */
-                        <div className="lg:col-span-2 space-y-4">
+                        <Grid.Item span={8} className="space-y-4">
                             {/* ═══ 3 Summary Cards ═══ */}
-                            <div className="grid grid-cols-3 gap-4">
+                            <Grid columns={3} gap="sm">
                                 {/* Card 1: Available Physical Stock */}
                                 <div className="bg-primary rounded-2xl p-5 text-primary-fg shadow-lg shadow-blue-900/40 relative overflow-hidden">
                                     <div className="absolute -right-3 -bottom-3 opacity-10">
@@ -678,7 +678,7 @@ const ItemDetailPage = () => {
                                         }}
                                     />
                                 </div>
-                            </div>
+                            </Grid>
                             <div className="bg-surface/50 border border-line rounded-xl">
                                 {/* View Tab Bar — 8 tabs */}
                                 <Tabs
@@ -703,19 +703,19 @@ const ItemDetailPage = () => {
                                     {viewTab === 'basic' && (
                                         <div className="space-y-8">
                                             <FormSection title="Identification">
-                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                <FieldGrid columns={3}>
                                                     <ReadOnlyField label="Item Name" value={item.name} />
                                                     <ReadOnlyField label="SKU" value={item.sku} mono />
                                                     <ReadOnlyField label="Barcode / UPC" value={item.barcode} />
-                                                </div>
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                                                </FieldGrid>
+                                                <FieldGrid columns={2} className="mt-nb-4">
                                                     <ReadOnlyField label="Brand" value={item.brand} />
                                                     <ReadOnlyField label="Unit of Measure" value={item.units ? `${item.units.name} (${item.units.abbreviation})` : null} />
-                                                </div>
+                                                </FieldGrid>
                                             </FormSection>
 
                                             <FormSection title="Classification">
-                                                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                                <Grid columns={3} gap="sm">
                                                     {ITEM_CLASSIFICATIONS.map(cls => {
                                                         const Icon = cls.icon;
                                                         const isSelected = item.type === cls.value;
@@ -736,7 +736,7 @@ const ItemDetailPage = () => {
                                                             </div>
                                                         );
                                                     })}
-                                                </div>
+                                                </Grid>
                                             </FormSection>
 
                                             <FormSection title="Product Type">
@@ -767,7 +767,7 @@ const ItemDetailPage = () => {
                                         <div className="space-y-8">
                                             <FormSection title="Product Images">
                                                 {hasImages ? (
-                                                    <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
+                                                    <Grid columns={4} gap="sm">
                                                         {item.image_urls!.map((url, i) => (
                                                             <div
                                                                 key={i}
@@ -777,7 +777,7 @@ const ItemDetailPage = () => {
                                                                 <img src={url} alt={`${item.name} ${i + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                                                             </div>
                                                         ))}
-                                                    </div>
+                                                    </Grid>
                                                 ) : (
                                                     <div className="flex flex-col items-center justify-center py-12 text-center">
                                                         <ImageIcon size={48} className="text-fg-subtle mb-4" />
@@ -792,10 +792,10 @@ const ItemDetailPage = () => {
                                     {viewTab === 'pricing' && (
                                         <div className="space-y-8">
                                             <FormSection title="Pricing">
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <FieldGrid columns={2}>
                                                     <ReadOnlyField label={`Selling Price (${currencySymbol})`} value={item.price != null ? formatters.formatCurrency(Number(item.price)) : null} />
                                                     <ReadOnlyField label={`Cost Price (${currencySymbol})`} value={item.cost != null ? formatters.formatCurrency(Number(item.cost)) : null} />
-                                                </div>
+                                                </FieldGrid>
                                                 {margin && (
                                                     <div className="mt-4 p-3 bg-surface-raised/50 border border-line-strong/50 rounded-lg">
                                                         <div className="flex items-center justify-between text-sm">
@@ -807,10 +807,10 @@ const ItemDetailPage = () => {
                                             </FormSection>
 
                                             <FormSection title="Tax Information">
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <FieldGrid columns={2}>
                                                     <ReadOnlyField label="Tax Code" value={taxDisplayValue} />
                                                     <ReadOnlyField label="HSN / SAC Code" value={item.hsn_code} />
-                                                </div>
+                                                </FieldGrid>
                                                 {isTaxCodesLoading && (
                                                     <p className="text-xs text-fg-subtle mt-2">Loading tax code labels from Core settings...</p>
                                                 )}
@@ -831,10 +831,10 @@ const ItemDetailPage = () => {
                                     {viewTab === 'stock' && (
                                         <div className="space-y-8">
                                             <FormSection title="Stock Thresholds">
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <FieldGrid columns={2}>
                                                     <ReadOnlyField label="Min Stock Threshold" value={item.min_stock_threshold != null ? String(item.min_stock_threshold) : null} />
                                                     <ReadOnlyField label="Reorder Level" value={item.reorder_level != null ? String(item.reorder_level) : null} />
-                                                </div>
+                                                </FieldGrid>
                                             </FormSection>
 
                                             <FormSection title="Tracking Options">
@@ -856,10 +856,10 @@ const ItemDetailPage = () => {
                                     {viewTab === 'shipping' && (
                                         <div className="space-y-8">
                                             <FormSection title="Weight">
-                                                <div className="grid grid-cols-2 gap-4">
+                                                <FieldGrid columns={2}>
                                                     <ReadOnlyField label="Weight" value={item.weight != null ? String(item.weight) : null} />
                                                     <ReadOnlyField label="Weight Unit" value={item.weight_unit || 'kg'} />
-                                                </div>
+                                                </FieldGrid>
                                             </FormSection>
 
                                             <FormSection title="Dimensions (L x W x H)">
@@ -897,7 +897,7 @@ const ItemDetailPage = () => {
                                                 </div>
                                             ) : item.product_types?.product_type_attributes && item.product_types.product_type_attributes.length > 0 ? (
                                                 <FormSection title={`${item.product_types.name} Attributes`}>
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <FieldGrid columns={2}>
                                                         {item.product_types.product_type_attributes
                                                             .sort((a, b) => a.sort_order - b.sort_order)
                                                             .map(attr => {
@@ -910,15 +910,15 @@ const ItemDetailPage = () => {
                                                                 return <ReadOnlyField key={attr.id} label={attr.label} value={display} />;
                                                             })
                                                         }
-                                                    </div>
+                                                    </FieldGrid>
                                                 </FormSection>
                                             ) : item.custom_attributes && Object.keys(item.custom_attributes).length > 0 ? (
                                                 <FormSection title={item.product_types?.name ? `${item.product_types.name} Attributes` : 'Custom Attributes'}>
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <FieldGrid columns={2}>
                                                         {Object.entries(item.custom_attributes).map(([key, val]) => (
                                                             <ReadOnlyField key={key} label={key} value={val != null ? String(val) : null} />
                                                         ))}
-                                                    </div>
+                                                    </FieldGrid>
                                                 </FormSection>
                                             ) : (
                                                 <div className="flex flex-col items-center justify-center py-8 text-center">
@@ -960,7 +960,7 @@ const ItemDetailPage = () => {
                                                 <h2 className="text-xl font-bold text-fg tracking-tight">Sales History</h2>
                                             </div>
 
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+                                            <Grid columns={2} gap="sm" className="mb-nb-6">
                                                 <div className="bg-surface/50 border border-line rounded-xl p-5">
                                                     <div className="flex items-center gap-2 text-fg-subtle mb-2">
                                                         <BarChart3 size={14} />
@@ -979,7 +979,7 @@ const ItemDetailPage = () => {
                                                         {salesHistory?.invoice_count ?? 0}
                                                     </div>
                                                 </div>
-                                            </div>
+                                            </Grid>
 
                                             <h3 className="text-[10px] font-black text-fg-subtle mb-3">Recent outbound movements</h3>
                                             {salesHistory && salesHistory.recent_movements.length > 0 ? (
@@ -1012,9 +1012,9 @@ const ItemDetailPage = () => {
                                     )}
                                 </div>
                             </div>
-                        </div>
+                        </Grid.Item>
                     )}
-                </div>
+                </Grid>
             </div>
 
             {isEditing && (

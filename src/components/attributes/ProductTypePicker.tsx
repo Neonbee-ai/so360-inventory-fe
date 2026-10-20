@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Cpu, Shirt, Armchair, Monitor, Tv, Smartphone, UtensilsCrossed, Car, Hammer, Paperclip, Package, LucideIcon } from 'lucide-react';
-import { Button, EmptyState } from '@so360/design-system';
+import { Button, EmptyState, FieldGrid } from '@so360/design-system';
 import { ProductType } from '../../types/productTypes';
 import { productTypeService } from '../../services/productTypeService';
 
@@ -41,7 +41,7 @@ const ProductTypePicker: React.FC<ProductTypePickerProps> = ({ value, onChange }
     }
 
     return (
-        <div className="grid grid-cols-2 wc-md:grid-cols-3 wc-lg:grid-cols-4 gap-nb-3">
+        <FieldGrid columns={4}>
             <Button
                 type="button"
                 variant={!value ? 'tonal' : 'secondary'}
@@ -81,7 +81,7 @@ const ProductTypePicker: React.FC<ProductTypePickerProps> = ({ value, onChange }
                     </Button>
                 );
             })}
-        </div>
+        </FieldGrid>
     );
 };
 

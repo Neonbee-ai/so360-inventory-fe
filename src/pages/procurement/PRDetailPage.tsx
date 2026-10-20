@@ -5,7 +5,7 @@ import { procurementService } from '../../services/procurementService';
 import { useActivity } from '@so360/shell-context';
 import {
     toast, getErrorMessage, useConfirm, DetailPageTemplate, Button, Badge, StatusBadge, SectionCard, DescriptionList,
-    DataTable, EmptyState,
+    DataTable, EmptyState, Grid,
 } from '@so360/design-system';
 import { useInventoryFormatters } from '../../utils/formatters';
 
@@ -239,12 +239,12 @@ const PRDetailPage = () => {
             secondaryActions={secondaryActions}
         >
             {confirmDialog}
-            <div className="grid grid-cols-1 wc-lg:grid-cols-3 gap-6">
-                <div className="wc-lg:col-span-1 space-y-6">
+            <Grid>
+                <Grid.Item span={4} className="space-y-6">
                     <SectionCard title="Overview"><DescriptionList items={overview} /></SectionCard>
-                </div>
+                </Grid.Item>
 
-                <div className="wc-lg:col-span-2 space-y-6">
+                <Grid.Item span={8} className="space-y-6">
                     <SectionCard title="Requested Items">
                         <DataTable
                             data-testid="pr-lines-table"
@@ -370,8 +370,8 @@ const PRDetailPage = () => {
                             />
                         </SectionCard>
                     )}
-                </div>
-            </div>
+                </Grid.Item>
+            </Grid>
         </DetailPageTemplate>
     );
 };

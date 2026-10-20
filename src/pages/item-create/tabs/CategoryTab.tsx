@@ -1,5 +1,5 @@
 import React from 'react';
-import { TextField, Textarea, Select, Checkbox, RadioGroup, Alert } from '@so360/design-system';
+import { TextField, Textarea, Select, Checkbox, RadioGroup, Alert, FieldGrid } from '@so360/design-system';
 import FormSection from '../components/FormSection';
 import CategoryPicker from '../../../components/categories/CategoryPicker';
 import { ItemCategory, ItemAttributeDefinition } from '../../../types/inventory';
@@ -244,11 +244,11 @@ const CategoryTab: React.FC<CategoryTabProps> = ({
                     title="Category Attributes"
                     description="Fill in the custom fields defined for this category"
                 >
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FieldGrid columns={2}>
                         {attributeDefs.map(def => (
                             <div key={def.id}>{renderAttributeField(def)}</div>
                         ))}
-                    </div>
+                    </FieldGrid>
                 </FormSection>
             )}
         </div>

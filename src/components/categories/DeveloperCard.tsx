@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Building2, Globe, Mail, Phone, MapPin, User, Loader2, Pencil } from 'lucide-react';
-import { Alert, Button, IconButton, Select, TextField } from '@so360/design-system';
+import { Alert, Button, IconButton, Select, TextField, FieldGrid, FieldGridItem } from '@so360/design-system';
 import { inventoryService } from '../../services/inventoryService';
 import type { DeveloperProfile, DeveloperUpdate } from '../../types/inventory';
 
@@ -176,7 +176,7 @@ export const DeveloperCard: React.FC<DeveloperCardProps> = ({ partnerId, project
             </div>
 
             {draft && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 border border-line rounded-lg p-3" data-testid="developer-edit">
+                <FieldGrid className="border-t border-line pt-nb-3" data-testid="developer-edit">
                     <TextField label="Website" name="developer_website" aria-label="Developer website" size="sm" value={draft.website} placeholder="https://"
                         onChange={(e) => setDraft({ ...draft, website: e.target.value })} />
                     <TextField label="Logo URL" name="developer_logo_url" aria-label="Developer logo URL" size="sm" value={draft.logo_url} placeholder="https://"
@@ -196,16 +196,16 @@ export const DeveloperCard: React.FC<DeveloperCardProps> = ({ partnerId, project
                     />
                     <TextField label="Account manager (user ID)" name="developer_account_manager" aria-label="Account manager user ID" size="sm" value={draft.account_manager_user_id}
                         onChange={(e) => setDraft({ ...draft, account_manager_user_id: e.target.value })} />
-                    {saveError && <div className="md:col-span-2"><Alert variant="error">{saveError}</Alert></div>}
-                    <div className="flex gap-2 md:col-span-2">
+                    {saveError && <FieldGridItem span="full"><Alert variant="error">{saveError}</Alert></FieldGridItem>}
+                    <FieldGridItem span="full" className="flex gap-2">
                         <Button type="button" variant="primary" size="sm" onClick={saveEdit} disabled={saving}>
                             {saving ? 'Saving…' : 'Save developer'}
                         </Button>
                         <Button type="button" variant="secondary" size="sm" onClick={() => setDraft(null)} disabled={saving}>
                             Cancel
                         </Button>
-                    </div>
-                </div>
+                    </FieldGridItem>
+                </FieldGrid>
             )}
 
             {dev.description && <p className="text-fg-muted">{dev.description}</p>}

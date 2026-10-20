@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import { Button } from '@so360/design-system';
+import { Button, Grid } from '@so360/design-system';
 import { PRESET_ICONS, buildPresetUrl, isPresetUrl, getPresetId } from '../../constants/categoryIcons';
 
 interface CategoryIconLibraryProps {
@@ -39,7 +39,7 @@ const CategoryIconLibrary: React.FC<CategoryIconLibraryProps> = ({ currentUrl, c
           {GROUPS.map(group => (
             <div key={group} className="mb-3">
               <p className="text-[10px] font-semibold text-fg-subtle mb-2">{group}</p>
-              <div className="grid grid-cols-4 gap-2">
+              <Grid columns={4} gap="sm">
                 {PRESET_ICONS.filter(icon => icon.group === group).map(icon => {
                   const IconComp = icon.icon;
                   const isActive = currentPresetId === icon.id;
@@ -62,7 +62,7 @@ const CategoryIconLibrary: React.FC<CategoryIconLibraryProps> = ({ currentUrl, c
                         style={{ background: bg }}
                       >
                         <IconComp size={16} className="text-fg" />
-                      </div>
+                      </Grid>
                       <span className="text-[10px] text-fg-subtle leading-tight text-center truncate w-full">{icon.label}</span>
                     </Button>
                   );

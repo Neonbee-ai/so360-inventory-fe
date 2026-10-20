@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Upload } from 'lucide-react';
-import { Alert, FileUpload, Spinner } from '@so360/design-system';
+import { Alert, FileUpload, Spinner, Grid } from '@so360/design-system';
 
 interface Props {
     onParsed: (result: any) => void;
@@ -56,7 +56,7 @@ const CsvUploadStep: React.FC<Props> = ({ onParsed, onParse }) => {
 
             <div className="mt-nb-6 bg-surface border border-line rounded-nb-lg p-nb-4">
                 <p className="text-fg-muted text-nb-caption font-semibold mb-nb-3">Required CSV columns</p>
-                <div className="grid grid-cols-2 gap-x-nb-6 gap-y-nb-1 text-nb-caption">
+                <Grid columns={2} gap="sm" className="text-nb-caption">
                     {[
                         ['name', 'Item name (required)'],
                         ['type', 'product / service / raw_material…'],
@@ -72,7 +72,7 @@ const CsvUploadStep: React.FC<Props> = ({ onParsed, onParse }) => {
                             <span className="text-fg-subtle text-nb-caption">{desc}</span>
                         </div>
                     ))}
-                </div>
+                </Grid>
                 <p className="mt-nb-3 text-fg-subtle text-nb-caption">
                     <span className="font-semibold text-fg-muted">SKU:</span> not needed — each item gets its SKU automatically.
                     In the next step, name each image after its product (e.g. <span className="font-mono text-primary">Namur Sofa.jpg</span>); for several images add _2, _3… (<span className="font-mono text-primary">Namur Sofa_2.jpg</span>).

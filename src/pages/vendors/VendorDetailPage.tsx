@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Star, FileText, Plus, ExternalLink } from 'lucide-react';
 import {
     DetailPageTemplate, Alert, Button, Card, DataTable, DescriptionList, StatusBadge,
-    Modal, ConfirmDialog, TextField, Textarea, Select, Checkbox, EmptyState,
+    Modal, ConfirmDialog, TextField, Textarea, Select, Checkbox, EmptyState, FieldGrid,
 } from '@so360/design-system';
 import { vendorService } from '../../services/vendorService';
 import { TableSkeleton } from '../../components/common/Skeleton';
@@ -322,15 +322,15 @@ const VendorDetailPage = () => {
                 <form id="edit-vendor-form" onSubmit={handleSaveEdit} className="space-y-4">
                     <TextField label="Vendor Name" name="name" required value={editForm.name}
                         onChange={(e: any) => setEditForm({ ...editForm, name: e.target.value })} />
-                    <div className="grid grid-cols-2 gap-4">
+                    <FieldGrid>
                         <TextField label="Email" name="email" type="email" value={editForm.email}
                             onChange={(e: any) => setEditForm({ ...editForm, email: e.target.value })} />
                         <TextField label="Phone" name="phone" type="tel" value={editForm.phone}
                             onChange={(e: any) => setEditForm({ ...editForm, phone: e.target.value })} />
-                    </div>
+                    </FieldGrid>
                     <Textarea label="Address" name="address" value={editForm.address}
                         onChange={(e: any) => setEditForm({ ...editForm, address: e.target.value })} />
-                    <div className="grid grid-cols-2 gap-4">
+                    <FieldGrid>
                         <Select label="Classification" name="classification" value={editForm.vendor_profile.classification}
                             options={[
                                 { value: 'supplier', label: 'Supplier' },
@@ -347,7 +347,7 @@ const VendorDetailPage = () => {
                                 { value: 'COD', label: 'Cash on Delivery' },
                             ]}
                             onChange={(e: any) => setEditForm({ ...editForm, vendor_profile: { ...editForm.vendor_profile, payment_terms: e.target.value } })} />
-                    </div>
+                    </FieldGrid>
                     <Checkbox name="is_preferred" label="Mark as Preferred Vendor" checked={editForm.vendor_profile.is_preferred}
                         onChange={(e: any) => setEditForm({ ...editForm, vendor_profile: { ...editForm.vendor_profile, is_preferred: e.target.checked } })} />
                 </form>

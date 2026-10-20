@@ -5,7 +5,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useShellBridge, useQuota, useSandboxLimit } from '@so360/shell-context';
 import {
     Alert, Button, Checkbox, ConfirmDialog, DataTable, EmptyState, FeatureGate, ListPageTemplate,
-    Modal, QuotaBar, QuotaGate, SearchInput, Select, StatusBadge, Textarea, TextField,
+    Modal, QuotaBar, QuotaGate, SearchInput, Select, StatusBadge, Textarea, TextField, FieldGrid,
 } from '@so360/design-system';
 import type { DataTableColumn } from '@so360/design-system';
 
@@ -263,7 +263,7 @@ const VendorListPage = () => {
                         onChange={(e) => setNewVendor({ ...newVendor, name: e.target.value })}
                         placeholder="Company name"
                     />
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <FieldGrid>
                         <TextField
                             name="email"
                             label="Email"
@@ -280,7 +280,7 @@ const VendorListPage = () => {
                             onChange={(e) => setNewVendor({ ...newVendor, phone: e.target.value })}
                             placeholder="+971 50 123 4567"
                         />
-                    </div>
+                    </FieldGrid>
                     <Textarea
                         name="address"
                         label="Address"
@@ -289,7 +289,7 @@ const VendorListPage = () => {
                         placeholder="Business address"
                         rows={3}
                     />
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <FieldGrid>
                         <Select
                             name="classification"
                             label="Classification"
@@ -310,7 +310,7 @@ const VendorListPage = () => {
                             })}
                             options={PAYMENT_TERMS_OPTIONS}
                         />
-                    </div>
+                    </FieldGrid>
                     <Checkbox
                         name="is_preferred"
                         label="Mark as Preferred Vendor"

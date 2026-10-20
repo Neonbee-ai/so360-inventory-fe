@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { qualityService } from '../../services/qualityService';
 import { procurementService } from '../../services/procurementService';
 import { useInventoryFormatters } from '../../utils/formatters';
-import { Alert, Button, Checkbox, DataTable, EmptyState, Grid, GridItem, KpiCard, ListPageTemplate, Modal, Select, StatusBadge, TextField, Textarea, toast, getErrorMessage, type DataTableColumn } from '@so360/design-system';
+import { Alert, Button, Checkbox, DataTable, EmptyState, Grid, GridItem, KpiCard, ListPageTemplate, Modal, Select, StatusBadge, TextField, Textarea, toast, getErrorMessage, type DataTableColumn, FieldGrid } from '@so360/design-system';
 
 const REASONS = [
     { value: 'damaged', label: 'Damaged' },
@@ -281,7 +281,7 @@ const VendorReturnsPage = () => {
                 )}
             >
                 <div className="flex flex-col gap-nb-4">
-                    <div className="grid grid-cols-1 gap-nb-4 md:grid-cols-3">
+                    <FieldGrid columns={3}>
                         <Select
                             name="ret-grn"
                             label="Goods Receipt"
@@ -303,7 +303,7 @@ const VendorReturnsPage = () => {
                             onChange={(e: any) => setForm({ ...form, resolution: e.target.value })}
                             options={RESOLUTIONS}
                         />
-                    </div>
+                    </FieldGrid>
 
                     {lines.length === 0 ? (
                         <EmptyState title="Select a receipt to choose what goes back." />

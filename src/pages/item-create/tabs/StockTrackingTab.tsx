@@ -1,5 +1,5 @@
 import React from 'react';
-import { Select, TextField } from '@so360/design-system';
+import { Select, TextField, FieldGrid } from '@so360/design-system';
 import FormSection from '../components/FormSection';
 
 interface Warehouse {
@@ -26,7 +26,7 @@ const StockTrackingTab: React.FC<StockTrackingTabProps> = ({
     return (
         <div className="space-y-nb-6">
             <FormSection title="Stock Thresholds" description="Set alerts and automatic reorder levels">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-nb-4">
+                <FieldGrid columns={2}>
                     <TextField
                         label="Min Stock Threshold"
                         name="min_stock_threshold"
@@ -47,7 +47,7 @@ const StockTrackingTab: React.FC<StockTrackingTabProps> = ({
                         placeholder="0"
                         hint="Trigger reorder when stock reaches this level"
                     />
-                </div>
+                </FieldGrid>
             </FormSection>
 
             <FormSection title="Tracking Options">

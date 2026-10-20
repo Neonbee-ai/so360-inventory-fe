@@ -2,7 +2,7 @@ import React from 'react';
 import FormSection from '../components/FormSection';
 import { ITEM_CLASSIFICATIONS, ItemClassification } from '../../../types/itemTypes';
 import { Unit } from '../../../types/inventory';
-import { Badge, Button, Select, TextField, Textarea } from '@so360/design-system';
+import { Badge, Button, Select, TextField, Textarea, FieldGrid, Grid } from '@so360/design-system';
 import ProductTypePicker from '../../../components/attributes/ProductTypePicker';
 
 export type FieldErrors = Record<string, string | null>;
@@ -45,7 +45,7 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
     return (
         <div className="space-y-nb-6">
             <FormSection title="Identification">
-                <div className="grid grid-cols-1 wc-md:grid-cols-3 gap-nb-4">
+                <FieldGrid columns={3}>
                     <TextField
                         label="Item Name"
                         name="name"
@@ -90,8 +90,8 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
                         error={errorFor('barcode')}
                         placeholder="e.g. 012345678905"
                     />
-                </div>
-                <div className="grid grid-cols-1 wc-md:grid-cols-2 gap-nb-4 mt-nb-4">
+                </FieldGrid>
+                <FieldGrid columns={2} className="mt-nb-4">
                     <TextField
                         label="Brand"
                         name="brand"
@@ -154,11 +154,11 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
                             </div>
                         </div>
                     )}
-                </div>
+                </FieldGrid>
             </FormSection>
 
             <FormSection title="Classification *" description="Choose what kind of item this is">
-                <div className="grid grid-cols-2 wc-md:grid-cols-3 gap-nb-3">
+                <Grid columns={3} gap="sm">
                     {ITEM_CLASSIFICATIONS.map(cls => {
                         const Icon = cls.icon;
                         const isSelected = type === cls.value;
@@ -180,7 +180,7 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
                             </button>
                         );
                     })}
-                </div>
+                </Grid>
                 {errorFor('type') && <p role="alert" data-testid="error-type" className="text-danger text-nb-caption mt-nb-1">{errorFor('type')}</p>}
             </FormSection>
 

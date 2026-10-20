@@ -6,7 +6,7 @@ import { vendorService } from '../../services/vendorService';
 import { useInventoryFormatters } from '../../utils/formatters';
 import {
     toast, getErrorMessage, useConfirm, DetailPageTemplate, Button, Badge, StatusBadge, SectionCard, DescriptionList,
-    DataTable, EmptyState, Modal, TextField, Select,
+    DataTable, EmptyState, Modal, TextField, Select, FieldGrid, Grid,
 } from '@so360/design-system';
 import { RFQ_STATUS_TONES } from './RFQListPage';
 
@@ -217,8 +217,8 @@ const RFQDetailPage = () => {
             primaryAction={primaryAction}
         >
             {confirmDialog}
-            <div className="grid grid-cols-1 wc-lg:grid-cols-3 gap-6">
-                <div className="wc-lg:col-span-1 space-y-6">
+            <Grid>
+                <Grid.Item span={4} className="space-y-6">
                     <SectionCard title="Overview"><DescriptionList items={details} /></SectionCard>
                     <SectionCard title="Invited Vendors">
                         {rfqVendors.length === 0 ? (
@@ -237,9 +237,9 @@ const RFQDetailPage = () => {
                             </div>
                         )}
                     </SectionCard>
-                </div>
+                </Grid.Item>
 
-                <div className="wc-lg:col-span-2 space-y-6">
+                <Grid.Item span={8} className="space-y-6">
                     <SectionCard title="Requested Lines">
                         <DataTable
                             data-testid="rfq-lines-table"
@@ -281,8 +281,8 @@ const RFQDetailPage = () => {
                             </div>
                         )}
                     </SectionCard>
-                </div>
-            </div>
+                </Grid.Item>
+            </Grid>
 
             <Modal
                 open={showQuoteForm}
@@ -296,7 +296,7 @@ const RFQDetailPage = () => {
                 )}
             >
                 <form id="quote-form" onSubmit={handleQuoteSubmit} className="space-y-4">
-                    <div className="grid grid-cols-1 wc-sm:grid-cols-2 gap-4">
+                    <FieldGrid columns={2}>
                         <Select
                             id="q-vendor" name="q-vendor" label="Vendor" placeholder="Select vendor" value={quoteVendor}
                             onChange={(e: any) => setQuoteVendor(e?.target ? e.target.value : e)}
@@ -314,7 +314,7 @@ const RFQDetailPage = () => {
                         <TextField id="q-payment" name="q-payment" label="Payment Terms" value={quoteHeader.payment_terms} onChange={hdr('payment_terms')} />
                         <TextField id="q-warranty" name="q-warranty" label="Warranty" value={quoteHeader.warranty_terms} onChange={hdr('warranty_terms')} />
                         <TextField id="q-moq" name="q-moq" label="MOQ Conditions" value={quoteHeader.moq_note} onChange={hdr('moq_note')} />
-                    </div>
+                    </FieldGrid>
 
                     <div className="space-y-2">
                         <div className="text-xs font-semibold text-fg-subtle">Quoted prices</div>
