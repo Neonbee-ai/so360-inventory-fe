@@ -76,7 +76,7 @@ const ProductTypePicker: React.FC<ProductTypePickerProps> = ({ value, onChange }
                                 <span className="text-nb-body font-semibold">{pt.name}</span>
                             </span>
                             <span className="text-nb-caption text-fg-subtle line-clamp-2">{pt.description || pt.code}</span>
-                            {pt.is_system && <span className="text-nb-caption text-fg-subtle uppercase">System</span>}
+                            {pt.is_system && <span className="text-nb-caption text-fg-subtle">System</span>}
                         </span>
                     </Button>
                 );

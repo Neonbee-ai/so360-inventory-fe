@@ -148,7 +148,7 @@ const ImageUploadStep: React.FC<Props> = ({ parsedRows, onImagesUploaded, onUplo
 
             {files.length > 0 && (
                 <div className="space-y-nb-2">
-                    <p className="text-fg-muted text-nb-caption font-semibold uppercase">
+                    <p className="text-fg-muted text-nb-caption font-semibold">
                         {files.length} file{files.length !== 1 ? 's' : ''} selected · {matchedCount} match products · {attentionCount} need attention
                     </p>
                     <div className="max-h-48 overflow-y-auto space-y-nb-1 pr-nb-1">

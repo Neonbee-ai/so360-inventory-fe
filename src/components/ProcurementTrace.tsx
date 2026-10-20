@@ -68,9 +68,9 @@ const ProcurementTrace: React.FC<{ type: TraceDocType; id: string }> = ({ type, 
                             <span className="text-lg">{meta.icon}</span>
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2">
-                                    <span className="text-[10px] font-bold uppercase tracking-wider text-fg-subtle">{meta.label}</span>
+                                    <span className="text-[10px] font-bold text-fg-subtle">{meta.label}</span>
                                     {isFocus && (
-                                        <span className="text-[9px] font-bold uppercase tracking-wider text-fg-muted">You are here</span>
+                                        <span className="text-[9px] font-bold text-fg-muted">You are here</span>
                                     )}
                                 </div>
                                 <div className="text-sm text-fg truncate">{node.label}</div>

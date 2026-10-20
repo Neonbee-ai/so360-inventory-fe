@@ -56,7 +56,7 @@ export const KanbanBoard = ({ deals, stages, onDealClick, onStageChange }: Kanba
     };
 
     return (
-        <div className="flex gap-6 overflow-x-auto pb-6 h-full min-h-[650px] scrollbar-hide">
+        <div className="flex gap-6 overflow-x-auto pb-6 h-full min-h-[320px] scrollbar-hide">
             {stages.map((stage) => {
                 const stageDeals = deals.filter(d => d.stage === stage.name);
                 const isOver = dragOverStage === stage.id;
@@ -68,13 +68,13 @@ export const KanbanBoard = ({ deals, stages, onDealClick, onStageChange }: Kanba
                     >
                         {/* Stage Header */}
                         <div className="flex items-center justify-between px-2">
-                            <h3 className="font-black text-fg flex items-center gap-2 text-sm uppercase tracking-wider">
+                            <h3 className="font-black text-fg flex items-center gap-2 text-sm">
                                 {stage.name}
                                 <span className="text-[10px] bg-surface-raised text-fg-muted px-2 py-0.5 rounded-full font-black">
                                     {stageDeals.length}
                                 </span>
                             </h3>
-                            <span className="text-[10px] text-fg-subtle font-black tracking-wider">
+                            <span className="text-[10px] text-fg-subtle font-black">
                                 {formatters.formatCurrency(stageDeals.reduce((sum, d) => sum + d.value, 0))}
                             </span>
                         </div>
@@ -84,7 +84,7 @@ export const KanbanBoard = ({ deals, stages, onDealClick, onStageChange }: Kanba
                             onDragOver={(e) => handleDragOver(e, stage.id)}
                             onDragLeave={handleDragLeave}
                             onDrop={(e) => handleDrop(e, stage.name)}
-                            className={`flex-1 flex flex-col gap-3 rounded-2xl p-3 min-h-[550px] transition-all duration-200 ${isOver
+                            className={`flex-1 flex flex-col gap-3 rounded-2xl p-3 min-h-[200px] transition-all duration-200 ${isOver
                                     ? 'bg-primary/10 ring-2 ring-focus/50 ring-dashed border-transparent'
                                     : 'bg-surface/40 border border-line/60'
                                 }`}
@@ -135,7 +135,7 @@ export const KanbanBoard = ({ deals, stages, onDealClick, onStageChange }: Kanba
                             {/* Empty state hint */}
                             {stageDeals.length === 0 && !isOver && (
                                 <div className="flex-1 flex items-center justify-center border-2 border-dashed border-line/50 rounded-xl">
-                                    <span className="text-[10px] font-black text-fg-subtle uppercase tracking-widest">Drop here</span>
+                                    <span className="text-[10px] font-black text-fg-subtle">Drop here</span>
                                 </div>
                             )}
                         </div>

@@ -309,7 +309,7 @@ const VendorReturnsPage = () => {
                         <EmptyState title="Select a receipt to choose what goes back." />
                     ) : (
                         <div className="flex flex-col gap-nb-3">
-                            <span className="text-xs font-semibold uppercase tracking-wider text-fg-subtle">Lines Returned</span>
+                            <span className="text-xs font-semibold text-fg-subtle">Lines returned</span>
                             {lines.map((l, idx) => (
                                 <div key={l.grn_line_id} className="flex flex-wrap items-center gap-nb-3 rounded-xl border border-line p-nb-3">
                                     <div className="min-w-0 flex-1">

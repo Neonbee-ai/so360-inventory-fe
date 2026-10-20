@@ -327,7 +327,14 @@ const PODetailPage = () => {
             </SectionCard>
 
             {['sent', 'acknowledged', 'partially_received', 'received', 'closed'].includes(po.status) && (
-                <SectionCard title="Vendor Acknowledgement">
+                <SectionCard
+                    title="Vendor Acknowledgement"
+                    actions={['sent', 'acknowledged'].includes(po.status) && !showAckForm ? (
+                        <Button variant="secondary" size="sm" onClick={() => setShowAckForm(true)}>
+                            {hasAck ? 'Update acknowledgement' : 'Record acknowledgement'}
+                        </Button>
+                    ) : undefined}
+                >
                     {hasAck ? (
                         <div className="space-y-3">
                             <Badge tone={ackOption?.tone || 'neutral'}>{po.acknowledgement_status!.replace(/_/g, ' ')}</Badge>
@@ -344,12 +351,6 @@ const PODetailPage = () => {
                         </div>
                     ) : (
                         <p className="text-xs text-fg-subtle">Awaiting the vendor's response to this order.</p>
-                    )}
-
-                    {['sent', 'acknowledged'].includes(po.status) && !showAckForm && (
-                        <Button variant="secondary" onClick={() => setShowAckForm(true)}>
-                            {hasAck ? 'Update acknowledgement' : 'Record acknowledgement'}
-                        </Button>
                     )}
 
                     {showAckForm && (

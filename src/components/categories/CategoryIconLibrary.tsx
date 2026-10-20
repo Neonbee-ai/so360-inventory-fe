@@ -26,7 +26,7 @@ const CategoryIconLibrary: React.FC<CategoryIconLibraryProps> = ({ currentUrl, c
         onClick={() => setOpen(v => !v)}
         className="w-full justify-between"
       >
-        <span className="text-xs font-medium text-fg-muted uppercase tracking-wider">Preset Icons</span>
+        <span className="text-xs font-medium text-fg-muted">Preset Icons</span>
         {open ? (
           <ChevronUp size={14} className="text-fg-subtle" />
         ) : (
@@ -38,7 +38,7 @@ const CategoryIconLibrary: React.FC<CategoryIconLibraryProps> = ({ currentUrl, c
         <div className="px-4 pb-4 pt-1 bg-surface/30">
           {GROUPS.map(group => (
             <div key={group} className="mb-3">
-              <p className="text-[10px] font-semibold text-fg-subtle uppercase tracking-widest mb-2">{group}</p>
+              <p className="text-[10px] font-semibold text-fg-subtle mb-2">{group}</p>
               <div className="grid grid-cols-4 gap-2">
                 {PRESET_ICONS.filter(icon => icon.group === group).map(icon => {
                   const IconComp = icon.icon;

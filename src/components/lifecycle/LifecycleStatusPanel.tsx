@@ -100,7 +100,7 @@ const LifecycleStatusPanel: React.FC<LifecycleStatusPanelProps> = ({
         <div className="bg-surface/50 border border-line rounded-2xl p-6 hover:border-line-strong transition-colors">
             <div className="flex items-center gap-2 mb-4">
                 <Shield size={16} className="text-primary" />
-                <h3 className="text-xs font-bold text-fg-muted uppercase tracking-wider">Product Lifecycle</h3>
+                <h3 className="text-xs font-bold text-fg-muted">Product Lifecycle</h3>
             </div>
 
             {/* Current Status Badge */}
@@ -116,7 +116,7 @@ const LifecycleStatusPanel: React.FC<LifecycleStatusPanelProps> = ({
                     const isPast = i < currentIndex;
                     return (
                         <React.Fragment key={state}>
-                            <div className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider whitespace-nowrap ${
+                            <div className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] font-bold whitespace-nowrap ${
                                 isActive ? 'bg-primary/10 text-primary border border-primary/30'
                                 : isPast ? 'text-fg-subtle line-through'
                                 : 'text-fg-subtle'
@@ -136,7 +136,7 @@ const LifecycleStatusPanel: React.FC<LifecycleStatusPanelProps> = ({
             {/* Activation Gates */}
             {currentStatus !== 'active' && currentStatus !== 'archived' && (
                 <div className="mb-4">
-                    <h4 className="text-[10px] font-bold text-fg-subtle uppercase tracking-wider mb-2">Activation Gates</h4>
+                    <h4 className="text-[10px] font-bold text-fg-subtle mb-2">Activation gates</h4>
                     {isLoadingGates ? (
                         <div className="flex items-center gap-2 text-fg-subtle text-xs">
                             <Loader2 size={12} className="animate-spin" />

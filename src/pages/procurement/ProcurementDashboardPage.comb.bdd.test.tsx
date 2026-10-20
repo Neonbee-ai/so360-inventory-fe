@@ -60,7 +60,7 @@ describe('ProcurementDashboardPage (Comb)', () => {
         render(<ProcurementDashboardPage />);
         await waitFor(() => expect(screen.getByText('No purchase orders yet.')).toBeInTheDocument());
         expect(screen.getByText('Not enough history yet.')).toBeInTheDocument();
-        expect(screen.queryByText('Needs Attention')).not.toBeInTheDocument();
+        expect(screen.queryByText('Needs attention')).not.toBeInTheDocument();
     });
 
     it('Given a pipeline tile, When clicked, Then the matching queue opens', async () => {

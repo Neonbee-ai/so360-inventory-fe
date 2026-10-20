@@ -4,7 +4,7 @@ import { Trophy, Clock, Star, TrendingDown } from 'lucide-react';
 import { rfqService } from '../../services/rfqService';
 import { useInventoryFormatters } from '../../utils/formatters';
 import {
-    toast, getErrorMessage, useConfirm, DetailPageTemplate, Button, Badge, KpiCard, SectionCard, DataTable, EmptyState, Textarea,
+    toast, getErrorMessage, useConfirm, DetailPageTemplate, Button, Badge, KpiCard, Grid, GridItem, SectionCard, DataTable, EmptyState, Textarea,
 } from '@so360/design-system';
 
 /**
@@ -171,12 +171,12 @@ const RFQComparisonPage = () => {
         >
             {confirmDialog}
             <div className="space-y-6">
-                <div className="grid grid-cols-1 wc-sm:grid-cols-2 wc-lg:grid-cols-4 gap-4">
-                    <KpiCard label="Vendors Invited" value={summary.invited_count} />
-                    <KpiCard label="Quotes Received" value={summary.quotation_count} />
-                    <KpiCard label="Lowest Total" value={summary.lowest_total != null ? fmt(summary.lowest_total) : '—'} />
-                    <KpiCard label="Potential Saving" value={fmt(summary.potential_saving || 0)} />
-                </div>
+                <Grid columns="auto" gap="md">
+                    <GridItem span={3}><KpiCard label="Vendors Invited" value={summary.invited_count} /></GridItem>
+                    <GridItem span={3}><KpiCard label="Quotes Received" value={summary.quotation_count} /></GridItem>
+                    <GridItem span={3}><KpiCard label="Lowest Total" value={summary.lowest_total != null ? fmt(summary.lowest_total) : '—'} /></GridItem>
+                    <GridItem span={3}><KpiCard label="Potential Saving" value={fmt(summary.potential_saving || 0)} /></GridItem>
+                </Grid>
 
                 {quotations.length === 0 ? (
                     <EmptyState title="No quotations to compare yet." />

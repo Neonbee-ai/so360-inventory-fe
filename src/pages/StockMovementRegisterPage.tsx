@@ -959,11 +959,11 @@ const StockMovementRegisterPage = () => {
                         </div>
                         <div className="mt-nb-4 grid grid-cols-2 gap-nb-4">
                             <div className="rounded-nb-md bg-surface-sunken px-nb-4 py-nb-3">
-                                <p className="text-nb-caption uppercase tracking-wide text-fg-subtle">Current Balance</p>
+                                <p className="text-nb-caption text-fg-subtle">Current balance</p>
                                 <p className="text-nb-h3 font-bold text-fg">{currentBalance === null ? '—' : currentBalance}</p>
                             </div>
                             <div className={`rounded-nb-md px-nb-4 py-nb-3 ${insufficientStock ? 'border border-danger bg-danger-soft' : 'bg-surface-sunken'}`}>
-                                <p className="text-nb-caption uppercase tracking-wide text-fg-subtle">Updated Balance</p>
+                                <p className="text-nb-caption text-fg-subtle">Updated balance</p>
                                 <p className={`text-nb-h3 font-bold ${insufficientStock ? 'text-danger' : 'text-fg'}`}>
                                     {projectedBalance === null ? '—' : projectedBalance}
                                 </p>

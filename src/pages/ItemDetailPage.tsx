@@ -552,7 +552,7 @@ const ItemDetailPage = () => {
                                     <div className="absolute -right-3 -bottom-3 opacity-10">
                                         <Package size={80} />
                                     </div>
-                                    <span className="text-primary text-[10px] font-bold uppercase tracking-wider">Physical Stock</span>
+                                    <span className="text-primary text-[10px] font-bold">Physical stock</span>
                                     <div className="text-4xl font-black mt-2 flex items-baseline gap-1.5">
                                         {totalStock}
                                         <span className="text-xs font-normal text-primary uppercase">{item.units?.abbreviation || 'PCS'}</span>
@@ -563,7 +563,7 @@ const ItemDetailPage = () => {
                                 </div>
                                 {/* Card 2: Stock Thresholds */}
                                 <div className="bg-surface/50 border border-line rounded-2xl p-5 hover:border-line-strong transition-colors">
-                                    <h3 className="text-[10px] font-bold text-fg-muted uppercase tracking-wider mb-3">Stock Thresholds</h3>
+                                    <h3 className="text-[10px] font-bold text-fg-muted mb-3">Stock thresholds</h3>
                                     {(item.min_stock_threshold != null || item.reorder_level != null) ? (
                                         <div className="space-y-2">
                                             {item.min_stock_threshold != null && (
@@ -624,7 +624,7 @@ const ItemDetailPage = () => {
                                     <div className="absolute -right-3 -bottom-3 opacity-10">
                                         <Package size={80} />
                                     </div>
-                                    <span className="text-primary text-[10px] font-bold uppercase tracking-wider">Physical Stock</span>
+                                    <span className="text-primary text-[10px] font-bold">Physical stock</span>
                                     <div className="text-4xl font-black mt-2 flex items-baseline gap-1.5">
                                         {totalStock}
                                         <span className="text-xs font-normal text-primary uppercase">{item.units?.abbreviation || 'PCS'}</span>
@@ -635,7 +635,7 @@ const ItemDetailPage = () => {
                                 </div>
                                 {/* Card 2: Stock Thresholds */}
                                 <div className="bg-surface/50 border border-line rounded-2xl p-5 hover:border-line-strong transition-colors">
-                                    <h3 className="text-[10px] font-bold text-fg-muted uppercase tracking-wider mb-3">Stock Thresholds</h3>
+                                    <h3 className="text-[10px] font-bold text-fg-muted mb-3">Stock thresholds</h3>
                                     {(item.min_stock_threshold != null || item.reorder_level != null) ? (
                                         <div className="space-y-2">
                                             {item.min_stock_threshold != null && (
@@ -887,7 +887,7 @@ const ItemDetailPage = () => {
                                     {viewTab === 'attributes' && (
                                         <div className="space-y-6">
                                             {!item.product_type_id ? (
-                                                <div className="flex flex-col items-center justify-center py-16 text-center">
+                                                <div className="flex flex-col items-center justify-center py-8 text-center">
                                                     <Sliders size={48} className="text-fg-subtle mb-4" />
                                                     <h3 className="text-lg font-semibold text-fg-muted mb-2">No Product Type Selected</h3>
                                                     <p className="text-sm text-fg-subtle max-w-md">
@@ -921,7 +921,7 @@ const ItemDetailPage = () => {
                                                     </div>
                                                 </FormSection>
                                             ) : (
-                                                <div className="flex flex-col items-center justify-center py-16 text-center">
+                                                <div className="flex flex-col items-center justify-center py-8 text-center">
                                                     <Sliders size={48} className="text-fg-subtle mb-4" />
                                                     <h3 className="text-lg font-semibold text-fg-muted mb-2">{item.product_types?.name || 'Product Type'}</h3>
                                                     <p className="text-sm text-fg-subtle">No attribute fields defined for this product type.</p>
@@ -938,7 +938,7 @@ const ItemDetailPage = () => {
                                                     <History size={20} className="text-primary" />
                                                     <h2 className="text-xl font-bold text-fg tracking-tight">Movement Ledger</h2>
                                                 </div>
-                                                <span className="text-[10px] text-fg-subtle border border-line px-3 py-1 rounded-full uppercase font-bold tracking-widest">
+                                                <span className="text-[10px] text-fg-subtle border border-line px-3 py-1 rounded-full font-bold">
                                                     Audit Trail
                                                 </span>
                                             </div>
@@ -964,7 +964,7 @@ const ItemDetailPage = () => {
                                                 <div className="bg-surface/50 border border-line rounded-xl p-5">
                                                     <div className="flex items-center gap-2 text-fg-subtle mb-2">
                                                         <BarChart3 size={14} />
-                                                        <span className="text-[10px] font-black uppercase tracking-widest">Total Quantity Sold</span>
+                                                        <span className="text-[10px] font-black">Total Quantity Sold</span>
                                                     </div>
                                                     <div className="text-2xl font-bold text-fg">
                                                         {salesHistory?.total_quantity_sold ?? 0}
@@ -973,7 +973,7 @@ const ItemDetailPage = () => {
                                                 <div className="bg-surface/50 border border-line rounded-xl p-5">
                                                     <div className="flex items-center gap-2 text-fg-subtle mb-2">
                                                         <FileText size={14} />
-                                                        <span className="text-[10px] font-black uppercase tracking-widest">Invoices Used In</span>
+                                                        <span className="text-[10px] font-black">Invoices Used In</span>
                                                     </div>
                                                     <div className="text-2xl font-bold text-fg">
                                                         {salesHistory?.invoice_count ?? 0}
@@ -981,7 +981,7 @@ const ItemDetailPage = () => {
                                                 </div>
                                             </div>
 
-                                            <h3 className="text-[10px] font-black uppercase tracking-widest text-fg-subtle mb-3">Recent Outbound Movements</h3>
+                                            <h3 className="text-[10px] font-black text-fg-subtle mb-3">Recent outbound movements</h3>
                                             {salesHistory && salesHistory.recent_movements.length > 0 ? (
                                                 <div className="border border-line rounded-xl divide-y divide-line overflow-hidden">
                                                     {salesHistory.recent_movements.map((m: any, idx: number) => (

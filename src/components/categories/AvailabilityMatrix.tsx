@@ -155,7 +155,7 @@ const UnitPanel: React.FC<UnitPanelProps> = ({ unit, orgCurrency, canManage, onC
             </dl>
             {ref && (
                 <div className="border-t border-line pt-2 space-y-1" data-testid="unit-deal-ref">
-                    <p className="text-fg-subtle uppercase tracking-wide text-[10px]">
+                    <p className="text-fg-subtle text-[10px]">
                         {ref.reservation_status === 'committed' ? 'Sale record' : 'Reservation'}
                     </p>
                     <dl className="space-y-1">

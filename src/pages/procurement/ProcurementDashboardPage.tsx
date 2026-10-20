@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { procurementInsightsService } from '../../services/procurementInsightsService';
 import { useInventoryFormatters } from '../../utils/formatters';
-import { Alert, Button, DashboardPageTemplate, DataTable, EmptyState, KpiCard, Progress, SectionCard, Spinner, getErrorMessage, type DataTableColumn } from '@so360/design-system';
+import { Alert, Button, DashboardPageTemplate, DataTable, DescriptionList, EmptyState, Grid, GridItem, KpiCard, Progress, SectionCard, Spinner, getErrorMessage, type DataTableColumn } from '@so360/design-system';
 
 /** Where each alert type takes the buyer when they act on it. */
 const ALERT_ROUTES: Record<string, string> = {
@@ -55,7 +55,7 @@ const ProcurementDashboardPage = () => {
     if (loading) {
         return (
             <DashboardPageTemplate title={title} description={description}>
-                <div className="flex min-h-[400px] items-center justify-center"><Spinner aria-label="Loading dashboard" /></div>
+                <div className="flex items-center justify-center py-8"><Spinner aria-label="Loading dashboard" /></div>
             </DashboardPageTemplate>
         );
     }
@@ -83,29 +83,16 @@ const ProcurementDashboardPage = () => {
         { label: 'Open Returns', value: k.open_returns ?? 0, route: '/procurement/returns' },
     ];
 
-    const health = [
-        {
-            label: 'Procurement Lead Time',
-            value: k.procurement_lead_time_days != null ? `${k.procurement_lead_time_days} days` : '—',
-            hint: 'Order raised to first receipt',
-        },
-        {
-            label: 'Approval Cycle',
-            value: k.average_approval_days != null ? `${k.average_approval_days} days` : '—',
-            hint: 'Requisition submitted to approved',
-        },
-        {
-            label: 'Delayed Deliveries',
-            value: k.delayed_deliveries ?? 0,
-            hint: 'Past the promised date',
-            danger: (k.delayed_deliveries ?? 0) > 0,
-        },
-        {
-            label: 'Rejected Deliveries',
-            value: k.rejected_deliveries ?? 0,
-            hint: 'Receipts with rejected or damaged units',
-            danger: (k.rejected_deliveries ?? 0) > 0,
-        },
+    const withHint = (value: React.ReactNode, hint: string) => (
+        <>
+            <span>{value}</span>
+            <span className="block text-xs text-fg-muted">{hint}</span>
+        </>
+    );
+    const healthItems = [
+        { label: 'Procurement Lead Time', value: withHint(k.procurement_lead_time_days != null ? `${k.procurement_lead_time_days} days` : '—', 'Order raised to first receipt') },
+        { label: 'Approval Cycle', value: withHint(k.average_approval_days != null ? `${k.average_approval_days} days` : '—', 'Requisition submitted to approved') },
+        { label: 'Rejected Deliveries', value: withHint(k.rejected_deliveries ?? 0, 'Receipts with rejected or damaged units') },
     ];
 
     const alerts: any[] = data?.alerts || [];
@@ -130,6 +117,15 @@ const ProcurementDashboardPage = () => {
         { key: 'value', header: 'Value', align: 'right', render: (item: any) => formatters.formatCurrency(item.value) },
     ];
 
+    const alertColumns: DataTableColumn<any>[] = [
+        { key: 'message', header: 'Alert', render: (alert: any) => alert.message },
+        { key: 'count', header: 'Count', align: 'right', render: (alert: any) => alert.count },
+    ];
+    const pipelineColumns: DataTableColumn<any>[] = [
+        { key: 'label', header: 'Stage', render: (tile: any) => tile.label },
+        { key: 'value', header: 'Open', align: 'right', render: (tile: any) => tile.value },
+    ];
+
     return (
         <DashboardPageTemplate
             title={title}
@@ -139,92 +135,93 @@ const ProcurementDashboardPage = () => {
                 <Button key="reports" variant="secondary" onClick={() => navigate('/procurement/reports')}>Open Reports</Button>,
                 <Button key="vp" variant="secondary" onClick={() => navigate('/procurement/vendor-performance')}>Vendor Performance</Button>,
             ]}
-            kpis={(
-                <div className="grid grid-cols-1 gap-nb-4 md:grid-cols-4">
-                    <KpiCard label="Total Procurement Value" value={formatters.formatCurrency(k.total_procurement_value || 0)} hint={`${k.po_issued || 0} orders issued · ${k.completed_orders || 0} completed`} />
-                    <KpiCard label="Cost Savings" value={formatters.formatCurrency(k.cost_savings || 0)} hint="Won against higher competing quotes" />
-                    <KpiCard
-                        label="Budget Utilisation"
-                        value={k.budget_utilisation_percent != null ? `${k.budget_utilisation_percent}%` : '—'}
-                        hint={k.budget_allocated ? `of ${formatters.formatCurrency(k.budget_allocated)} allocated` : 'No budgets set on requisitions'}
-                    />
-                </div>
-            )}
+            kpis={[
+                <KpiCard key="value" label="Total Procurement Value" value={formatters.formatCurrency(k.total_procurement_value || 0)} hint={`${k.po_issued || 0} orders issued · ${k.completed_orders || 0} completed`} />,
+                <KpiCard key="savings" label="Cost Savings" value={formatters.formatCurrency(k.cost_savings || 0)} hint="Won against higher competing quotes" />,
+                <KpiCard
+                    key="budget"
+                    label="Budget Utilisation"
+                    value={k.budget_utilisation_percent != null ? `${k.budget_utilisation_percent}%` : '—'}
+                    hint={k.budget_allocated ? `of ${formatters.formatCurrency(k.budget_allocated)} allocated` : 'No budgets set on requisitions'}
+                />,
+                <KpiCard key="delayed" label="Delayed Deliveries" value={k.delayed_deliveries ?? 0} hint="Past the promised date" onClick={() => navigate('/procurement/po')} />,
+            ]}
             primary={(
                 <div className="flex flex-col gap-nb-4">
                     {alerts.length > 0 && (
-                        <SectionCard title="Needs Attention">
-                            <div className="grid grid-cols-1 gap-nb-3 md:grid-cols-2">
-                                {alerts.map((alert: any) => (
-                                    <KpiCard
-                                        key={alert.type}
-                                        label={alert.message}
-                                        value={alert.count}
-                                        onClick={() => navigate(ALERT_ROUTES[alert.type] || '/procurement/pr')}
-                                    />
-                                ))}
-                            </div>
+                        <SectionCard title="Needs attention">
+                            <DataTable
+                                columns={alertColumns}
+                                rows={alerts}
+                                rowKey={(alert: any) => alert.type}
+                                onRowClick={(alert: any) => navigate(ALERT_ROUTES[alert.type] || '/procurement/pr')}
+                            />
                         </SectionCard>
                     )}
                     <SectionCard title="Pipeline">
-                        <div className="grid grid-cols-2 gap-nb-3 md:grid-cols-5">
-                            {pipeline.map(tile => (
-                                <KpiCard key={tile.label} label={tile.label} value={tile.value} onClick={() => navigate(tile.route)} />
-                            ))}
-                        </div>
-                    </SectionCard>
-                    <SectionCard title="Process Health">
-                        <div className="grid grid-cols-2 gap-nb-3 md:grid-cols-4">
-                            {health.map(tile => (
-                                <KpiCard key={tile.label} label={tile.label} value={tile.value} hint={tile.hint} />
-                            ))}
-                        </div>
+                        <DataTable
+                            columns={pipelineColumns}
+                            rows={pipeline}
+                            rowKey={(tile: any) => tile.label}
+                            onRowClick={(tile: any) => navigate(tile.route)}
+                        />
                     </SectionCard>
                 </div>
             )}
             secondary={(
-                <div className="grid grid-cols-1 gap-nb-4 lg:grid-cols-2">
-                    <SectionCard title="Spend by Vendor">
-                        {vendors.length === 0 ? (
-                            <EmptyState title="No purchase orders yet." />
-                        ) : (
-                            <div className="flex flex-col gap-nb-3">
-                                {vendors.map((row: any) => (
-                                    <div key={row.vendor_id}>
-                                        <div className="mb-1 flex justify-between text-sm">
-                                            <span className="max-w-[60%] truncate text-fg-muted">{row.vendor_name || row.vendor_id.slice(0, 8)}</span>
-                                            <span className="font-semibold text-fg">{formatters.formatCurrency(row.amount)}</span>
-                                        </div>
-                                        <Progress value={Math.max(2, (row.amount / topVendor) * 100)} />
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </SectionCard>
-                    <SectionCard title="Monthly Spend">
-                        {months.length === 0 ? (
-                            <EmptyState title="Not enough history yet." />
-                        ) : (
-                            <div className="flex flex-col gap-nb-3">
-                                {months.map((m: any) => (
-                                    <div key={m.month} title={`${m.month}: ${formatters.formatCurrency(m.value)}`}>
-                                        <div className="mb-1 flex justify-between text-xs text-fg-subtle">
-                                            <span>{m.month}</span>
-                                            <span className="font-semibold text-fg" data-testid="monthly-spend-value">{formatters.formatCurrency(m.value)}</span>
-                                        </div>
-                                        <Progress value={Math.max(4, (m.value / maxMonth) * 100)} />
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </SectionCard>
-                </div>
-            )}
-            bottom={topItems.length > 0 ? (
-                <SectionCard title="Top Purchased Items">
-                    <DataTable columns={itemColumns} rows={topItems} rowKey={(item: any) => item.item_id} />
+                <SectionCard title="Process health">
+                    <DescriptionList columns={1} layout="stacked" items={healthItems} />
                 </SectionCard>
-            ) : undefined}
+            )}
+            bottom={(
+                <Grid columns="auto" gap="md">
+                    <GridItem span={6}>
+                        <SectionCard title="Spend by vendor">
+                            {vendors.length === 0 ? (
+                                <EmptyState title="No purchase orders yet." />
+                            ) : (
+                                <div className="flex flex-col gap-nb-3">
+                                    {vendors.map((row: any) => (
+                                        <div key={row.vendor_id}>
+                                            <div className="mb-1 flex justify-between text-sm">
+                                                <span className="max-w-[60%] truncate text-fg-muted">{row.vendor_name || row.vendor_id.slice(0, 8)}</span>
+                                                <span className="font-semibold text-fg">{formatters.formatCurrency(row.amount)}</span>
+                                            </div>
+                                            <Progress value={Math.max(2, (row.amount / topVendor) * 100)} />
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </SectionCard>
+                    </GridItem>
+                    <GridItem span={6}>
+                        <SectionCard title="Monthly spend">
+                            {months.length === 0 ? (
+                                <EmptyState title="Not enough history yet." />
+                            ) : (
+                                <div className="flex flex-col gap-nb-3">
+                                    {months.map((m: any) => (
+                                        <div key={m.month} title={`${m.month}: ${formatters.formatCurrency(m.value)}`}>
+                                            <div className="mb-1 flex justify-between text-xs text-fg-subtle">
+                                                <span>{m.month}</span>
+                                                <span className="font-semibold text-fg" data-testid="monthly-spend-value">{formatters.formatCurrency(m.value)}</span>
+                                            </div>
+                                            <Progress value={Math.max(4, (m.value / maxMonth) * 100)} />
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </SectionCard>
+                    </GridItem>
+                    {topItems.length > 0 && (
+                        <GridItem span={12}>
+                            <SectionCard title="Top purchased items">
+                                <DataTable columns={itemColumns} rows={topItems} rowKey={(item: any) => item.item_id} />
+                            </SectionCard>
+                        </GridItem>
+                    )}
+                </Grid>
+            )}
         />
     );
 };

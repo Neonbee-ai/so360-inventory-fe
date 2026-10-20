@@ -55,7 +55,7 @@ const CsvUploadStep: React.FC<Props> = ({ onParsed, onParse }) => {
             )}
 
             <div className="mt-nb-6 bg-surface border border-line rounded-nb-lg p-nb-4">
-                <p className="text-fg-muted text-nb-caption font-semibold uppercase mb-nb-3">Required CSV columns</p>
+                <p className="text-fg-muted text-nb-caption font-semibold mb-nb-3">Required CSV columns</p>
                 <div className="grid grid-cols-2 gap-x-nb-6 gap-y-nb-1 text-nb-caption">
                     {[
                         ['name', 'Item name (required)'],

@@ -5,7 +5,7 @@ import { inventoryService } from '../services/inventoryService';
 import { StockBalance } from '../types/inventory';
 import { useInventoryFormatters } from '../utils/formatters';
 import { useShellBridge } from '@so360/shell-context';
-import { FeatureGate, ListPageTemplate, DataTable, Button, SearchInput, KpiCard, Badge, Alert, EmptyState, Pagination, type DataTableColumn, type FilterValues } from '@so360/design-system';
+import { FeatureGate, ListPageTemplate, DataTable, Button, SearchInput, KpiCard, Grid, Badge, Alert, EmptyState, Pagination, type DataTableColumn, type FilterValues } from '@so360/design-system';
 
 const PAGE_SIZE = 25;
 
@@ -135,7 +135,7 @@ const StockOverviewPage = () => {
     };
 
     const kpis = (
-        <div className="grid grid-cols-2 wc-large:grid-cols-5 gap-nb-4">
+        <Grid columns={5} gap="md">
             <KpiCard label="Total Positions" value={stockLevels.length} />
             <KpiCard label="Stock Value" value={formatters.formatCurrency(totalValue)} />
             <FeatureGate state={viewGlValuationState} loading={(shell?.effectiveFlagsLoaded === false)} onUpgradeClick={() => navigate('/org/billing')}>
@@ -147,7 +147,7 @@ const StockOverviewPage = () => {
             </FeatureGate>
             <KpiCard label="Low Stock" value={stockLevels.filter(isLowRow).length} />
             <KpiCard label="Stock Out" value={stockLevels.filter(sl => sl.quantity === 0).length} />
-        </div>
+        </Grid>
     );
 
     return (

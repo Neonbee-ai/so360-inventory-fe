@@ -317,7 +317,7 @@ const RFQDetailPage = () => {
                     </div>
 
                     <div className="space-y-2">
-                        <div className="text-xs font-semibold text-fg-subtle uppercase">Quoted Prices</div>
+                        <div className="text-xs font-semibold text-fg-subtle">Quoted prices</div>
                         {quoteLines.map((l, idx) => (
                             <div key={l.rfq_line_id} className="border border-line rounded-lg p-3 flex flex-wrap items-center gap-3">
                                 <div className="flex-1 min-w-0">

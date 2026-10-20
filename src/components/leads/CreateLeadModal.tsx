@@ -140,7 +140,7 @@ export const CreateLeadModal = ({ isOpen, onClose, onSuccess, existingLeads }: C
 
                 {customFieldDefs.length > 0 && (
                     <section className="flex flex-col gap-4 border-t border-line pt-4">
-                        <h3 className="text-xs font-semibold uppercase tracking-wide text-fg-subtle">Additional Details</h3>
+                        <h3 className="text-xs font-semibold text-fg-subtle">Additional Details</h3>
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             {customFieldDefs.map((field) =>
                                 field.type === 'boolean' ? (

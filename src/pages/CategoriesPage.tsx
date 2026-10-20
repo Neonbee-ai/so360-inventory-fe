@@ -539,7 +539,7 @@ const CategoriesPage = () => {
                 {/* Left panel — tree / cards */}
                 <div className="w-1/3 min-w-[260px] bg-surface/50 border border-line rounded-2xl p-5">
                     <div className="flex items-center justify-between mb-1">
-                        <h2 className="text-sm font-semibold text-fg-muted uppercase tracking-wider">{labels.categories}</h2>
+                        <h2 className="text-sm font-semibold text-fg-muted">{labels.categories}</h2>
                         <div className="flex items-center gap-1">
                             <Button size="sm" variant={viewMode === 'tree' ? 'tonal' : 'ghost'} onClick={() => setViewMode('tree')}>Tree</Button>
                             <Button size="sm" variant={viewMode === 'cards' ? 'tonal' : 'ghost'} onClick={() => setViewMode('cards')}>Cards</Button>
@@ -573,7 +573,7 @@ const CategoriesPage = () => {
                 {/* Right panel — detail editor */}
                 <div className="flex-1 bg-surface/50 border border-line rounded-2xl p-6">
                     {!selectedCategory ? (
-                        <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
+                        <div className="flex flex-col items-center justify-center py-8 gap-3 text-center">
                             <div className="w-16 h-16 rounded-2xl bg-surface-raised flex items-center justify-center">
                                 <Tag size={28} className="text-fg-subtle" />
                             </div>

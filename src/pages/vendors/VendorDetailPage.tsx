@@ -204,61 +204,60 @@ const VendorDetailPage = () => {
                 title={vendor.name}
                 trail={[{ label: 'Vendors', to: '/vendors', onClick: () => navigate('/vendors') }]}
                 status={profile?.is_preferred ? <StatusBadge status="Preferred" /> : undefined}
-                meta={<span className="text-xs uppercase tracking-wide text-fg-subtle">{profile?.classification || 'Supplier'}</span>}
+                meta={<span className="text-nb-sm text-fg-muted capitalize">{profile?.classification || 'Supplier'}</span>}
+                primaryAction={canManage ? (
+                    <Button variant="primary" onClick={() => setIsInvoiceModalOpen(true)}><Plus size={16} />
+                        Create Invoice
+                    </Button>
+                ) : undefined}
+                sidePanel={(
+                    <div className="flex flex-col gap-nb-4">
+                    <Card title="Contact">
+                        <DescriptionList
+                            items={[
+                                { label: 'Email', value: vendor.email || 'No email' },
+                                { label: 'Phone', value: vendor.phone || 'No phone' },
+                                { label: 'Address', value: vendor.address || 'No address' },
+                            ]}
+                        />
+                    </Card>
+
+                    <Card title="Performance rating">
+                        <div className="flex items-center gap-1 mb-2">
+                            {[1, 2, 3, 4, 5].map(star => {
+                                const isActive = star <= (hoverRating || (profile?.performance_rating ?? 0));
+                                return (
+                                    <Star
+                                        key={star}
+                                        size={28}
+                                        fill={isActive ? 'currentColor' : 'none'}
+                                        className={`transition-colors ${canManage ? 'cursor-pointer' : 'cursor-default'} ${isActive ? 'text-warning' : 'text-fg-subtle'} ${ratingLoading ? 'animate-pulse' : ''}`}
+                                        onMouseEnter={() => canManage && !ratingLoading && setHoverRating(star)}
+                                        onMouseLeave={() => setHoverRating(0)}
+                                        onClick={() => handleRatingClick(star)}
+                                    />
+                                );
+                            })}
+                        </div>
+                        <div className="text-3xl font-black text-fg">
+                            {profile?.performance_rating ? Number(profile.performance_rating).toFixed(1) : 'N/A'}
+                            <span className="text-lg font-normal text-fg-muted">/5</span>
+                        </div>
+                        {(profile?.rating_count ?? 0) > 0 && (
+                            <p className="text-xs text-fg-muted">from {profile?.rating_count} rating{profile?.rating_count !== 1 ? 's' : ''}</p>
+                        )}
+                        {canManage && <p className="mt-1 text-[11px] text-fg-subtle">Click to rate</p>}
+                        <p className="mt-2 text-sm text-fg-muted">Payment Terms: {profile?.payment_terms || 'Not set'}</p>
+                    </Card>
+                    </div>
+                )}
                 overflowActions={canManage ? [
                     { label: 'Edit Vendor', onSelect: handleEditClick },
                     { label: 'Delete Vendor', onSelect: () => setShowDeleteConfirm(true), danger: true },
                 ] : undefined}
             >
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div className="lg:col-span-1 space-y-6">
-                        <Card>
-                            <DescriptionList
-                                title="Contact"
-                                items={[
-                                    { label: 'Email', value: vendor.email || 'No email' },
-                                    { label: 'Phone', value: vendor.phone || 'No phone' },
-                                    { label: 'Address', value: vendor.address || 'No address' },
-                                ]}
-                            />
-                        </Card>
-
-                        <Card>
-                            <div className="flex items-center gap-2 mb-3">
-                                <Star size={20} fill="currentColor" className="text-warning" />
-                                <span className="text-xs font-bold uppercase tracking-wider text-fg-muted">Performance Rating</span>
-                            </div>
-                            <div className="flex items-center gap-1 mb-2">
-                                {[1, 2, 3, 4, 5].map(star => {
-                                    const isActive = star <= (hoverRating || (profile?.performance_rating ?? 0));
-                                    return (
-                                        <Star
-                                            key={star}
-                                            size={28}
-                                            fill={isActive ? 'currentColor' : 'none'}
-                                            className={`transition-colors ${canManage ? 'cursor-pointer' : 'cursor-default'} ${isActive ? 'text-warning' : 'text-fg-subtle'} ${ratingLoading ? 'animate-pulse' : ''}`}
-                                            onMouseEnter={() => canManage && !ratingLoading && setHoverRating(star)}
-                                            onMouseLeave={() => setHoverRating(0)}
-                                            onClick={() => handleRatingClick(star)}
-                                        />
-                                    );
-                                })}
-                            </div>
-                            <div className="text-3xl font-black text-fg">
-                                {profile?.performance_rating ? Number(profile.performance_rating).toFixed(1) : 'N/A'}
-                                <span className="text-lg font-normal text-fg-muted">/5</span>
-                            </div>
-                            {(profile?.rating_count ?? 0) > 0 && (
-                                <p className="text-xs text-fg-muted">from {profile?.rating_count} rating{profile?.rating_count !== 1 ? 's' : ''}</p>
-                            )}
-                            {canManage && <p className="mt-1 text-[11px] text-fg-subtle">Click to rate</p>}
-                            <p className="mt-2 text-sm text-fg-muted">Payment Terms: {profile?.payment_terms || 'Not set'}</p>
-                        </Card>
-                    </div>
-
-                    <div className="lg:col-span-2 space-y-6">
-                        <Card>
-                            <h2 className="text-xl font-bold text-fg mb-4">Purchase Orders</h2>
+                <div className="flex flex-col gap-nb-4">
+                        <Card title="Purchase orders">
                             <DataTable
                                 data-testid="vendor-pos-table"
                                 rowKey={(po: any) => po.id}
@@ -273,15 +272,7 @@ const VendorDetailPage = () => {
                             />
                         </Card>
 
-                        <Card>
-                            <div className="flex items-center justify-between mb-4">
-                                <h2 className="text-xl font-bold text-fg">Vendor Invoices</h2>
-                                {canManage && (
-                                    <Button variant="primary" onClick={() => setIsInvoiceModalOpen(true)}><Plus size={16} />
-                                        Create Invoice
-                                    </Button>
-                                )}
-                            </div>
+                        <Card title="Vendor invoices">
                             <DataTable
                                 data-testid="vendor-invoices-table"
                                 rowKey={(inv: any) => inv.id}
@@ -304,7 +295,6 @@ const VendorDetailPage = () => {
                             />
                         </Card>
                     </div>
-                </div>
             </DetailPageTemplate>
 
             <CreateInvoiceModal

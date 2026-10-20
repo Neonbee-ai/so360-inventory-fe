@@ -61,7 +61,7 @@ const ImportResultStep: React.FC<Props> = ({ result, loading, submittedRows, onG
             {/* Successes */}
             {successes.length > 0 && (
                 <div className="space-y-nb-2">
-                    <p className="text-success text-nb-caption font-semibold uppercase">Imported items</p>
+                    <p className="text-success text-nb-caption font-semibold">Imported items</p>
                     <div className="max-h-48 overflow-y-auto space-y-nb-1 pr-nb-1">
                         {successes.map((r) => {
                             const name = submittedRows[r.row_index - 1]?.name || `Row ${r.row_index}`;
@@ -86,7 +86,7 @@ const ImportResultStep: React.FC<Props> = ({ result, loading, submittedRows, onG
             {/* Failures */}
             {failures.length > 0 && (
                 <div className="space-y-nb-2">
-                    <p className="text-danger text-nb-caption font-semibold uppercase">Failed rows</p>
+                    <p className="text-danger text-nb-caption font-semibold">Failed rows</p>
                     <div className="space-y-nb-1">
                         {failures.map((r) => (
                             <div key={r.row_index} className="flex items-start gap-nb-3 px-nb-3 py-nb-2 rounded-nb-md bg-surface border border-danger">

@@ -8,7 +8,7 @@ import { firstError, optional, validateAddress, validateCode, validateName, Vali
 import { useActivity, useShellBridge } from '@so360/shell-context';
 import {
     FeatureGate, DetailPageTemplate, DataTable, Button, IconButton, Modal, TextField, Textarea, Checkbox,
-    Alert, Badge, EmptyState, KpiCard, Card,
+    Alert, Badge, EmptyState, DescriptionList, Card,
     type DataTableColumn,
 } from '@so360/design-system';
 
@@ -255,17 +255,25 @@ const WarehouseDetailPage = () => {
             }
             sidePanel={
                 <div className="flex flex-col gap-nb-4">
-                    <Card title="Address">
-                        <span className="inline-flex items-center gap-nb-2 text-nb-body text-fg">
-                            <MapPin size={16} className="text-fg-muted" />
-                            {warehouse.address || 'No address set'}
-                        </span>
+                    <Card title="Details">
+                        <DescriptionList
+                            columns={1}
+                            layout="stacked"
+                            items={[
+                                {
+                                    label: 'Address',
+                                    value: (
+                                        <span className="inline-flex items-center gap-nb-2">
+                                            <MapPin size={16} className="text-fg-muted" />
+                                            {warehouse.address || 'No address set'}
+                                        </span>
+                                    ),
+                                },
+                                { label: 'Storage locations', value: warehouse.warehouse_locations?.length || 0 },
+                                { label: 'Items in stock', value: warehouse.stock_balances?.length || 0 },
+                            ]}
+                        />
                     </Card>
-                    <KpiCard
-                        label="Storage Locations"
-                        value={warehouse.warehouse_locations?.length || 0}
-                        hint={`${warehouse.stock_balances?.length || 0} items in stock`}
-                    />
                 </div>
             }
         >
