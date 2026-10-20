@@ -62,12 +62,12 @@ const CategoryIconLibrary: React.FC<CategoryIconLibraryProps> = ({ currentUrl, c
                         style={{ background: bg }}
                       >
                         <IconComp size={16} className="text-fg" />
-                      </Grid>
+                      </div>
                       <span className="text-[10px] text-fg-subtle leading-tight text-center truncate w-full">{icon.label}</span>
                     </Button>
                   );
                 })}
-              </div>
+              </Grid>
             </div>
           ))}
 
