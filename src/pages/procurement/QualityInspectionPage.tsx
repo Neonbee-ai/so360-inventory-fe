@@ -195,7 +195,7 @@ const QualityInspectionPage = () => {
 
     return (
         <>
-            <ListPageTemplate
+            <ListPageTemplate trail={[]}
                 title="Quality Inspection"
                 description="Receipts held for inspection. Stock is released only for what passes."
                 primaryAction={<Button onClick={() => setShowOpenForm(true)}>+ Open Inspection</Button>}

@@ -54,7 +54,7 @@ const GRNListPage = () => {
     );
 
     return (
-        <ListPageTemplate
+        <ListPageTemplate trail={[]}
             title="Goods Receipt Notes"
             description="Track all received shipments and inventory updates."
             count={grns.length}

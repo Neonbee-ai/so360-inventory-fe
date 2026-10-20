@@ -37,7 +37,7 @@ const BulkImportPage = lazy(() => import('./pages/bulk-import/BulkImportPage'));
 
 
 import { useShellBridge } from '@so360/shell-context';
-import { FeatureRoute } from '@so360/design-system';
+import { FeatureRoute, CombScope } from '@so360/design-system';
 import { inventoryService } from './services/inventoryService';
 import { procurementService } from './services/procurementService';
 import { vendorService } from './services/vendorService';
@@ -154,7 +154,9 @@ const MfeShellInitializer = ({ children }: { children: React.ReactNode }) => {
 };
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
+    const navigate = useNavigate();
     return (
+        <CombScope module="inventory" root={{ label: 'Inventory', to: '/inventory/items' }} navigate={(to) => navigate(to)}>
         <div className="min-h-screen bg-bg text-fg selection:bg-primary/30">
             <MfeShellInitializer>
                 <main className="w-full">
@@ -169,6 +171,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                 </main>
             </MfeShellInitializer>
         </div>
+        </CombScope>
     );
 };
 

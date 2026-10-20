@@ -500,7 +500,7 @@ const CategoriesPage = () => {
     }
 
     return (
-        <ListPageTemplate
+        <ListPageTemplate trail={[]}
             title={propertyUnits ? labels.categories : 'Product Categories'}
             description={propertyUnits
                 ? 'Projects, their towers and unit availability'

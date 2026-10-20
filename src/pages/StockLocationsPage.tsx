@@ -385,7 +385,7 @@ const StockLocationsPage = () => {
     ) : undefined;
 
     return (
-        <ListPageTemplate
+        <ListPageTemplate trail={[]}
             title="Warehouses"
             description="Manage physical storage facilities and fulfillment centers"
             count={warehouses.length}

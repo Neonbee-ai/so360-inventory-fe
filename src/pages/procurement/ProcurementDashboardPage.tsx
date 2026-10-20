@@ -54,7 +54,7 @@ const ProcurementDashboardPage = () => {
 
     if (loading) {
         return (
-            <DashboardPageTemplate title={title} description={description}>
+            <DashboardPageTemplate trail={[]} title={title} description={description}>
                 <div className="flex items-center justify-center py-8"><Spinner aria-label="Loading dashboard" /></div>
             </DashboardPageTemplate>
         );
@@ -62,7 +62,7 @@ const ProcurementDashboardPage = () => {
 
     if (error) {
         return (
-            <DashboardPageTemplate title={title} description={description} primaryAction={refreshAction}>
+            <DashboardPageTemplate trail={[]} title={title} description={description} primaryAction={refreshAction}>
                 <Alert variant="error">{error}</Alert>
             </DashboardPageTemplate>
         );
@@ -127,7 +127,7 @@ const ProcurementDashboardPage = () => {
     ];
 
     return (
-        <DashboardPageTemplate
+        <DashboardPageTemplate trail={[]}
             title={title}
             description={description}
             primaryAction={refreshAction}

@@ -347,7 +347,7 @@ const POListPage = () => {
 
     return (
         <>
-            <ListPageTemplate
+            <ListPageTemplate trail={[]}
                 title="Purchase Orders"
                 description="Official commercial documents issued to sellers."
                 count={pos.length}

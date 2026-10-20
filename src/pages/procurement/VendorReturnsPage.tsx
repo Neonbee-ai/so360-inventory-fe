@@ -218,7 +218,7 @@ const VendorReturnsPage = () => {
 
     return (
         <>
-            <ListPageTemplate
+            <ListPageTemplate trail={[]}
                 title="Vendor Returns"
                 description="Send back damaged, wrong, excess or expired goods and track the credit."
                 count={returns.length > 0 ? `${returns.length} return(s)` : undefined}

@@ -752,7 +752,7 @@ const StockMovementRegisterPage = () => {
                 : 'Not linked';
 
     return (
-        <ListPageTemplate
+        <ListPageTemplate trail={[]}
             title="Stock Transactions"
             description="Inventory movement register — every movement traceable end to end"
             primaryAction={

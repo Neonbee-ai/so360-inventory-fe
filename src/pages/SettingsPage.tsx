@@ -160,7 +160,7 @@ const SettingsPage = () => {
     if (isLoading) return <div className="p-nb-6" aria-busy="true"><Skeleton variant="rect" /></div>;
 
     return (
-        <SettingsPageTemplate title="Inventory Settings" description="Configure units, categories, and module defaults">
+        <SettingsPageTemplate trail={[]} title="Inventory Settings" description="Configure units, categories, and module defaults">
             {confirmDialog}
             <div className="flex flex-col gap-nb-4">
                 {error && <Alert variant="error">{error}</Alert>}

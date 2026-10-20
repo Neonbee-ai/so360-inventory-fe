@@ -187,7 +187,7 @@ const VendorDetailPage = () => {
     }
     if (error || !vendor) {
         return (
-            <DetailPageTemplate title="Vendor">
+            <DetailPageTemplate trail={[{ label: 'Vendors', to: '/inventory/vendors' }]} title="Vendor">
                 <Alert variant="error" title="Unable to load vendor">{error || 'Vendor not found'}</Alert>
                 <Button variant="secondary" onClick={() => navigate('/vendors')}>Back to Vendors</Button>
             </DetailPageTemplate>

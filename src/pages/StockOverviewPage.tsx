@@ -151,7 +151,7 @@ const StockOverviewPage = () => {
     );
 
     return (
-        <ListPageTemplate
+        <ListPageTemplate trail={[]}
             title="Stock Overview"
             description="Real-time physical stock levels and valuation"
             headerSecondaryActions={[

@@ -100,7 +100,7 @@ const ProcurementReportsPage = () => {
     }));
 
     return (
-        <ListPageTemplate
+        <ListPageTemplate trail={[]}
             title="Procurement Reports"
             description={active?.hint}
             count={rows.length > 0 ? `${rows.length} row(s)` : undefined}

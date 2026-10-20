@@ -363,7 +363,7 @@ const ItemDetailPage = () => {
     };
 
     // ── Loading / Error States ────────────────────────
-    if (isLoading) return <DetailPageTemplate title="Item" loading>{null}</DetailPageTemplate>;
+    if (isLoading) return <DetailPageTemplate trail={[{ label: 'Items', to: '/inventory/items' }]} title="Item" loading>{null}</DetailPageTemplate>;
     if (error && !item) return (
         <EmptyState
             icon={AlertCircle}

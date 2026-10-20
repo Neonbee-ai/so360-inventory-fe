@@ -32,7 +32,7 @@ const ContractsPage = () => {
     ];
 
     return (
-        <ListPageTemplate
+        <ListPageTemplate trail={[]}
             title="Subcontractor Contracts"
             description="Lump-sum and value-based service agreements."
             count={loading ? undefined : contracts.length}

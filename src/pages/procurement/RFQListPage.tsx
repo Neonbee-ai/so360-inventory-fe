@@ -164,7 +164,7 @@ const RFQListPage = () => {
 
     return (
         <>
-            <ListPageTemplate
+            <ListPageTemplate trail={[]}
                 title="Requests for Quotation"
                 description="Source competitive quotes before committing to a purchase order."
                 count={rfqs.length}

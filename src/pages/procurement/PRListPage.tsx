@@ -249,7 +249,7 @@ const PRListPage = () => {
     return (
         <>
             {confirmDialog}
-            <ListPageTemplate
+            <ListPageTemplate trail={[]}
                 title="Purchase Requisitions"
                 description="Manage and track spending requests across the organization."
                 count={prs.length}

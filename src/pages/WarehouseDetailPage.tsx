@@ -196,11 +196,11 @@ const WarehouseDetailPage = () => {
         }
     };
 
-    if (isLoading) return <DetailPageTemplate title="Warehouse" loading />;
+    if (isLoading) return <DetailPageTemplate trail={[{ label: 'Locations', to: '/inventory/locations' }]} title="Warehouse" loading />;
 
     if (!warehouse) {
         return (
-            <DetailPageTemplate title="Warehouse">
+            <DetailPageTemplate trail={[{ label: 'Locations', to: '/inventory/locations' }]} title="Warehouse">
                 <EmptyState
                     title={error || 'Warehouse not found'}
                     action={{ label: 'Back to Warehouses', onClick: () => navigate('/inventory/locations') }}

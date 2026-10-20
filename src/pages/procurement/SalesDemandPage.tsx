@@ -112,7 +112,7 @@ const SalesDemandPage = () => {
     return (
         <>
             {confirmDialog}
-            <ListPageTemplate
+            <ListPageTemplate trail={[]}
                 title="Sales Demand"
                 description="Confirmed customer orders, netted against stock and open purchase orders."
                 count={orders.length > 0

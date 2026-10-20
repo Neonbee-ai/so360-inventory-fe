@@ -75,7 +75,7 @@ const VendorPerformancePage = () => {
     ];
 
     return (
-        <ListPageTemplate
+        <ListPageTemplate trail={[]}
             title="Vendor Performance"
             description="Scored from what actually happened — deliveries, rejections, quotes and spend."
             loading={loading}

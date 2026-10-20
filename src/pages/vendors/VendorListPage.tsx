@@ -170,7 +170,7 @@ const VendorListPage = () => {
 
     return (
         <>
-            <ListPageTemplate
+            <ListPageTemplate trail={[]}
                 title="Vendors & Subcontractors"
                 description="Manage supply chain partners and commercial contracts."
                 count={loading ? undefined : filteredVendors.length}
