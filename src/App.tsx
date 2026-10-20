@@ -30,6 +30,7 @@ const VendorReturnsPage = lazy(() => import('./pages/procurement/VendorReturnsPa
 const ProcurementDashboardPage = lazy(() => import('./pages/procurement/ProcurementDashboardPage'));
 const ProcurementReportsPage = lazy(() => import('./pages/procurement/ProcurementReportsPage'));
 const VendorPerformancePage = lazy(() => import('./pages/procurement/VendorPerformancePage'));
+const SerialRegisterPage = lazy(() => import('./pages/SerialRegisterPage'));
 const SalesDemandPage = lazy(() => import('./pages/procurement/SalesDemandPage'));
 const CategoriesPage = lazy(() => import('./pages/CategoriesPage'));
 const BulkImportPage = lazy(() => import('./pages/bulk-import/BulkImportPage'));
@@ -200,6 +201,7 @@ const App = () => {
                 <Route path="locations" element={<PermissionGuard permission="warehouses.read"><FeatureGate flagKey="submodule:inventory:warehouses"><StockLocationsPage /></FeatureGate></PermissionGuard>} />
                 <Route path="warehouses/:id" element={<PermissionGuard permission="warehouses.read"><WarehouseDetailPage /></PermissionGuard>} />
                 <Route path="overview" element={<PermissionGuard permission="stock.view"><StockOverviewPage /></PermissionGuard>} />
+                <Route path="serials" element={<PermissionGuard permission="items.read"><FeatureGate flagKey="submodule:inventory:serial_tracking"><SerialRegisterPage /></FeatureGate></PermissionGuard>} />
                 <Route path="movements" element={<PermissionGuard permission="stock.view"><StockMovementRegisterPage /></PermissionGuard>} />
                 {/* Legacy paths kept as redirects — notification actionUrls and
                     bookmarks still point at /adjustments and /transfers. */}
