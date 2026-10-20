@@ -24,7 +24,7 @@ const CategoryIconLibrary: React.FC<CategoryIconLibraryProps> = ({ currentUrl, c
         variant="ghost"
         aria-expanded={open}
         onClick={() => setOpen(v => !v)}
-        className="w-full justify-between"
+        className="w-full !justify-between"
       >
         <span className="text-xs font-medium text-fg-muted">Preset Icons</span>
         {open ? (
@@ -50,7 +50,7 @@ const CategoryIconLibrary: React.FC<CategoryIconLibraryProps> = ({ currentUrl, c
                       type="button"
                       variant="ghost"
                       onClick={() => onSelect(buildPresetUrl(icon.id))}
-                      className={`!h-auto flex flex-col items-center gap-1 p-2 rounded-lg border transition-all ${
+                      className={`!h-auto !flex !flex-col !items-center gap-1 !p-2 rounded-lg border transition-all ${
                         isActive
                           ? 'border-primary bg-primary/10 ring-1 ring-focus'
                           : 'border-line bg-surface-raised/30'

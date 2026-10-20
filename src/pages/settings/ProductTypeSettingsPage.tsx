@@ -169,7 +169,7 @@ const ProductTypeSettingsPage = () => {
                                 <Button
                                     key={pt.id}
                                     variant={selectedType?.id === pt.id ? 'tonal' : 'ghost'}
-                                    className="w-full justify-between"
+                                    className="w-full !justify-between"
                                     onClick={() => loadTypeDetail(pt.id)}
                                 >
                                     <span className="flex flex-col items-start text-left">

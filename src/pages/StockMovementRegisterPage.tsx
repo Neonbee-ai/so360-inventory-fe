@@ -202,7 +202,7 @@ const ItemSearchSelect = ({
                             key={i.id}
                             type="button"
                             variant="ghost"
-                            className="w-full justify-start text-left"
+                            className="w-full !justify-start !text-left"
                             onClick={() => { onSelect(i); setOpen(false); }}
                         >
                             <span className="font-medium">{i.name}</span>

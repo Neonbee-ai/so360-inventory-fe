@@ -63,7 +63,7 @@ const CategoryPicker: React.FC<CategoryPickerProps> = ({ categories, value, onCh
                 aria-haspopup="listbox"
                 aria-expanded={isOpen}
                 onClick={() => setIsOpen(!isOpen)}
-                className="w-full justify-between"
+                className="w-full !justify-between"
             >
                 <span className={`text-sm ${value ? 'text-fg' : 'text-fg-subtle'} truncate`}>
                     {selectedPath || 'Select category...'}
@@ -94,7 +94,7 @@ const CategoryPicker: React.FC<CategoryPickerProps> = ({ categories, value, onCh
                             type="button"
                             variant="ghost"
                             onClick={() => { onChange(''); setIsOpen(false); setSearch(''); }}
-                            className={`w-full justify-start ${!value ? 'text-primary' : ''}`}
+                            className={`w-full !justify-start ${!value ? 'text-primary' : ''}`}
                         >
                             None
                         </Button>
@@ -154,7 +154,7 @@ const CategoryPicker: React.FC<CategoryPickerProps> = ({ categories, value, onCh
                                     variant="ghost"
                                     size="sm"
                                     onClick={() => setShowQuickAdd(true)}
-                                    className="w-full justify-start gap-1.5"
+                                    className="w-full !justify-start gap-1.5"
                                 >
                                     <Plus size={14} /> Create new category
                                 </Button>

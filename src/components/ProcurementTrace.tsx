@@ -63,7 +63,7 @@ const ProcurementTrace: React.FC<{ type: TraceDocType; id: string }> = ({ type, 
                             onClick={() => !isFocus && navigate(node.route)}
                             disabled={isFocus}
                             aria-current={isFocus ? 'step' : undefined}
-                            className={`w-full justify-start gap-nb-3 text-left ${meta.className}`}
+                            className={`w-full !justify-start gap-nb-3 !text-left ${meta.className}`}
                         >
                             <span className="text-lg">{meta.icon}</span>
                             <div className="flex-1 min-w-0">

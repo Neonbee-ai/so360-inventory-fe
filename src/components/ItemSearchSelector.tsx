@@ -114,7 +114,7 @@ const ItemSearchSelector: React.FC<ItemSearchSelectorProps> = ({
                             key={item.id}
                             type="button"
                             variant="ghost"
-                            className="w-full justify-between gap-nb-4 text-left"
+                            className="w-full !justify-between gap-nb-4 !text-left"
                             onMouseDown={() => handleSelect(item)}
                         >
                             <div className="min-w-0">

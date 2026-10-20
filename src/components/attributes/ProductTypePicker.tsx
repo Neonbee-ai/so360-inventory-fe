@@ -45,7 +45,7 @@ const ProductTypePicker: React.FC<ProductTypePickerProps> = ({ value, onChange }
             <Button
                 type="button"
                 variant={!value ? 'tonal' : 'secondary'}
-                className="h-auto justify-start text-left py-nb-3"
+                className="!h-auto !justify-start !text-left !py-nb-3"
                 aria-pressed={!value}
                 onClick={() => onChange('')}
             >
@@ -66,7 +66,7 @@ const ProductTypePicker: React.FC<ProductTypePickerProps> = ({ value, onChange }
                         key={pt.id}
                         type="button"
                         variant={isSelected ? 'tonal' : 'secondary'}
-                        className="h-auto justify-start text-left py-nb-3"
+                        className="!h-auto !justify-start !text-left !py-nb-3"
                         aria-pressed={isSelected}
                         onClick={() => onChange(pt.id)}
                     >
