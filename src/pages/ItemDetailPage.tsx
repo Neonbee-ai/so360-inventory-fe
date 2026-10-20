@@ -454,11 +454,14 @@ const ItemDetailPage = () => {
                     ? <Badge tone="info">Editing</Badge>
                     : <Badge tone={item.is_active ? 'success' : 'neutral'}>{item.is_active ? 'Active' : 'Inactive'}</Badge>}
                 secondaryActions={isEditing ? [
-                    <Button key="cancel-editing" variant="secondary" size="sm" onClick={handleCancelEdit}>Cancel Editing</Button>,
-                ] : [
-                    ...(can('items.update') ? [<Button key="edit" variant="secondary" size="sm" onClick={handleEditClick}>{<Edit2 size={16} />} Edit</Button>] : []),
-                    ...(can('items.delete') ? [<Button key="delete" variant="danger" size="sm" onClick={() => setShowDeleteConfirm(true)}>{<Trash2 size={16} />} Delete</Button>] : []),
-                ]}
+                    <Button key="cancel-editing" variant="secondary" onClick={handleCancelEdit}>Cancel Editing</Button>,
+                ] : undefined}
+                primaryAction={!isEditing && can('items.update')
+                    ? <Button onClick={handleEditClick}><Edit2 size={16} /> Edit</Button>
+                    : undefined}
+                overflowActions={!isEditing && can('items.delete')
+                    ? [{ label: 'Delete', danger: true, onSelect: () => setShowDeleteConfirm(true) }]
+                    : undefined}
             >
             {error && <Alert variant="error" action={{ label: 'Dismiss', onClick: () => setError(null) }}>{error}</Alert>}
             {taxCodesError && <Alert variant="warning">{taxCodesError}</Alert>}
@@ -511,7 +514,7 @@ const ItemDetailPage = () => {
                             {/* Item Identity */}
                             <h1 className="text-2xl font-bold text-fg mb-1 leading-tight">{item.name}</h1>
                             <div className="flex items-center gap-2 mb-4">
-                                <span className="text-xs font-mono text-fg-subtle tracking-widest">{item.sku || 'NO-SKU'}</span>
+                                <span className="text-nb-sm font-mono text-fg-subtle">{item.sku || 'No SKU'}</span>
                                 {item.barcode && (
                                     <>
                                         <span className="text-fg-subtle">|</span>
@@ -555,7 +558,7 @@ const ItemDetailPage = () => {
                                     <span className="text-primary text-[10px] font-bold">Physical stock</span>
                                     <div className="text-4xl font-black mt-2 flex items-baseline gap-1.5">
                                         {totalStock}
-                                        <span className="text-xs font-normal text-primary uppercase">{item.units?.abbreviation || 'PCS'}</span>
+                                        <span className="text-nb-sm font-normal text-primary">{item.units?.abbreviation || 'PCS'}</span>
                                     </div>
                                     <p className="mt-3 text-[10px] text-primary flex items-center gap-1.5 bg-primary/30 w-fit px-2 py-1 rounded-lg">
                                         <Info size={11} /> Real-time count
@@ -627,7 +630,7 @@ const ItemDetailPage = () => {
                                     <span className="text-primary text-[10px] font-bold">Physical stock</span>
                                     <div className="text-4xl font-black mt-2 flex items-baseline gap-1.5">
                                         {totalStock}
-                                        <span className="text-xs font-normal text-primary uppercase">{item.units?.abbreviation || 'PCS'}</span>
+                                        <span className="text-nb-sm font-normal text-primary">{item.units?.abbreviation || 'PCS'}</span>
                                     </div>
                                     <p className="mt-3 text-[10px] text-primary flex items-center gap-1.5 bg-primary/30 w-fit px-2 py-1 rounded-lg">
                                         <Info size={11} /> Real-time count
@@ -1104,7 +1107,7 @@ const ReadOnlyField = ({ label, value, mono }: { label: string; value: React.Rea
     <div>
         <span className="block text-sm font-medium text-fg-muted mb-1.5">{label}</span>
         <div className={`w-full bg-surface-raised/50 border border-line-strong/50 rounded-lg px-4 py-2.5 text-sm min-h-[42px] flex items-center ${
-            mono ? 'font-mono tracking-wider text-fg-muted' : 'text-fg'
+            mono ? 'font-mono text-fg-muted' : 'text-fg'
         }`}>
             {value || <span className="text-fg-subtle">&mdash;</span>}
         </div>

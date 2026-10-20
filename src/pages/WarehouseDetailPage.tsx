@@ -241,18 +241,14 @@ const WarehouseDetailPage = () => {
             trail={[{ label: 'Warehouses', onClick: () => navigate('/inventory/locations') }]}
             status={<Badge tone={warehouse.is_active ? 'success' : 'neutral'}>{warehouse.is_active ? 'Operational' : 'Inactive'}</Badge>}
             meta={<span className="font-mono">{warehouse.code || 'NO-CODE'}</span>}
-            secondaryActions={
-                can('warehouses.create')
-                    ? [
-                        <FeatureGate key="manage" state={warehouseState} loading={(shell?.effectiveFlagsLoaded === false)} onUpgradeClick={() => navigate('/org/billing')}>
-                            <>
-                                <IconButton label="Edit Warehouse" icon={<Edit2 size={16} />} variant="ghost" onClick={handleEditClick} />
-                                <IconButton label="Delete Warehouse" icon={<Trash2 size={16} />} variant="ghost" onClick={() => setShowDeleteConfirm(true)} />
-                            </>
-                        </FeatureGate>,
-                    ]
-                    : undefined
-            }
+            primaryAction={can('warehouses.create') ? (
+                <FeatureGate key="manage" state={warehouseState} loading={(shell?.effectiveFlagsLoaded === false)} onUpgradeClick={() => navigate('/org/billing')}>
+                    <Button aria-label="Edit Warehouse" title="Edit Warehouse" onClick={handleEditClick}><Edit2 size={16} /> Edit</Button>
+                </FeatureGate>
+            ) : undefined}
+            overflowActions={can('warehouses.create') && warehouseState === 'enabled' && shell?.effectiveFlagsLoaded !== false
+                ? [{ label: 'Delete Warehouse', danger: true, onSelect: () => setShowDeleteConfirm(true) }]
+                : undefined}
             sidePanel={
                 <div className="flex flex-col gap-nb-4">
                     <Card title="Details">

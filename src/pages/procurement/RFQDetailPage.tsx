@@ -181,9 +181,6 @@ const RFQDetailPage = () => {
                 <Scale size={16} /> Compare &amp; Award
             </Button>
         ),
-        canAct && (
-            <Button key="cancel" variant="danger" onClick={handleCancel} disabled={busy === 'cancel'}>Cancel RFQ</Button>
-        ),
     ].filter(Boolean) as React.ReactElement[];
 
     const primaryAction = ['draft', 'sent'].includes(rfq.status) ? (
@@ -215,6 +212,7 @@ const RFQDetailPage = () => {
             backLabel="Back to RFQs"
             secondaryActions={secondaryActions}
             primaryAction={primaryAction}
+            overflowActions={canAct ? [{ label: 'Cancel RFQ', danger: true, onSelect: handleCancel, disabled: busy === 'cancel' }] : undefined}
         >
             {confirmDialog}
             <Grid>

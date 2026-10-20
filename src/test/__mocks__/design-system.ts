@@ -174,7 +174,7 @@ export const DetailPageTemplate = (p: any) =>
       slot('secondary', p.secondaryActions && React.createElement(React.Fragment, null, ...p.secondaryActions)),
       slot('primary', p.primaryAction),
       slot('overflow', p.overflowActions && p.overflowActions.map((a: any) =>
-        React.createElement('button', { key: a.label, onClick: a.onSelect, 'data-danger': String(!!a.danger) }, a.label)))),
+        React.createElement('button', { key: a.label, onClick: a.onSelect, disabled: a.disabled, 'data-danger': String(!!a.danger) }, a.label)))),
     p.tabs ? React.createElement('div', { 'data-slot': 'tabs', role: 'tablist' }, p.tabs.map((t: any) =>
       React.createElement('button', { key: t.id, role: 'tab', 'aria-selected': t.id === p.activeTab, onClick: () => p.onTabChange?.(t.id) }, t.label))) : null,
     p.loading ? React.createElement('div', { 'data-slot': 'skeleton' }) : null,

@@ -169,7 +169,7 @@ describe('WarehouseDetailPage', () => {
     it('When Delete Warehouse icon button clicked / Then shows confirm dialog', async () => {
       render(<WarehouseDetailPage />);
       await waitFor(() => expect(screen.getByText('Main Warehouse')).toBeInTheDocument());
-      fireEvent.click(screen.getByTitle('Delete Warehouse'));
+      fireEvent.click(screen.getByText('Delete Warehouse'));
       await waitFor(() => {
         expect(screen.getByText(/Are you sure/i)).toBeInTheDocument();
       });

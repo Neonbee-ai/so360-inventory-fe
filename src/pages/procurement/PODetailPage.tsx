@@ -217,19 +217,14 @@ const PODetailPage = () => {
     } else if (po.status === 'received') {
         primaryAction = closeBtn('primary');
     }
-    if (po.status === 'draft' || po.status === 'sent') {
-        secondaryActions.push(
-            <Button
-                key="cancel"
-                variant="danger"
-                onClick={() => handleStatusChange('cancelled')}
-                disabled={busy || (po.status === 'sent' && totalReceived > 0)}
-                title={po.status === 'sent' && totalReceived > 0 ? 'Cannot cancel after receiving goods' : undefined}
-            >
-                {closeLabel('cancelled') ?? 'Cancel PO'}
-            </Button>,
-        );
-    }
+    const overflowActions = (po.status === 'draft' || po.status === 'sent')
+        ? [{
+            label: closeLabel('cancelled') ?? 'Cancel PO',
+            danger: true,
+            onSelect: () => handleStatusChange('cancelled'),
+            disabled: busy || (po.status === 'sent' && totalReceived > 0),
+        }]
+        : undefined;
     if ((po.status === 'sent' && receiveProgress === 100) || po.status === 'partially_received') {
         secondaryActions.push(closeBtn('secondary'));
     }
@@ -415,6 +410,7 @@ const PODetailPage = () => {
                 backLabel="Back to Purchase Orders"
                 primaryAction={primaryAction}
                 secondaryActions={secondaryActions}
+                overflowActions={overflowActions}
                 sidePanel={sidePanel}
             >
                 <div className="space-y-6">
