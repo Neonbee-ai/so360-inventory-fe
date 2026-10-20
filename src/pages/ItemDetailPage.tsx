@@ -512,7 +512,6 @@ const ItemDetailPage = () => {
                             )}
 
                             {/* Item Identity */}
-                            <h1 className="text-2xl font-bold text-fg mb-1 leading-tight">{item.name}</h1>
                             <div className="flex items-center gap-2 mb-4">
                                 <span className="text-nb-sm font-mono text-fg-subtle">{item.sku || 'No SKU'}</span>
                                 {item.barcode && (
@@ -939,7 +938,7 @@ const ItemDetailPage = () => {
                                             <div className="flex items-center justify-between mb-6">
                                                 <div className="flex items-center gap-2">
                                                     <History size={20} className="text-primary" />
-                                                    <h2 className="text-xl font-bold text-fg tracking-tight">Movement Ledger</h2>
+                                                    <h2 className="text-lg font-semibold text-fg">Movement Ledger</h2>
                                                 </div>
                                                 <span className="text-[10px] text-fg-subtle border border-line px-3 py-1 rounded-full font-bold">
                                                     Audit Trail
@@ -960,7 +959,7 @@ const ItemDetailPage = () => {
                                         <div>
                                             <div className="flex items-center gap-2 mb-6">
                                                 <TrendingUp size={20} className="text-primary" />
-                                                <h2 className="text-xl font-bold text-fg tracking-tight">Sales History</h2>
+                                                <h2 className="text-lg font-semibold text-fg">Sales History</h2>
                                             </div>
 
                                             <Grid columns={2} gap="sm" className="mb-nb-6">

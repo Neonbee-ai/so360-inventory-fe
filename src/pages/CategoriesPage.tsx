@@ -29,7 +29,7 @@ import {
 import { fitImageFile, describeFit, IMAGE_FIT_SLOTS, type ImageFitSlot } from '../utils/imageFit';
 import ImageSpecChip from '../components/media/ImageSpecChip';
 import { useActivity, useShellBridge } from '@so360/shell-context';
-import { Alert, Button, FeatureGate, IconButton, TextField, Textarea, Grid } from '@so360/design-system';
+import { Alert, Button, Card, Cluster, FeatureGate, IconButton, ListPageTemplate, TextField, Textarea, Grid } from '@so360/design-system';
 
 const PRESET_COLORS = ['#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#EC4899', '#06B6D4', '#64748B'];
 
@@ -500,21 +500,13 @@ const CategoriesPage = () => {
     }
 
     return (
-        <div className="p-8">
-            <header className="mb-6 flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl font-bold text-fg tracking-tight flex items-center gap-3">
-                        {propertyUnits ? <Building2 className="text-purple-400" /> : <Tag className="text-purple-400" />}
-                        {propertyUnits ? labels.categories : 'Product Categories'}
-                    </h1>
-                    <p className="text-fg-muted mt-1 text-sm">
-                        {propertyUnits
-                            ? 'Projects, their towers and unit availability'
-                            : 'Organize your products with a hierarchical category system'}
-                    </p>
-                </div>
-                {canManage && (
-                    <FeatureGate state={createState} loading={(shell?.effectiveFlagsLoaded === false)} onUpgradeClick={() => navigate('/org/billing')}>
+        <ListPageTemplate
+            title={propertyUnits ? labels.categories : 'Product Categories'}
+            description={propertyUnits
+                ? 'Projects, their towers and unit availability'
+                : 'Organize your products with a hierarchical category system'}
+            primaryAction={canManage ? (
+                <FeatureGate state={createState} loading={(shell?.effectiveFlagsLoaded === false)} onUpgradeClick={() => navigate('/org/billing')}>
                     <Button
                         variant="primary"
                         onClick={() => {
@@ -525,10 +517,9 @@ const CategoriesPage = () => {
                     ><Plus size={16} />
                         {`New ${labels.category}`}
                     </Button>
-                    </FeatureGate>
-                )}
-            </header>
-
+                </FeatureGate>
+            ) : undefined}
+        >
             {error && (
                 <div className="mb-4">
                     <Alert variant="error" action={{ label: 'Dismiss', onClick: () => setError(null) }}>{error}</Alert>
@@ -537,15 +528,17 @@ const CategoriesPage = () => {
 
             <div className="flex gap-6 items-start">
                 {/* Left panel — tree / cards */}
-                <div className="w-1/3 min-w-[260px] bg-surface/50 border border-line rounded-2xl p-5">
-                    <div className="flex items-center justify-between mb-1">
-                        <h2 className="text-sm font-semibold text-fg-muted">{labels.categories}</h2>
-                        <div className="flex items-center gap-1">
+                <div className="w-1/3 min-w-[260px]">
+                  <Card
+                    title={labels.categories}
+                    actions={
+                        <Cluster gap="tight">
                             <Button size="sm" variant={viewMode === 'tree' ? 'tonal' : 'ghost'} onClick={() => setViewMode('tree')}>Tree</Button>
                             <Button size="sm" variant={viewMode === 'cards' ? 'tonal' : 'ghost'} onClick={() => setViewMode('cards')}>Cards</Button>
-                        </div>
-                    </div>
-                    <p className="text-[10px] text-fg-subtle mb-3">
+                        </Cluster>
+                    }
+                  >
+                    <p className="text-nb-caption text-fg-muted mb-3">
                         {categories.filter(c => c.icon_url || c.image_url || c.banner_url).length} of {categories.length} have images
                     </p>
                     <div className="overflow-y-auto max-h-[600px]">
@@ -568,10 +561,28 @@ const CategoriesPage = () => {
                             />
                         )}
                     </div>
+                  </Card>
                 </div>
 
                 {/* Right panel — detail editor */}
-                <div className="flex-1 bg-surface/50 border border-line rounded-2xl p-6">
+                <div className="flex-1">
+                  <Card
+                    title={selectedCategory ? `Edit ${selectedCategory.parent_id ? labels.subcategory : labels.category}` : undefined}
+                    actions={selectedCategory ? (
+                        <Cluster gap="tight">
+                            {saveSuccess && <span className="text-nb-caption text-success">Saved!</span>}
+                            {saveError && <span className="text-nb-caption text-danger">{saveError}</span>}
+                            <Button
+                                variant="primary"
+                                onClick={handleSaveDetail}
+                                disabled={isSaving || !editName.trim() || !!slugError}
+                                loading={isSaving}
+                            ><Save size={14} />
+                                Save
+                            </Button>
+                        </Cluster>
+                    ) : undefined}
+                  >
                     {!selectedCategory ? (
                         <div className="flex flex-col items-center justify-center py-8 gap-3 text-center">
                             <div className="w-16 h-16 rounded-2xl bg-surface-raised flex items-center justify-center">
@@ -581,24 +592,6 @@ const CategoriesPage = () => {
                         </div>
                     ) : (
                         <div className="space-y-6">
-                            <div className="flex items-center justify-between">
-                                <h2 className="text-lg font-bold text-fg">
-                                    {`Edit ${selectedCategory.parent_id ? labels.subcategory : labels.category}`}
-                                </h2>
-                                <div className="flex items-center gap-2">
-                                    {saveSuccess && <span className="text-xs text-success">Saved!</span>}
-                                    {saveError && <span className="text-xs text-rose-400">{saveError}</span>}
-                                    <Button
-                                        variant="primary"
-                                        onClick={handleSaveDetail}
-                                        disabled={isSaving || !editName.trim() || !!slugError}
-                                        loading={isSaving}
-                                    ><Save size={14} />
-                                        Save
-                                    </Button>
-                                </div>
-                            </div>
-
                             {/* Real estate: project details, unit generation and availability */}
                             {propertyUnits && (
                                 <div className="space-y-4" data-testid="property-units-panel">
@@ -938,9 +931,10 @@ const CategoriesPage = () => {
                             )}
                         </div>
                     )}
+                  </Card>
                 </div>
             </div>
-        </div>
+        </ListPageTemplate>
     );
 };
 
