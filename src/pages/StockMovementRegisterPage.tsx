@@ -10,6 +10,8 @@ import { useAuth } from '../hooks/useAuth';
 import { useActivity, useShellBridge } from '@so360/shell-context';
 import { useInventoryFormatters } from '../utils/formatters';
 import { optional, validateReference } from '../utils/validators';
+import { isSerialTrackingEnabled, validateSerialSelection } from '../utils/serials';
+import { SerialPicker } from '../components/serials/SerialPicker';
 import {
     FeatureGate, ListPageTemplate, DataTable, Button, IconButton, Modal, TextField, Textarea, Select,
     SegmentedControl, Alert, Card, EmptyState,
@@ -265,6 +267,7 @@ const StockMovementRegisterPage = () => {
     const [form, setForm] = useState(emptyForm());
     const [selectedItem, setSelectedItem] = useState<Item | null>(null);
     const [currentBalance, setCurrentBalance] = useState<number | null>(null);
+    const [pickedSerials, setPickedSerials] = useState<string[]>([]);
 
     const fetchMovements = useCallback(async () => {
         setIsLoading(true);
@@ -349,6 +352,10 @@ const StockMovementRegisterPage = () => {
     }, [form.item_id, form.warehouse_id]);
 
     const quantityNum = Number(form.quantity) || 0;
+    // Serial-tracked stock issues must name the exact units that leave (flag-gated).
+    const needsSerials = form.transaction_type === 'stock_out'
+        && !!selectedItem?.is_serial_tracked
+        && isSerialTrackingEnabled(shell);
 
     /**
      * Quantity rules per transaction type. Only an adjustment carries a sign —
@@ -441,6 +448,7 @@ const StockMovementRegisterPage = () => {
         project: requiresProject && !form.project_id ? 'Please select a project.' : null,
         work_order: requiresWorkOrder && !form.work_order_id ? 'Please select a work order.' : null,
         transaction_date: dateWarning,
+        serials: needsSerials ? validateSerialSelection(pickedSerials, quantityNum) : null,
         stock: insufficientStock
             ? `Insufficient stock available. Current balance is ${currentBalance}.`
             : null,
@@ -448,7 +456,7 @@ const StockMovementRegisterPage = () => {
         form.item_id, form.warehouse_id, form.to_warehouse_id, form.reason_code,
         form.source_type, form.source_label, form.project_id, form.work_order_id,
         isTransfer, quantityError, requiresParty, requiresProject, requiresWorkOrder,
-        dateWarning, insufficientStock, currentBalance,
+        dateWarning, insufficientStock, currentBalance, needsSerials, pickedSerials, quantityNum,
     ]);
 
     /**
@@ -472,6 +480,7 @@ const StockMovementRegisterPage = () => {
         setForm(emptyForm());
         setSelectedItem(null);
         setCurrentBalance(null);
+        setPickedSerials([]);
         setShowFieldErrors(false);
     };
 
@@ -517,6 +526,7 @@ const StockMovementRegisterPage = () => {
                     quantity: signedQuantity as number,
                     reason_code: form.reason_code,
                     transaction_type: form.transaction_type,
+                    ...(needsSerials ? { serial_numbers: pickedSerials } : {}),
                     ...allocation,
                 });
             }
@@ -899,6 +909,7 @@ const StockMovementRegisterPage = () => {
                                     itemName={selectedItem ? `${selectedItem.name} (${selectedItem.sku})` : ''}
                                     onSelect={(item) => {
                                         setSelectedItem(item);
+                                        setPickedSerials([]);
                                         setForm((f) => ({ ...f, item_id: item?.id || '' }));
                                     }}
                                 />
@@ -957,6 +968,17 @@ const StockMovementRegisterPage = () => {
                                 <FieldError field="quantity" />
                             </div>
                         </FieldGrid>
+                        {needsSerials && (
+                            <div className="mt-nb-4">
+                                <SerialPicker
+                                    itemId={form.item_id}
+                                    quantity={quantityNum}
+                                    selected={pickedSerials}
+                                    onChange={(v) => { setPickedSerials(v); setShowFieldErrors(true); }}
+                                    warehouseId={form.warehouse_id || undefined}
+                                />
+                            </div>
+                        )}
                         <Grid columns={2} className="mt-nb-4">
                             <div className="rounded-nb-md bg-surface-sunken px-nb-4 py-nb-3">
                                 <p className="text-nb-caption text-fg-subtle">Current balance</p>
