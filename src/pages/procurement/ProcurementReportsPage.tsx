@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { procurementInsightsService, type ProcurementReport } from '../../services/procurementInsightsService';
 import { useInventoryFormatters } from '../../utils/formatters';
+import { buildCsv, downloadCsv } from '../../utils/csvDownload';
 import { Alert, Button, DataTable, EmptyState, ListPageTemplate, Tabs, TextField, getErrorMessage, toast, type DataTableColumn } from '@so360/design-system';
 
 const REPORTS: Array<{ key: ProcurementReport; label: string; hint: string }> = [
@@ -64,22 +65,8 @@ const ProcurementReportsPage = () => {
             return;
         }
         const columns = Object.keys(rows[0]);
-        const escape = (v: any) => {
-            const s = v == null ? '' : String(v);
-            return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-        };
-        const csv = [
-            columns.map(humanise).join(','),
-            ...rows.map(r => columns.map(c => escape(r[c])).join(',')),
-        ].join('\n');
-
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `${report}-${new Date().toISOString().slice(0, 10)}.csv`;
-        link.click();
-        URL.revokeObjectURL(url);
+        const csv = buildCsv(columns.map(humanise), rows.map(r => columns.map(c => r[c])));
+        downloadCsv(`${report}-${new Date().toISOString().slice(0, 10)}.csv`, csv);
         toast.success(`Exported ${rows.length} row(s)`);
     };
 
