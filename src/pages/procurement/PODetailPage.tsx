@@ -92,7 +92,7 @@ const PODetailPage = () => {
             const data = await procurementService.getPODetail(id!);
             setPo(data);
         } catch (err: any) {
-            setError(err.message || 'Failed to load PO details');
+            setError(err?.status === 404 || err?.status === 400 ? 'PO not found' : (err.message || 'Failed to load PO details'));
         } finally {
             setIsLoading(false);
         }
@@ -183,10 +183,12 @@ const PODetailPage = () => {
 
     if (error || (!isLoading && !po)) {
         return (
-            <EmptyState
-                title={error || 'PO not found'}
-                action={{ label: 'Back to Purchase Orders', onClick: backToList }}
-            />
+            <DetailPageTemplate title="Purchase Order">
+                <EmptyState
+                    title={error || 'PO not found'}
+                    action={{ label: 'Back to Purchase Orders', onClick: backToList }}
+                />
+            </DetailPageTemplate>
         );
     }
 

@@ -38,6 +38,19 @@ beforeEach(() => {
 });
 
 describe('PRDetailPage (Comb)', () => {
+  it('Given the API answers 404 / When loaded / Then it settles on "PR not found" inside the page shell', async () => {
+    mockGetPRDetail.mockRejectedValue(Object.assign(new Error('Not Found'), { status: 404 }));
+    render(<PRDetailPage />);
+    expect(await screen.findByText('PR not found')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Purchase Requisition' })).toBeInTheDocument();
+  });
+
+  it('Given the API answers 400 for a malformed id / When loaded / Then it shows "PR not found"', async () => {
+    mockGetPRDetail.mockRejectedValue(Object.assign(new Error('Validation failed'), { status: 400 }));
+    render(<PRDetailPage />);
+    expect(await screen.findByText('PR not found')).toBeInTheDocument();
+  });
+
   it('Given an approved PR, When it loads, Then the title and Create PO primary action show', async () => {
     render(<PRDetailPage />);
     expect(await screen.findByRole('heading', { name: '#PR-ABCDEF12' })).toBeTruthy();

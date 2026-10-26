@@ -86,7 +86,7 @@ const PRDetailPage = () => {
             const data = await procurementService.getPRDetail(id!);
             setPr(data);
         } catch (err: any) {
-            setError(err.message || 'Failed to load PR details');
+            setError(err?.status === 404 || err?.status === 400 ? 'PR not found' : (err.message || 'Failed to load PR details'));
         } finally {
             setIsLoading(false);
         }
@@ -199,11 +199,14 @@ const PRDetailPage = () => {
     }
 
     if (error || !pr) {
+        // Keep the page shell (title) around the not-found state so the route settles with a real page, not a bare fragment.
         return (
-            <EmptyState
-                title={error || 'PR not found'}
-                action={{ label: 'Back to PRs', onClick: () => navigate('/procurement/pr') }}
-            />
+            <DetailPageTemplate title="Purchase Requisition">
+                <EmptyState
+                    title={error || 'PR not found'}
+                    action={{ label: 'Back to PRs', onClick: () => navigate('/procurement/pr') }}
+                />
+            </DetailPageTemplate>
         );
     }
 
