@@ -51,6 +51,7 @@ const VendorListPage = () => {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [error, setError] = useState<string | null>(null);
+    const [nameError, setNameError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
     // Create form state
@@ -91,10 +92,15 @@ const VendorListPage = () => {
 
     const handleCreateVendor = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!newVendor.name.trim()) {
+            setNameError('Vendor name is required.');
+            return;
+        }
+        setNameError(null);
         setIsCreating(true);
         setError(null);
         try {
-            await vendorService.createVendor(newVendor);
+            await vendorService.createVendor({ ...newVendor, name: newVendor.name.trim() });
             setShowCreateModal(false);
             setNewVendor({
                 name: '',
@@ -259,8 +265,9 @@ const VendorListPage = () => {
                         name="name"
                         label="Vendor Name"
                         required
+                        error={nameError ?? undefined}
                         value={newVendor.name}
-                        onChange={(e) => setNewVendor({ ...newVendor, name: e.target.value })}
+                        onChange={(e) => { setNameError(null); setNewVendor({ ...newVendor, name: e.target.value }); }}
                         placeholder="Company name"
                     />
                     <FieldGrid>
