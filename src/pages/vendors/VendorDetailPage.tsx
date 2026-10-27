@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { Star, FileText, Plus, ExternalLink } from 'lucide-react';
 import {
-    ArrowLeft, Building2, Mail, Phone, MapPin, AlertCircle,
-    Edit2, Trash2, Save, Loader2, Star, FileText, DollarSign,
-    Package, Calendar, Plus, ExternalLink
-} from 'lucide-react';
+    DetailPageTemplate, Alert, Button, Card, DataTable, DescriptionList, StatusBadge,
+    Modal, ConfirmDialog, TextField, Textarea, Select, Checkbox, EmptyState, FieldGrid,
+} from '@so360/design-system';
 import { vendorService } from '../../services/vendorService';
-import { Modal } from '../../components/common/Modal';
 import { TableSkeleton } from '../../components/common/Skeleton';
 import { useAuth } from '../../hooks/useAuth';
 import { CreateInvoiceModal } from '../../components/vendors/CreateInvoiceModal';
@@ -177,91 +176,53 @@ const VendorDetailPage = () => {
         }
     };
 
-    if (isLoading) return <div className="p-8"><TableSkeleton /></div>;
-    if (error || !vendor) return (
-        <div className="p-8 text-center">
-            <AlertCircle size={48} className="mx-auto text-rose-500 mb-4" />
-            <h2 className="text-2xl font-bold text-slate-50 mb-2">{error || 'Vendor not found'}</h2>
-            <button onClick={() => navigate('/vendors')} className="text-blue-400 hover:underline">Back to Vendors</button>
-        </div>
-    );
+    const canManage = can('suppliers.create');
+
+    if (isLoading) {
+        return (
+            <DetailPageTemplate title="Vendor" trail={[{ label: 'Vendors', to: '/vendors', onClick: () => navigate('/vendors') }]}>
+                <TableSkeleton />
+            </DetailPageTemplate>
+        );
+    }
+    if (error || !vendor) {
+        return (
+            <DetailPageTemplate trail={[{ label: 'Vendors', to: '/inventory/vendors' }]} title="Vendor">
+                <Alert variant="error" title="Unable to load vendor">{error || 'Vendor not found'}</Alert>
+                <Button variant="secondary" onClick={() => navigate('/vendors')}>Back to Vendors</Button>
+            </DetailPageTemplate>
+        );
+    }
 
     const profile = vendor.vendor_profiles?.[0];
+    const pos = vendor.purchase_orders ?? [];
+    const invoices = vendor.vendor_invoices ?? [];
 
     return (
-        <div className="p-8">
-            <button
-                onClick={() => navigate('/vendors')}
-                className="flex items-center gap-2 text-slate-400 hover:text-slate-50 mb-6 transition-colors group"
-            >
-                <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
-                Back to Vendors
-            </button>
+        <>
+            <DetailPageTemplate
+                title={vendor.name}
+                trail={[{ label: 'Vendors', to: '/vendors', onClick: () => navigate('/vendors') }]}
+                status={profile?.is_preferred ? <StatusBadge status="Preferred" /> : undefined}
+                meta={<span className="text-nb-sm text-fg-muted capitalize">{profile?.classification || 'Supplier'}</span>}
+                primaryAction={canManage ? (
+                    <Button variant="primary" onClick={() => setIsInvoiceModalOpen(true)}><Plus size={16} />
+                        Create Invoice
+                    </Button>
+                ) : undefined}
+                sidePanel={(
+                    <div className="flex flex-col gap-nb-4">
+                    <Card title="Contact">
+                        <DescriptionList
+                            items={[
+                                { label: 'Email', value: vendor.email || 'No email' },
+                                { label: 'Phone', value: vendor.phone || 'No phone' },
+                                { label: 'Address', value: vendor.address || 'No address' },
+                            ]}
+                        />
+                    </Card>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Vendor Info Card */}
-                <div className="lg:col-span-1 space-y-6">
-                    <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6 relative overflow-hidden">
-                        <div className="absolute top-0 right-0 p-4 flex items-center gap-2">
-                            {profile?.is_preferred && (
-                                <span className="px-2 py-1 rounded text-[10px] uppercase font-bold border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
-                                    Preferred
-                                </span>
-                            )}
-                            {can('suppliers.create') && (
-                                <>
-                                    <button
-                                        onClick={handleEditClick}
-                                        className="p-1.5 hover:bg-slate-800 rounded-lg transition-colors text-slate-400 hover:text-blue-400"
-                                        title="Edit Vendor"
-                                    >
-                                        <Edit2 size={16} />
-                                    </button>
-                                    <button
-                                        onClick={() => setShowDeleteConfirm(true)}
-                                        className="p-1.5 hover:bg-slate-800 rounded-lg transition-colors text-slate-400 hover:text-rose-400"
-                                        title="Delete Vendor"
-                                    >
-                                        <Trash2 size={16} />
-                                    </button>
-                                </>
-                            )}
-                        </div>
-
-                        <div className="flex items-start gap-4 mb-8 mt-6">
-                            <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shadow-xl">
-                                <Building2 size={32} className="text-emerald-400" />
-                            </div>
-                            <div className="pt-1">
-                                <h1 className="text-2xl font-bold text-slate-50 mb-1 leading-tight">{vendor.name}</h1>
-                                <span className="text-xs font-bold uppercase tracking-widest text-slate-500">
-                                    {profile?.classification || 'Supplier'}
-                                </span>
-                            </div>
-                        </div>
-
-                        <div className="space-y-3">
-                            <div className="flex items-center gap-3 p-3 bg-slate-800/30 rounded-xl border border-slate-700/30">
-                                <Mail size={16} className="text-slate-400" />
-                                <span className="text-sm text-slate-50">{vendor.email || 'No email'}</span>
-                            </div>
-                            <div className="flex items-center gap-3 p-3 bg-slate-800/30 rounded-xl border border-slate-700/30">
-                                <Phone size={16} className="text-slate-400" />
-                                <span className="text-sm text-slate-50">{vendor.phone || 'No phone'}</span>
-                            </div>
-                            <div className="flex items-center gap-3 p-3 bg-slate-800/30 rounded-xl border border-slate-700/30">
-                                <MapPin size={16} className="text-slate-400" />
-                                <span className="text-sm text-slate-50">{vendor.address || 'No address'}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Rating Card */}
-                    <div className="bg-emerald-600 rounded-2xl p-6 text-white shadow-lg shadow-emerald-900/40">
-                        <div className="flex items-center gap-2 mb-3">
-                            <Star size={20} fill="currentColor" className="text-yellow-300" />
-                            <span className="text-emerald-100 text-[10px] font-bold uppercase tracking-wider">Performance Rating</span>
-                        </div>
+                    <Card title="Performance rating">
                         <div className="flex items-center gap-1 mb-2">
                             {[1, 2, 3, 4, 5].map(star => {
                                 const isActive = star <= (hoverRating || (profile?.performance_rating ?? 0));
@@ -270,169 +231,72 @@ const VendorDetailPage = () => {
                                         key={star}
                                         size={28}
                                         fill={isActive ? 'currentColor' : 'none'}
-                                        className={`transition-colors ${
-                                            can('suppliers.create')
-                                                ? 'cursor-pointer'
-                                                : 'cursor-default'
-                                        } ${
-                                            isActive
-                                                ? 'text-yellow-300'
-                                                : 'text-emerald-300/30'
-                                        } ${ratingLoading ? 'animate-pulse' : ''}`}
-                                        onMouseEnter={() => can('suppliers.create') && !ratingLoading && setHoverRating(star)}
+                                        className={`transition-colors ${canManage ? 'cursor-pointer' : 'cursor-default'} ${isActive ? 'text-warning' : 'text-fg-subtle'} ${ratingLoading ? 'animate-pulse' : ''}`}
+                                        onMouseEnter={() => canManage && !ratingLoading && setHoverRating(star)}
                                         onMouseLeave={() => setHoverRating(0)}
                                         onClick={() => handleRatingClick(star)}
                                     />
                                 );
                             })}
                         </div>
-                        <div className="text-3xl font-black">
+                        <div className="text-3xl font-black text-fg">
                             {profile?.performance_rating ? Number(profile.performance_rating).toFixed(1) : 'N/A'}
-                            <span className="text-lg font-normal text-emerald-200">/5</span>
+                            <span className="text-lg font-normal text-fg-muted">/5</span>
                         </div>
                         {(profile?.rating_count ?? 0) > 0 && (
-                            <p className="text-xs text-emerald-200/80">from {profile?.rating_count} rating{profile?.rating_count !== 1 ? 's' : ''}</p>
+                            <p className="text-xs text-fg-muted">from {profile?.rating_count} rating{profile?.rating_count !== 1 ? 's' : ''}</p>
                         )}
-                        {can('suppliers.create') && (
-                            <p className="mt-1 text-[11px] text-emerald-200/60">Click to rate</p>
-                        )}
-                        <p className="mt-2 text-sm text-emerald-200">
-                            Payment Terms: {profile?.payment_terms || 'Not set'}
-                        </p>
+                        {canManage && <p className="mt-1 text-[11px] text-fg-subtle">Click to rate</p>}
+                        <p className="mt-2 text-sm text-fg-muted">Payment Terms: {profile?.payment_terms || 'Not set'}</p>
+                    </Card>
                     </div>
-                </div>
+                )}
+                overflowActions={canManage ? [
+                    { label: 'Edit Vendor', onSelect: handleEditClick },
+                    { label: 'Delete Vendor', onSelect: () => setShowDeleteConfirm(true), danger: true },
+                ] : undefined}
+            >
+                <div className="flex flex-col gap-nb-4">
+                        <Card title="Purchase orders">
+                            <DataTable
+                                data-testid="vendor-pos-table"
+                                rowKey={(po: any) => po.id}
+                                rows={pos}
+                                emptyState=<EmptyState title="No purchase orders yet" />
+                                columns={[
+                                    { key: 'po_number', header: 'PO Number', render: (po: any) => <span className="font-mono text-sm">{po.po_number}</span> },
+                                    { key: 'status', header: 'Status', render: (po: any) => <StatusBadge status={po.status} /> },
+                                    { key: 'created_at', header: 'Date', render: (po: any) => formatters.formatDate(po.created_at) },
+                                    { key: 'total_amount', header: 'Amount', align: 'right', render: (po: any) => formatters.formatCurrency(po.total_amount ?? 0) },
+                                ]}
+                            />
+                        </Card>
 
-                {/* Purchase Orders & Invoices */}
-                <div className="lg:col-span-2 space-y-6">
-                    {/* Purchase Orders */}
-                    <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
-                        <div className="flex items-center gap-2 mb-6">
-                            <Package size={20} className="text-blue-400" />
-                            <h2 className="text-xl font-bold text-slate-50">Purchase Orders</h2>
-                        </div>
-                        {vendor.purchase_orders && vendor.purchase_orders.length > 0 ? (
-                            <div className="overflow-x-auto">
-                                <table className="w-full">
-                                    <thead>
-                                        <tr className="text-left text-xs font-bold uppercase tracking-wider text-slate-500 border-b border-slate-800">
-                                            <th className="pb-3">PO Number</th>
-                                            <th className="pb-3">Status</th>
-                                            <th className="pb-3">Date</th>
-                                            <th className="pb-3 text-right">Amount</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {vendor.purchase_orders.map((po) => (
-                                            <tr key={po.id} className="border-b border-slate-800/50 hover:bg-slate-800/20">
-                                                <td className="py-3 font-mono text-sm text-blue-400">{po.po_number}</td>
-                                                <td className="py-3">
-                                                    <span className={`px-2 py-1 rounded text-[10px] uppercase font-bold ${
-                                                        po.status === 'completed' ? 'bg-emerald-500/10 text-emerald-400' :
-                                                        po.status === 'pending' ? 'bg-amber-500/10 text-amber-400' :
-                                                        'bg-slate-500/10 text-slate-400'
-                                                    }`}>
-                                                        {po.status}
-                                                    </span>
-                                                </td>
-                                                <td className="py-3 text-slate-400 text-sm">
-                                                    {formatters.formatDate(po.created_at)}
-                                                </td>
-                                                <td className="py-3 text-right font-bold text-slate-50">
-                                                    {formatters.formatCurrency(po.total_amount ?? 0)}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        ) : (
-                            <div className="text-center py-8 text-slate-500">
-                                <Package size={48} className="mx-auto mb-4 opacity-50" />
-                                <p>No purchase orders yet</p>
-                            </div>
-                        )}
+                        <Card title="Vendor invoices">
+                            <DataTable
+                                data-testid="vendor-invoices-table"
+                                rowKey={(inv: any) => inv.id}
+                                rows={invoices}
+                                emptyState=<EmptyState title="No invoices yet" />
+                                columns={[
+                                    { key: 'invoice_number', header: 'Invoice', render: (inv: any) => <span className="font-mono text-sm">{inv.invoice_number}</span> },
+                                    { key: 'status', header: 'Status', render: (inv: any) => <StatusBadge status={inv.status} /> },
+                                    { key: 'due_date', header: 'Due Date', render: (inv: any) => (inv.due_date ? formatters.formatDate(inv.due_date) : '--') },
+                                    { key: 'total_amount', header: 'Amount', align: 'right', render: (inv: any) => formatters.formatCurrency(inv.total_amount ?? 0) },
+                                    {
+                                        key: 'attachment_url', header: 'Attachment', align: 'center',
+                                        render: (inv: any) => inv.attachment_url ? (
+                                            <a href={inv.attachment_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-primary" title="View attachment">
+                                                <FileText size={16} /><ExternalLink size={12} />
+                                            </a>
+                                        ) : <span className="text-fg-subtle">--</span>,
+                                    },
+                                ]}
+                            />
+                        </Card>
                     </div>
+            </DetailPageTemplate>
 
-                    {/* Invoices */}
-                    <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
-                        <div className="flex items-center justify-between mb-6">
-                            <div className="flex items-center gap-2">
-                                <FileText size={20} className="text-purple-400" />
-                                <h2 className="text-xl font-bold text-slate-50">Vendor Invoices</h2>
-                            </div>
-                            {can('suppliers.create') && (
-                                <button
-                                    onClick={() => setIsInvoiceModalOpen(true)}
-                                    className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white text-sm font-semibold rounded-lg transition-all"
-                                >
-                                    <Plus size={16} /> Create Invoice
-                                </button>
-                            )}
-                        </div>
-                        {vendor.vendor_invoices && vendor.vendor_invoices.length > 0 ? (
-                            <div className="overflow-x-auto">
-                                <table className="w-full">
-                                    <thead>
-                                        <tr className="text-left text-xs font-bold uppercase tracking-wider text-slate-500 border-b border-slate-800">
-                                            <th className="pb-3">Invoice</th>
-                                            <th className="pb-3">Status</th>
-                                            <th className="pb-3">Due Date</th>
-                                            <th className="pb-3 text-right">Amount</th>
-                                            <th className="pb-3 text-center">Attachment</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {vendor.vendor_invoices.map((inv) => (
-                                            <tr key={inv.id} className="border-b border-slate-800/50 hover:bg-slate-800/20">
-                                                <td className="py-3 font-mono text-sm text-purple-400">{inv.invoice_number}</td>
-                                                <td className="py-3">
-                                                    <span className={`px-2 py-1 rounded text-[10px] uppercase font-bold ${
-                                                        inv.status === 'paid' ? 'bg-emerald-500/10 text-emerald-400' :
-                                                        inv.status === 'pending' ? 'bg-amber-500/10 text-amber-400' :
-                                                        inv.status === 'overdue' ? 'bg-rose-500/10 text-rose-400' :
-                                                        'bg-slate-500/10 text-slate-400'
-                                                    }`}>
-                                                        {inv.status}
-                                                    </span>
-                                                </td>
-                                                <td className="py-3 text-slate-400 text-sm">
-                                                    {inv.due_date ? formatters.formatDate(inv.due_date) : '--'}
-                                                </td>
-                                                <td className="py-3 text-right font-bold text-slate-50">
-                                                    {formatters.formatCurrency(inv.total_amount ?? 0)}
-                                                </td>
-                                                <td className="py-3 text-center">
-                                                    {inv.attachment_url ? (
-                                                        <a
-                                                            href={inv.attachment_url}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="inline-flex items-center gap-1 text-purple-400 hover:text-purple-300 transition-colors"
-                                                            title="View attachment"
-                                                        >
-                                                            <FileText size={16} />
-                                                            <ExternalLink size={12} />
-                                                        </a>
-                                                    ) : (
-                                                        <span className="text-slate-600">--</span>
-                                                    )}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        ) : (
-                            <div className="text-center py-8 text-slate-500">
-                                <FileText size={48} className="mx-auto mb-4 opacity-50" />
-                                <p>No invoices yet</p>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </div>
-
-            {/* Create Invoice Modal */}
             <CreateInvoiceModal
                 isOpen={isInvoiceModalOpen}
                 onClose={() => setIsInvoiceModalOpen(false)}
@@ -441,161 +305,64 @@ const VendorDetailPage = () => {
                 onSuccess={() => { setIsInvoiceModalOpen(false); fetchVendor(); }}
             />
 
-            {/* Edit Modal */}
             <Modal
-                isOpen={isEditModalOpen}
+                open={isEditModalOpen}
                 onClose={() => setIsEditModalOpen(false)}
                 title="Edit Vendor"
+                dismissible={!isSaving}
+                footer={
+                    <>
+                        <Button variant="secondary" onClick={() => setIsEditModalOpen(false)} disabled={isSaving}>Cancel</Button>
+                        <Button variant="primary" type="submit" form="edit-vendor-form" loading={isSaving} disabled={isSaving}>
+                            {isSaving ? 'Saving...' : 'Save Changes'}
+                        </Button>
+                    </>
+                }
             >
-                <form onSubmit={handleSaveEdit} className="space-y-4 text-slate-200">
-                    <div>
-                        <label className="block text-sm font-medium text-slate-400 mb-1.5">Vendor Name *</label>
-                        <input
-                            required
-                            type="text"
-                            value={editForm.name}
-                            onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
-                        />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-slate-400 mb-1.5">Email</label>
-                            <input
-                                type="email"
-                                value={editForm.email}
-                                onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-400 mb-1.5">Phone</label>
-                            <input
-                                type="tel"
-                                value={editForm.phone}
-                                onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
-                            />
-                        </div>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-slate-400 mb-1.5">Address</label>
-                        <textarea
-                            value={editForm.address}
-                            onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
-                            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 h-20 resize-none"
-                        />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-slate-400 mb-1.5">Classification</label>
-                            <select
-                                value={editForm.vendor_profile.classification}
-                                onChange={(e) => setEditForm({
-                                    ...editForm,
-                                    vendor_profile: { ...editForm.vendor_profile, classification: e.target.value }
-                                })}
-                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
-                            >
-                                <option value="supplier">Supplier</option>
-                                <option value="subcontractor">Subcontractor</option>
-                                <option value="service_provider">Service Provider</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-400 mb-1.5">Payment Terms</label>
-                            <select
-                                value={editForm.vendor_profile.payment_terms}
-                                onChange={(e) => setEditForm({
-                                    ...editForm,
-                                    vendor_profile: { ...editForm.vendor_profile, payment_terms: e.target.value }
-                                })}
-                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
-                            >
-                                <option value="Net 15">Net 15</option>
-                                <option value="Net 30">Net 30</option>
-                                <option value="Net 45">Net 45</option>
-                                <option value="Net 60">Net 60</option>
-                                <option value="COD">Cash on Delivery</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <label className="flex items-center gap-2 cursor-pointer group">
-                        <input
-                            type="checkbox"
-                            checked={editForm.vendor_profile.is_preferred}
-                            onChange={(e) => setEditForm({
-                                ...editForm,
-                                vendor_profile: { ...editForm.vendor_profile, is_preferred: e.target.checked }
-                            })}
-                            className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-emerald-600 focus:ring-emerald-500/50"
-                        />
-                        <span className="text-sm text-slate-300 group-hover:text-slate-50 transition-colors">Mark as Preferred Vendor</span>
-                    </label>
-
-                    <div className="flex gap-3 mt-8">
-                        <button
-                            type="button"
-                            onClick={() => setIsEditModalOpen(false)}
-                            disabled={isSaving}
-                            className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-50 font-semibold py-2.5 rounded-lg transition-all"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            type="submit"
-                            disabled={isSaving}
-                            className="flex-1 bg-emerald-600 hover:bg-emerald-500 disabled:bg-emerald-600/50 text-white font-semibold py-2.5 rounded-lg transition-all shadow-lg shadow-emerald-900/20 flex items-center justify-center gap-2"
-                        >
-                            {isSaving ? <><Loader2 size={18} className="animate-spin" /> Saving...</> : <><Save size={18} /> Save Changes</>}
-                        </button>
-                    </div>
+                <form id="edit-vendor-form" onSubmit={handleSaveEdit} className="space-y-4">
+                    <TextField label="Vendor Name" name="name" required value={editForm.name}
+                        onChange={(e: any) => setEditForm({ ...editForm, name: e.target.value })} />
+                    <FieldGrid>
+                        <TextField label="Email" name="email" type="email" value={editForm.email}
+                            onChange={(e: any) => setEditForm({ ...editForm, email: e.target.value })} />
+                        <TextField label="Phone" name="phone" type="tel" value={editForm.phone}
+                            onChange={(e: any) => setEditForm({ ...editForm, phone: e.target.value })} />
+                    </FieldGrid>
+                    <Textarea label="Address" name="address" value={editForm.address}
+                        onChange={(e: any) => setEditForm({ ...editForm, address: e.target.value })} />
+                    <FieldGrid>
+                        <Select label="Classification" name="classification" value={editForm.vendor_profile.classification}
+                            options={[
+                                { value: 'supplier', label: 'Supplier' },
+                                { value: 'subcontractor', label: 'Subcontractor' },
+                                { value: 'service_provider', label: 'Service Provider' },
+                            ]}
+                            onChange={(e: any) => setEditForm({ ...editForm, vendor_profile: { ...editForm.vendor_profile, classification: e.target.value } })} />
+                        <Select label="Payment Terms" name="payment_terms" value={editForm.vendor_profile.payment_terms}
+                            options={[
+                                { value: 'Net 15', label: 'Net 15' },
+                                { value: 'Net 30', label: 'Net 30' },
+                                { value: 'Net 45', label: 'Net 45' },
+                                { value: 'Net 60', label: 'Net 60' },
+                                { value: 'COD', label: 'Cash on Delivery' },
+                            ]}
+                            onChange={(e: any) => setEditForm({ ...editForm, vendor_profile: { ...editForm.vendor_profile, payment_terms: e.target.value } })} />
+                    </FieldGrid>
+                    <Checkbox name="is_preferred" label="Mark as Preferred Vendor" checked={editForm.vendor_profile.is_preferred}
+                        onChange={(e: any) => setEditForm({ ...editForm, vendor_profile: { ...editForm.vendor_profile, is_preferred: e.target.checked } })} />
                 </form>
             </Modal>
 
-            {/* Delete Confirmation */}
-            {showDeleteConfirm && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[600]">
-                    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto shadow-2xl">
-                        <div className="flex items-center gap-4 mb-4">
-                            <div className="w-12 h-12 rounded-full bg-rose-500/10 flex items-center justify-center">
-                                <Trash2 size={24} className="text-rose-500" />
-                            </div>
-                            <div>
-                                <h3 className="text-lg font-bold text-slate-50">Delete Vendor</h3>
-                                <p className="text-slate-400 text-sm">This action cannot be undone</p>
-                            </div>
-                        </div>
-
-                        <p className="text-slate-300 mb-6">
-                            Are you sure you want to delete <strong className="text-slate-50">{vendor.name}</strong>?
-                            Vendors with purchase orders or invoices cannot be deleted.
-                        </p>
-
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => setShowDeleteConfirm(false)}
-                                disabled={isDeleting}
-                                className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-50 font-semibold py-2.5 rounded-lg transition-all"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleDeleteVendor}
-                                disabled={isDeleting}
-                                className="flex-1 bg-rose-600 hover:bg-rose-500 disabled:bg-rose-600/50 text-white font-semibold py-2.5 rounded-lg transition-all flex items-center justify-center gap-2"
-                            >
-                                {isDeleting ? <><Loader2 size={18} className="animate-spin" /> Deleting...</> : <><Trash2 size={18} /> Delete</>}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-        </div>
+            <ConfirmDialog
+                open={showDeleteConfirm}
+                title="Delete Vendor"
+                message={`Are you sure you want to delete ${vendor.name}? Vendors with purchase orders or invoices cannot be deleted.`}
+                intent="danger"
+                confirmLabel={isDeleting ? 'Deleting...' : 'Delete'}
+                onConfirm={handleDeleteVendor}
+                onCancel={() => setShowDeleteConfirm(false)}
+            />
+        </>
     );
 };
 

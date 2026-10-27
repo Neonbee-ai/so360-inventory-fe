@@ -24,14 +24,10 @@ vi.mock('../../hooks/useAuth', () => ({
   useAuth: () => ({ can: mockCanVendorList }),
 }));
 
-vi.mock('../../components/common/Modal', () => ({
-  Modal: ({ isOpen, title, children }: any) =>
-    isOpen ? <div data-testid="modal"><h3>{title}</h3>{children}</div> : null,
-}));
-
 const mockUseShellBridgeV = vi.fn();
 const mockQuotaBar = vi.fn();
-vi.mock('@so360/design-system', () => ({
+vi.mock('@so360/design-system', async () => ({
+  ...(await vi.importActual<any>('@so360/design-system')),
   QuotaBar: (props: any) => { mockQuotaBar(props); return <div data-testid="quota-bar" data-used={props.used} />; },
   QuotaGate: ({ children }: any) => <>{children}</>,
   FeatureGate: ({ children, loading }: any) => loading ? null : <>{children}</>,
@@ -167,7 +163,7 @@ describe('VendorListPage', () => {
       await waitFor(() => screen.getByText('Add Vendor'));
       fireEvent.click(screen.getByText('Add Vendor'));
       await waitFor(() => {
-        expect(screen.getByTestId('modal')).toBeInTheDocument();
+        expect(screen.getByRole('dialog')).toBeInTheDocument();
       });
     });
 
@@ -175,7 +171,7 @@ describe('VendorListPage', () => {
       render(<VendorListPage />);
       await waitFor(() => screen.getByText('Add Vendor'));
       fireEvent.click(screen.getByText('Add Vendor'));
-      await waitFor(() => screen.getByTestId('modal'));
+      await waitFor(() => screen.getByRole('dialog'));
       fireEvent.change(screen.getByPlaceholderText('Company name'), { target: { value: 'New Vendor' } });
       fireEvent.click(screen.getByText('Add Vendor', { selector: 'button[type="submit"]' }));
       await waitFor(() => {

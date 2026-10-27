@@ -56,7 +56,7 @@ export const KanbanBoard = ({ deals, stages, onDealClick, onStageChange }: Kanba
     };
 
     return (
-        <div className="flex gap-6 overflow-x-auto pb-6 h-full min-h-[650px] scrollbar-hide">
+        <div className="flex gap-6 overflow-x-auto pb-6 h-full min-h-[320px] scrollbar-hide">
             {stages.map((stage) => {
                 const stageDeals = deals.filter(d => d.stage === stage.name);
                 const isOver = dragOverStage === stage.id;
@@ -68,13 +68,13 @@ export const KanbanBoard = ({ deals, stages, onDealClick, onStageChange }: Kanba
                     >
                         {/* Stage Header */}
                         <div className="flex items-center justify-between px-2">
-                            <h3 className="font-black text-slate-100 flex items-center gap-2 text-sm uppercase tracking-wider">
+                            <h3 className="font-black text-fg flex items-center gap-2 text-sm">
                                 {stage.name}
-                                <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full font-black">
+                                <span className="text-[10px] bg-surface-raised text-fg-muted px-2 py-0.5 rounded-full font-black">
                                     {stageDeals.length}
                                 </span>
                             </h3>
-                            <span className="text-[10px] text-slate-500 font-black tracking-wider">
+                            <span className="text-[10px] text-fg-subtle font-black">
                                 {formatters.formatCurrency(stageDeals.reduce((sum, d) => sum + d.value, 0))}
                             </span>
                         </div>
@@ -84,9 +84,9 @@ export const KanbanBoard = ({ deals, stages, onDealClick, onStageChange }: Kanba
                             onDragOver={(e) => handleDragOver(e, stage.id)}
                             onDragLeave={handleDragLeave}
                             onDrop={(e) => handleDrop(e, stage.name)}
-                            className={`flex-1 flex flex-col gap-3 rounded-2xl p-3 min-h-[550px] transition-all duration-200 ${isOver
-                                    ? 'bg-blue-600/10 ring-2 ring-blue-500/50 ring-dashed border-transparent'
-                                    : 'bg-slate-900/40 border border-slate-800/60'
+                            className={`flex-1 flex flex-col gap-3 rounded-2xl p-3 min-h-[200px] transition-all duration-200 ${isOver
+                                    ? 'bg-primary/10 ring-2 ring-focus/50 ring-dashed border-transparent'
+                                    : 'bg-surface/40 border border-line/60'
                                 }`}
                         >
                             {stageDeals.map((deal) => (
@@ -96,25 +96,25 @@ export const KanbanBoard = ({ deals, stages, onDealClick, onStageChange }: Kanba
                                     onDragStart={(e) => handleDragStart(e, deal)}
                                     onDragEnd={handleDragEnd}
                                     onClick={() => onDealClick(deal)}
-                                    className={`bg-slate-800 border-2 p-4 rounded-xl shadow-sm transition-all cursor-grab active:cursor-grabbing group ${draggedDealId === deal.id
-                                            ? 'border-blue-500/50 scale-95'
-                                            : 'border-slate-700/50 hover:border-blue-500/50 hover:shadow-xl hover:shadow-blue-900/20'
+                                    className={`bg-surface-raised border-2 p-4 rounded-xl shadow-sm transition-all cursor-grab active:cursor-grabbing group ${draggedDealId === deal.id
+                                            ? 'border-primary/50 scale-95'
+                                            : 'border-line-strong/50 hover:border-primary/50 hover:shadow-xl hover:shadow-blue-900/20'
                                         }`}
                                 >
                                     <div className="flex justify-between items-start mb-2">
-                                        <h4 className="font-bold text-sm text-slate-50 group-hover:text-blue-400 transition-colors truncate">
+                                        <h4 className="font-bold text-sm text-fg group-hover:text-primary transition-colors truncate">
                                             {deal.name}
                                         </h4>
                                     </div>
 
-                                    <p className="text-[11px] text-slate-500 mb-4 line-clamp-1 flex items-center gap-1">
-                                        <TrendingUp size={10} className="text-slate-600" />
+                                    <p className="text-[11px] text-fg-subtle mb-4 line-clamp-1 flex items-center gap-1">
+                                        <TrendingUp size={10} className="text-fg-subtle" />
                                         {deal.company_name}
                                     </p>
 
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-2">
-                                            <div className="w-5 h-5 rounded-full bg-slate-700 flex items-center justify-center text-[8px] font-black overflow-hidden border border-slate-600">
+                                            <div className="w-5 h-5 rounded-full bg-surface-high flex items-center justify-center text-[8px] font-black overflow-hidden border border-line-strong">
                                                 {deal.owner.avatar_url ? (
                                                     <img src={deal.owner.avatar_url} alt={deal.owner.full_name} />
                                                 ) : (
@@ -122,11 +122,11 @@ export const KanbanBoard = ({ deals, stages, onDealClick, onStageChange }: Kanba
                                                 )}
                                             </div>
                                             <div className="flex flex-col">
-                                                <span className="text-[10px] font-black text-slate-100">{formatters.formatCurrency(deal.value)}</span>
+                                                <span className="text-[10px] font-black text-fg">{formatters.formatCurrency(deal.value)}</span>
                                             </div>
                                         </div>
-                                        <span className="text-[9px] text-slate-500 font-bold flex items-center gap-1 bg-slate-900/50 px-1.5 py-0.5 rounded">
-                                            <Calendar size={10} className="text-slate-600" /> {deal.expected_close_date}
+                                        <span className="text-[9px] text-fg-subtle font-bold flex items-center gap-1 bg-surface/50 px-1.5 py-0.5 rounded">
+                                            <Calendar size={10} className="text-fg-subtle" /> {deal.expected_close_date}
                                         </span>
                                     </div>
                                 </div>
@@ -134,8 +134,8 @@ export const KanbanBoard = ({ deals, stages, onDealClick, onStageChange }: Kanba
 
                             {/* Empty state hint */}
                             {stageDeals.length === 0 && !isOver && (
-                                <div className="flex-1 flex items-center justify-center border-2 border-dashed border-slate-800/50 rounded-xl">
-                                    <span className="text-[10px] font-black text-slate-700 uppercase tracking-widest">Drop here</span>
+                                <div className="flex-1 flex items-center justify-center border-2 border-dashed border-line/50 rounded-xl">
+                                    <span className="text-[10px] font-black text-fg-subtle">Drop here</span>
                                 </div>
                             )}
                         </div>

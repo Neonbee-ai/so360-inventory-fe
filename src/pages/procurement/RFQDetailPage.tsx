@@ -1,23 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import {
-    ArrowLeft, FileText, AlertCircle, Send, Package,
-    Building2, Calendar, Loader2, Scale,
-} from 'lucide-react';
+import { Send, Scale } from 'lucide-react';
 import { rfqService } from '../../services/rfqService';
 import { vendorService } from '../../services/vendorService';
 import { useInventoryFormatters } from '../../utils/formatters';
-import { toast, getErrorMessage } from '@so360/design-system';
-import { RFQ_STATUS_STYLES } from './RFQListPage';
+import {
+    toast, getErrorMessage, useConfirm, DetailPageTemplate, Button, Badge, StatusBadge, SectionCard, DescriptionList,
+    DataTable, EmptyState, Modal, TextField, Select, FieldGrid, Grid,
+} from '@so360/design-system';
+import { RFQ_STATUS_TONES } from './RFQListPage';
 
-const VENDOR_STATUS_STYLES: Record<string, string> = {
-    invited: 'bg-slate-700/50 text-slate-400 border-slate-600/20',
-    quoted: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-    declined: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
-    no_response: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+const VENDOR_STATUS_TONES: Record<string, 'neutral' | 'success' | 'danger' | 'warning'> = {
+    invited: 'neutral', quoted: 'success', declined: 'danger', no_response: 'warning',
 };
 
 const RFQDetailPage = () => {
+    const [confirm, confirmDialog] = useConfirm();
     const { id } = useParams();
     const navigate = useNavigate();
     const formatters = useInventoryFormatters();
@@ -86,7 +84,7 @@ const RFQDetailPage = () => {
     };
 
     const handleCancel = async () => {
-        if (!window.confirm('Cancel this RFQ? Vendors will no longer be able to quote.')) return;
+        if (!(await confirm({ title: 'Cancel RFQ', message: 'Cancel this RFQ? Vendors will no longer be able to quote.', intent: 'danger', confirmLabel: 'Cancel RFQ' }))) return;
         setBusy('cancel');
         try {
             await rfqService.cancelRFQ(id!);
@@ -151,338 +149,195 @@ const RFQDetailPage = () => {
         }
     };
 
+    const quotations = rfq?.vendor_quotations || [];
+    const canAct = !!rfq && !['awarded', 'cancelled'].includes(rfq.status);
+    const hdr = (key: keyof typeof quoteHeader) => (e: React.ChangeEvent<HTMLInputElement>) =>
+        setQuoteHeader({ ...quoteHeader, [key]: e.target.value });
+    const setLine = (idx: number, patch: Record<string, string>) => {
+        const next = [...quoteLines];
+        next[idx] = { ...next[idx], ...patch };
+        setQuoteLines(next);
+    };
+
     if (isLoading) {
-        return (
-            <div className="p-8 flex items-center justify-center min-h-[400px]">
-                <div className="w-8 h-8 border-2 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
-            </div>
-        );
+        return <DetailPageTemplate title="RFQ" loading onBack={() => navigate('/procurement/rfq')} backLabel="Back to RFQs">{null}</DetailPageTemplate>;
     }
 
     if (error || !rfq) {
         return (
-            <div className="p-8 text-center">
-                <AlertCircle size={48} className="mx-auto text-rose-500 mb-4" />
-                <h2 className="text-2xl font-bold text-slate-50 mb-2">{error || 'RFQ not found'}</h2>
-                <button onClick={() => navigate('/procurement/rfq')} className="text-blue-400 hover:underline">
-                    Back to RFQs
-                </button>
-            </div>
+            <EmptyState
+                title={error || 'RFQ not found'}
+                action={{ label: 'Back to RFQs', onClick: () => navigate('/procurement/rfq') }}
+            />
         );
     }
 
-    const quotations = rfq.vendor_quotations || [];
+    const secondaryActions = [
+        canAct && (
+            <Button key="quote" variant="secondary" onClick={openQuoteForm}>Record Quotation</Button>
+        ),
+        quotations.length > 0 && (
+            <Button key="compare" variant="secondary" onClick={() => navigate(`/procurement/rfq/${rfq.id}/compare`)}>
+                <Scale size={16} /> Compare &amp; Award
+            </Button>
+        ),
+    ].filter(Boolean) as React.ReactElement[];
+
+    const primaryAction = ['draft', 'sent'].includes(rfq.status) ? (
+        <Button onClick={handleSend} disabled={busy === 'send'}>
+            <Send size={16} /> {rfq.status === 'draft' ? 'Send to Vendors' : 'Send to New Vendors'}
+        </Button>
+    ) : undefined;
+
+    const details = [
+        rfq.title && { label: 'Title', value: rfq.title },
+        rfq.pr_id && {
+            label: 'Source Requisition',
+            value: <Button variant="ghost" size="sm" onClick={() => navigate(`/procurement/pr/${rfq.pr_id}`)}>View requisition</Button>,
+        },
+        { label: 'Response Due', value: rfq.response_due_date ? formatters.formatDate(rfq.response_due_date) : 'Not set' },
+        rfq.po_id && {
+            label: 'Awarded — Purchase Order',
+            value: <Button variant="ghost" size="sm" onClick={() => navigate(`/procurement/po/${rfq.po_id}`)}>View purchase order</Button>,
+        },
+    ].filter(Boolean) as { label: string; value: React.ReactNode }[];
+
+    const rfqVendors = rfq.rfq_vendors || [];
 
     return (
-        <div className="p-8">
-            <button
-                onClick={() => navigate('/procurement/rfq')}
-                className="flex items-center gap-2 text-slate-400 hover:text-slate-50 mb-6 transition-colors group"
-            >
-                <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
-                Back to RFQs
-            </button>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-1 space-y-6">
-                    <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
-                        <div className="flex items-start gap-4 mb-6">
-                            <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 flex items-center justify-center border border-cyan-500/20">
-                                <FileText size={28} className="text-cyan-400" />
-                            </div>
-                            <div>
-                                <h1 className="text-xl font-bold text-slate-50">{rfq.rfq_number}</h1>
-                                <span className={`inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${RFQ_STATUS_STYLES[rfq.status] || RFQ_STATUS_STYLES.draft}`}>
-                                    {rfq.status}
-                                </span>
-                            </div>
-                        </div>
-
-                        <div className="space-y-4">
-                            {rfq.title && (
-                                <div className="p-3 bg-slate-800/30 rounded-xl">
-                                    <span className="text-xs text-slate-500 block">Title</span>
-                                    <span className="text-sm text-slate-50">{rfq.title}</span>
-                                </div>
-                            )}
-                            {rfq.pr_id && (
-                                <div className="flex items-center gap-3 p-3 bg-slate-800/30 rounded-xl">
-                                    <FileText size={16} className="text-slate-500" />
-                                    <div>
-                                        <span className="text-xs text-slate-500 block">Source Requisition</span>
-                                        <button onClick={() => navigate(`/procurement/pr/${rfq.pr_id}`)} className="text-sm text-blue-400 hover:text-blue-300">
-                                            View requisition
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-                            <div className="flex items-center gap-3 p-3 bg-slate-800/30 rounded-xl">
-                                <Calendar size={16} className="text-slate-500" />
-                                <div>
-                                    <span className="text-xs text-slate-500 block">Response Due</span>
-                                    <span className="text-sm text-slate-50">
-                                        {rfq.response_due_date ? formatters.formatDate(rfq.response_due_date) : 'Not set'}
-                                    </span>
-                                </div>
-                            </div>
-                            {rfq.po_id && (
-                                <div className="flex items-center gap-3 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
-                                    <Package size={16} className="text-emerald-400" />
-                                    <div>
-                                        <span className="text-xs text-emerald-300/70 block">Awarded — Purchase Order</span>
-                                        <button onClick={() => navigate(`/procurement/po/${rfq.po_id}`)} className="text-sm text-emerald-400 hover:text-emerald-300 font-semibold">
-                                            View purchase order
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="mt-6 pt-6 border-t border-slate-800 space-y-3">
-                            {['draft', 'sent'].includes(rfq.status) && (
-                                <button
-                                    onClick={handleSend}
-                                    disabled={busy === 'send'}
-                                    className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-500 disabled:opacity-60 text-white rounded-xl font-bold transition-colors flex items-center justify-center gap-2"
-                                >
-                                    {busy === 'send' ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
-                                    {rfq.status === 'draft' ? 'Send to Vendors' : 'Send to New Vendors'}
-                                </button>
-                            )}
-                            {!['awarded', 'cancelled'].includes(rfq.status) && (
-                                <button
-                                    onClick={openQuoteForm}
-                                    className="w-full px-4 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl font-bold transition-colors"
-                                >
-                                    Record Quotation
-                                </button>
-                            )}
-                            {quotations.length > 0 && (
-                                <button
-                                    onClick={() => navigate(`/procurement/rfq/${rfq.id}/compare`)}
-                                    className="w-full px-4 py-3 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl font-bold transition-colors flex items-center justify-center gap-2"
-                                >
-                                    <Scale size={16} /> Compare &amp; Award
-                                </button>
-                            )}
-                            {!['awarded', 'cancelled'].includes(rfq.status) && (
-                                <button
-                                    onClick={handleCancel}
-                                    disabled={busy === 'cancel'}
-                                    className="w-full px-4 py-3 bg-rose-600/10 hover:bg-rose-600/20 text-rose-400 border border-rose-500/20 rounded-xl font-bold transition-colors"
-                                >
-                                    Cancel RFQ
-                                </button>
-                            )}
-                        </div>
-                    </div>
-
-                    <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
-                        <h3 className="text-sm font-bold text-slate-400 mb-4 flex items-center gap-2">
-                            <Building2 size={16} /> Invited Vendors
-                        </h3>
-                        {(rfq.rfq_vendors || []).length === 0 ? (
-                            <p className="text-xs text-slate-500">No vendors invited yet.</p>
+        <DetailPageTemplate
+            title={rfq.rfq_number}
+            status={<StatusBadge status={rfq.status} map={{ [rfq.status]: RFQ_STATUS_TONES[rfq.status] || 'neutral' }} />}
+            onBack={() => navigate('/procurement/rfq')}
+            backLabel="Back to RFQs"
+            secondaryActions={secondaryActions}
+            primaryAction={primaryAction}
+            overflowActions={canAct ? [{ label: 'Cancel RFQ', danger: true, onSelect: handleCancel, disabled: busy === 'cancel' }] : undefined}
+        >
+            {confirmDialog}
+            <Grid>
+                <Grid.Item span={4} className="space-y-6">
+                    <SectionCard title="Overview"><DescriptionList items={details} /></SectionCard>
+                    <SectionCard title="Invited Vendors">
+                        {rfqVendors.length === 0 ? (
+                            <p className="text-xs text-fg-subtle">No vendors invited yet.</p>
                         ) : (
                             <div className="space-y-2">
-                                {rfq.rfq_vendors.map((v: any) => (
-                                    <div key={v.id} className="flex items-center justify-between gap-3 p-3 bg-slate-800/30 rounded-xl">
+                                {rfqVendors.map((v: any) => (
+                                    <div key={v.id} className="flex items-center justify-between gap-3">
                                         <div className="min-w-0">
-                                            <div className="text-sm text-slate-100 truncate">{v.vendor_name || v.vendor_id.slice(0, 8)}</div>
-                                            {v.contact_email && <div className="text-[10px] text-slate-500 truncate">{v.contact_email}</div>}
+                                            <div className="text-sm text-fg truncate">{v.vendor_name || v.vendor_id.slice(0, 8)}</div>
+                                            {v.contact_email && <div className="text-xs text-fg-subtle truncate">{v.contact_email}</div>}
                                         </div>
-                                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${VENDOR_STATUS_STYLES[v.status] || VENDOR_STATUS_STYLES.invited}`}>
-                                            {v.status.replace(/_/g, ' ')}
-                                        </span>
+                                        <Badge tone={VENDOR_STATUS_TONES[v.status] || 'neutral'}>{v.status.replace(/_/g, ' ')}</Badge>
                                     </div>
                                 ))}
                             </div>
                         )}
-                    </div>
-                </div>
+                    </SectionCard>
+                </Grid.Item>
 
-                <div className="lg:col-span-2 space-y-6">
-                    <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
-                        <h2 className="text-lg font-bold text-slate-50 mb-4 flex items-center gap-2">
-                            <Package size={20} className="text-cyan-400" /> Requested Lines
-                        </h2>
-                        <div className="overflow-x-auto">
-                            <table className="w-full">
-                                <thead>
-                                    <tr className="text-left text-xs font-bold uppercase tracking-wider text-slate-500 border-b border-slate-800">
-                                        <th className="pb-3">Item</th>
-                                        <th className="pb-3 text-center">Quantity</th>
-                                        <th className="pb-3 text-center">UOM</th>
-                                        <th className="pb-3 text-right">Target Price</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {(rfq.rfq_lines || []).map((l: any) => (
-                                        <tr key={l.id} className="border-b border-slate-800/50">
-                                            <td className="py-3 text-slate-50">{l.description || l.item_id?.slice(0, 8) || 'Item'}</td>
-                                            <td className="py-3 text-center text-slate-300">{l.quantity}</td>
-                                            <td className="py-3 text-center text-slate-400">{l.uom || '—'}</td>
-                                            <td className="py-3 text-right text-slate-300">
-                                                {l.target_unit_price != null ? formatters.formatCurrency(l.target_unit_price) : '—'}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+                <Grid.Item span={8} className="space-y-6">
+                    <SectionCard title="Requested Lines">
+                        <DataTable
+                            data-testid="rfq-lines-table"
+                            rows={rfq.rfq_lines || []}
+                            rowKey={(l: any) => l.id}
+                            columns={[
+                                { key: 'item', header: 'Item', render: (l: any) => l.description || l.item_id?.slice(0, 8) || 'Item' },
+                                { key: 'qty', header: 'Quantity', align: 'center', render: (l: any) => l.quantity },
+                                { key: 'uom', header: 'UOM', align: 'center', render: (l: any) => l.uom || '—' },
+                                {
+                                    key: 'target', header: 'Target Price', align: 'right',
+                                    render: (l: any) => (l.target_unit_price != null ? formatters.formatCurrency(l.target_unit_price) : '—'),
+                                },
+                            ]}
+                        />
+                    </SectionCard>
 
-                    <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
-                        <h2 className="text-lg font-bold text-slate-50 mb-4">Quotations Received</h2>
+                    <SectionCard title="Quotations Received">
                         {quotations.length === 0 ? (
-                            <p className="text-sm text-slate-500">No quotations yet. Record one as vendors respond.</p>
+                            <p className="text-sm text-fg-subtle">No quotations yet. Record one as vendors respond.</p>
                         ) : (
                             <div className="space-y-3">
                                 {quotations.map((q: any) => (
-                                    <div key={q.id} className="p-4 bg-slate-950 border border-slate-800 rounded-2xl flex items-center justify-between gap-4">
+                                    <div key={q.id} className="flex items-center justify-between gap-4 border border-line rounded-lg p-3">
                                         <div>
-                                            <div className="font-semibold text-slate-100">{q.vendor_name || q.vendor_id.slice(0, 8)}</div>
-                                            <div className="text-xs text-slate-500">
+                                            <div className="font-semibold text-fg">{q.vendor_name || q.vendor_id.slice(0, 8)}</div>
+                                            <div className="text-xs text-fg-subtle">
                                                 {q.quotation_number || 'No quote ref'}
                                                 {q.lead_time_days != null && ` · ${q.lead_time_days} day lead time`}
                                                 {q.valid_until && ` · valid to ${formatters.formatDate(q.valid_until)}`}
                                             </div>
                                         </div>
                                         <div className="text-right">
-                                            <div className="text-lg font-bold text-slate-50">{formatters.formatCurrency(q.total_amount || 0)}</div>
-                                            <span className={`text-[10px] font-bold uppercase ${q.status === 'awarded' ? 'text-emerald-400' : q.status === 'rejected' ? 'text-rose-400' : 'text-slate-500'}`}>
-                                                {q.status}
-                                            </span>
+                                            <div className="text-lg font-bold text-fg">{formatters.formatCurrency(q.total_amount || 0)}</div>
+                                            <Badge tone={q.status === 'awarded' ? 'success' : q.status === 'rejected' ? 'danger' : 'neutral'}>{q.status}</Badge>
                                         </div>
                                     </div>
                                 ))}
                             </div>
                         )}
+                    </SectionCard>
+                </Grid.Item>
+            </Grid>
+
+            <Modal
+                open={showQuoteForm}
+                onClose={() => setShowQuoteForm(false)}
+                title="Record Quotation"
+                footer={(
+                    <>
+                        <Button variant="secondary" type="button" onClick={() => setShowQuoteForm(false)}>Cancel</Button>
+                        <Button type="submit" form="quote-form" disabled={busy === 'quote'}>{busy === 'quote' ? 'Saving...' : 'Save Quotation'}</Button>
+                    </>
+                )}
+            >
+                <form id="quote-form" onSubmit={handleQuoteSubmit} className="space-y-4">
+                    <FieldGrid columns={2}>
+                        <Select
+                            id="q-vendor" name="q-vendor" label="Vendor" placeholder="Select vendor" value={quoteVendor}
+                            onChange={(e: any) => setQuoteVendor(e?.target ? e.target.value : e)}
+                            options={[
+                                ...rfqVendors.map((v: any) => ({ value: v.vendor_id, label: v.vendor_name || v.vendor_id.slice(0, 8) })),
+                                ...vendors
+                                    .filter(v => !rfqVendors.some((rv: any) => rv.vendor_id === v.id))
+                                    .map(v => ({ value: v.id, label: `${v.name} (not invited)` })),
+                            ]}
+                        />
+                        <TextField id="q-number" name="q-number" label="Quotation Ref" value={quoteHeader.quotation_number} onChange={hdr('quotation_number')} />
+                        <TextField id="q-valid" name="q-valid" label="Valid Until" type="date" value={quoteHeader.valid_until} onChange={hdr('valid_until')} />
+                        <TextField id="q-lead" name="q-lead" label="Lead Time (days)" type="number" min="0" value={quoteHeader.lead_time_days} onChange={hdr('lead_time_days')} />
+                        <TextField id="q-freight" name="q-freight" label="Freight" type="number" min="0" step="0.01" value={quoteHeader.freight_amount} onChange={hdr('freight_amount')} />
+                        <TextField id="q-payment" name="q-payment" label="Payment Terms" value={quoteHeader.payment_terms} onChange={hdr('payment_terms')} />
+                        <TextField id="q-warranty" name="q-warranty" label="Warranty" value={quoteHeader.warranty_terms} onChange={hdr('warranty_terms')} />
+                        <TextField id="q-moq" name="q-moq" label="MOQ Conditions" value={quoteHeader.moq_note} onChange={hdr('moq_note')} />
+                    </FieldGrid>
+
+                    <div className="space-y-2">
+                        <div className="text-xs font-semibold text-fg-subtle">Quoted prices</div>
+                        {quoteLines.map((l, idx) => (
+                            <div key={l.rfq_line_id} className="border border-line rounded-lg p-3 flex flex-wrap items-center gap-3">
+                                <div className="flex-1 min-w-0">
+                                    <div className="text-sm text-fg truncate">{l.description || 'Line'}</div>
+                                    <div className="text-xs text-fg-subtle">Qty {l.quantity} {l.uom}</div>
+                                </div>
+                                <TextField name="unit-price"
+                                    type="number" min="0" step="0.01" placeholder="Unit price"
+                                    aria-label={`Unit price for ${l.description || `line ${idx + 1}`}`}
+                                    value={l.unit_price} onChange={(e: any) => setLine(idx, { unit_price: e.target.value })}
+                                />
+                                <TextField name="tax"
+                                    type="number" min="0" step="0.01" placeholder="Tax %"
+                                    aria-label={`Tax rate for ${l.description || `line ${idx + 1}`}`}
+                                    value={l.tax_rate} onChange={(e: any) => setLine(idx, { tax_rate: e.target.value })}
+                                />
+                            </div>
+                        ))}
                     </div>
-                </div>
-            </div>
-
-            {showQuoteForm && (
-                <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center px-4 pt-24 pb-6 z-[600]">
-                    <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-3xl max-h-[calc(100vh-7.5rem)] flex flex-col overflow-hidden">
-                        <div className="p-8 border-b border-slate-800 flex justify-between items-center">
-                            <h2 className="text-2xl font-bold text-slate-100">Record Quotation</h2>
-                            <button onClick={() => setShowQuoteForm(false)} className="text-slate-500 hover:text-slate-50 text-2xl">×</button>
-                        </div>
-                        <form onSubmit={handleQuoteSubmit} className="p-8 space-y-6 overflow-y-auto custom-scrollbar flex-1">
-                            <div className="grid grid-cols-2 gap-6">
-                                <div className="space-y-2">
-                                    <label htmlFor="q-vendor" className="text-xs font-bold text-slate-500 uppercase tracking-wider">Vendor</label>
-                                    <select
-                                        id="q-vendor"
-                                        value={quoteVendor}
-                                        onChange={e => setQuoteVendor(e.target.value)}
-                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-200"
-                                    >
-                                        <option value="">Select vendor</option>
-                                        {(rfq.rfq_vendors || []).map((v: any) => (
-                                            <option key={v.vendor_id} value={v.vendor_id}>{v.vendor_name || v.vendor_id.slice(0, 8)}</option>
-                                        ))}
-                                        {vendors
-                                            .filter(v => !(rfq.rfq_vendors || []).some((rv: any) => rv.vendor_id === v.id))
-                                            .map(v => <option key={v.id} value={v.id}>{v.name} (not invited)</option>)}
-                                    </select>
-                                </div>
-                                <div className="space-y-2">
-                                    <label htmlFor="q-number" className="text-xs font-bold text-slate-500 uppercase tracking-wider">Quotation Ref</label>
-                                    <input id="q-number" type="text" value={quoteHeader.quotation_number}
-                                        onChange={e => setQuoteHeader({ ...quoteHeader, quotation_number: e.target.value })}
-                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-200 font-mono" />
-                                </div>
-                                <div className="space-y-2">
-                                    <label htmlFor="q-valid" className="text-xs font-bold text-slate-500 uppercase tracking-wider">Valid Until</label>
-                                    <input id="q-valid" type="date" value={quoteHeader.valid_until}
-                                        onChange={e => setQuoteHeader({ ...quoteHeader, valid_until: e.target.value })}
-                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-200" />
-                                </div>
-                                <div className="space-y-2">
-                                    <label htmlFor="q-lead" className="text-xs font-bold text-slate-500 uppercase tracking-wider">Lead Time (days)</label>
-                                    <input id="q-lead" type="number" min="0" value={quoteHeader.lead_time_days}
-                                        onChange={e => setQuoteHeader({ ...quoteHeader, lead_time_days: e.target.value })}
-                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-200" />
-                                </div>
-                                <div className="space-y-2">
-                                    <label htmlFor="q-freight" className="text-xs font-bold text-slate-500 uppercase tracking-wider">Freight</label>
-                                    <input id="q-freight" type="number" min="0" step="0.01" value={quoteHeader.freight_amount}
-                                        onChange={e => setQuoteHeader({ ...quoteHeader, freight_amount: e.target.value })}
-                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-200" />
-                                </div>
-                                <div className="space-y-2">
-                                    <label htmlFor="q-payment" className="text-xs font-bold text-slate-500 uppercase tracking-wider">Payment Terms</label>
-                                    <input id="q-payment" type="text" value={quoteHeader.payment_terms}
-                                        onChange={e => setQuoteHeader({ ...quoteHeader, payment_terms: e.target.value })}
-                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-200" />
-                                </div>
-                                <div className="space-y-2">
-                                    <label htmlFor="q-warranty" className="text-xs font-bold text-slate-500 uppercase tracking-wider">Warranty</label>
-                                    <input id="q-warranty" type="text" value={quoteHeader.warranty_terms}
-                                        onChange={e => setQuoteHeader({ ...quoteHeader, warranty_terms: e.target.value })}
-                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-200" />
-                                </div>
-                                <div className="space-y-2">
-                                    <label htmlFor="q-moq" className="text-xs font-bold text-slate-500 uppercase tracking-wider">MOQ Conditions</label>
-                                    <input id="q-moq" type="text" value={quoteHeader.moq_note}
-                                        onChange={e => setQuoteHeader({ ...quoteHeader, moq_note: e.target.value })}
-                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-200" />
-                                </div>
-                            </div>
-
-                            <div className="space-y-3">
-                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Quoted Prices</label>
-                                {quoteLines.map((l, idx) => (
-                                    <div key={l.rfq_line_id} className="p-3 bg-slate-950 border border-slate-800 rounded-xl flex items-center gap-3">
-                                        <div className="flex-1 min-w-0">
-                                            <div className="text-sm text-slate-200 truncate">{l.description || 'Line'}</div>
-                                            <div className="text-[10px] text-slate-500">Qty {l.quantity} {l.uom}</div>
-                                        </div>
-                                        <input
-                                            type="number" min="0" step="0.01"
-                                            aria-label={`Unit price for ${l.description || `line ${idx + 1}`}`}
-                                            placeholder="Unit price"
-                                            value={l.unit_price}
-                                            onChange={e => {
-                                                const next = [...quoteLines];
-                                                next[idx] = { ...next[idx], unit_price: e.target.value };
-                                                setQuoteLines(next);
-                                            }}
-                                            className="w-32 bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-sm text-emerald-400 font-bold text-center"
-                                        />
-                                        <input
-                                            type="number" min="0" step="0.01"
-                                            aria-label={`Tax rate for ${l.description || `line ${idx + 1}`}`}
-                                            placeholder="Tax %"
-                                            value={l.tax_rate}
-                                            onChange={e => {
-                                                const next = [...quoteLines];
-                                                next[idx] = { ...next[idx], tax_rate: e.target.value };
-                                                setQuoteLines(next);
-                                            }}
-                                            className="w-24 bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 text-center"
-                                        />
-                                    </div>
-                                ))}
-                            </div>
-
-                            <div className="pt-4 flex gap-4">
-                                <button type="submit" disabled={busy === 'quote'}
-                                    className="flex-1 px-6 py-4 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 text-white rounded-2xl font-bold transition-all">
-                                    {busy === 'quote' ? 'Saving...' : 'Save Quotation'}
-                                </button>
-                                <button type="button" onClick={() => setShowQuoteForm(false)}
-                                    className="px-6 py-4 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-2xl font-bold transition-all">
-                                    Cancel
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-        </div>
+                </form>
+            </Modal>
+        </DetailPageTemplate>
     );
 };
 

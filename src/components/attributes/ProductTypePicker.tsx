@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Cpu, Shirt, Armchair, Monitor, Tv, Smartphone, UtensilsCrossed, Car, Hammer, Paperclip, Package, LucideIcon } from 'lucide-react';
+import { Button, EmptyState, FieldGrid } from '@so360/design-system';
 import { ProductType } from '../../types/productTypes';
 import { productTypeService } from '../../services/productTypeService';
 
@@ -32,62 +33,55 @@ const ProductTypePicker: React.FC<ProductTypePickerProps> = ({ value, onChange }
     };
 
     if (loading) {
-        return <div className="text-sm text-slate-500 animate-pulse">Loading product types...</div>;
+        return <p className="text-nb-body text-fg-subtle" aria-busy="true">Loading product types...</p>;
     }
 
     if (types.length === 0) {
-        return <p className="text-sm text-slate-500">No product types available. Create them in Settings.</p>;
+        return <EmptyState title="No product types available. Create them in Settings." />;
     }
 
     return (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-            {/* None option */}
-            <button
+        <FieldGrid columns={4}>
+            <Button
                 type="button"
+                variant={!value ? 'tonal' : 'secondary'}
+                className="!h-auto !justify-start !text-left !py-nb-3"
+                aria-pressed={!value}
                 onClick={() => onChange('')}
-                className={`
-                    p-3 rounded-xl border text-left transition-all
-                    ${!value
-                        ? 'border-blue-500 bg-blue-500/10 ring-1 ring-blue-500/30'
-                        : 'border-slate-700 bg-slate-800/50 hover:border-slate-600 hover:bg-slate-800'
-                    }
-                `}
             >
-                <div className="flex items-center gap-2 mb-1">
-                    <Package size={16} className={!value ? 'text-blue-400' : 'text-slate-500'} />
-                    <span className={`text-sm font-semibold ${!value ? 'text-blue-300' : 'text-slate-300'}`}>None</span>
-                </div>
-                <p className="text-xs text-slate-500 leading-tight">No product type</p>
-            </button>
+                <span className="flex flex-col items-start gap-nb-1">
+                    <span className="flex items-center gap-nb-2">
+                        <Package size={16} />
+                        <span className="text-nb-body font-semibold">None</span>
+                    </span>
+                    <span className="text-nb-caption text-fg-subtle">No product type</span>
+                </span>
+            </Button>
 
             {types.map(pt => {
                 const Icon = (pt.icon && ICON_MAP[pt.icon]) || Package;
                 const isSelected = value === pt.id;
                 return (
-                    <button
+                    <Button
                         key={pt.id}
                         type="button"
+                        variant={isSelected ? 'tonal' : 'secondary'}
+                        className="!h-auto !justify-start !text-left !py-nb-3"
+                        aria-pressed={isSelected}
                         onClick={() => onChange(pt.id)}
-                        className={`
-                            p-3 rounded-xl border text-left transition-all
-                            ${isSelected
-                                ? 'border-blue-500 bg-blue-500/10 ring-1 ring-blue-500/30'
-                                : 'border-slate-700 bg-slate-800/50 hover:border-slate-600 hover:bg-slate-800'
-                            }
-                        `}
                     >
-                        <div className="flex items-center gap-2 mb-1">
-                            <Icon size={16} className={isSelected ? 'text-blue-400' : 'text-slate-500'} />
-                            <span className={`text-sm font-semibold ${isSelected ? 'text-blue-300' : 'text-slate-300'}`}>{pt.name}</span>
-                        </div>
-                        <p className="text-xs text-slate-500 leading-tight line-clamp-2">{pt.description || pt.code}</p>
-                        {pt.is_system && (
-                            <span className="inline-block mt-1.5 text-[10px] text-slate-600 uppercase tracking-wider">System</span>
-                        )}
-                    </button>
+                        <span className="flex flex-col items-start gap-nb-1">
+                            <span className="flex items-center gap-nb-2">
+                                <Icon size={16} />
+                                <span className="text-nb-body font-semibold">{pt.name}</span>
+                            </span>
+                            <span className="text-nb-caption text-fg-subtle line-clamp-2">{pt.description || pt.code}</span>
+                            {pt.is_system && <span className="text-nb-caption text-fg-subtle">System</span>}
+                        </span>
+                    </Button>
                 );
             })}
-        </div>
+        </FieldGrid>
     );
 };
 

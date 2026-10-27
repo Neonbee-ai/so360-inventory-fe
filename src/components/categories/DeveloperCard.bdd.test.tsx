@@ -61,7 +61,7 @@ describe('Given a developer with every RFP §3 field', () => {
       expect(mockGetDeveloper).toHaveBeenCalledWith('d1');
       expect(screen.getByAltText('Emaar logo').getAttribute('src')).toBe('https://cdn.example.com/emaar.png');
       expect(screen.getByTestId('developer-status').textContent).toBe('active');
-      expect(screen.getByTestId('developer-status').className).toContain('emerald');
+      expect(screen.getByTestId('developer-status').className).toContain('success');
       const text = card.textContent || '';
       for (const s of ['Emaar Properties PJSC', 'Master developer', 'Sara Ali', 'Downtown, Dubai', 'CountryAE',
         'Account managerOmar', 'NotesKey account',
@@ -128,7 +128,7 @@ describe('Given a developer whose company equals its name, an inactive status an
       render(<DeveloperCard partnerId="d1" projects={projects} />);
       const card = await screen.findByTestId('developer-card');
       expect(screen.getAllByText('Emaar')).toHaveLength(1);
-      expect(screen.getByTestId('developer-status').className).toContain('slate');
+      expect(screen.getByTestId('developer-status').className).toContain('line-strong');
       expect(screen.getByText('exa mple').tagName).not.toBe('A');
       expect(card.textContent).toContain('Createdlong ago');
     });

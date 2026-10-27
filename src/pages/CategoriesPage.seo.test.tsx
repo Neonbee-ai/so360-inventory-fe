@@ -304,7 +304,7 @@ describe('Given the meta title and description counters', () => {
       await openEditor();
       openSeo();
       type(/meta title/i, 'Short');
-      expect(screen.getByTestId('meta-title-count').className).toContain('text-slate-500');
+      expect(screen.getByTestId('meta-title-count').className).toContain('text-fg-subtle');
     });
   });
 
@@ -315,7 +315,7 @@ describe('Given the meta title and description counters', () => {
       type(/meta title/i, 'x'.repeat(64));
       const counter = screen.getByTestId('meta-title-count');
       expect(counter).toHaveTextContent('64/70');
-      expect(counter.className).toContain('text-amber-400');
+      expect(counter.className).toContain('text-warning');
     });
   });
 

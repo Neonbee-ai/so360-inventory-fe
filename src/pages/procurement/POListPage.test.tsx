@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent, within } from '@testing-library/react';
 import React from 'react';
 
 const mockGetPOs = vi.fn();
@@ -174,13 +174,12 @@ describe('POListPage', () => {
       expect(poInputs.length).toBeGreaterThan(0);
     });
 
-    it('When × clicked in form / Then hides form', async () => {
+    it('When Close clicked in form / Then hides form', async () => {
       render(<POListPage />);
       fireEvent.click(screen.getByText('New PO'));
       const headings = screen.getAllByText('Create Purchase Order');
       expect(headings.length).toBeGreaterThan(0);
-      // Close button is the × character
-      fireEvent.click(screen.getByText('×'));
+      fireEvent.click(screen.getByLabelText('Close'));
       expect(screen.queryAllByText('Create Purchase Order').length).toBe(0);
     });
 
@@ -198,64 +197,32 @@ describe('POListPage', () => {
     });
   });
 
-  describe('Given PO modal positioning — header overlap fix', () => {
-    it('When New PO modal opens / Then overlay has pt-24 class for header clearance', async () => {
+  describe('Given the Comb Create PO modal', () => {
+    it('When New PO opens / Then a dialog titled Create Purchase Order is shown', async () => {
       render(<POListPage />);
       await waitFor(() => screen.getByText('New PO'));
       fireEvent.click(screen.getByText('New PO'));
-      await waitFor(() => {
-        const headings = screen.getAllByText('Create Purchase Order');
-        expect(headings.length).toBeGreaterThan(0);
-      });
-      const overlay = document.querySelector('.fixed.inset-0') as HTMLElement;
-      expect(overlay).not.toBeNull();
-      expect(overlay.className).toContain('pt-24');
+      const dialog = await screen.findByRole('dialog');
+      expect(within(dialog).getByRole('heading', { name: 'Create Purchase Order' })).toBeInTheDocument();
     });
 
-    it('When PO modal open / Then overlay uses items-center for centering within safe zone', async () => {
+    it('When the modal is open / Then the submit button lives in the footer and targets the form', async () => {
       render(<POListPage />);
       await waitFor(() => screen.getByText('New PO'));
       fireEvent.click(screen.getByText('New PO'));
-      await waitFor(() => {
-        expect(screen.getAllByText('Create Purchase Order').length).toBeGreaterThan(0);
-      });
-      const overlay = document.querySelector('.fixed.inset-0') as HTMLElement;
-      expect(overlay.className).toContain('items-center');
+      const dialog = await screen.findByRole('dialog');
+      const submit = within(dialog).getByRole('button', { name: 'Create Purchase Order' });
+      expect(submit).toHaveAttribute('form', 'po-form');
+      expect(dialog.querySelector('form#po-form')).not.toBeNull();
     });
 
-    it('When PO modal open / Then overlay does NOT have bare p-4', async () => {
+    it('When Cancel is clicked / Then the modal closes', async () => {
       render(<POListPage />);
       await waitFor(() => screen.getByText('New PO'));
       fireEvent.click(screen.getByText('New PO'));
-      await waitFor(() => {
-        expect(screen.getAllByText('Create Purchase Order').length).toBeGreaterThan(0);
-      });
-      const overlay = document.querySelector('.fixed.inset-0') as HTMLElement;
-      const classes = overlay.className.split(/\s+/);
-      expect(classes).not.toContain('p-4');
-    });
-
-    it('When PO modal open / Then dialog height is bounded to the safe zone (never overlaps header) with internal scroll', async () => {
-      render(<POListPage />);
-      await waitFor(() => screen.getByText('New PO'));
-      fireEvent.click(screen.getByText('New PO'));
-      await waitFor(() => {
-        expect(screen.getAllByText('Create Purchase Order').length).toBeGreaterThan(0);
-      });
-      const dialog = document.querySelector('.max-h-\\[calc\\(100vh-7\\.5rem\\)\\]') as HTMLElement;
-      expect(dialog).not.toBeNull();
-      expect(document.querySelector('.max-h-\\[90vh\\]')).toBeNull();
-    });
-
-    it('When PO modal open / Then overlay stacks above shell NavBar (z-[600] > z-[500])', async () => {
-      render(<POListPage />);
-      await waitFor(() => screen.getByText('New PO'));
-      fireEvent.click(screen.getByText('New PO'));
-      await waitFor(() => {
-        expect(screen.getAllByText('Create Purchase Order').length).toBeGreaterThan(0);
-      });
-      const overlay = document.querySelector('.fixed.inset-0') as HTMLElement;
-      expect(overlay.className).toContain('z-[600]');
+      await screen.findByRole('dialog');
+      fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+      expect(screen.queryByRole('dialog')).toBeNull();
     });
   });
 

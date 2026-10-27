@@ -1,18 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-    ArrowLeft, Package, Info, AlertCircle,
+    Package, Info, AlertCircle,
     ArrowDownLeft, ArrowUpRight, ArrowRightLeft,
     History, MapPin, DollarSign,
-    Edit2, Trash2, Save, Loader2, ScanLine,
+    Edit2, Trash2, Save, ScanLine,
     AlertTriangle, RefreshCcw, Truck, Sliders,
-    Image as ImageIcon, Tag, X, BarChart3, TrendingUp, FileText
+    Image as ImageIcon, Tag, BarChart3, TrendingUp, FileText
 } from 'lucide-react';
 import { inventoryService } from '../services/inventoryService';
 import { Item, StockMovement, Unit, ItemCategory, Warehouse } from '../types/inventory';
 import { TabId, ITEM_CLASSIFICATIONS, ItemClassification } from '../types/itemTypes';
-import { Table } from '../components/common/Table';
-import { TableSkeleton } from '../components/common/Skeleton';
+import {
+    DetailPageTemplate, DataTable, Button, Modal, Alert, Badge, EmptyState, Tabs, Grid, FieldGrid,
+    type DataTableColumn,
+} from '@so360/design-system';
 import { useAuth } from '../hooks/useAuth';
 import TabNavigation from './item-create/components/TabNavigation';
 import FormSection from './item-create/components/FormSection';
@@ -361,13 +363,13 @@ const ItemDetailPage = () => {
     };
 
     // ── Loading / Error States ────────────────────────
-    if (isLoading) return <div className="p-8"><TableSkeleton /></div>;
+    if (isLoading) return <DetailPageTemplate trail={[{ label: 'Items', to: '/inventory/items' }]} title="Item" loading>{null}</DetailPageTemplate>;
     if (error && !item) return (
-        <div className="p-8 text-center">
-            <AlertCircle size={48} className="mx-auto text-rose-500 mb-4" />
-            <h2 className="text-2xl font-bold text-slate-50 mb-2">{error}</h2>
-            <button onClick={() => navigate('/inventory/items')} className="text-blue-400 hover:underline">Back to Items</button>
-        </div>
+        <EmptyState
+            icon={AlertCircle}
+            title={error}
+            action={{ label: 'Back to Items', onClick: () => navigate('/inventory/items') }}
+        />
     );
     if (!item) return null;
 
@@ -389,153 +391,93 @@ const ItemDetailPage = () => {
         : (item.tax_class ? `Legacy tax class: ${item.tax_class}` : null);
 
     // ── Movement Table Columns ────────────────────────
-    const columns = [
+    const columns: DataTableColumn<StockMovement>[] = [
         {
+            key: 'date',
             header: 'Date',
-            accessor: (entry: StockMovement) => (
-                <span className="text-slate-400 text-xs">{formatters.formatDateTime(entry.created_at)}</span>
+            render: (entry: StockMovement) => (
+                <span className="text-fg-muted text-xs">{formatters.formatDateTime(entry.created_at)}</span>
             )
         },
         {
+            key: 'activity',
             header: 'Activity',
-            accessor: (entry: StockMovement) => {
+            render: (entry: StockMovement) => {
                 const getIcon = () => {
-                    if (entry.type === 'inbound' || (entry.type === 'adjustment' && entry.quantity > 0)) return <ArrowDownLeft size={14} className="text-emerald-400" />;
+                    if (entry.type === 'inbound' || (entry.type === 'adjustment' && entry.quantity > 0)) return <ArrowDownLeft size={14} className="text-success" />;
                     if (entry.type === 'outbound' || (entry.type === 'adjustment' && entry.quantity < 0)) return <ArrowUpRight size={14} className="text-rose-400" />;
-                    return <ArrowRightLeft size={14} className="text-blue-400" />;
+                    return <ArrowRightLeft size={14} className="text-primary" />;
                 };
                 return (
                     <div className="flex items-center gap-2">
                         {getIcon()}
-                        <span className="font-medium text-slate-200 capitalize">{entry.type}</span>
+                        <span className="font-medium text-fg capitalize">{entry.type}</span>
                     </div>
                 );
             }
         },
         {
+            key: 'quantity',
             header: 'Quantity',
-            accessor: (entry: StockMovement) => (
-                <span className={`font-bold ${entry.quantity > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+            render: (entry: StockMovement) => (
+                <span className={`font-bold ${entry.quantity > 0 ? 'text-success' : 'text-rose-400'}`}>
                     {entry.quantity > 0 ? '+' : ''}{entry.quantity}
                 </span>
             )
         },
         {
+            key: 'warehouse',
             header: 'Warehouse',
-            accessor: (entry: StockMovement) => (
+            render: (entry: StockMovement) => (
                 <div className="flex items-center gap-1.5">
-                    <MapPin size={12} className="text-slate-500" />
-                    <span className="text-slate-300">{entry.warehouses?.name}</span>
+                    <MapPin size={12} className="text-fg-subtle" />
+                    <span className="text-fg-muted">{entry.warehouses?.name}</span>
                 </div>
             )
         },
         {
+            key: 'reference',
             header: 'Reference/Reason',
-            accessor: (entry: StockMovement) => (
-                <span className="text-slate-500 text-xs italic">{entry.reason_code || entry.reference_type || '-'}</span>
+            render: (entry: StockMovement) => (
+                <span className="text-fg-subtle text-xs italic">{entry.reason_code || entry.reference_type || '-'}</span>
             )
         }
     ];
 
     // ── Render ────────────────────────────────────────
     return (
-        <div className="min-h-screen">
-            {/* Error Banner */}
-            {error && (
-                <div className="px-8 pt-4">
-                    <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 px-4 py-3 rounded-lg text-sm flex items-center justify-between">
-                        <span>{error}</span>
-                        <button onClick={() => setError(null)} className="text-rose-400 hover:text-rose-300"><X size={16} /></button>
-                    </div>
-                </div>
-            )}
-            {taxCodesError && (
-                <div className="px-8 pt-4">
-                    <div className="bg-amber-500/10 border border-amber-500/20 text-amber-400 px-4 py-3 rounded-lg text-sm">
-                        {taxCodesError}
-                    </div>
-                </div>
-            )}
-
-            {/* ═══ STICKY HEADER BAR ═══ */}
-            <div className="sticky top-0 z-10 bg-slate-950/80 backdrop-blur-xl border-b border-slate-800">
-                <div className="px-8 py-4 flex items-center justify-between">
-                    {isEditing ? (
-                        <>
-                            <button
-                                onClick={handleCancelEdit}
-                                className="flex items-center gap-2 text-slate-400 hover:text-slate-50 transition-colors group"
-                            >
-                                <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
-                                Cancel Editing
-                            </button>
-                            <div className="flex items-center gap-3">
-                                <button
-                                    onClick={handleCancelEdit}
-                                    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-50 text-sm font-semibold rounded-lg transition-all"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={handleSaveEdit}
-                                    disabled={isSaving || isTaxCodesLoading || !!taxCodesError}
-                                    className="px-5 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-600/50 text-white text-sm font-semibold rounded-lg transition-all shadow-lg shadow-blue-900/20 flex items-center gap-2"
-                                >
-                                    {isSaving ? <><Loader2 size={16} className="animate-spin" /> Saving...</> : <><Save size={16} /> Save Changes</>}
-                                </button>
-                            </div>
-                        </>
-                    ) : (
-                        <>
-                            <button
-                                onClick={() => navigate('/inventory/items')}
-                                className="flex items-center gap-2 text-slate-400 hover:text-slate-50 transition-colors group"
-                            >
-                                <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
-                                Back to Catalog
-                            </button>
-                            <div className="flex items-center gap-3">
-                                {can('items.update') && (
-                                    <button
-                                        onClick={handleEditClick}
-                                        className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-50 text-sm font-semibold rounded-lg transition-all flex items-center gap-2"
-                                    >
-                                        <Edit2 size={16} /> Edit
-                                    </button>
-                                )}
-                                {can('items.delete') && (
-                                    <button
-                                        onClick={() => setShowDeleteConfirm(true)}
-                                        className="px-4 py-2 bg-slate-800 hover:bg-rose-600/20 text-slate-400 hover:text-rose-400 text-sm font-semibold rounded-lg transition-all flex items-center gap-2 border border-slate-700 hover:border-rose-500/30"
-                                    >
-                                        <Trash2 size={16} /> Delete
-                                    </button>
-                                )}
-                            </div>
-                        </>
-                    )}
-                </div>
-            </div>
+        <>
+            <DetailPageTemplate
+                title={item.name}
+                trail={[{ label: 'Catalog', onClick: () => navigate('/inventory/items') }]}
+                status={isEditing
+                    ? <Badge tone="info">Editing</Badge>
+                    : <Badge tone={item.is_active ? 'success' : 'neutral'}>{item.is_active ? 'Active' : 'Inactive'}</Badge>}
+                secondaryActions={isEditing ? [
+                    <Button key="cancel-editing" variant="secondary" onClick={handleCancelEdit}>Cancel Editing</Button>,
+                ] : undefined}
+                primaryAction={!isEditing && can('items.update')
+                    ? <Button onClick={handleEditClick}><Edit2 size={16} /> Edit</Button>
+                    : undefined}
+                overflowActions={!isEditing && can('items.delete')
+                    ? [{ label: 'Delete', danger: true, onSelect: () => setShowDeleteConfirm(true) }]
+                    : undefined}
+            >
+            {error && <Alert variant="error" action={{ label: 'Dismiss', onClick: () => setError(null) }}>{error}</Alert>}
+            {taxCodesError && <Alert variant="warning">{taxCodesError}</Alert>}
 
             <div className="p-8">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <Grid>
                     {/* ═══ LEFT COLUMN ═══ */}
-                    <div className="lg:col-span-1 space-y-6">
+                    <Grid.Item span={4} className="space-y-6">
 
                         {/* Section A: Image Gallery + Hero Card */}
-                        <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6 relative overflow-hidden hover:border-slate-700 transition-colors">
-                            {/* Active/Inactive badge */}
-                            <div className="absolute top-4 right-4 z-10">
-                                <span className={`px-2 py-1 rounded text-[10px] uppercase font-bold border ${item.is_active ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-slate-500/10 text-slate-400 border-slate-700'}`}>
-                                    {item.is_active ? 'Active' : 'Inactive'}
-                                </span>
-                            </div>
-
+                        <div className="bg-surface/50 border border-line rounded-2xl p-6 relative overflow-hidden hover:border-line-strong transition-colors">
                             {/* Hero Image */}
                             {hasImages ? (
                                 <div className="mb-4">
                                     <div
-                                        className="aspect-[4/3] rounded-xl overflow-hidden border border-slate-700 cursor-pointer group"
+                                        className="aspect-[4/3] rounded-xl overflow-hidden border border-line-strong cursor-pointer group"
                                         onClick={() => setPreviewImage(item.image_urls![0])}
                                     >
                                         <img
@@ -549,14 +491,14 @@ const ItemDetailPage = () => {
                                             {item.image_urls!.slice(1, 5).map((url, i) => (
                                                 <div
                                                     key={i}
-                                                    className="w-16 h-16 rounded-lg overflow-hidden border border-slate-700 cursor-pointer hover:border-blue-500 transition-colors"
+                                                    className="w-16 h-16 rounded-lg overflow-hidden border border-line-strong cursor-pointer hover:border-primary transition-colors"
                                                     onClick={() => setPreviewImage(url)}
                                                 >
                                                     <img src={url} alt="" className="w-full h-full object-cover" />
                                                 </div>
                                             ))}
                                             {item.image_urls!.length > 5 && (
-                                                <div className="w-16 h-16 rounded-lg border border-slate-700 flex items-center justify-center text-xs text-slate-500 font-medium">
+                                                <div className="w-16 h-16 rounded-lg border border-line-strong flex items-center justify-center text-xs text-fg-subtle font-medium">
                                                     +{item.image_urls!.length - 5}
                                                 </div>
                                             )}
@@ -564,19 +506,18 @@ const ItemDetailPage = () => {
                                     )}
                                 </div>
                             ) : (
-                                <div className="w-20 h-20 rounded-2xl bg-slate-800 flex items-center justify-center border border-slate-700 shadow-xl mb-4 mt-6">
-                                    <ClassIcon size={40} className="text-blue-400" />
+                                <div className="w-20 h-20 rounded-2xl bg-surface-raised flex items-center justify-center border border-line-strong shadow-xl mb-4 mt-6">
+                                    <ClassIcon size={40} className="text-primary" />
                                 </div>
                             )}
 
                             {/* Item Identity */}
-                            <h1 className="text-2xl font-bold text-slate-50 mb-1 leading-tight">{item.name}</h1>
                             <div className="flex items-center gap-2 mb-4">
-                                <span className="text-xs font-mono text-slate-500 tracking-widest">{item.sku || 'NO-SKU'}</span>
+                                <span className="text-nb-sm font-mono text-fg-subtle">{item.sku || 'No SKU'}</span>
                                 {item.barcode && (
                                     <>
-                                        <span className="text-slate-700">|</span>
-                                        <span className="flex items-center gap-1 text-xs text-slate-500">
+                                        <span className="text-fg-subtle">|</span>
+                                        <span className="flex items-center gap-1 text-xs text-fg-subtle">
                                             <ScanLine size={12} /> {item.barcode}
                                         </span>
                                     </>
@@ -586,8 +527,8 @@ const ItemDetailPage = () => {
                             {/* Classification chip */}
                             {classification && (
                                 <div className="flex items-center gap-1.5 mb-3">
-                                    <ClassIcon size={14} className="text-blue-400" />
-                                    <span className="text-xs font-semibold text-blue-400">{classification.label}</span>
+                                    <ClassIcon size={14} className="text-primary" />
+                                    <span className="text-xs font-semibold text-primary">{classification.label}</span>
                                 </div>
                             )}
 
@@ -600,64 +541,64 @@ const ItemDetailPage = () => {
                             </div>
                         </div>
 
-                    </div>
+                    </Grid.Item>
 
                     {/* ═══ RIGHT COLUMN ═══ */}
                     {isEditing ? (
                         /* ── EDIT MODE ── */
-                        <div className="lg:col-span-2 space-y-4">
+                        <Grid.Item span={8} className="space-y-4">
                             {/* ═══ 3 Summary Cards ═══ */}
-                            <div className="grid grid-cols-3 gap-4">
+                            <Grid columns={3} gap="sm">
                                 {/* Card 1: Available Physical Stock */}
-                                <div className="bg-blue-600 rounded-2xl p-5 text-white shadow-lg shadow-blue-900/40 relative overflow-hidden">
+                                <div className="bg-primary rounded-2xl p-5 text-primary-fg shadow-lg shadow-blue-900/40 relative overflow-hidden">
                                     <div className="absolute -right-3 -bottom-3 opacity-10">
                                         <Package size={80} />
                                     </div>
-                                    <span className="text-blue-100 text-[10px] font-bold uppercase tracking-wider">Physical Stock</span>
+                                    <span className="text-primary text-[10px] font-bold">Physical stock</span>
                                     <div className="text-4xl font-black mt-2 flex items-baseline gap-1.5">
                                         {totalStock}
-                                        <span className="text-xs font-normal text-blue-200 uppercase">{item.units?.abbreviation || 'PCS'}</span>
+                                        <span className="text-nb-sm font-normal text-primary">{item.units?.abbreviation || 'PCS'}</span>
                                     </div>
-                                    <p className="mt-3 text-[10px] text-blue-100 flex items-center gap-1.5 bg-blue-500/30 w-fit px-2 py-1 rounded-lg">
+                                    <p className="mt-3 text-[10px] text-primary flex items-center gap-1.5 bg-primary/30 w-fit px-2 py-1 rounded-lg">
                                         <Info size={11} /> Real-time count
                                     </p>
                                 </div>
                                 {/* Card 2: Stock Thresholds */}
-                                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 hover:border-slate-700 transition-colors">
-                                    <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3">Stock Thresholds</h3>
+                                <div className="bg-surface/50 border border-line rounded-2xl p-5 hover:border-line-strong transition-colors">
+                                    <h3 className="text-[10px] font-bold text-fg-muted mb-3">Stock thresholds</h3>
                                     {(item.min_stock_threshold != null || item.reorder_level != null) ? (
                                         <div className="space-y-2">
                                             {item.min_stock_threshold != null && (
-                                                <div className="flex items-center justify-between p-2.5 bg-slate-800/30 rounded-xl border border-slate-700/30">
-                                                    <div className="flex items-center gap-1.5 text-slate-400">
+                                                <div className="flex items-center justify-between p-2.5 bg-surface-raised/30 rounded-xl border border-line-strong/30">
+                                                    <div className="flex items-center gap-1.5 text-fg-muted">
                                                         <AlertTriangle size={13} />
                                                         <span className="text-xs font-semibold">Min Stock</span>
                                                     </div>
-                                                    <span className="text-sm text-slate-50 font-medium">{item.min_stock_threshold}</span>
+                                                    <span className="text-sm text-fg font-medium">{item.min_stock_threshold}</span>
                                                 </div>
                                             )}
                                             {item.reorder_level != null && (
-                                                <div className="flex items-center justify-between p-2.5 bg-slate-800/30 rounded-xl border border-slate-700/30">
-                                                    <div className="flex items-center gap-1.5 text-slate-400">
+                                                <div className="flex items-center justify-between p-2.5 bg-surface-raised/30 rounded-xl border border-line-strong/30">
+                                                    <div className="flex items-center gap-1.5 text-fg-muted">
                                                         <RefreshCcw size={13} />
                                                         <span className="text-xs font-semibold">Reorder Level</span>
                                                     </div>
-                                                    <span className="text-sm text-slate-50 font-medium">{item.reorder_level}</span>
+                                                    <span className="text-sm text-fg font-medium">{item.reorder_level}</span>
                                                 </div>
                                             )}
                                             {item.min_stock_threshold != null && totalStock < item.min_stock_threshold && (
-                                                <div className="mt-2 p-2 bg-amber-500/10 border border-amber-500/20 rounded-lg flex items-center gap-1.5">
-                                                    <AlertTriangle size={12} className="text-amber-400 flex-shrink-0" />
-                                                    <span className="text-[10px] text-amber-400 font-medium">Below minimum!</span>
+                                                <div className="mt-2 p-2 bg-warning/10 border border-warning/20 rounded-lg flex items-center gap-1.5">
+                                                    <AlertTriangle size={12} className="text-warning flex-shrink-0" />
+                                                    <span className="text-[10px] text-warning font-medium">Below minimum!</span>
                                                 </div>
                                             )}
                                         </div>
                                     ) : (
-                                        <p className="text-xs text-slate-600 italic">No thresholds set</p>
+                                        <p className="text-xs text-fg-subtle italic">No thresholds set</p>
                                     )}
                                 </div>
                                 {/* Card 3: Product Lifecycle */}
-                                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 hover:border-slate-700 transition-colors">
+                                <div className="bg-surface/50 border border-line rounded-2xl p-5 hover:border-line-strong transition-colors">
                                     <LifecycleStatusPanel
                                         itemId={item.id}
                                         productStatus={item.product_status || 'draft'}
@@ -667,69 +608,69 @@ const ItemDetailPage = () => {
                                         }}
                                     />
                                 </div>
-                            </div>
-                            <div className="bg-slate-900/50 border border-slate-800 rounded-xl ring-1 ring-blue-500/20">
+                            </Grid>
+                            <div className="bg-surface/50 border border-line rounded-xl ring-1 ring-focus/20">
                                 <TabNavigation activeTab={editTab} onTabChange={setEditTab} tabErrors={tabErrors} />
                                 <div className="p-6 min-h-[24rem]">
                                     {renderEditTab()}
                                 </div>
                             </div>
-                        </div>
+                        </Grid.Item>
                     ) : (
                         /* ── VIEW MODE ── */
-                        <div className="lg:col-span-2 space-y-4">
+                        <Grid.Item span={8} className="space-y-4">
                             {/* ═══ 3 Summary Cards ═══ */}
-                            <div className="grid grid-cols-3 gap-4">
+                            <Grid columns={3} gap="sm">
                                 {/* Card 1: Available Physical Stock */}
-                                <div className="bg-blue-600 rounded-2xl p-5 text-white shadow-lg shadow-blue-900/40 relative overflow-hidden">
+                                <div className="bg-primary rounded-2xl p-5 text-primary-fg shadow-lg shadow-blue-900/40 relative overflow-hidden">
                                     <div className="absolute -right-3 -bottom-3 opacity-10">
                                         <Package size={80} />
                                     </div>
-                                    <span className="text-blue-100 text-[10px] font-bold uppercase tracking-wider">Physical Stock</span>
+                                    <span className="text-primary text-[10px] font-bold">Physical stock</span>
                                     <div className="text-4xl font-black mt-2 flex items-baseline gap-1.5">
                                         {totalStock}
-                                        <span className="text-xs font-normal text-blue-200 uppercase">{item.units?.abbreviation || 'PCS'}</span>
+                                        <span className="text-nb-sm font-normal text-primary">{item.units?.abbreviation || 'PCS'}</span>
                                     </div>
-                                    <p className="mt-3 text-[10px] text-blue-100 flex items-center gap-1.5 bg-blue-500/30 w-fit px-2 py-1 rounded-lg">
+                                    <p className="mt-3 text-[10px] text-primary flex items-center gap-1.5 bg-primary/30 w-fit px-2 py-1 rounded-lg">
                                         <Info size={11} /> Real-time count
                                     </p>
                                 </div>
                                 {/* Card 2: Stock Thresholds */}
-                                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 hover:border-slate-700 transition-colors">
-                                    <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3">Stock Thresholds</h3>
+                                <div className="bg-surface/50 border border-line rounded-2xl p-5 hover:border-line-strong transition-colors">
+                                    <h3 className="text-[10px] font-bold text-fg-muted mb-3">Stock thresholds</h3>
                                     {(item.min_stock_threshold != null || item.reorder_level != null) ? (
                                         <div className="space-y-2">
                                             {item.min_stock_threshold != null && (
-                                                <div className="flex items-center justify-between p-2.5 bg-slate-800/30 rounded-xl border border-slate-700/30">
-                                                    <div className="flex items-center gap-1.5 text-slate-400">
+                                                <div className="flex items-center justify-between p-2.5 bg-surface-raised/30 rounded-xl border border-line-strong/30">
+                                                    <div className="flex items-center gap-1.5 text-fg-muted">
                                                         <AlertTriangle size={13} />
                                                         <span className="text-xs font-semibold">Min Stock</span>
                                                     </div>
-                                                    <span className="text-sm text-slate-50 font-medium">{item.min_stock_threshold}</span>
+                                                    <span className="text-sm text-fg font-medium">{item.min_stock_threshold}</span>
                                                 </div>
                                             )}
                                             {item.reorder_level != null && (
-                                                <div className="flex items-center justify-between p-2.5 bg-slate-800/30 rounded-xl border border-slate-700/30">
-                                                    <div className="flex items-center gap-1.5 text-slate-400">
+                                                <div className="flex items-center justify-between p-2.5 bg-surface-raised/30 rounded-xl border border-line-strong/30">
+                                                    <div className="flex items-center gap-1.5 text-fg-muted">
                                                         <RefreshCcw size={13} />
                                                         <span className="text-xs font-semibold">Reorder Level</span>
                                                     </div>
-                                                    <span className="text-sm text-slate-50 font-medium">{item.reorder_level}</span>
+                                                    <span className="text-sm text-fg font-medium">{item.reorder_level}</span>
                                                 </div>
                                             )}
                                             {item.min_stock_threshold != null && totalStock < item.min_stock_threshold && (
-                                                <div className="mt-2 p-2 bg-amber-500/10 border border-amber-500/20 rounded-lg flex items-center gap-1.5">
-                                                    <AlertTriangle size={12} className="text-amber-400 flex-shrink-0" />
-                                                    <span className="text-[10px] text-amber-400 font-medium">Below minimum!</span>
+                                                <div className="mt-2 p-2 bg-warning/10 border border-warning/20 rounded-lg flex items-center gap-1.5">
+                                                    <AlertTriangle size={12} className="text-warning flex-shrink-0" />
+                                                    <span className="text-[10px] text-warning font-medium">Below minimum!</span>
                                                 </div>
                                             )}
                                         </div>
                                     ) : (
-                                        <p className="text-xs text-slate-600 italic">No thresholds set</p>
+                                        <p className="text-xs text-fg-subtle italic">No thresholds set</p>
                                     )}
                                 </div>
                                 {/* Card 3: Product Lifecycle */}
-                                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 hover:border-slate-700 transition-colors">
+                                <div className="bg-surface/50 border border-line rounded-2xl p-5 hover:border-line-strong transition-colors">
                                     <LifecycleStatusPanel
                                         itemId={item.id}
                                         productStatus={item.product_status || 'draft'}
@@ -739,11 +680,11 @@ const ItemDetailPage = () => {
                                         }}
                                     />
                                 </div>
-                            </div>
-                            <div className="bg-slate-900/50 border border-slate-800 rounded-xl">
+                            </Grid>
+                            <div className="bg-surface/50 border border-line rounded-xl">
                                 {/* View Tab Bar — 8 tabs */}
-                                <div className="flex gap-1 border-b border-slate-800 overflow-x-auto overflow-y-hidden rounded-t-xl">
-                                    {([
+                                <Tabs
+                                    items={[
                                         { id: 'basic' as ViewTabId, label: 'Basic Info', icon: <Package size={14} /> },
                                         { id: 'media' as ViewTabId, label: 'Media', icon: <ImageIcon size={14} /> },
                                         { id: 'pricing' as ViewTabId, label: 'Pricing', icon: <DollarSign size={14} /> },
@@ -753,20 +694,10 @@ const ItemDetailPage = () => {
                                         { id: 'attributes' as ViewTabId, label: 'Attributes', icon: <Sliders size={14} /> },
                                         { id: 'ledger' as ViewTabId, label: 'Ledger', icon: <History size={14} /> },
                                         { id: 'sales' as ViewTabId, label: 'Sales History', icon: <TrendingUp size={14} /> },
-                                    ]).map(tab => (
-                                        <button
-                                            key={tab.id}
-                                            onClick={() => setViewTab(tab.id)}
-                                            className={`flex items-center gap-1.5 px-4 py-3 text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all border-b-2 ${
-                                                viewTab === tab.id
-                                                    ? 'text-blue-400 border-blue-500 bg-blue-500/5'
-                                                    : 'text-slate-500 hover:text-slate-300 border-transparent'
-                                            }`}
-                                        >
-                                            {tab.icon} {tab.label}
-                                        </button>
-                                    ))}
-                                </div>
+                                    ]}
+                                    value={viewTab}
+                                    onChange={(id: string) => setViewTab(id as ViewTabId)}
+                                />
 
                                 {/* View Tab Content */}
                                 <div className="p-6 min-h-[24rem]">
@@ -774,19 +705,19 @@ const ItemDetailPage = () => {
                                     {viewTab === 'basic' && (
                                         <div className="space-y-8">
                                             <FormSection title="Identification">
-                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                <FieldGrid columns={3}>
                                                     <ReadOnlyField label="Item Name" value={item.name} />
                                                     <ReadOnlyField label="SKU" value={item.sku} mono />
                                                     <ReadOnlyField label="Barcode / UPC" value={item.barcode} />
-                                                </div>
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                                                </FieldGrid>
+                                                <FieldGrid columns={2} className="mt-nb-4">
                                                     <ReadOnlyField label="Brand" value={item.brand} />
                                                     <ReadOnlyField label="Unit of Measure" value={item.units ? `${item.units.name} (${item.units.abbreviation})` : null} />
-                                                </div>
+                                                </FieldGrid>
                                             </FormSection>
 
                                             <FormSection title="Classification">
-                                                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                                <Grid columns={3} gap="sm">
                                                     {ITEM_CLASSIFICATIONS.map(cls => {
                                                         const Icon = cls.icon;
                                                         const isSelected = item.type === cls.value;
@@ -795,19 +726,19 @@ const ItemDetailPage = () => {
                                                                 key={cls.value}
                                                                 className={`p-3 rounded-xl border text-left ${
                                                                     isSelected
-                                                                        ? 'border-blue-500 bg-blue-500/10 ring-1 ring-blue-500/30'
-                                                                        : 'border-slate-700/30 bg-slate-800/20 opacity-40'
+                                                                        ? 'border-primary bg-primary/10 ring-1 ring-focus/30'
+                                                                        : 'border-line-strong/30 bg-surface-raised/20 opacity-40'
                                                                 }`}
                                                             >
                                                                 <div className="flex items-center gap-2 mb-1">
-                                                                    <Icon size={16} className={isSelected ? 'text-blue-400' : 'text-slate-600'} />
-                                                                    <span className={`text-sm font-semibold ${isSelected ? 'text-blue-300' : 'text-slate-500'}`}>{cls.label}</span>
+                                                                    <Icon size={16} className={isSelected ? 'text-primary' : 'text-fg-subtle'} />
+                                                                    <span className={`text-sm font-semibold ${isSelected ? 'text-primary' : 'text-fg-subtle'}`}>{cls.label}</span>
                                                                 </div>
-                                                                <p className="text-xs text-slate-500 leading-tight">{cls.description}</p>
+                                                                <p className="text-xs text-fg-subtle leading-tight">{cls.description}</p>
                                                             </div>
                                                         );
                                                     })}
-                                                </div>
+                                                </Grid>
                                             </FormSection>
 
                                             <FormSection title="Product Type">
@@ -815,17 +746,17 @@ const ItemDetailPage = () => {
                                             </FormSection>
 
                                             <FormSection title="Description">
-                                                <div className="w-full bg-slate-800/50 border border-slate-700/50 rounded-lg px-4 py-2.5 text-sm min-h-[80px]">
+                                                <div className="w-full bg-surface-raised/50 border border-line-strong/50 rounded-lg px-4 py-2.5 text-sm min-h-[80px]">
                                                     {item.description?.trim() ? (
-                                                        <p className="text-slate-200 whitespace-pre-wrap leading-relaxed">{item.description}</p>
+                                                        <p className="text-fg whitespace-pre-wrap leading-relaxed">{item.description}</p>
                                                     ) : (
-                                                        <span className="text-slate-600">No description provided</span>
+                                                        <span className="text-fg-subtle">No description provided</span>
                                                     )}
                                                 </div>
                                             </FormSection>
 
                                             {/* Metadata Footer */}
-                                            <div className="flex flex-wrap gap-4 text-xs text-slate-600 pt-2">
+                                            <div className="flex flex-wrap gap-4 text-xs text-fg-subtle pt-2">
                                                 {item.created_at && <span>Created: {formatters.formatDate(item.created_at)}</span>}
                                                 {item.updated_at && <span>Updated: {formatters.formatDate(item.updated_at)}</span>}
                                                 <span>ID: <span className="font-mono">{item.id}</span></span>
@@ -838,21 +769,21 @@ const ItemDetailPage = () => {
                                         <div className="space-y-8">
                                             <FormSection title="Product Images">
                                                 {hasImages ? (
-                                                    <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
+                                                    <Grid columns={4} gap="sm">
                                                         {item.image_urls!.map((url, i) => (
                                                             <div
                                                                 key={i}
-                                                                className="aspect-square rounded-lg overflow-hidden border border-slate-700 cursor-pointer hover:border-blue-500 transition-colors group"
+                                                                className="aspect-square rounded-lg overflow-hidden border border-line-strong cursor-pointer hover:border-primary transition-colors group"
                                                                 onClick={() => setPreviewImage(url)}
                                                             >
                                                                 <img src={url} alt={`${item.name} ${i + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                                                             </div>
                                                         ))}
-                                                    </div>
+                                                    </Grid>
                                                 ) : (
                                                     <div className="flex flex-col items-center justify-center py-12 text-center">
-                                                        <ImageIcon size={48} className="text-slate-700 mb-4" />
-                                                        <p className="text-sm text-slate-500">No images uploaded</p>
+                                                        <ImageIcon size={48} className="text-fg-subtle mb-4" />
+                                                        <p className="text-sm text-fg-subtle">No images uploaded</p>
                                                     </div>
                                                 )}
                                             </FormSection>
@@ -863,27 +794,27 @@ const ItemDetailPage = () => {
                                     {viewTab === 'pricing' && (
                                         <div className="space-y-8">
                                             <FormSection title="Pricing">
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <FieldGrid columns={2}>
                                                     <ReadOnlyField label={`Selling Price (${currencySymbol})`} value={item.price != null ? formatters.formatCurrency(Number(item.price)) : null} />
                                                     <ReadOnlyField label={`Cost Price (${currencySymbol})`} value={item.cost != null ? formatters.formatCurrency(Number(item.cost)) : null} />
-                                                </div>
+                                                </FieldGrid>
                                                 {margin && (
-                                                    <div className="mt-4 p-3 bg-slate-800/50 border border-slate-700/50 rounded-lg">
+                                                    <div className="mt-4 p-3 bg-surface-raised/50 border border-line-strong/50 rounded-lg">
                                                         <div className="flex items-center justify-between text-sm">
-                                                            <span className="text-slate-400">Margin</span>
-                                                            <span className="text-emerald-400 font-semibold">{margin}%</span>
+                                                            <span className="text-fg-muted">Margin</span>
+                                                            <span className="text-success font-semibold">{margin}%</span>
                                                         </div>
                                                     </div>
                                                 )}
                                             </FormSection>
 
                                             <FormSection title="Tax Information">
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <FieldGrid columns={2}>
                                                     <ReadOnlyField label="Tax Code" value={taxDisplayValue} />
                                                     <ReadOnlyField label="HSN / SAC Code" value={item.hsn_code} />
-                                                </div>
+                                                </FieldGrid>
                                                 {isTaxCodesLoading && (
-                                                    <p className="text-xs text-slate-500 mt-2">Loading tax code labels from Core settings...</p>
+                                                    <p className="text-xs text-fg-subtle mt-2">Loading tax code labels from Core settings...</p>
                                                 )}
                                             </FormSection>
                                         </div>
@@ -902,21 +833,21 @@ const ItemDetailPage = () => {
                                     {viewTab === 'stock' && (
                                         <div className="space-y-8">
                                             <FormSection title="Stock Thresholds">
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <FieldGrid columns={2}>
                                                     <ReadOnlyField label="Min Stock Threshold" value={item.min_stock_threshold != null ? String(item.min_stock_threshold) : null} />
                                                     <ReadOnlyField label="Reorder Level" value={item.reorder_level != null ? String(item.reorder_level) : null} />
-                                                </div>
+                                                </FieldGrid>
                                             </FormSection>
 
                                             <FormSection title="Tracking Options">
-                                                <div className="flex flex-col gap-3 p-4 bg-slate-800/30 border border-slate-700/50 rounded-lg">
+                                                <div className="flex flex-col gap-3 p-4 bg-surface-raised/30 border border-line-strong/50 rounded-lg">
                                                     <StatusPill label="Batch Tracked" active={item.is_batch_tracked} />
                                                     <StatusPill label="Serial Tracked" active={item.is_serial_tracked} />
                                                 </div>
                                             </FormSection>
 
                                             <FormSection title="Status">
-                                                <div className="p-4 bg-slate-800/30 border border-slate-700/50 rounded-lg">
+                                                <div className="p-4 bg-surface-raised/30 border border-line-strong/50 rounded-lg">
                                                     <StatusPill label="Active" active={item.is_active} />
                                                 </div>
                                             </FormSection>
@@ -927,10 +858,10 @@ const ItemDetailPage = () => {
                                     {viewTab === 'shipping' && (
                                         <div className="space-y-8">
                                             <FormSection title="Weight">
-                                                <div className="grid grid-cols-2 gap-4">
+                                                <FieldGrid columns={2}>
                                                     <ReadOnlyField label="Weight" value={item.weight != null ? String(item.weight) : null} />
                                                     <ReadOnlyField label="Weight Unit" value={item.weight_unit || 'kg'} />
-                                                </div>
+                                                </FieldGrid>
                                             </FormSection>
 
                                             <FormSection title="Dimensions (L x W x H)">
@@ -938,11 +869,11 @@ const ItemDetailPage = () => {
                                                     <div className="flex-1">
                                                         <ReadOnlyField label="Length" value={item.dimensions?.length != null ? String(item.dimensions.length) : null} />
                                                     </div>
-                                                    <span className="text-slate-600 pb-3">&times;</span>
+                                                    <span className="text-fg-subtle pb-3">&times;</span>
                                                     <div className="flex-1">
                                                         <ReadOnlyField label="Width" value={item.dimensions?.width != null ? String(item.dimensions.width) : null} />
                                                     </div>
-                                                    <span className="text-slate-600 pb-3">&times;</span>
+                                                    <span className="text-fg-subtle pb-3">&times;</span>
                                                     <div className="flex-1">
                                                         <ReadOnlyField label="Height" value={item.dimensions?.height != null ? String(item.dimensions.height) : null} />
                                                     </div>
@@ -958,17 +889,17 @@ const ItemDetailPage = () => {
                                     {viewTab === 'attributes' && (
                                         <div className="space-y-6">
                                             {!item.product_type_id ? (
-                                                <div className="flex flex-col items-center justify-center py-16 text-center">
-                                                    <Sliders size={48} className="text-slate-700 mb-4" />
-                                                    <h3 className="text-lg font-semibold text-slate-400 mb-2">No Product Type Selected</h3>
-                                                    <p className="text-sm text-slate-500 max-w-md">
-                                                        Select a product type on the <span className="text-blue-400 font-medium">Basic Info</span> tab to see
+                                                <div className="flex flex-col items-center justify-center py-8 text-center">
+                                                    <Sliders size={48} className="text-fg-subtle mb-4" />
+                                                    <h3 className="text-lg font-semibold text-fg-muted mb-2">No Product Type Selected</h3>
+                                                    <p className="text-sm text-fg-subtle max-w-md">
+                                                        Select a product type on the <span className="text-primary font-medium">Basic Info</span> tab to see
                                                         type-specific attributes here.
                                                     </p>
                                                 </div>
                                             ) : item.product_types?.product_type_attributes && item.product_types.product_type_attributes.length > 0 ? (
                                                 <FormSection title={`${item.product_types.name} Attributes`}>
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <FieldGrid columns={2}>
                                                         {item.product_types.product_type_attributes
                                                             .sort((a, b) => a.sort_order - b.sort_order)
                                                             .map(attr => {
@@ -981,21 +912,21 @@ const ItemDetailPage = () => {
                                                                 return <ReadOnlyField key={attr.id} label={attr.label} value={display} />;
                                                             })
                                                         }
-                                                    </div>
+                                                    </FieldGrid>
                                                 </FormSection>
                                             ) : item.custom_attributes && Object.keys(item.custom_attributes).length > 0 ? (
                                                 <FormSection title={item.product_types?.name ? `${item.product_types.name} Attributes` : 'Custom Attributes'}>
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <FieldGrid columns={2}>
                                                         {Object.entries(item.custom_attributes).map(([key, val]) => (
                                                             <ReadOnlyField key={key} label={key} value={val != null ? String(val) : null} />
                                                         ))}
-                                                    </div>
+                                                    </FieldGrid>
                                                 </FormSection>
                                             ) : (
-                                                <div className="flex flex-col items-center justify-center py-16 text-center">
-                                                    <Sliders size={48} className="text-slate-700 mb-4" />
-                                                    <h3 className="text-lg font-semibold text-slate-400 mb-2">{item.product_types?.name || 'Product Type'}</h3>
-                                                    <p className="text-sm text-slate-500">No attribute fields defined for this product type.</p>
+                                                <div className="flex flex-col items-center justify-center py-8 text-center">
+                                                    <Sliders size={48} className="text-fg-subtle mb-4" />
+                                                    <h3 className="text-lg font-semibold text-fg-muted mb-2">{item.product_types?.name || 'Product Type'}</h3>
+                                                    <p className="text-sm text-fg-subtle">No attribute fields defined for this product type.</p>
                                                 </div>
                                             )}
                                         </div>
@@ -1006,17 +937,17 @@ const ItemDetailPage = () => {
                                         <div>
                                             <div className="flex items-center justify-between mb-6">
                                                 <div className="flex items-center gap-2">
-                                                    <History size={20} className="text-blue-500" />
-                                                    <h2 className="text-xl font-bold text-slate-50 tracking-tight">Movement Ledger</h2>
+                                                    <History size={20} className="text-primary" />
+                                                    <h2 className="text-lg font-semibold text-fg">Movement Ledger</h2>
                                                 </div>
-                                                <span className="text-[10px] text-slate-500 border border-slate-800 px-3 py-1 rounded-full uppercase font-bold tracking-widest">
+                                                <span className="text-[10px] text-fg-subtle border border-line px-3 py-1 rounded-full font-bold">
                                                     Audit Trail
                                                 </span>
                                             </div>
-                                            <Table data={ledger} columns={columns} emptyMessage="No movements recorded for this item." />
-                                            <div className="mt-6 flex items-start gap-3 p-4 bg-slate-900/30 border border-slate-800 rounded-xl">
-                                                <Info size={16} className="text-slate-500 mt-1" />
-                                                <p className="text-xs text-slate-500 leading-relaxed">
+                                            <DataTable columns={columns} rows={ledger} rowKey={(m: StockMovement) => m.id} emptyState=<EmptyState title="No movements recorded for this item." /> />
+                                            <div className="mt-6 flex items-start gap-3 p-4 bg-surface/30 border border-line rounded-xl">
+                                                <Info size={16} className="text-fg-subtle mt-1" />
+                                                <p className="text-xs text-fg-subtle leading-relaxed">
                                                     This ledger is the immutable source of truth for all stock mutations. Each entry corresponds to a verified event. Manual changes to historical data are forbidden by system architectural constraints.
                                                 </p>
                                             </div>
@@ -1027,55 +958,55 @@ const ItemDetailPage = () => {
                                     {viewTab === 'sales' && (
                                         <div>
                                             <div className="flex items-center gap-2 mb-6">
-                                                <TrendingUp size={20} className="text-blue-500" />
-                                                <h2 className="text-xl font-bold text-slate-50 tracking-tight">Sales History</h2>
+                                                <TrendingUp size={20} className="text-primary" />
+                                                <h2 className="text-lg font-semibold text-fg">Sales History</h2>
                                             </div>
 
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-                                                <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-5">
-                                                    <div className="flex items-center gap-2 text-slate-500 mb-2">
+                                            <Grid columns={2} gap="sm" className="mb-nb-6">
+                                                <div className="bg-surface/50 border border-line rounded-xl p-5">
+                                                    <div className="flex items-center gap-2 text-fg-subtle mb-2">
                                                         <BarChart3 size={14} />
-                                                        <span className="text-[10px] font-black uppercase tracking-widest">Total Quantity Sold</span>
+                                                        <span className="text-[10px] font-black">Total Quantity Sold</span>
                                                     </div>
-                                                    <div className="text-2xl font-bold text-slate-50">
+                                                    <div className="text-2xl font-bold text-fg">
                                                         {salesHistory?.total_quantity_sold ?? 0}
                                                     </div>
                                                 </div>
-                                                <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-5">
-                                                    <div className="flex items-center gap-2 text-slate-500 mb-2">
+                                                <div className="bg-surface/50 border border-line rounded-xl p-5">
+                                                    <div className="flex items-center gap-2 text-fg-subtle mb-2">
                                                         <FileText size={14} />
-                                                        <span className="text-[10px] font-black uppercase tracking-widest">Invoices Used In</span>
+                                                        <span className="text-[10px] font-black">Invoices Used In</span>
                                                     </div>
-                                                    <div className="text-2xl font-bold text-slate-50">
+                                                    <div className="text-2xl font-bold text-fg">
                                                         {salesHistory?.invoice_count ?? 0}
                                                     </div>
                                                 </div>
-                                            </div>
+                                            </Grid>
 
-                                            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3">Recent Outbound Movements</h3>
+                                            <h3 className="text-[10px] font-black text-fg-subtle mb-3">Recent outbound movements</h3>
                                             {salesHistory && salesHistory.recent_movements.length > 0 ? (
-                                                <div className="border border-slate-800 rounded-xl divide-y divide-slate-800 overflow-hidden">
+                                                <div className="border border-line rounded-xl divide-y divide-line overflow-hidden">
                                                     {salesHistory.recent_movements.map((m: any, idx: number) => (
-                                                        <div key={m.id || idx} className="flex items-center justify-between px-4 py-3 bg-slate-900/30">
+                                                        <div key={m.id || idx} className="flex items-center justify-between px-4 py-3 bg-surface/30">
                                                             <div className="flex items-center gap-3 min-w-0">
                                                                 <ArrowUpRight size={16} className="text-rose-400 flex-shrink-0" />
                                                                 <div className="min-w-0">
-                                                                    <div className="text-xs text-slate-200 truncate">
+                                                                    <div className="text-xs text-fg truncate">
                                                                         {m.metadata?.note || (m.reference_id ? `Order ${m.reference_id}` : 'Outbound movement')}
                                                                     </div>
-                                                                    <div className="text-[11px] text-slate-500">
+                                                                    <div className="text-[11px] text-fg-subtle">
                                                                         {m.created_at ? parseUtcDate(m.created_at).toLocaleString() : ''}
                                                                     </div>
                                                                 </div>
                                                             </div>
-                                                            <span className="text-sm font-semibold text-slate-100 whitespace-nowrap">
+                                                            <span className="text-sm font-semibold text-fg whitespace-nowrap">
                                                                 {Number(m.quantity)}
                                                             </span>
                                                         </div>
                                                     ))}
                                                 </div>
                                             ) : (
-                                                <div className="text-center py-12 text-slate-500 text-sm border border-slate-800 rounded-xl">
+                                                <div className="text-center py-12 text-fg-subtle text-sm border border-line rounded-xl">
                                                     No sales recorded for this item yet.
                                                 </div>
                                             )}
@@ -1083,53 +1014,53 @@ const ItemDetailPage = () => {
                                     )}
                                 </div>
                             </div>
-                        </div>
+                        </Grid.Item>
                     )}
-                </div>
+                </Grid>
             </div>
 
-            {/* ═══ DELETE CONFIRMATION ═══ */}
-            {showDeleteConfirm && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[600]">
-                    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto shadow-2xl">
-                        <div className="flex items-center gap-4 mb-4">
-                            <div className="w-12 h-12 rounded-full bg-rose-500/10 flex items-center justify-center">
-                                <Trash2 size={24} className="text-rose-500" />
-                            </div>
-                            <div>
-                                <h3 className="text-lg font-bold text-slate-50">Delete Item</h3>
-                                <p className="text-slate-400 text-sm">This action cannot be undone</p>
-                            </div>
-                        </div>
-                        <p className="text-slate-300 mb-6">
-                            Are you sure you want to delete <strong className="text-slate-50">{item.name}</strong>?
-                            Items with stock movements or balances cannot be deleted.
-                        </p>
-                        <div className="flex gap-3">
-                            <button onClick={() => setShowDeleteConfirm(false)} disabled={isDeleting} className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-50 font-semibold py-2.5 rounded-lg transition-all">Cancel</button>
-                            <button onClick={handleDeleteItem} disabled={isDeleting} className="flex-1 bg-rose-600 hover:bg-rose-500 disabled:bg-rose-600/50 text-white font-semibold py-2.5 rounded-lg transition-all flex items-center justify-center gap-2">
-                                {isDeleting ? <><Loader2 size={18} className="animate-spin" /> Deleting...</> : <><Trash2 size={18} /> Delete</>}
-                            </button>
-                        </div>
-                    </div>
+            {isEditing && (
+                <div className="flex justify-end gap-nb-3 px-8 pb-8">
+                    <Button variant="secondary" onClick={handleCancelEdit}>Cancel</Button>
+                    <Button
+                        variant="primary"
+                        onClick={handleSaveEdit}
+                        disabled={isSaving || isTaxCodesLoading || !!taxCodesError}
+                        loading={isSaving}
+                    ><Save size={16} />
+                        {isSaving ? 'Saving...' : 'Save Changes'}
+                    </Button>
                 </div>
             )}
+            </DetailPageTemplate>
+
+            {/* ═══ DELETE CONFIRMATION ═══ */}
+            <Modal
+                open={showDeleteConfirm}
+                onClose={() => !isDeleting && setShowDeleteConfirm(false)}
+                title="Delete Item"
+                description="This action cannot be undone"
+                size="sm"
+                footer={
+                    <>
+                        <Button variant="secondary" onClick={() => setShowDeleteConfirm(false)} disabled={isDeleting}>Cancel</Button>
+                        <Button variant="danger" onClick={handleDeleteItem} disabled={isDeleting} loading={isDeleting}>{<Trash2 size={16} />}
+                            {isDeleting ? 'Deleting...' : 'Delete'}
+                        </Button>
+                    </>
+                }
+            >
+                <p className="text-fg-muted">
+                    Are you sure you want to delete <strong className="text-fg">{item.name}</strong>?
+                    Items with stock movements or balances cannot be deleted.
+                </p>
+            </Modal>
 
             {/* ═══ IMAGE PREVIEW MODAL ═══ */}
-            {previewImage && (
-                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[600]" onClick={() => setPreviewImage(null)}>
-                    <div className="relative max-w-4xl max-h-[90vh] w-full mx-4">
-                        <button
-                            onClick={() => setPreviewImage(null)}
-                            className="absolute -top-10 right-0 text-slate-50/70 hover:text-slate-50 transition-colors"
-                        >
-                            <X size={24} />
-                        </button>
-                        <img src={previewImage} alt="Preview" className="w-full h-full object-contain rounded-xl" />
-                    </div>
-                </div>
-            )}
-        </div>
+            <Modal open={!!previewImage} onClose={() => setPreviewImage(null)} title="Image preview" size="lg">
+                {previewImage && <img src={previewImage} alt="Preview" className="w-full h-full object-contain rounded-xl" />}
+            </Modal>
+        </>
     );
 };
 
@@ -1173,28 +1104,28 @@ function initEditForm(item: Item): EditFormData {
 // ── Sub-components ────────────────────────────────────
 const ReadOnlyField = ({ label, value, mono }: { label: string; value: React.ReactNode; mono?: boolean }) => (
     <div>
-        <span className="block text-sm font-medium text-slate-400 mb-1.5">{label}</span>
-        <div className={`w-full bg-slate-800/50 border border-slate-700/50 rounded-lg px-4 py-2.5 text-sm min-h-[42px] flex items-center ${
-            mono ? 'font-mono tracking-wider text-slate-300' : 'text-slate-200'
+        <span className="block text-sm font-medium text-fg-muted mb-1.5">{label}</span>
+        <div className={`w-full bg-surface-raised/50 border border-line-strong/50 rounded-lg px-4 py-2.5 text-sm min-h-[42px] flex items-center ${
+            mono ? 'font-mono text-fg-muted' : 'text-fg'
         }`}>
-            {value || <span className="text-slate-600">&mdash;</span>}
+            {value || <span className="text-fg-subtle">&mdash;</span>}
         </div>
     </div>
 );
 
 const InfoChip = ({ label, value }: { label: string; value: string }) => (
-    <div className="flex items-center justify-between p-2.5 bg-slate-800/30 rounded-lg border border-slate-700/30">
-        <span className="text-xs text-slate-500 font-medium">{label}</span>
-        <span className="text-xs text-slate-300 font-medium">{value}</span>
+    <div className="flex items-center justify-between p-2.5 bg-surface-raised/30 rounded-lg border border-line-strong/30">
+        <span className="text-xs text-fg-subtle font-medium">{label}</span>
+        <span className="text-xs text-fg-muted font-medium">{value}</span>
     </div>
 );
 
 const StatusPill = ({ label, active }: { label: string; active: boolean }) => (
     <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-semibold ${
-        active ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-               : 'bg-slate-800/50 text-slate-500 border-slate-700'
+        active ? 'bg-success/10 text-success border-success/20'
+               : 'bg-surface-raised/50 text-fg-subtle border-line-strong'
     }`}>
-        <span className={`w-2 h-2 rounded-full ${active ? 'bg-emerald-400' : 'bg-slate-600'}`} />
+        <span className={`w-2 h-2 rounded-full ${active ? 'bg-emerald-400' : 'bg-surface-high'}`} />
         {label}: {active ? 'Yes' : 'No'}
     </div>
 );

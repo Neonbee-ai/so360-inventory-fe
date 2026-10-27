@@ -1,5 +1,6 @@
 import React from 'react';
-import { CheckCircle2, XCircle, Package, RotateCcw, Loader2 } from 'lucide-react';
+import { CheckCircle2, XCircle, Package, RotateCcw } from 'lucide-react';
+import { Button, Spinner } from '@so360/design-system';
 
 interface RowResult {
     row_index: number;
@@ -21,9 +22,9 @@ interface Props {
 const ImportResultStep: React.FC<Props> = ({ result, loading, submittedRows, onGoToItems, onReset, onNavigateToItem }) => {
     if (loading) {
         return (
-            <div className="flex flex-col items-center gap-4 py-16">
-                <Loader2 size={36} className="text-blue-500 animate-spin" />
-                <p className="text-slate-400 text-sm">Importing {submittedRows.length} items…</p>
+            <div className="flex flex-col items-center gap-nb-4 py-nb-10">
+                <Spinner aria-label="Importing" />
+                <p className="text-fg-muted text-nb-caption" aria-busy="true">Importing {submittedRows.length} items…</p>
             </div>
         );
     }
@@ -34,24 +35,24 @@ const ImportResultStep: React.FC<Props> = ({ result, loading, submittedRows, onG
     const failures  = result.results.filter(r => r.status === 'error');
 
     return (
-        <div className="max-w-2xl mx-auto space-y-6">
+        <div className="max-w-2xl mx-auto space-y-nb-6">
             {/* Header */}
-            <div className="flex items-center gap-4">
-                <div className={`w-14 h-14 rounded-xl flex items-center justify-center border ${
+            <div className="flex items-center gap-nb-4">
+                <div className={`w-14 h-14 rounded-nb-lg flex items-center justify-center border ${
                     result.failed === 0
-                        ? 'bg-emerald-500/10 border-emerald-500/20'
-                        : 'bg-amber-500/10 border-amber-500/20'
+                        ? 'bg-surface-raised border-success'
+                        : 'bg-surface-raised border-warning'
                 }`}>
                     {result.failed === 0
-                        ? <CheckCircle2 size={28} className="text-emerald-400" />
-                        : <Package size={28} className="text-amber-400" />
+                        ? <CheckCircle2 size={28} className="text-success" />
+                        : <Package size={28} className="text-warning" />
                     }
                 </div>
                 <div>
-                    <p className="text-slate-50 font-bold text-xl">
+                    <p className="text-fg font-bold text-nb-title">
                         {result.failed === 0 ? 'Import complete' : 'Partial import'}
                     </p>
-                    <p className="text-slate-400 text-sm mt-0.5">
+                    <p className="text-fg-muted text-nb-caption">
                         {result.succeeded} succeeded · {result.failed} failed
                     </p>
                 </div>
@@ -59,20 +60,20 @@ const ImportResultStep: React.FC<Props> = ({ result, loading, submittedRows, onG
 
             {/* Successes */}
             {successes.length > 0 && (
-                <div className="space-y-2">
-                    <p className="text-emerald-400 text-xs font-semibold uppercase tracking-wider">Imported items</p>
-                    <div className="max-h-48 overflow-y-auto space-y-1 pr-1">
+                <div className="space-y-nb-2">
+                    <p className="text-success text-nb-caption font-semibold">Imported items</p>
+                    <div className="max-h-48 overflow-y-auto space-y-nb-1 pr-nb-1">
                         {successes.map((r) => {
                             const name = submittedRows[r.row_index - 1]?.name || `Row ${r.row_index}`;
                             return (
                                 <button
                                     key={r.row_index}
                                     onClick={() => r.item_id && onNavigateToItem(r.item_id)}
-                                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg bg-emerald-500/5 border border-emerald-500/10 hover:border-emerald-500/30 transition-all text-left"
+                                    className="w-full flex items-center gap-nb-3 px-nb-3 py-nb-2 rounded-nb-md bg-surface border border-line hover:bg-surface-raised text-left"
                                 >
-                                    <CheckCircle2 size={13} className="text-emerald-400 shrink-0" />
-                                    <span className="text-slate-200 text-xs flex-1 truncate">{name}</span>
-                                    <span className="text-slate-500 text-[10px] font-mono">
+                                    <CheckCircle2 size={13} className="text-success shrink-0" />
+                                    <span className="text-fg text-nb-caption flex-1 truncate">{name}</span>
+                                    <span className="text-fg-subtle text-nb-caption font-mono">
                                         {r.sku ? `SKU ${r.sku}` : `${r.item_id?.slice(0, 8)}…`}
                                     </span>
                                 </button>
@@ -84,15 +85,15 @@ const ImportResultStep: React.FC<Props> = ({ result, loading, submittedRows, onG
 
             {/* Failures */}
             {failures.length > 0 && (
-                <div className="space-y-2">
-                    <p className="text-rose-400 text-xs font-semibold uppercase tracking-wider">Failed rows</p>
-                    <div className="space-y-1">
+                <div className="space-y-nb-2">
+                    <p className="text-danger text-nb-caption font-semibold">Failed rows</p>
+                    <div className="space-y-nb-1">
                         {failures.map((r) => (
-                            <div key={r.row_index} className="flex items-start gap-3 px-3 py-2 rounded-lg bg-rose-500/5 border border-rose-500/10">
-                                <XCircle size={13} className="text-rose-400 shrink-0 mt-0.5" />
+                            <div key={r.row_index} className="flex items-start gap-nb-3 px-nb-3 py-nb-2 rounded-nb-md bg-surface border border-danger">
+                                <XCircle size={13} className="text-danger shrink-0" />
                                 <div>
-                                    <span className="text-slate-400 text-xs">Row {r.row_index}</span>
-                                    <span className="text-rose-400 text-xs ml-2">{r.reason}</span>
+                                    <span className="text-fg-muted text-nb-caption">Row {r.row_index}</span>
+                                    <span className="text-danger text-nb-caption ml-nb-2">{r.reason}</span>
                                 </div>
                             </div>
                         ))}
@@ -101,15 +102,15 @@ const ImportResultStep: React.FC<Props> = ({ result, loading, submittedRows, onG
             )}
 
             {/* Actions */}
-            <div className="flex items-center gap-3 pt-2">
-                <button onClick={onGoToItems} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-lg font-semibold text-sm transition-all">
+            <div className="flex items-center gap-nb-3 pt-nb-2">
+                <Button variant="primary" onClick={onGoToItems}>
                     <Package size={16} />
                     Go to Items
-                </button>
-                <button onClick={onReset} className="flex items-center gap-2 text-slate-400 hover:text-slate-200 border border-slate-700 hover:border-slate-600 px-4 py-2.5 rounded-lg text-sm transition-all">
+                </Button>
+                <Button variant="secondary" onClick={onReset}>
                     <RotateCcw size={15} />
                     Start new import
-                </button>
+                </Button>
             </div>
         </div>
     );

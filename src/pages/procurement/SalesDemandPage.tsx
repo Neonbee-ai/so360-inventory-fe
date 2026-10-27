@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { procurementService } from '../../services/procurementService';
 import { useInventoryFormatters } from '../../utils/formatters';
-import { toast, getErrorMessage } from '@so360/design-system';
+import { Alert, Button, Checkbox, DataTable, EmptyState, Grid, GridItem, KpiCard, ListPageTemplate, SectionCard, toast, getErrorMessage, useConfirm, type DataTableColumn } from '@so360/design-system';
 
 /**
  * Sales demand — the buy list a confirmed customer order creates.
@@ -12,6 +12,7 @@ import { toast, getErrorMessage } from '@so360/design-system';
  * requisition from here means the customer order is never re-keyed by hand.
  */
 const SalesDemandPage = () => {
+    const [confirm, confirmDialog] = useConfirm();
     const navigate = useNavigate();
     const formatters = useInventoryFormatters();
     const [data, setData] = useState<any>(null);
@@ -36,7 +37,7 @@ const SalesDemandPage = () => {
     };
 
     const raise = async (order: any) => {
-        if (!window.confirm(`Raise a requisition for ${order.short_line_count} short line(s) on ${order.so_number}?`)) return;
+        if (!(await confirm({ title: 'Raise requisition', message: `Raise a requisition for ${order.short_line_count} short line(s) on ${order.so_number}?`, intent: 'default', confirmLabel: 'Raise' }))) return;
         setRaising(order.sales_order_id);
         try {
             const res = await procurementService.raiseRequisitionForSalesOrder(order.sales_order_id);
@@ -51,146 +52,127 @@ const SalesDemandPage = () => {
     const summary = data?.summary || {};
     const orders = data?.orders || [];
 
+    const expandedOrder = orders.find((o: any) => o.sales_order_id === expanded);
+
+    const columns: DataTableColumn<any>[] = [
+        {
+            key: 'so',
+            header: 'Sales Order',
+            render: (o: any) => (
+                <>
+                    <Button variant="ghost" size="sm" onClick={() => setExpanded(expanded === o.sales_order_id ? null : o.sales_order_id)}>
+                        {o.so_number}
+                    </Button>
+                    <div className="text-xs text-fg-subtle">{o.status}</div>
+                </>
+            ),
+        },
+        { key: 'customer', header: 'Customer', render: (o: any) => o.customer_name || '—' },
+        { key: 'delivery', header: 'Delivery', render: (o: any) => o.requested_delivery_date ? formatters.formatDate(o.requested_delivery_date) : '—' },
+        {
+            key: 'short',
+            header: 'Short Lines',
+            render: (o: any) => (
+                <span className={o.short_line_count > 0 ? 'font-semibold text-warning' : 'font-semibold text-success'}>
+                    {o.short_line_count > 0 ? `${o.short_line_count} short` : 'Covered'}
+                </span>
+            ),
+        },
+        { key: 'shortfall', header: 'Shortfall', align: 'right', render: (o: any) => formatters.formatCurrency(o.shortfall_value || 0) },
+        {
+            key: 'action',
+            header: 'Action',
+            render: (o: any) => o.short_line_count > 0 ? (
+                <Button size="sm" onClick={() => raise(o)} disabled={raising === o.sales_order_id}>
+                    {raising === o.sales_order_id ? 'Raising...' : 'Raise Requisition'}
+                </Button>
+            ) : (
+                <span className="text-sm text-fg-subtle">—</span>
+            ),
+        },
+    ];
+
+    const lineColumns: DataTableColumn<any>[] = [
+        {
+            key: 'item',
+            header: 'Item',
+            render: (l: any) => (
+                <>
+                    {l.item_name || l.sku || 'Line'}
+                    {l.sku && <span className="block font-mono text-xs text-fg-subtle">{l.sku}</span>}
+                </>
+            ),
+        },
+        { key: 'ordered', header: 'Ordered', align: 'center', render: (l: any) => l.ordered_quantity },
+        { key: 'stock', header: 'From Stock', align: 'center', render: (l: any) => l.covered_by_stock },
+        { key: 'onorder', header: 'On Order', align: 'center', render: (l: any) => l.covered_by_open_orders },
+        { key: 'short', header: 'Short', align: 'center', render: (l: any) => l.shortfall },
+    ];
+
     return (
-        <div className="p-8 space-y-8 animate-in fade-in duration-700">
-            <div>
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
-                    Sales Demand
-                </h1>
-                <p className="text-slate-400 mt-2 font-medium">
-                    Confirmed customer orders, netted against stock and open purchase orders.
-                </p>
-            </div>
-
-            {error && (
-                <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-400 text-sm">{error}</div>
-            )}
-
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                {[
-                    { label: 'Orders Shown', value: summary.order_count ?? 0 },
-                    { label: 'Need Purchasing', value: summary.orders_needing_purchase ?? 0 },
-                    { label: 'Short Lines', value: summary.short_line_count ?? 0 },
-                    { label: 'Shortfall Value', value: formatters.formatCurrency(summary.shortfall_value || 0) },
-                ].map((s, i) => (
-                    <div key={i} className="bg-slate-900/50 border border-slate-800 p-6 rounded-2xl">
-                        <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{s.label}</span>
-                        <div className="mt-3 text-2xl font-bold text-slate-100">{s.value}</div>
-                    </div>
-                ))}
-            </div>
-
-            <label className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider">
-                <input
-                    type="checkbox"
-                    checked={onlyShort}
-                    aria-label="Only orders needing purchase"
-                    onChange={e => setOnlyShort(e.target.checked)}
-                />
-                Only orders needing purchase
-            </label>
-
-            <div className="bg-slate-900/50 border border-slate-800 rounded-2xl overflow-hidden">
-                <table className="w-full text-left border-collapse">
-                    <thead>
-                        <tr className="border-b border-slate-800 bg-slate-800/30">
-                            <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400">Sales Order</th>
-                            <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400">Customer</th>
-                            <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400">Delivery</th>
-                            <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400">Short Lines</th>
-                            <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400">Shortfall</th>
-                            <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800/50">
-                        {loading ? (
-                            <tr><td colSpan={6} className="px-6 py-12 text-center text-slate-500 animate-pulse">Netting demand against stock...</td></tr>
-                        ) : orders.length === 0 ? (
-                            <tr><td colSpan={6} className="px-6 py-12 text-center text-slate-500">
-                                {onlyShort ? 'Every confirmed order is covered by stock or existing purchase orders.' : 'No confirmed sales orders.'}
-                            </td></tr>
-                        ) : orders.map((o: any) => (
-                            <React.Fragment key={o.sales_order_id}>
-                                <tr className="hover:bg-slate-800/20 transition-colors">
-                                    <td className="px-6 py-4">
-                                        <button
-                                            onClick={() => setExpanded(expanded === o.sales_order_id ? null : o.sales_order_id)}
-                                            className="font-semibold text-slate-200 hover:text-blue-400 transition-colors"
-                                        >
-                                            {o.so_number}
-                                        </button>
-                                        <div className="text-xs text-slate-500">{o.status}</div>
-                                    </td>
-                                    <td className="px-6 py-4 text-sm text-slate-300">{o.customer_name || '—'}</td>
-                                    <td className="px-6 py-4 text-sm text-slate-300">
-                                        {o.requested_delivery_date ? formatters.formatDate(o.requested_delivery_date) : '—'}
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <span className={o.short_line_count > 0 ? 'text-amber-400 font-bold' : 'text-emerald-400 font-bold'}>
-                                            {o.short_line_count > 0 ? `${o.short_line_count} short` : 'Covered'}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 text-sm font-bold text-slate-100">
-                                        {formatters.formatCurrency(o.shortfall_value || 0)}
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        {o.short_line_count > 0 ? (
-                                            <button
-                                                onClick={() => raise(o)}
-                                                disabled={raising === o.sales_order_id}
-                                                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 text-white rounded-xl text-xs font-bold transition-colors"
-                                            >
-                                                {raising === o.sales_order_id ? 'Raising...' : 'Raise Requisition'}
-                                            </button>
-                                        ) : (
-                                            <span className="text-slate-600 text-sm">—</span>
-                                        )}
-                                    </td>
-                                </tr>
-                                {expanded === o.sales_order_id && (
-                                    <tr className="bg-slate-950/50">
-                                        <td colSpan={6} className="px-6 py-4">
-                                            <table className="w-full text-xs">
-                                                <thead>
-                                                    <tr className="text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                                                        <th className="pb-2">Item</th>
-                                                        <th className="pb-2 text-center">Ordered</th>
-                                                        <th className="pb-2 text-center">From Stock</th>
-                                                        <th className="pb-2 text-center">On Order</th>
-                                                        <th className="pb-2 text-center">Short</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {o.lines.map((l: any) => (
-                                                        <tr key={l.sales_order_line_id} className="border-t border-slate-800/50">
-                                                            <td className="py-2 text-slate-300">
-                                                                {l.item_name || l.sku || 'Line'}
-                                                                {l.sku && <span className="block text-[10px] text-slate-600 font-mono">{l.sku}</span>}
-                                                            </td>
-                                                            <td className="py-2 text-center text-slate-300">{l.ordered_quantity}</td>
-                                                            <td className="py-2 text-center text-emerald-400">{l.covered_by_stock}</td>
-                                                            <td className="py-2 text-center text-blue-400">{l.covered_by_open_orders}</td>
-                                                            <td className={`py-2 text-center font-bold ${l.shortfall > 0 ? 'text-amber-400' : 'text-slate-600'}`}>
-                                                                {l.shortfall}
-                                                            </td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </td>
-                                    </tr>
-                                )}
-                            </React.Fragment>
+        <>
+            {confirmDialog}
+            <ListPageTemplate trail={[]}
+                title="Sales Demand"
+                description="Confirmed customer orders, netted against stock and open purchase orders."
+                count={orders.length > 0
+                    ? `${summary.order_count ?? orders.length} order(s) · ${summary.short_line_count ?? 0} short line(s) · ${formatters.formatCurrency(summary.shortfall_value || 0)} shortfall`
+                    : undefined}
+                toolbar={(
+                    <Checkbox
+                        name="only-short"
+                        label="Only orders needing purchase"
+                        aria-label="Only orders needing purchase"
+                        checked={onlyShort}
+                        onChange={(e: any) => setOnlyShort(e.target.checked)}
+                    />
+                )}
+                loading={loading}
+                isEmpty={!loading && !error && orders.length === 0}
+                empty={(
+                    <EmptyState
+                        title={onlyShort ? 'Every confirmed order is covered by stock or existing purchase orders.' : 'No confirmed sales orders.'}
+                    />
+                )}
+            >
+                <div className="flex flex-col gap-nb-4">
+                    {error && <Alert variant="error">{error}</Alert>}
+                    <Grid columns="auto" data-testid="sales-demand-kpis">
+                        {[
+                            { label: 'Orders Shown', value: summary.order_count ?? 0 },
+                            { label: 'Need Purchasing', value: summary.orders_needing_purchase ?? 0 },
+                            { label: 'Short Lines', value: summary.short_line_count ?? 0 },
+                            { label: 'Shortfall Value', value: formatters.formatCurrency(summary.shortfall_value || 0) },
+                        ].map(s => (
+                            <GridItem key={s.label} span={3}>
+                                <KpiCard label={s.label} value={s.value} />
+                            </GridItem>
                         ))}
-                    </tbody>
-                </table>
-            </div>
-
-            <p className="text-xs text-slate-500">
-                Stock is a shared pool — it is allocated to orders in date sequence, so the same units are never
-                promised to two customers.
-            </p>
-        </div>
+                    </Grid>
+                    <DataTable
+                        data-testid="sales-demand-table"
+                        columns={columns}
+                        rows={orders}
+                        rowKey={(o: any) => o.sales_order_id}
+                        loading={loading}
+                    />
+                    {expandedOrder && (
+                        <SectionCard title={`${expandedOrder.so_number} netting`}>
+                            <DataTable
+                                data-testid="sales-demand-lines"
+                                columns={lineColumns}
+                                rows={expandedOrder.lines || []}
+                                rowKey={(l: any) => l.sales_order_line_id}
+                            />
+                        </SectionCard>
+                    )}
+                    <p className="text-xs text-fg-subtle">
+                        Stock is a shared pool — it is allocated to orders in date sequence, so the same units are never
+                        promised to two customers.
+                    </p>
+                </div>
+            </ListPageTemplate>
+        </>
     );
 };
 

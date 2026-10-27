@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { inventoryService } from '../services/inventoryService';
+import { TextField, Button } from '@so360/design-system';
 
 interface SelectedItem {
     id: string;
@@ -94,37 +95,38 @@ const ItemSearchSelector: React.FC<ItemSearchSelectorProps> = ({
 
     return (
         <div ref={containerRef} className={`relative ${className}`}>
-            <input
+            <TextField
+                name="item-search"
                 type="text"
                 value={query}
                 placeholder="Search item by name or SKU..."
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/30 placeholder-slate-600"
                 onChange={handleInputChange}
                 onFocus={handleFocus}
             />
             {open && (query.length > 0 || results.length > 0) && (
-                <div className="absolute z-50 top-full mt-1 left-0 right-0 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl overflow-hidden max-h-56 overflow-y-auto">
+                <div className="absolute z-50 top-full mt-1 left-0 right-0 bg-surface border border-line-strong rounded-lg shadow-2xl overflow-hidden max-h-56 overflow-y-auto">
                     {loading ? (
-                        <div className="px-3 py-3 text-xs text-slate-500 animate-pulse">Searching...</div>
+                        <div className="px-nb-3 py-nb-3 text-nb-caption text-fg-subtle">Searching...</div>
                     ) : results.length === 0 ? (
-                        <div className="px-3 py-3 text-xs text-slate-500 italic">No items found.</div>
+                        <div className="px-nb-3 py-nb-3 text-nb-caption text-fg-subtle">No items found.</div>
                     ) : results.map((item) => (
-                        <button
+                        <Button
                             key={item.id}
                             type="button"
-                            className="w-full text-left px-3 py-2.5 hover:bg-slate-800 transition-colors border-b border-slate-800/60 last:border-0 flex items-center justify-between gap-4"
+                            variant="ghost"
+                            className="w-full !justify-between gap-nb-4 !text-left"
                             onMouseDown={() => handleSelect(item)}
                         >
                             <div className="min-w-0">
-                                <div className="text-sm font-semibold text-slate-200 truncate">{item.name}</div>
-                                <div className="text-[10px] text-slate-500 font-mono">{item.sku}</div>
+                                <div className="text-nb-body font-semibold text-fg truncate">{item.name}</div>
+                                <div className="text-nb-caption text-fg-subtle font-mono">{item.sku}</div>
                             </div>
                             {(item.unit_price ?? item.cost_price ?? item.price) != null && (
-                                <div className="text-xs text-slate-400 font-mono whitespace-nowrap">
+                                <div className="text-nb-caption text-fg-muted font-mono whitespace-nowrap">
                                     {(item.unit_price ?? item.cost_price ?? item.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                 </div>
                             )}
-                        </button>
+                        </Button>
                     ))}
                 </div>
             )}

@@ -76,8 +76,8 @@ describe('Given a project with two towers and tower-tagged units', () => {
     it('Then chips carry status colours', async () => {
       render(<AvailabilityMatrix categoryId="p1" />);
       await screen.findByTestId('availability-grid');
-      expect(screen.getByRole('button', { name: 'Unit 101 Available' }).className).toContain('emerald');
-      expect(screen.getByRole('button', { name: 'Unit 102 On hold' }).className).toContain('amber');
+      expect(screen.getByRole('button', { name: 'Unit 101 Available' }).className).toContain('success');
+      expect(screen.getByRole('button', { name: 'Unit 102 On hold' }).className).toContain('warning');
       expect(screen.getByRole('button', { name: 'Unit 201 Sold' }).className).toContain('rose');
     });
   });
@@ -336,7 +336,7 @@ describe('Given a unit with an unknown status and one with bedrooms', () => {
       });
       render(<AvailabilityMatrix categoryId="t9" />);
       const odd = await screen.findByRole('button', { name: 'Unit 101 Available' });
-      expect(odd.className).toContain('emerald');
+      expect(odd.className).toContain('success');
       expect(odd.getAttribute('title')).toBe('101 · Available · 2 BR');
       expect(screen.getByRole('button', { name: 'Unit 102 Sold' }).getAttribute('title')).toBe('102 · Sold');
     });

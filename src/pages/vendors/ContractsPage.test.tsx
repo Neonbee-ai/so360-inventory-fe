@@ -56,6 +56,7 @@ describe('ContractsPage', () => {
     });
 
     it('When loaded / Then shows Duration column header', async () => {
+      mockGetContracts.mockResolvedValue([makeContract()]);
       render(<ContractsPage />);
       await waitFor(() => {
         expect(screen.getByText(/Duration/i)).toBeInTheDocument();

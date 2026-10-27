@@ -1,4 +1,5 @@
 import React from 'react';
+import { Select, TextField, FieldGrid } from '@so360/design-system';
 import FormSection from '../components/FormSection';
 
 interface ShippingTabProps {
@@ -11,97 +12,63 @@ interface ShippingTabProps {
     updateField: (field: string, value: any) => void;
 }
 
-const inputClass = 'w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all placeholder:text-slate-600';
-const labelClass = 'block text-sm font-medium text-slate-400 mb-1.5';
-
 const ShippingTab: React.FC<ShippingTabProps> = ({
     weight, weight_unit, dimensions_length, dimensions_width, dimensions_height, dimensions_unit,
     updateField,
 }) => {
+    const dim = (label: string, field: string, value: string, ph: string) => (
+        <div className="flex-1">
+            <TextField
+                label={label}
+                name={field}
+                type="number"
+                step="0.1"
+                min="0"
+                value={value}
+                onChange={e => updateField(field, e.target.value)}
+                placeholder={ph}
+            />
+        </div>
+    );
     return (
-        <div className="space-y-8">
+        <div className="space-y-nb-6">
             <FormSection title="Weight" description="Used for shipping cost calculations">
-                <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <label className={labelClass}>Weight</label>
-                        <input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            value={weight}
-                            onChange={e => updateField('weight', e.target.value)}
-                            className={inputClass}
-                            placeholder="0.00"
-                        />
-                    </div>
-                    <div>
-                        <label className={labelClass}>Weight Unit</label>
-                        <select
-                            value={weight_unit}
-                            onChange={e => updateField('weight_unit', e.target.value)}
-                            className={inputClass}
-                        >
-                            <option value="kg">kg</option>
-                            <option value="g">g</option>
-                            <option value="lb">lb</option>
-                            <option value="oz">oz</option>
-                        </select>
-                    </div>
-                </div>
+                <FieldGrid columns={2}>
+                    <TextField
+                        label="Weight"
+                        name="weight"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={weight}
+                        onChange={e => updateField('weight', e.target.value)}
+                        placeholder="0.00"
+                    />
+                    <Select
+                        label="Weight Unit"
+                        name="weight_unit"
+                        value={weight_unit}
+                        onChange={(e: any) => updateField('weight_unit', e.target.value)}
+                        options={['kg', 'g', 'lb', 'oz'].map(u => ({ value: u, label: u }))}
+                    />
+                </FieldGrid>
             </FormSection>
 
             <FormSection title="Dimensions (L x W x H)" description="Package dimensions for shipping">
-                <div className="flex gap-2 items-end">
-                    <div className="flex-1">
-                        <label className={labelClass}>Length</label>
-                        <input
-                            type="number"
-                            step="0.1"
-                            min="0"
-                            value={dimensions_length}
-                            onChange={e => updateField('dimensions_length', e.target.value)}
-                            className={inputClass}
-                            placeholder="L"
-                        />
-                    </div>
-                    <span className="text-slate-600 pb-3">&times;</span>
-                    <div className="flex-1">
-                        <label className={labelClass}>Width</label>
-                        <input
-                            type="number"
-                            step="0.1"
-                            min="0"
-                            value={dimensions_width}
-                            onChange={e => updateField('dimensions_width', e.target.value)}
-                            className={inputClass}
-                            placeholder="W"
-                        />
-                    </div>
-                    <span className="text-slate-600 pb-3">&times;</span>
-                    <div className="flex-1">
-                        <label className={labelClass}>Height</label>
-                        <input
-                            type="number"
-                            step="0.1"
-                            min="0"
-                            value={dimensions_height}
-                            onChange={e => updateField('dimensions_height', e.target.value)}
-                            className={inputClass}
-                            placeholder="H"
-                        />
-                    </div>
-                    <div className="w-20 flex-shrink-0">
-                        <label className={labelClass}>Unit</label>
-                        <select
+                <div className="flex gap-nb-2 items-end">
+                    {dim('Length', 'dimensions_length', dimensions_length, 'L')}
+                    <span className="text-fg-subtle pb-nb-3">&times;</span>
+                    {dim('Width', 'dimensions_width', dimensions_width, 'W')}
+                    <span className="text-fg-subtle pb-nb-3">&times;</span>
+                    {dim('Height', 'dimensions_height', dimensions_height, 'H')}
+                    <div className="w-24 flex-shrink-0">
+                        <Select
+                            label="Unit"
+                            name="dimensions_unit"
                             value={dimensions_unit}
-                            onChange={e => updateField('dimensions_unit', e.target.value)}
-                            className={inputClass}
-                        >
-                            <option value="cm">cm</option>
-                            <option value="in">in</option>
-                            <option value="mm">mm</option>
-                            <option value="m">m</option>
-                        </select>
+                            onChange={(e: any) => updateField('dimensions_unit', e.target.value)}
+                            options={['cm', 'in', 'mm', 'm'].map(u => ({ value: u, label: u }))}
+                        />
                     </div>
                 </div>
             </FormSection>

@@ -1,5 +1,6 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { Upload } from 'lucide-react';
+import { Alert } from '@so360/design-system';
 import { mediaService } from '../../services/mediaService';
 import { fitImageFile, describeFit, IMAGE_FIT_SLOTS } from '../../utils/imageFit';
 import ImageThumbnail from './ImageThumbnail';
@@ -121,11 +122,11 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({ imageUrls, onImagesChange
     return (
         <div className="space-y-4">
             <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs font-medium text-slate-400">Product photos</span>
+                <span className="text-xs font-medium text-fg-muted">Product photos</span>
                 <ImageSpecChip slot={PRODUCT_SLOT} />
             </div>
 
-            {/* Drop zone */}
+            {/* comb-exception: no DS drop-zone; hand-built drag/drop target */}
             <div
                 onDrop={handleDrop}
                 onDragOver={handleDragOver}
@@ -134,16 +135,17 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({ imageUrls, onImagesChange
                 className={`
                     flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-xl cursor-pointer transition-all
                     ${isDragOver
-                        ? 'border-blue-500 bg-blue-500/10'
-                        : 'border-slate-700 bg-slate-800/30 hover:border-slate-600 hover:bg-slate-800/50'
+                        ? 'border-primary bg-primary/10'
+                        : 'border-line-strong bg-surface-raised/30 hover:border-line-strong hover:bg-surface-raised/50'
                     }
                 `}
             >
-                <Upload size={32} className={isDragOver ? 'text-blue-400' : 'text-slate-600'} />
-                <p className="text-sm text-slate-400 mt-3">
+                <Upload size={32} className={isDragOver ? 'text-primary' : 'text-fg-subtle'} />
+                <p className="text-sm text-fg-muted mt-3">
                     {isDragOver ? 'Drop files here' : 'Drag and drop images here, or click to browse'}
                 </p>
-                <p className="text-xs text-slate-600 mt-1">PNG, JPG, SVG, WebP — large photos are shrunk automatically</p>
+                <p className="text-xs text-fg-subtle mt-1">PNG, JPG, SVG, WebP — large photos are shrunk automatically</p>
+                {/* comb-exception: hidden native file input driven by the drop zone (no DS file-picker trigger) */}
                 <input
                     ref={fileInputRef}
                     type="file"
@@ -178,13 +180,13 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({ imageUrls, onImagesChange
             )}
 
             {notes.length > 0 && (
-                <ul data-testid="image-fit-notes" className="space-y-0.5 text-xs text-slate-500">
+                <ul data-testid="image-fit-notes" className="space-y-0.5 text-xs text-fg-subtle">
                     {notes.map((n, i) => <li key={i}>{n}</li>)}
                 </ul>
             )}
 
             {imageUrls.length >= maxFiles && (
-                <p className="text-xs text-amber-400">Maximum {maxFiles} images reached</p>
+                <Alert variant="warning">Maximum {maxFiles} images reached</Alert>
             )}
         </div>
     );

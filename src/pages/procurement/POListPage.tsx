@@ -3,10 +3,15 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { procurementService } from '../../services/procurementService';
 import { vendorService } from '../../services/vendorService';
 import { useBusinessSettings, useActivity, useShellBridge, useQuota } from '@so360/shell-context';
+import { Plus, X } from 'lucide-react';
 import { useInventoryFormatters } from '../../utils/formatters';
 import { useAuth } from '../../hooks/useAuth';
 import ItemSearchSelector from '../../components/ItemSearchSelector';
-import { QuotaBar, QuotaGate, FeatureGate, toast, getErrorMessage } from '@so360/design-system';
+import {
+    QuotaBar, QuotaGate, FeatureGate, toast, getErrorMessage,
+    ListPageTemplate, Button, DataTable, EmptyState, Alert, Badge, StatusBadge,
+    Modal, TextField, Select, Textarea, Progress, SectionCard, FieldGrid,
+} from '@so360/design-system';
 
 /**
  * A 403 from an RBAC guard is an *expected* outcome for a role without the
@@ -19,6 +24,17 @@ const isForbidden = (error: any): boolean =>
 
 const VENDOR_PERMISSION_MESSAGE =
     'You do not have permission to view vendor information required for Purchase Orders. Please contact your administrator.';
+
+const PO_STATUS_MAP: Record<string, any> = {
+    draft: 'neutral', sent: 'primary', acknowledged: 'info', partially_received: 'warning',
+    received: 'success', closed: 'neutral', cancelled: 'danger',
+};
+
+const poProgress = (po: any): number => {
+    const totalLines = po.po_lines?.length || 0;
+    const receivedLines = po.po_lines?.filter((l: any) => l.received_quantity >= l.quantity).length || 0;
+    return totalLines > 0 ? (receivedLines / totalLines) * 100 : 0;
+};
 
 type PageNotice = { kind: 'permission' | 'error'; message: string } | null;
 
@@ -39,6 +55,7 @@ const POListPage = () => {
     const [fetchError, setFetchError] = useState<PageNotice>(null);
     const [vendorNotice, setVendorNotice] = useState<PageNotice>(null);
     const [showForm, setShowForm] = useState(false);
+    const [showPrMenu, setShowPrMenu] = useState(false);
     const [vendors, setVendors] = useState<any[]>([]);
     const [approvedPrs, setApprovedPrs] = useState<any[]>([]);
     const [allPrs, setAllPrs] = useState<any[]>([]);
@@ -304,433 +321,296 @@ const POListPage = () => {
 
     const { subtotal, taxTotal, total } = calculateTotals();
 
+    const PR_DONE = ['approved', 'partially_converted', 'converted_to_po'];
+    const pendingPrs = allPrs.filter(pr => !PR_DONE.includes(pr.status) && pr.status !== 'rejected' && pr.status !== 'closed');
+    const prLabel = (pr: any) => `PR-${pr.id.slice(0, 8).toUpperCase()} — ${pr.pr_lines?.length || 0} items — ${pr.status.replace(/_/g, ' ')}`;
+    const prOptions = [
+        { value: '', label: 'None (standalone PO)' },
+        ...approvedPrs.map(pr => ({ value: pr.id, label: prLabel(pr) })),
+        ...pendingPrs.map(pr => ({ value: pr.id, label: `${prLabel(pr)} (not approved)`, disabled: true })),
+        ...(approvedPrs.length === 0 && pendingPrs.length === 0
+            ? [{ value: '__none', label: 'No purchase requisitions available', disabled: true }]
+            : []),
+    ];
+    const pendingCount = allPrs.filter(pr => ['pending_approval', 'draft'].includes(pr.status)).length;
+    const closeForm = () => setShowForm(false);
+    const val = (e: any) => (e?.target ? e.target.value : e);
+
+    const renderNotice = (n: PageNotice) => n && (
+        <Alert
+            variant={n.kind === 'permission' ? 'warning' : 'error'}
+            action={n.kind === 'error' ? { label: 'Retry', onClick: fetchData } : undefined}
+        >
+            {n.message}
+        </Alert>
+    );
+
     return (
-        <div className="p-8 space-y-8 animate-in fade-in duration-700">
-            {fetchError && (
-                <div
-                    role={fetchError.kind === 'error' ? 'alert' : 'status'}
-                    className={`p-4 rounded-xl flex items-center gap-3 text-sm ${
-                        fetchError.kind === 'permission'
-                            ? 'bg-amber-500/10 border border-amber-500/20 text-amber-300'
-                            : 'bg-rose-500/10 border border-rose-500/20 text-rose-400'
-                    }`}
-                >
-                    <span>{fetchError.kind === 'permission' ? '🔒' : '⚠'}</span>
-                    <span className="flex-1">{fetchError.message}</span>
-                    {/* Retry is only meaningful for transient failures — retrying a
-                        permission denial would just fail identically. */}
-                    {fetchError.kind === 'error' && (
-                        <button
-                            onClick={fetchData}
-                            className="px-3 py-1.5 rounded-lg bg-rose-500/20 border border-rose-500/30 text-rose-200 text-xs font-bold hover:bg-rose-500/30 transition-colors"
-                        >
-                            Retry
-                        </button>
-                    )}
-                </div>
-            )}
-            {vendorNotice && (
-                <div
-                    role={vendorNotice.kind === 'error' ? 'alert' : 'status'}
-                    className={`p-4 rounded-xl flex items-center gap-3 text-sm ${
-                        vendorNotice.kind === 'permission'
-                            ? 'bg-amber-500/10 border border-amber-500/20 text-amber-300'
-                            : 'bg-rose-500/10 border border-rose-500/20 text-rose-400'
-                    }`}
-                >
-                    <span>{vendorNotice.kind === 'permission' ? '🔒' : '⚠'}</span>
-                    <span className="flex-1">{vendorNotice.message}</span>
-                    {vendorNotice.kind === 'error' && (
-                        <button
-                            onClick={fetchData}
-                            className="px-3 py-1.5 rounded-lg bg-rose-500/20 border border-rose-500/30 text-rose-200 text-xs font-bold hover:bg-rose-500/30 transition-colors"
-                        >
-                            Retry
-                        </button>
-                    )}
-                </div>
-            )}
-            <div className="flex items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">
-                        Purchase Orders
-                    </h1>
-                    <p className="text-slate-400 mt-2 font-medium">Official commercial documents issued to sellers.</p>
-                </div>
-                <div className="flex gap-4">
-                    {approvedPrs.length > 0 && (
-                        <div className="relative group">
-                            <button className="px-6 py-3 bg-indigo-600/20 border border-indigo-500/50 text-indigo-400 rounded-xl font-bold hover:bg-indigo-600/30 transition-all flex items-center gap-2">
-                                <span className="w-5 h-5 bg-indigo-500 text-white rounded-full flex items-center justify-center text-[10px]">{approvedPrs.length}</span>
-                                Convert Approved PRs
-                            </button>
-                            <div className="absolute right-0 top-full mt-2 w-72 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-4 hidden group-hover:block z-50">
-                                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 border-b border-slate-800 pb-2">Approved Requisitions</div>
-                                <div className="space-y-3 max-h-60 overflow-y-auto">
-                                    {approvedPrs.map(pr => (
-                                        <div key={pr.id} className="flex justify-between items-center bg-slate-950 p-2 rounded-lg border border-slate-800 hover:border-slate-700 transition-colors">
-                                            <div className="text-xs">
-                                                <div className="text-slate-300 font-bold">#PR-{pr.id.slice(0, 8).toUpperCase()}</div>
-                                                <div className="text-slate-500">{pr.pr_lines?.length} items</div>
-                                            </div>
-                                            <button
-                                                onClick={() => handleCreateFromPR(pr)}
-                                                className="text-[10px] font-bold bg-indigo-500 px-2 py-1 rounded text-white"
-                                            >
-                                                Convert
-                                            </button>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                    <button
-                        onClick={() => navigate('/procurement/opening-balance')}
-                        className="px-6 py-3 bg-amber-600/20 border border-amber-500/50 text-amber-400 rounded-xl font-semibold transition-all hover:bg-amber-600/30 active:scale-95 flex items-center gap-2"
-                    >
-                        <span className="text-base leading-none">⚖</span> Opening Balance
-                    </button>
-                    <FeatureGate state={createPoState} loading={(shell?.effectiveFlagsLoaded === false)} onUpgradeClick={() => navigate('/org/billing')}>
-                    <QuotaGate
-                        quotaKey="max_po_per_month"
-                        moduleCode="inventory"
-                        used={quotaData?.current_usage ?? 0}
-                        limit={quotaData?.limit ?? 0}
-                        isUnlimited={quotaData?.is_unlimited}
-                        disableOnExceeded
-                    >
-                        <button
-                            onClick={openNewPOForm}
-                            disabled={!!vendorNotice}
-                            title={vendorNotice ? vendorNotice.message : undefined}
-                            className="px-6 py-3 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-blue-600 text-white rounded-xl font-semibold transition-all shadow-lg shadow-blue-900/20 active:scale-95 flex items-center gap-2"
-                        >
-                            <span className="text-xl leading-none">+</span> New PO
-                        </button>
-                    </QuotaGate>
-                    </FeatureGate>
-                </div>
-            </div>
-
-            {quotaData && (
-                <QuotaBar
-                    label="Purchase Orders"
-                    used={quotaData.current_usage}
-                    limit={quotaData.limit}
-                    isUnlimited={quotaData.is_unlimited}
-                    className="mb-6"
-                />
-            )}
-
-            <div className="bg-slate-900/50 border border-slate-800 rounded-3xl overflow-hidden backdrop-blur-sm">
-                <table className="w-full text-left">
-                    <thead className="bg-slate-800/30 border-b border-slate-800">
-                        <tr>
-                            <th className="px-6 py-4 text-[10px] font-bold uppercase text-slate-500 tracking-widest">Order Info</th>
-                            <th className="px-6 py-4 text-[10px] font-bold uppercase text-slate-500 tracking-widest">Vendor</th>
-                            <th className="px-6 py-4 text-[10px] font-bold uppercase text-slate-500 tracking-widest">Status</th>
-                            <th className="px-6 py-4 text-[10px] font-bold uppercase text-slate-500 tracking-widest">Amount</th>
-                            <th className="px-6 py-4 text-[10px] font-bold uppercase text-slate-500 tracking-widest">Progress</th>
-                            <th className="px-6 py-4 text-[10px] font-bold uppercase text-slate-500 tracking-widest">Date</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800/50">
-                        {loading ? (
-                            <tr><td colSpan={6} className="px-6 py-12 text-center text-slate-500 animate-pulse">Loading orders...</td></tr>
-                        ) : pos.length === 0 ? (
-                            <tr><td colSpan={6} className="px-6 py-12 text-center text-slate-500 italic">No purchase orders found.</td></tr>
-                        ) : pos.map(po => {
-                            const totalLines = po.po_lines?.length || 0;
-                            const receivedLines = po.po_lines?.filter((l: any) => l.received_quantity >= l.quantity).length || 0;
-                            const progress = totalLines > 0 ? (receivedLines / totalLines) * 100 : 0;
-
-                            return (
-                                <tr
-                                    key={po.id}
-                                    className="hover:bg-slate-800/20 transition-all cursor-pointer group"
-                                    onClick={() => navigate(`/procurement/po/${po.id}`)}
+        <>
+            <ListPageTemplate trail={[]}
+                title="Purchase Orders"
+                description="Official commercial documents issued to sellers."
+                count={pos.length}
+                primaryAction={
+                    <div className="flex flex-wrap items-center gap-nb-2">
+                        {approvedPrs.length > 0 && (
+                            <Button variant="tonal" onClick={() => setShowPrMenu(v => !v)} aria-expanded={showPrMenu}>
+                                <Badge tone="primary">{approvedPrs.length}</Badge> Convert Approved PRs
+                            </Button>
+                        )}
+                        <Button variant="secondary" onClick={() => navigate('/procurement/opening-balance')}>Opening Balance</Button>
+                        <FeatureGate state={createPoState} loading={(shell?.effectiveFlagsLoaded === false)} onUpgradeClick={() => navigate('/org/billing')}>
+                            <QuotaGate
+                                quotaKey="max_po_per_month"
+                                moduleCode="inventory"
+                                used={quotaData?.current_usage ?? 0}
+                                limit={quotaData?.limit ?? 0}
+                                isUnlimited={quotaData?.is_unlimited}
+                                disableOnExceeded
+                            >
+                                <Button
+                                    onClick={openNewPOForm}
+                                    disabled={!!vendorNotice}
+                                    title={vendorNotice ? vendorNotice.message : undefined}
                                 >
-                                    <td className="px-6 py-5">
-                                        <div className="font-bold text-slate-100 uppercase tracking-tight">#{po.po_number}</div>
-                                        {po.pr_id && (
-                                            <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">Reference: PR-{po.pr_id?.slice(0, 6).toUpperCase()}</div>
-                                        )}
-                                    </td>
-                                    <td className="px-6 py-5">
-                                        <div className="text-sm font-semibold text-slate-300 group-hover:text-blue-400 transition-colors uppercase">{po.vendor?.name}</div>
-                                    </td>
-                                    <td className="px-6 py-5">
-                                        <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-widest border
-                                            ${po.status === 'sent' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
-                                                po.status === 'acknowledged' ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' :
-                                                po.status === 'partially_received' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
-                                                po.status === 'received' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
-                                                    po.status === 'closed' ? 'bg-slate-500/10 text-slate-300 border-slate-500/20' :
-                                                        po.status === 'cancelled' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' :
-                                                    'bg-slate-700/50 text-slate-400 border-slate-600'}
-                                        `}>
-                                            {po.status}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-5 font-mono text-sm font-bold text-slate-100">
-                                        {formatters.formatCurrency(parseFloat(po.total_amount || 0))}
-                                    </td>
-                                    <td className="px-6 py-5 w-48">
-                                        <div className="flex items-center gap-3">
-                                            <div className="flex-1 h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                                                <div className={`h-full transition-all duration-1000 ${progress === 100 ? 'bg-emerald-500' : 'bg-blue-500'}`} style={{ width: `${progress}%` }}></div>
-                                            </div>
-                                            <span className="text-[10px] font-bold text-slate-500">{Math.round(progress)}%</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-5 text-[10px] text-slate-500 font-bold">
-                                        {formatters.formatDate(po.created_at).toUpperCase()}
-                                    </td>
-                                </tr>
+                                    <Plus size={16} aria-hidden="true" /> New PO
+                                </Button>
+                            </QuotaGate>
+                        </FeatureGate>
+                    </div>
+                }
+                loading={loading}
+                isEmpty={!loading && !fetchError && pos.length === 0}
+                empty={<EmptyState title="No purchase orders found." />}
+            >
+                {renderNotice(fetchError)}
+                {renderNotice(vendorNotice)}
+                {quotaData && (
+                    <QuotaBar
+                        label="Purchase Orders"
+                        used={quotaData.current_usage}
+                        limit={quotaData.limit}
+                        isUnlimited={quotaData.is_unlimited}
+                    />
+                )}
+                {showPrMenu && approvedPrs.length > 0 && (
+                    <SectionCard title="Approved Requisitions">
+                        <ul className="space-y-nb-2">
+                            {approvedPrs.map(pr => (
+                                <li key={pr.id} className="flex items-center justify-between gap-nb-3">
+                                    <div>
+                                        <div className="text-nb-label font-medium text-fg">#PR-{pr.id.slice(0, 8).toUpperCase()}</div>
+                                        <div className="text-nb-caption text-fg-subtle">{pr.pr_lines?.length} items</div>
+                                    </div>
+                                    <Button size="sm" onClick={() => { setShowPrMenu(false); handleCreateFromPR(pr); }}>Convert</Button>
+                                </li>
+                            ))}
+                        </ul>
+                    </SectionCard>
+                )}
+                <DataTable
+                    data-testid="po-table"
+                    rows={pos}
+                    rowKey={(po: any) => po.id}
+                    onRowClick={(po: any) => navigate(`/procurement/po/${po.id}`)}
+                    columns={[
+                        {
+                            key: 'order', header: 'Order Info',
+                            render: (po: any) => (
+                                <div>
+                                    <div className="font-medium text-fg">#{po.po_number}</div>
+                                    {po.pr_id && (
+                                        <div className="text-nb-caption text-fg-subtle">Reference: PR-{po.pr_id?.slice(0, 6).toUpperCase()}</div>
+                                    )}
+                                </div>
+                            ),
+                        },
+                        { key: 'vendor', header: 'Vendor', render: (po: any) => po.vendor?.name },
+                        { key: 'status', header: 'Status', render: (po: any) => <StatusBadge status={po.status} map={PO_STATUS_MAP} /> },
+                        {
+                            key: 'amount', header: 'Amount', align: 'right',
+                            render: (po: any) => formatters.formatCurrency(parseFloat(po.total_amount || 0)),
+                        },
+                        {
+                            key: 'progress', header: 'Progress',
+                            render: (po: any) => {
+                                const progress = poProgress(po);
+                                return (
+                                    <div className="flex items-center gap-nb-2">
+                                        <div className="flex-1"><Progress value={progress} max={100} /></div>
+                                        <span className="text-nb-caption text-fg-subtle">{Math.round(progress)}%</span>
+                                    </div>
+                                );
+                            },
+                        },
+                        { key: 'date', header: 'Date', render: (po: any) => formatters.formatDate(po.created_at) },
+                    ]}
+                />
+            </ListPageTemplate>
+
+            <Modal
+                open={showForm}
+                onClose={closeForm}
+                title="Create Purchase Order"
+                size="xl"
+                footer={
+                    <>
+                        <Button type="button" variant="secondary" onClick={closeForm}>Cancel</Button>
+                        <Button type="submit" form="po-form" disabled={submitting}>
+                            {submitting ? 'Creating...' : 'Create Purchase Order'}
+                        </Button>
+                    </>
+                }
+            >
+                <form id="po-form" onSubmit={handleSubmit} className="space-y-nb-4">
+                    {formData.pr_id && (
+                        <Alert variant="info" title={`Converting from PR #${formData.pr_id.slice(0, 8).toUpperCase()}`}>
+                            Items pre-filled from requisition. Select a vendor and adjust quantities as needed.
+                        </Alert>
+                    )}
+
+                    <FieldGrid columns={2}>
+                        <Select
+                            label="Vendor"
+                            name="vendor_id"
+                            required
+                            placeholder="Select Vendor"
+                            value={formData.vendor_id}
+                            options={vendors.map(v => ({ value: v.id, label: v.name }))}
+                            onChange={(e: any) => setFormData(prev => ({ ...prev, vendor_id: val(e) }))}
+                        />
+                        <TextField
+                            label="PO Number"
+                            name="po_number"
+                            required
+                            value={formData.po_number}
+                            onChange={(e: any) => setFormData(prev => ({ ...prev, po_number: e.target.value }))}
+                        />
+                    </FieldGrid>
+
+                    <div className="space-y-nb-1">
+                        <Select
+                            label="Link to Requisition"
+                            name="pr_id"
+                            value={formData.pr_id}
+                            options={prOptions}
+                            onChange={(e: any) => setFormData(prev => ({ ...prev, pr_id: val(e) }))}
+                        />
+                        {approvedPrs.length === 0 && pendingCount > 0 && (
+                            <p className="text-nb-caption text-warning">
+                                You have {pendingCount} pending PR(s). PRs must be approved before conversion to PO.
+                            </p>
+                        )}
+                        <div className="text-nb-caption text-fg-subtle">
+                            Currency: <span className="font-medium text-fg-muted">{settings?.base_currency || 'USD'}</span>
+                            <span> · From org settings</span>
+                        </div>
+                    </div>
+
+                    <Textarea
+                        label="Terms & Conditions"
+                        name="terms"
+                        rows={3}
+                        value={formData.terms}
+                        placeholder="Payment terms, delivery conditions, etc."
+                        onChange={(e: any) => setFormData(prev => ({ ...prev, terms: e.target.value }))}
+                    />
+                    <TextField
+                        label="Shipping Address"
+                        name="shipping_address"
+                        value={formData.shipping_address}
+                        placeholder="Delivery address for goods"
+                        onChange={(e: any) => setFormData(prev => ({ ...prev, shipping_address: e.target.value }))}
+                    />
+
+                    <div className="space-y-nb-3">
+                        <div className="flex items-center justify-between">
+                            <div className="text-nb-label font-medium text-fg-muted">Order Items <span className="text-danger">*</span></div>
+                            <Button type="button" variant="ghost" size="sm" onClick={addItemLine}>+ Add Item</Button>
+                        </div>
+                        {items.length === 0 && (
+                            <EmptyState title={'No items added yet. Click "+ Add Item" to begin.'} />
+                        )}
+                        {items.map((item, idx) => {
+                            const hasTaxCode = !!item.tax_code_id;
+                            return (
+                                <div key={idx} className="flex flex-wrap items-end gap-nb-2">
+                                    <div className="min-w-48 flex-1">
+                                        <ItemSearchSelector
+                                            value={item.item_id}
+                                            selectedName={item._selectedName}
+                                            onSelect={(selected) => updateItemWithProduct(idx, selected)}
+                                            className="flex-1"
+                                        />
+                                    </div>
+                                    <div className="w-20">
+                                        <TextField
+                                            name={`qty_${idx}`}
+                                            type="number"
+                                            min="1"
+                                            placeholder="Qty"
+                                            aria-label="Quantity"
+                                            value={item.quantity}
+                                            onChange={(e: any) => updateItem(idx, 'quantity', e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="w-28">
+                                        <TextField
+                                            name={`price_${idx}`}
+                                            type="number"
+                                            min="0"
+                                            step="0.01"
+                                            placeholder="Unit Price"
+                                            aria-label="Unit Price"
+                                            value={item.unit_price}
+                                            onChange={(e: any) => updateItem(idx, 'unit_price', e.target.value)}
+                                        />
+                                    </div>
+                                    <Badge tone={hasTaxCode ? 'warning' : 'neutral'}>{hasTaxCode ? 'Tax ✓' : 'No Tax'}</Badge>
+                                    <div className="w-36">
+                                        <TextField
+                                            name={`desc_${idx}`}
+                                            placeholder="Description"
+                                            aria-label="Description"
+                                            value={item.description}
+                                            onChange={(e: any) => updateItem(idx, 'description', e.target.value)}
+                                        />
+                                    </div>
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        title="Remove item"
+                                        aria-label="Remove item"
+                                        onClick={() => removeItemLine(idx)}
+                                    >
+                                        <X size={16} aria-hidden="true" />
+                                    </Button>
+                                </div>
                             );
                         })}
-                    </tbody>
-                </table>
-            </div>
-
-            {/* New PO Modal Form */}
-            {showForm && (
-                <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center px-4 pt-24 pb-6 z-[600] animate-in fade-in zoom-in duration-300">
-                    <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-3xl max-h-[calc(100vh-7.5rem)] flex flex-col overflow-hidden shadow-2xl shadow-black/50">
-                        <div className="p-8 border-b border-slate-800 flex justify-between items-center">
-                            <h2 className="text-2xl font-bold text-slate-100">Create Purchase Order</h2>
-                            <button onClick={() => setShowForm(false)} className="text-slate-500 hover:text-slate-50 transition-colors text-2xl">×</button>
-                        </div>
-                        <form onSubmit={handleSubmit} className="p-8 space-y-6 overflow-y-auto custom-scrollbar flex-1">
-                            {/* Conversion context banner */}
-                            {formData.pr_id && (
-                                <div className="flex items-center gap-3 p-4 bg-indigo-500/10 border border-indigo-500/20 rounded-xl">
-                                    <div className="w-8 h-8 rounded-lg bg-indigo-500/20 flex items-center justify-center flex-shrink-0">
-                                        <span className="text-indigo-400 text-sm">PR</span>
+                        {items.length > 0 && (
+                            <div className="flex justify-end border-t border-line pt-nb-2">
+                                <dl className="min-w-48 space-y-nb-1 text-nb-caption">
+                                    <div className="flex justify-between gap-nb-4">
+                                        <dt className="text-fg-subtle">Subtotal</dt>
+                                        <dd className="font-medium text-fg-muted">{formatters.formatCurrency(subtotal)}</dd>
                                     </div>
-                                    <div>
-                                        <span className="text-sm font-bold text-indigo-300">
-                                            Converting from PR #{formData.pr_id.slice(0, 8).toUpperCase()}
-                                        </span>
-                                        <span className="block text-xs text-indigo-400/70">
-                                            Items pre-filled from requisition. Select a vendor and adjust quantities as needed.
-                                        </span>
+                                    <div className="flex justify-between gap-nb-4">
+                                        <dt className="text-fg-subtle">Tax</dt>
+                                        <dd className="italic text-fg-subtle">{isTaxInclusive ? 'Inclusive in price' : 'Resolved on save'}</dd>
                                     </div>
-                                </div>
-                            )}
-
-                            {/* Row 1: Vendor + PO Number */}
-                            <div className="grid grid-cols-2 gap-6">
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Vendor <span className="text-red-400">*</span></label>
-                                    <select
-                                        required
-                                        value={formData.vendor_id}
-                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-slate-200"
-                                        onChange={(e) => setFormData({ ...formData, vendor_id: e.target.value })}
-                                    >
-                                        <option value="">Select Vendor</option>
-                                        {vendors.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
-                                    </select>
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">PO Number <span className="text-red-400">*</span></label>
-                                    <input
-                                        type="text"
-                                        required
-                                        value={formData.po_number}
-                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-slate-200"
-                                        onChange={(e) => setFormData({ ...formData, po_number: e.target.value })}
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Row 2: Link PR (full width) */}
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Link to Requisition</label>
-                                <select
-                                    value={formData.pr_id}
-                                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-slate-200"
-                                    onChange={(e) => setFormData({ ...formData, pr_id: e.target.value })}
-                                >
-                                    <option value="">None (standalone PO)</option>
-                                    {approvedPrs.length > 0 && (
-                                        <optgroup label="✅ Available for Conversion">
-                                            {approvedPrs.map(pr => (
-                                                <option key={pr.id} value={pr.id}>
-                                                    PR-{pr.id.slice(0, 8).toUpperCase()} — {pr.pr_lines?.length || 0} items — {pr.status.replace(/_/g, ' ')}
-                                                </option>
-                                            ))}
-                                        </optgroup>
-                                    )}
-                                    {allPrs.filter(pr => !['approved', 'partially_converted', 'converted_to_po'].includes(pr.status) && pr.status !== 'rejected' && pr.status !== 'closed').length > 0 && (
-                                        <optgroup label="⏳ Pending Approval (Not Available)">
-                                            {allPrs.filter(pr => !['approved', 'partially_converted', 'converted_to_po'].includes(pr.status) && pr.status !== 'rejected' && pr.status !== 'closed').map(pr => (
-                                                <option key={pr.id} value={pr.id} disabled>
-                                                    PR-{pr.id.slice(0, 8).toUpperCase()} — {pr.pr_lines?.length || 0} items — {pr.status.replace(/_/g, ' ')}
-                                                </option>
-                                            ))}
-                                        </optgroup>
-                                    )}
-                                    {approvedPrs.length === 0 && allPrs.filter(pr => !['approved', 'partially_converted', 'converted_to_po'].includes(pr.status) && pr.status !== 'rejected' && pr.status !== 'closed').length === 0 && (
-                                        <option disabled>No purchase requisitions available</option>
-                                    )}
-                                </select>
-                                {approvedPrs.length === 0 && allPrs.filter(pr => ['pending_approval', 'draft'].includes(pr.status)).length > 0 && (
-                                    <p className="text-[10px] text-amber-400 mt-1 flex items-center gap-1">
-                                        <span>⚠️</span>
-                                        <span>You have {allPrs.filter(pr => ['pending_approval', 'draft'].includes(pr.status)).length} pending PR(s). PRs must be approved before conversion to PO.</span>
-                                    </p>
-                                )}
-                                <div className="text-xs text-slate-500 mt-1">
-                                    Currency: <span className="text-slate-300 font-semibold">{settings?.base_currency || 'USD'}</span>
-                                    <span className="text-slate-600"> · From org settings</span>
-                                </div>
-                            </div>
-
-                            {/* Row 3: Terms */}
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Terms & Conditions</label>
-                                <textarea
-                                    value={formData.terms}
-                                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 h-20 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-slate-200 resize-none"
-                                    placeholder="Payment terms, delivery conditions, etc."
-                                    onChange={(e) => setFormData({ ...formData, terms: e.target.value })}
-                                />
-                            </div>
-
-                            {/* Row 4: Shipping Address */}
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Shipping Address</label>
-                                <input
-                                    type="text"
-                                    value={formData.shipping_address}
-                                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-slate-200"
-                                    placeholder="Delivery address for goods"
-                                    onChange={(e) => setFormData({ ...formData, shipping_address: e.target.value })}
-                                />
-                            </div>
-
-                            {/* Line Items */}
-                            <div className="space-y-4">
-                                <div className="flex justify-between items-center">
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Order Items <span className="text-red-400">*</span></label>
-                                    <button type="button" onClick={addItemLine} className="text-blue-400 hover:text-blue-300 text-xs font-bold">+ Add Item</button>
-                                </div>
-                                {items.length === 0 && (
-                                    <div className="text-center py-6 text-slate-600 text-sm border border-dashed border-slate-800 rounded-xl">
-                                        No items added yet. Click "+ Add Item" to begin.
+                                    <div className="flex justify-between gap-nb-4 border-t border-line-strong pt-nb-1">
+                                        <dt className="text-fg-subtle">Total</dt>
+                                        <dd className="text-nb-body font-semibold text-fg">{formatters.formatCurrency(total)}</dd>
                                     </div>
-                                )}
-                                {items.map((item, idx) => {
-                                    const hasTaxCode = !!item.tax_code_id;
-                                    return (
-                                        <div key={idx} className="flex gap-3 items-end animate-in slide-in-from-top-2 duration-300">
-                                            <div className="flex-1 space-y-1">
-                                                <ItemSearchSelector
-                                                    value={item.item_id}
-                                                    selectedName={item._selectedName}
-                                                    onSelect={(selected) => updateItemWithProduct(idx, selected)}
-                                                    className="flex-1"
-                                                />
-                                            </div>
-                                            <div className="w-20 space-y-1">
-                                                <input
-                                                    type="number"
-                                                    min="1"
-                                                    placeholder="Qty"
-                                                    value={item.quantity}
-                                                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
-                                                    onChange={(e) => updateItem(idx, 'quantity', e.target.value)}
-                                                />
-                                            </div>
-                                            <div className="w-28 space-y-1">
-                                                <input
-                                                    type="number"
-                                                    min="0"
-                                                    step="0.01"
-                                                    placeholder="Unit Price"
-                                                    value={item.unit_price}
-                                                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
-                                                    onChange={(e) => updateItem(idx, 'unit_price', e.target.value)}
-                                                />
-                                            </div>
-                                            <div className="w-24 space-y-1">
-                                                {/* Tax rate badge — resolved server-side */}
-                                                <div className={`px-3 py-2 rounded-lg text-xs font-bold text-center border ${
-                                                    hasTaxCode
-                                                        ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                                                        : 'bg-slate-800/50 text-slate-600 border-slate-700'
-                                                }`}>
-                                                    {hasTaxCode ? 'Tax ✓' : 'No Tax'}
-                                                </div>
-                                            </div>
-                                            <div className="w-36 space-y-1">
-                                                <input
-                                                    type="text"
-                                                    placeholder="Description"
-                                                    value={item.description}
-                                                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
-                                                    onChange={(e) => updateItem(idx, 'description', e.target.value)}
-                                                />
-                                            </div>
-                                            <button
-                                                type="button"
-                                                onClick={() => removeItemLine(idx)}
-                                                className="text-red-400 hover:text-red-300 text-lg font-bold px-2 py-1 transition-colors"
-                                                title="Remove item"
-                                            >
-                                                ×
-                                            </button>
-                                        </div>
-                                    );
-                                })}
-                                {items.length > 0 && (
-                                    <div className="flex justify-end pt-2 border-t border-slate-800">
-                                        <div className="text-right space-y-1 min-w-48">
-                                            <div className="flex justify-between items-center gap-6">
-                                                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Subtotal</span>
-                                                <span className="text-sm font-semibold text-slate-300 font-mono">{formatters.formatCurrency(subtotal)}</span>
-                                            </div>
-                                            {isTaxInclusive ? (
-                                                <div className="flex justify-between items-center gap-6">
-                                                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Tax</span>
-                                                    <span className="text-xs text-slate-500 italic">Inclusive in price</span>
-                                                </div>
-                                            ) : (
-                                                <div className="flex justify-between items-center gap-6">
-                                                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Tax</span>
-                                                    <span className="text-xs text-amber-400 italic">Resolved on save</span>
-                                                </div>
-                                            )}
-                                            <div className="flex justify-between items-center gap-6 border-t border-slate-700 pt-1">
-                                                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total</span>
-                                                <span className="text-lg font-bold text-slate-100 font-mono">{formatters.formatCurrency(total)}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
+                                </dl>
                             </div>
-
-                            {/* Actions */}
-                            <div className="pt-4 flex gap-4">
-                                <button
-                                    type="submit"
-                                    disabled={submitting}
-                                    className="flex-1 px-6 py-4 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-2xl font-bold transition-all shadow-lg shadow-blue-900/20 active:scale-95"
-                                >
-                                    {submitting ? 'Creating...' : 'Create Purchase Order'}
-                                </button>
-                                <button type="button" onClick={() => setShowForm(false)} className="px-6 py-4 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-2xl font-bold transition-all active:scale-95">
-                                    Cancel
-                                </button>
-                            </div>
-                        </form>
+                        )}
                     </div>
-                </div>
-            )}
-        </div>
+                </form>
+            </Modal>
+        </>
     );
 };
 

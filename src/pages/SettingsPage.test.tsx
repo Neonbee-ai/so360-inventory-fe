@@ -72,7 +72,7 @@ describe('SettingsPage', () => {
     it('When settings are loading / Then shows loading indicator', () => {
       mockGetSettings.mockReturnValue(new Promise(() => {}));
       const { container } = render(<SettingsPage />);
-      expect(container.querySelector('.animate-pulse')).toBeInTheDocument();
+      expect(container.querySelector('[aria-busy="true"]')).toBeInTheDocument();
     });
   });
 

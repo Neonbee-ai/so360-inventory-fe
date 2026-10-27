@@ -70,14 +70,16 @@ vi.mock('@so360/shell-context', () => ({
   ShellContext: { Provider: ({ children }: any) => children },
 }));
 
-vi.mock('@so360/design-system', () => ({
+vi.mock('@so360/design-system', async () => ({
+  ...(await vi.importActual<any>('@so360/design-system')),
   QuotaBar: () => <div data-testid="quota-bar" />,
   QuotaGate: ({ children }: any) => <>{children}</>,
   FeatureGate: ({ state, children }: any) => (state === 'hidden' ? null : <>{children}</>),
   FeatureRoute: ({ children }: any) => <>{children}</>,
 }));
 
-vi.mock('lucide-react', () => ({
+vi.mock('lucide-react', async () => ({
+  ...(await vi.importActual<any>('lucide-react')),
   Plus: () => <span data-testid="icon-plus" />,
   Search: () => <span data-testid="icon-search" />,
   Trash2: () => <span data-testid="icon-trash2" />,
@@ -97,16 +99,6 @@ vi.mock('lucide-react', () => ({
   Package: () => <span data-testid="icon-package" />,
   Calendar: () => <span data-testid="icon-calendar" />,
   ExternalLink: () => <span data-testid="icon-external-link" />,
-}));
-
-vi.mock('../../../components/common/Modal', () => ({
-  Modal: ({ isOpen, title, children }: any) =>
-    isOpen ? (
-      <div data-testid="modal">
-        <h3>{title}</h3>
-        {children}
-      </div>
-    ) : null,
 }));
 
 vi.mock('../../../components/common/Skeleton', () => ({
@@ -253,7 +245,7 @@ describe('Given VendorListPage', () => {
     await waitFor(() => screen.getByRole('button', { name: /Add Vendor/i }));
     await user.click(screen.getByRole('button', { name: /Add Vendor/i }));
 
-    expect(screen.getByTestId('modal')).toBeInTheDocument();
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
   });
 });
 

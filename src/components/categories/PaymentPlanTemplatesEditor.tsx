@@ -1,4 +1,5 @@
 import React from 'react';
+import { Alert, Button, Checkbox, IconButton, Select, TextField, FieldGrid, Grid } from '@so360/design-system';
 import { Plus, Trash2, Wallet } from 'lucide-react';
 import {
     BILLING_MODES,
@@ -23,9 +24,6 @@ import {
     triggerField,
     withTrigger,
 } from '../../utils/paymentPlanTemplates';
-
-const inputCls =
-    'w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 disabled:opacity-50';
 
 export const TRIGGER_LABEL: Record<InstalmentTrigger, string> = {
     booking: 'On booking',
@@ -92,22 +90,23 @@ export const PaymentPlanTemplatesEditor: React.FC<PaymentPlanTemplatesEditorProp
     return (
         <section className="space-y-3" aria-label="Payment plan templates">
             <div className="flex items-center justify-between">
-                <span className="text-xs text-slate-400 flex items-center gap-1"><Wallet size={12} /> Payment plans</span>
+                <span className="text-xs text-fg-muted flex items-center gap-1"><Wallet size={12} /> Payment plans</span>
                 {!disabled && (
-                    <button
+                    <Button
                         type="button"
+                        variant="secondary"
+                        size="sm"
                         onClick={() => emit([...templates, newPaymentPlanTemplate(templates.length === 0)])}
                         disabled={atMax}
                         title={atMax ? `At most ${MAX_PAYMENT_PLAN_TEMPLATES} payment plans` : undefined}
-                        className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        <Plus size={12} /> Add payment plan
-                    </button>
+                    ><Plus size={12} />
+                        Add payment plan
+                    </Button>
                 )}
             </div>
 
             {templates.length === 0 && (
-                <p className="text-xs text-slate-500">No payment plans yet.</p>
+                <p className="text-xs text-fg-subtle">No payment plans yet.</p>
             )}
 
             {templates.map((t, ti) => {
@@ -117,148 +116,143 @@ export const PaymentPlanTemplatesEditor: React.FC<PaymentPlanTemplatesEditorProp
                 const err = templateError(t);
                 const n = ti + 1;
                 return (
-                    <div key={t.id} data-testid={`payment-plan-${ti}`} className="border border-slate-800 rounded-lg p-3 space-y-3 bg-slate-900/40">
+                    <div key={t.id} data-testid={`payment-plan-${ti}`} className="border border-line rounded-lg p-3 space-y-3 bg-surface/40">
                         <div className="flex flex-wrap items-center gap-2">
-                            <input
+                            <TextField
+                                name={`payment_plan_${n}_name`}
                                 aria-label={`Payment plan ${n} name`}
-                                className={`${inputCls} flex-1 min-w-[10rem]`}
+                                className="flex-1 min-w-[10rem]"
+                                size="sm"
                                 value={t.name}
                                 disabled={disabled}
                                 placeholder="e.g. 60/40 post-handover"
                                 onChange={(e) => patchTemplate(ti, { name: e.target.value })}
                             />
-                            <label className="flex items-center gap-1 text-xs text-slate-300">
-                                <input
-                                    type="checkbox"
-                                    aria-label={`Payment plan ${n} default`}
-                                    checked={t.is_default}
-                                    disabled={disabled}
-                                    onChange={(e) => setDefault(ti, e.target.checked)}
-                                />
-                                Default
-                            </label>
+                            <Checkbox
+                                name={`payment_plan_${n}_default`}
+                                label="Default"
+                                aria-label={`Payment plan ${n} default`}
+                                checked={t.is_default}
+                                disabled={disabled}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDefault(ti, e.target.checked)}
+                            />
                             {!disabled && (
-                                <button
-                                    type="button"
-                                    aria-label={`Remove payment plan ${n}`}
+                                <IconButton
+                                    label={`Remove payment plan ${n}`}
+                                    icon={<Trash2 size={14} />}
+                                    variant="danger"
+                                    size="sm"
                                     onClick={() => emit(templates.filter((_, idx) => idx !== ti))}
-                                    className="p-1 text-slate-500 hover:text-rose-400"
-                                >
-                                    <Trash2 size={14} />
-                                </button>
+                                />
                             )}
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                            <select
+                        <FieldGrid>
+                            <Select
+                                name={`payment_plan_${n}_billing`}
                                 aria-label={`Payment plan ${n} billing`}
-                                className={inputCls}
+                                size="sm"
                                 value={t.billing_mode || ''}
                                 disabled={disabled}
-                                onChange={(e) => {
-                                    const v = e.target.value;
+                                options={[
+                                    { value: '', label: 'Billing: org default' },
+                                    ...BILLING_MODES.map((m) => ({ value: m, label: BILLING_MODE_LABEL[m] })),
+                                ]}
+                                onValueChange={(v: string) => {
                                     patchTemplate(ti, { billing_mode: BILLING_MODES.find((m) => m === v) ?? null });
                                 }}
-                            >
-                                <option value="">Billing: org default</option>
-                                {BILLING_MODES.map((m) => (
-                                    <option key={m} value={m}>{BILLING_MODE_LABEL[m]}</option>
-                                ))}
-                            </select>
+                            />
                             <div className="flex flex-wrap items-center gap-1" role="group" aria-label={`Payment plan ${n} payment modes`}>
-                                <span className="text-[11px] text-slate-500 mr-1">{t.allowed_modes ? 'Modes:' : 'Any mode'}</span>
+                                <span className="text-[11px] text-fg-subtle mr-1">{t.allowed_modes ? 'Modes:' : 'Any mode'}</span>
                                 {PAYMENT_MODES.map((m) => {
                                     const on = !!t.allowed_modes?.includes(m);
                                     return (
-                                        <button
+                                        <Button
                                             key={m}
                                             type="button"
+                                            variant={on ? 'tonal' : 'ghost'}
+                                            size="sm"
                                             aria-pressed={on}
                                             disabled={disabled}
                                             onClick={() => toggleMode(ti, m)}
-                                            className={`px-2 py-0.5 rounded-full text-[11px] border disabled:opacity-50 ${on ? 'bg-blue-500/20 border-blue-500 text-blue-300' : 'border-slate-700 text-slate-400 hover:border-slate-500'}`}
                                         >
                                             {PAYMENT_MODE_LABEL[m]}
-                                        </button>
+                                        </Button>
                                     );
                                 })}
                             </div>
-                        </div>
+                        </FieldGrid>
 
                         <div className="space-y-2">
                             {t.lines.map((l, li) => {
                                 const field = triggerField(l.trigger);
                                 const ln = `Payment plan ${n} instalment ${li + 1}`;
                                 return (
-                                    <div key={li} className="grid grid-cols-2 md:grid-cols-[2fr_1fr_1fr_2fr_2fr_auto] gap-2 items-center">
-                                        <input aria-label={`${ln} label`} className={inputCls} value={l.label} disabled={disabled} placeholder="e.g. Down payment"
+                                    <Grid template="2fr 1fr 1fr 2fr 2fr auto" gap="sm" className="items-center" key={li}>
+                                        <TextField name={`payment_plan_${n}_line_${li + 1}_label`} aria-label={`${ln} label`} size="sm" value={l.label} disabled={disabled} placeholder="e.g. Down payment"
                                             onChange={(e) => patchLine(ti, li, { ...l, label: e.target.value })} />
-                                        <select aria-label={`${ln} type`} className={inputCls} value={l.type} disabled={disabled}
-                                            onChange={(e) => patchLine(ti, li, { ...l, type: (e.target.value === 'fixed' ? 'fixed' : 'percent') as PaymentPlanLineType })}>
-                                            <option value="percent">%</option>
-                                            <option value="fixed">Amount</option>
-                                        </select>
-                                        <input aria-label={`${ln} value`} type="number" min={0} step="0.01" className={inputCls}
+                                        <Select name={`payment_plan_${n}_line_${li + 1}_type`} aria-label={`${ln} type`} size="sm" value={l.type} disabled={disabled}
+                                            options={[{ value: 'percent', label: '%' }, { value: 'fixed', label: 'Amount' }]}
+                                            onValueChange={(v: string) => patchLine(ti, li, { ...l, type: (v === 'fixed' ? 'fixed' : 'percent') as PaymentPlanLineType })} />
+                                        <TextField name={`payment_plan_${n}_line_${li + 1}_value`} aria-label={`${ln} value`} type="number" min={0} step="0.01" size="sm"
                                             value={Number.isFinite(l.value) && l.value !== 0 ? l.value : ''} disabled={disabled}
                                             onChange={(e) => {
                                                 const v = Number(e.target.value);
                                                 patchLine(ti, li, { ...l, value: e.target.value.trim() === '' || !Number.isFinite(v) ? 0 : v });
                                             }} />
-                                        <select aria-label={`${ln} trigger`} className={inputCls} value={l.trigger} disabled={disabled}
-                                            onChange={(e) => {
-                                                const trig = INSTALMENT_TRIGGERS.find((x) => x === e.target.value) ?? 'booking';
+                                        <Select name={`payment_plan_${n}_line_${li + 1}_trigger`} aria-label={`${ln} trigger`} size="sm" value={l.trigger} disabled={disabled}
+                                            options={INSTALMENT_TRIGGERS.map((trig) => ({ value: trig, label: TRIGGER_LABEL[trig] }))}
+                                            onValueChange={(v: string) => {
+                                                const trig = INSTALMENT_TRIGGERS.find((x) => x === v) ?? 'booking';
                                                 patchLine(ti, li, withTrigger(l, trig));
-                                            }}>
-                                            {INSTALMENT_TRIGGERS.map((trig) => (
-                                                <option key={trig} value={trig}>{TRIGGER_LABEL[trig]}</option>
-                                            ))}
-                                        </select>
+                                            }} />
                                         {field === 'offset_days' || field === 'offset_months' ? (
-                                            <input aria-label={`${ln} ${field === 'offset_days' ? 'days' : 'months'}`} type="number" min={0} step={1} className={inputCls}
+                                            <TextField name={`payment_plan_${n}_line_${li + 1}_offset`} aria-label={`${ln} ${field === 'offset_days' ? 'days' : 'months'}`} type="number" min={0} step={1} size="sm"
                                                 placeholder={field === 'offset_days' ? 'Days' : 'Months'} value={l.offset ?? ''} disabled={disabled}
                                                 onChange={(e) => patchLine(ti, li, { ...l, offset: intOrNull(e.target.value) })} />
                                         ) : field === 'date' ? (
-                                            <input aria-label={`${ln} date`} type="date" className={inputCls} value={(l.date || '').slice(0, 10)} disabled={disabled}
+                                            <TextField name={`payment_plan_${n}_line_${li + 1}_date`} aria-label={`${ln} date`} type="date" size="sm" value={(l.date || '').slice(0, 10)} disabled={disabled}
                                                 onChange={(e) => patchLine(ti, li, { ...l, date: e.target.value || null })} />
                                         ) : field === 'milestone' ? (
-                                            <input aria-label={`${ln} milestone`} className={inputCls} placeholder="e.g. 50% construction" value={l.milestone || ''} disabled={disabled}
+                                            <TextField name={`payment_plan_${n}_line_${li + 1}_milestone`} aria-label={`${ln} milestone`} size="sm" placeholder="e.g. 50% construction" value={l.milestone || ''} disabled={disabled}
                                                 onChange={(e) => patchLine(ti, li, { ...l, milestone: e.target.value || null })} />
                                         ) : (
                                             <span />
                                         )}
                                         {!disabled && t.lines.length > 1 ? (
-                                            <button type="button" aria-label={`Remove ${ln}`} className="p-1 text-slate-500 hover:text-rose-400 justify-self-end"
-                                                onClick={() => patchTemplate(ti, { lines: t.lines.filter((_, idx) => idx !== li) })}>
-                                                <Trash2 size={14} />
-                                            </button>
+                                            <span className="justify-self-end">
+                                                <IconButton label={`Remove ${ln}`} icon={<Trash2 size={14} />} variant="danger" size="sm"
+                                                    onClick={() => patchTemplate(ti, { lines: t.lines.filter((_, idx) => idx !== li) })} />
+                                            </span>
                                         ) : (
                                             <span />
                                         )}
-                                    </div>
+                                    </Grid>
                                 );
                             })}
                         </div>
 
                         <div className="flex flex-wrap items-center justify-between gap-2">
                             {!disabled && (
-                                <button
+                                <Button
                                     type="button"
+                                    variant="ghost"
+                                    size="sm"
                                     aria-label={`Add instalment to payment plan ${n}`}
                                     disabled={t.lines.length >= MAX_PAYMENT_PLAN_LINES}
                                     onClick={() => patchTemplate(ti, { lines: [...t.lines, newPaymentPlanLine()] })}
-                                    className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 disabled:opacity-50"
-                                >
-                                    <Plus size={12} /> Add instalment
-                                </button>
+                                ><Plus size={12} />
+                                    Add instalment
+                                </Button>
                             )}
                             <span
                                 data-testid={`payment-plan-${ti}-total`}
-                                className={`text-xs font-medium ${allPercent ? (totalOk ? 'text-emerald-400' : 'text-rose-400') : 'text-slate-400'}`}
+                                className={`text-xs font-medium ${allPercent ? (totalOk ? 'text-success' : 'text-danger') : 'text-fg-muted'}`}
                             >
                                 {allPercent ? `Total ${total}%` : `Percent lines ${total}% + fixed amounts`}
                             </span>
                         </div>
-                        {err && <p role="alert" className="text-[11px] text-rose-400">{err}</p>}
+                        {err && <Alert variant="error">{err}</Alert>}
                     </div>
                 );
             })}

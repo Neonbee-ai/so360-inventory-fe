@@ -27,11 +27,6 @@ vi.mock('../../hooks/useAuth', () => ({
   useAuth: () => ({ can: mockCanVendorDetail }),
 }));
 
-vi.mock('../../components/common/Modal', () => ({
-  Modal: ({ isOpen, title, children }: any) =>
-    isOpen ? <div data-testid="modal"><h3>{title}</h3>{children}</div> : null,
-}));
-
 vi.mock('../../components/common/Skeleton', () => ({
   TableSkeleton: () => <div data-testid="skeleton">Loading...</div>,
 }));
@@ -111,7 +106,7 @@ describe('VendorDetailPage', () => {
       mockGetVendorDetail.mockRejectedValue(new Error('Vendor not found'));
       render(<VendorDetailPage />);
       await waitFor(() => {
-        expect(screen.getByText('Back to Vendors')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Back to Vendors' })).toBeInTheDocument();
       });
     });
   });
@@ -148,7 +143,7 @@ describe('VendorDetailPage', () => {
     it('When loaded / Then shows Back to Vendors button', async () => {
       render(<VendorDetailPage />);
       await waitFor(() => {
-        expect(screen.getByText('Back to Vendors')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Back to Vendors' })).toBeInTheDocument();
       });
     });
 
@@ -186,7 +181,7 @@ describe('VendorDetailPage', () => {
       render(<VendorDetailPage />);
       await waitFor(() => expect(screen.getByText('Acme Corp')).toBeInTheDocument());
       // Click the first "Back to Vendors" button
-      fireEvent.click(screen.getAllByText('Back to Vendors')[0]);
+      fireEvent.click(screen.getByRole('button', { name: 'Back to Vendors' }));
       expect(mockNavigate).toHaveBeenCalledWith('/vendors');
     });
   });
@@ -205,16 +200,16 @@ describe('VendorDetailPage', () => {
       mockCanVendorDetail.mockImplementation((action: string) => action !== 'suppliers.create');
       render(<VendorDetailPage />);
       await waitFor(() => expect(screen.getByText('Acme Corp')).toBeInTheDocument());
-      expect(screen.queryByTitle('Edit Vendor')).not.toBeInTheDocument();
-      expect(screen.queryByTitle('Delete Vendor')).not.toBeInTheDocument();
+      expect(screen.queryByText('Edit Vendor')).not.toBeInTheDocument();
+      expect(screen.queryByText('Delete Vendor')).not.toBeInTheDocument();
     });
 
     it('When can("suppliers.create") is granted / Then Edit/Delete Vendor are shown', async () => {
       mockCanVendorDetail.mockImplementation((action: string) => action === 'suppliers.create');
       render(<VendorDetailPage />);
       await waitFor(() => expect(screen.getByText('Acme Corp')).toBeInTheDocument());
-      expect(screen.getByTitle('Edit Vendor')).toBeInTheDocument();
-      expect(screen.getByTitle('Delete Vendor')).toBeInTheDocument();
+      expect(screen.getByText('Edit Vendor')).toBeInTheDocument();
+      expect(screen.getByText('Delete Vendor')).toBeInTheDocument();
     });
   });
 });

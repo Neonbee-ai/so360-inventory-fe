@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { inventoryService } from '../../services/inventoryService';
+import { Button } from '@so360/design-system';
 import {
     Shield, CheckCircle2, XCircle, ArrowRight,
     Loader2, AlertTriangle, Archive, Play, RotateCcw,
@@ -19,9 +20,9 @@ interface LifecycleStatusPanelProps {
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bgColor: string; borderColor: string }> = {
-    draft: { label: 'Draft', color: 'text-slate-400', bgColor: 'bg-slate-500/10', borderColor: 'border-slate-500/20' },
-    pending_review: { label: 'Pending Review', color: 'text-amber-400', bgColor: 'bg-amber-500/10', borderColor: 'border-amber-500/20' },
-    active: { label: 'Active', color: 'text-emerald-400', bgColor: 'bg-emerald-500/10', borderColor: 'border-emerald-500/20' },
+    draft: { label: 'Draft', color: 'text-fg-muted', bgColor: 'bg-surface-sunken', borderColor: 'border-line-strong/20' },
+    pending_review: { label: 'Pending Review', color: 'text-warning', bgColor: 'bg-warning/10', borderColor: 'border-warning/20' },
+    active: { label: 'Active', color: 'text-success', bgColor: 'bg-success/10', borderColor: 'border-success/20' },
     archived: { label: 'Archived', color: 'text-rose-400', bgColor: 'bg-rose-500/10', borderColor: 'border-rose-500/20' },
 };
 
@@ -91,32 +92,20 @@ const LifecycleStatusPanel: React.FC<LifecycleStatusPanelProps> = ({
         }
     };
 
-    const buttonClass = (variant: 'primary' | 'secondary' | 'danger') => {
-        const base = 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed';
-        switch (variant) {
-            case 'primary':
-                return `${base} bg-blue-600 hover:bg-blue-500 text-white`;
-            case 'secondary':
-                return `${base} bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700`;
-            case 'danger':
-                return `${base} bg-rose-600/10 hover:bg-rose-600/20 text-rose-400 border border-rose-500/20`;
-        }
-    };
-
     // State machine visual
     const states = ['draft', 'pending_review', 'active', 'archived'];
     const currentIndex = states.indexOf(currentStatus);
 
     return (
-        <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6 hover:border-slate-700 transition-colors">
+        <div className="bg-surface/50 border border-line rounded-2xl p-6 hover:border-line-strong transition-colors">
             <div className="flex items-center gap-2 mb-4">
-                <Shield size={16} className="text-blue-400" />
-                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Product Lifecycle</h3>
+                <Shield size={16} className="text-primary" />
+                <h3 className="text-xs font-bold text-fg-muted">Product Lifecycle</h3>
             </div>
 
             {/* Current Status Badge */}
             <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg ${statusConfig.bgColor} ${statusConfig.borderColor} border mb-4`}>
-                <span className={`w-2 h-2 rounded-full ${currentStatus === 'active' ? 'bg-emerald-400 animate-pulse' : currentStatus === 'archived' ? 'bg-rose-400' : 'bg-slate-400'}`} />
+                <span className={`w-2 h-2 rounded-full ${currentStatus === 'active' ? 'bg-emerald-400 animate-pulse' : currentStatus === 'archived' ? 'bg-rose-400' : 'bg-fg-muted'}`} />
                 <span className={`text-sm font-semibold ${statusConfig.color}`}>{statusConfig.label}</span>
             </div>
 
@@ -127,17 +116,17 @@ const LifecycleStatusPanel: React.FC<LifecycleStatusPanelProps> = ({
                     const isPast = i < currentIndex;
                     return (
                         <React.Fragment key={state}>
-                            <div className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider whitespace-nowrap ${
-                                isActive ? 'bg-blue-500/10 text-blue-400 border border-blue-500/30'
-                                : isPast ? 'text-slate-500 line-through'
-                                : 'text-slate-600'
+                            <div className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] font-bold whitespace-nowrap ${
+                                isActive ? 'bg-primary/10 text-primary border border-primary/30'
+                                : isPast ? 'text-fg-subtle line-through'
+                                : 'text-fg-subtle'
                             }`}>
-                                {isPast && <CheckCircle2 size={10} className="text-emerald-500" />}
+                                {isPast && <CheckCircle2 size={10} className="text-success" />}
                                 {isActive && <Clock size={10} />}
                                 {STATUS_CONFIG[state]?.label || state}
                             </div>
                             {i < states.length - 1 && (
-                                <ArrowRight size={12} className="text-slate-700 flex-shrink-0" />
+                                <ArrowRight size={12} className="text-fg-subtle flex-shrink-0" />
                             )}
                         </React.Fragment>
                     );
@@ -147,9 +136,9 @@ const LifecycleStatusPanel: React.FC<LifecycleStatusPanelProps> = ({
             {/* Activation Gates */}
             {currentStatus !== 'active' && currentStatus !== 'archived' && (
                 <div className="mb-4">
-                    <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Activation Gates</h4>
+                    <h4 className="text-[10px] font-bold text-fg-subtle mb-2">Activation gates</h4>
                     {isLoadingGates ? (
-                        <div className="flex items-center gap-2 text-slate-600 text-xs">
+                        <div className="flex items-center gap-2 text-fg-subtle text-xs">
                             <Loader2 size={12} className="animate-spin" />
                             Checking gates...
                         </div>
@@ -158,16 +147,16 @@ const LifecycleStatusPanel: React.FC<LifecycleStatusPanelProps> = ({
                             {gates.map((gate, i) => (
                                 <div key={i} className="flex items-center gap-2 text-xs">
                                     {gate.passed ? (
-                                        <CheckCircle2 size={14} className="text-emerald-400 flex-shrink-0" />
+                                        <CheckCircle2 size={14} className="text-success flex-shrink-0" />
                                     ) : (
                                         <XCircle size={14} className="text-rose-400 flex-shrink-0" />
                                     )}
-                                    <span className={gate.passed ? 'text-slate-400' : 'text-slate-300'}>{gate.name}</span>
+                                    <span className={gate.passed ? 'text-fg-muted' : 'text-fg-muted'}>{gate.name}</span>
                                 </div>
                             ))}
                         </div>
                     ) : (
-                        <p className="text-xs text-slate-600">No gate information available</p>
+                        <p className="text-xs text-fg-subtle">No gate information available</p>
                     )}
                 </div>
             )}
@@ -184,15 +173,16 @@ const LifecycleStatusPanel: React.FC<LifecycleStatusPanelProps> = ({
             {availableTransitions.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                     {availableTransitions.map(transition => (
-                        <button
+                        <Button
                             key={transition.code}
+                            size="sm"
+                            variant={transition.variant}
                             onClick={() => handleTransition(transition.code)}
                             disabled={isTransitioning}
-                            className={buttonClass(transition.variant)}
-                        >
-                            {isTransitioning ? <Loader2 size={14} className="animate-spin" /> : transition.icon}
+                            loading={isTransitioning}
+                        >{isTransitioning ? undefined : transition.icon}
                             {transition.label}
-                        </button>
+                        </Button>
                     ))}
                 </div>
             )}

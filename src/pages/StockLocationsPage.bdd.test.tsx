@@ -41,23 +41,12 @@ vi.mock('@so360/shell-context', () => ({
   }),
 }));
 
-vi.mock('@so360/design-system', () => ({
-  QuotaBar: () => null,
-  QuotaGate: ({ children }: any) => <>{children}</>,
-  FeatureGate: ({ children }: any) => <>{children}</>,
-}));
 
 vi.mock('../hooks/useAuth', () => ({
   useAuth: () => ({ can: () => true }),
 }));
 
-vi.mock('../components/common/Modal', () => ({
-  Modal: () => null,
-}));
 
-vi.mock('../components/common/Skeleton', () => ({
-  TableSkeleton: () => null,
-}));
 
 vi.mock('react-router-dom', () => ({
   useNavigate: () => vi.fn(),

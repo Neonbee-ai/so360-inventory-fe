@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, X } from 'lucide-react';
+import { Button, Checkbox, IconButton, Select, TextField, FieldGrid } from '@so360/design-system';
 import { AttributeFieldType } from '../../../types/productTypes';
 
 interface AttributeEditorProps {
@@ -26,8 +27,6 @@ interface AttributeEditorProps {
     };
 }
 
-const inputClass = 'w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all placeholder:text-slate-600';
-const labelClass = 'block text-xs font-medium text-slate-400 mb-1';
 
 const FIELD_TYPES: { value: AttributeFieldType; label: string }[] = [
     { value: 'text', label: 'Text' },
@@ -90,94 +89,71 @@ const AttributeEditor: React.FC<AttributeEditorProps> = ({ onSave, onCancel, ini
     };
 
     return (
-        <div className="p-4 bg-slate-800/50 border border-slate-700 rounded-lg space-y-3">
-            <div className="grid grid-cols-2 gap-3">
-                <div>
-                    <label className={labelClass}>Label *</label>
-                    <input
-                        type="text"
-                        value={label}
-                        onChange={e => handleLabelChange(e.target.value)}
-                        className={inputClass}
-                        placeholder="e.g. Screen Size"
-                        autoFocus
-                    />
-                </div>
-                <div>
-                    <label className={labelClass}>Field Name *</label>
-                    <input
-                        type="text"
-                        value={fieldName}
-                        onChange={e => setFieldName(e.target.value)}
-                        className={inputClass}
-                        placeholder="e.g. screen_size"
-                    />
-                </div>
-            </div>
+        <div className="p-nb-4 bg-surface-raised border border-line-strong rounded-nb-md flex flex-col gap-nb-3">
+            <FieldGrid>
+                <TextField
+                    label="Label *"
+                    name="attr-label"
+                    value={label}
+                    onChange={e => handleLabelChange(e.target.value)}
+                    placeholder="e.g. Screen Size"
+                    autoFocus
+                />
+                <TextField
+                    label="Field Name *"
+                    name="attr-field-name"
+                    value={fieldName}
+                    onChange={e => setFieldName(e.target.value)}
+                    placeholder="e.g. screen_size"
+                />
+            </FieldGrid>
 
-            <div className="grid grid-cols-3 gap-3">
-                <div>
-                    <label className={labelClass}>Type</label>
-                    <select value={fieldType} onChange={e => setFieldType(e.target.value as AttributeFieldType)} className={inputClass}>
-                        {FIELD_TYPES.map(ft => (
-                            <option key={ft.value} value={ft.value}>{ft.label}</option>
-                        ))}
-                    </select>
-                </div>
-                <div>
-                    <label className={labelClass}>Placeholder</label>
-                    <input type="text" value={placeholder} onChange={e => setPlaceholder(e.target.value)} className={inputClass} placeholder="e.g. Enter value" />
-                </div>
-                <div>
-                    <label className={labelClass}>Unit</label>
-                    <input type="text" value={unit} onChange={e => setUnit(e.target.value)} className={inputClass} placeholder="e.g. inches, kg" />
-                </div>
-            </div>
+            <FieldGrid columns={3}>
+                <Select
+                    label="Type"
+                    name="attr-type"
+                    value={fieldType}
+                    options={FIELD_TYPES}
+                    onChange={e => setFieldType(e.target.value as AttributeFieldType)}
+                />
+                <TextField label="Placeholder" name="attr-placeholder" value={placeholder} onChange={e => setPlaceholder(e.target.value)} placeholder="e.g. Enter value" />
+                <TextField label="Unit" name="attr-unit" value={unit} onChange={e => setUnit(e.target.value)} placeholder="e.g. inches, kg" />
+            </FieldGrid>
 
             {fieldType === 'select' && (
-                <div>
-                    <label className={labelClass}>Options</label>
-                    <div className="flex flex-wrap gap-1.5 mb-2">
+                <div className="flex flex-col gap-nb-2">
+                    <span className="text-nb-caption font-medium text-fg-muted">Options</span>
+                    <div className="flex flex-wrap gap-nb-2">
                         {options.map((opt, i) => (
-                            <span key={i} className="bg-slate-700 text-slate-300 px-2 py-0.5 rounded text-xs flex items-center gap-1">
-                                {opt}
-                                <button type="button" onClick={() => removeOption(i)} className="text-slate-500 hover:text-rose-400"><X size={10} /></button>
+                            <span key={i} className="inline-flex items-center gap-nb-1">
+                                <span className="bg-surface-high text-fg-muted px-nb-2 rounded-nb-sm text-nb-caption">{opt}</span>
+                                <IconButton label={`Remove ${opt}`} size="sm" icon={<X size={10} />} onClick={() => removeOption(i)} />
                             </span>
                         ))}
                     </div>
-                    <div className="flex gap-2">
-                        <input
-                            type="text"
-                            value={newOption}
-                            onChange={e => setNewOption(e.target.value)}
-                            className={inputClass}
-                            placeholder="Add option..."
-                            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addOption(); } }}
-                        />
-                        <button type="button" onClick={addOption} className="px-3 py-1 bg-slate-700 hover:bg-slate-600 rounded text-xs text-slate-300">
-                            <Plus size={14} />
-                        </button>
+                    <div className="flex gap-nb-2 items-end">
+                        <div className="flex-1">
+                            <TextField
+                                name="attr-new-option"
+                                aria-label="New option"
+                                value={newOption}
+                                onChange={e => setNewOption(e.target.value)}
+                                placeholder="Add option..."
+                                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addOption(); } }}
+                            />
+                        </div>
+                        <IconButton label="Add option" icon={<Plus size={14} />} onClick={addOption} />
                     </div>
                 </div>
             )}
 
-            <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" checked={isRequired} onChange={e => setIsRequired(e.target.checked)} className="w-3.5 h-3.5 rounded border-slate-600 bg-slate-800 text-blue-600" />
-                <span className="text-xs text-slate-400">Required field</span>
-            </label>
+            <Checkbox label="Required field" name="attr-required" checked={isRequired} onChange={e => setIsRequired(e.target.checked)} />
 
-            <div className="flex gap-2 pt-1">
-                <button type="button" onClick={onCancel} className="flex-1 px-3 py-1.5 rounded-lg border border-slate-700 text-slate-400 hover:bg-slate-800 text-sm transition-all">
-                    Cancel
-                </button>
-                <button
-                    type="button"
-                    onClick={handleSave}
-                    disabled={isSaving || !label.trim() || !fieldName.trim()}
-                    className="flex-1 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-sm font-medium transition-all"
-                >
+            <div className="flex gap-nb-2 pt-nb-1 justify-end">
+                <Button type="button" variant="secondary" onClick={onCancel}>Cancel</Button>
+                <Button type="button" variant="primary" onClick={handleSave} disabled={isSaving || !label.trim() || !fieldName.trim()}>
                     {isSaving ? 'Saving...' : initialData ? 'Update' : 'Add Attribute'}
-                </button>
+                </Button>
             </div>
         </div>
     );

@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Settings, Save, Box, Tag, MapPin, AlertCircle, CheckCircle2, X, Plus, Sliders, ChevronRight, ListFilter } from 'lucide-react';
+import { X, Plus, ChevronRight } from 'lucide-react';
 import { inventoryService } from '../services/inventoryService';
 import { useAuth } from '../hooks/useAuth';
 import CategoryTreeView from '../components/categories/CategoryTreeView';
 import { buildCategoryTree } from '../utils/categoryTree';
 import ItemAttributeSettingsSection from '../components/settings/ItemAttributeSettingsSection';
+import { Alert, Button, IconButton, SettingsCard, SettingsPageTemplate, Skeleton, Switch, TextField, useConfirm } from '@so360/design-system';
 
 interface UomItem {
     id: string;
@@ -29,6 +30,7 @@ interface InventorySettingsData {
 }
 
 const SettingsPage = () => {
+    const [confirm, confirmDialog] = useConfirm();
     const navigate = useNavigate();
     const { can } = useAuth();
     const [settings, setSettings] = useState<InventorySettingsData | null>(null);
@@ -111,7 +113,7 @@ const SettingsPage = () => {
     };
 
     const handleDeleteUom = async (id: string) => {
-        if (!confirm('Are you sure you want to delete this unit of measure?')) return;
+        if (!(await confirm({ title: 'Delete', message: 'Are you sure you want to delete this unit of measure?', intent: 'danger', confirmLabel: 'Delete' }))) return;
         setError(null);
         try {
             await inventoryService.deleteUom(id);
@@ -143,7 +145,7 @@ const SettingsPage = () => {
     };
 
     const handleDeleteCategory = async (id: string) => {
-        if (!confirm('Are you sure you want to delete this category?')) return;
+        if (!(await confirm({ title: 'Delete', message: 'Are you sure you want to delete this category?', intent: 'danger', confirmLabel: 'Delete' }))) return;
         setError(null);
         try {
             await inventoryService.deleteCategory(id);
@@ -155,98 +157,39 @@ const SettingsPage = () => {
         }
     };
 
-    if (isLoading) return <div className="p-8"><div className="animate-pulse text-slate-500">Loading settings...</div></div>;
+    if (isLoading) return <div className="p-nb-6" aria-busy="true"><Skeleton variant="rect" /></div>;
 
     return (
-        <div className="p-8">
-            <header className="mb-8">
-                <h1 className="text-3xl font-bold text-slate-50 tracking-tight flex items-center gap-3">
-                    <Settings className="text-slate-400" /> Inventory Settings
-                </h1>
-                <p className="text-slate-400 mt-1">Configure units, categories, and module defaults</p>
-            </header>
+        <SettingsPageTemplate trail={[]} title="Inventory Settings" description="Configure units, categories, and module defaults">
+            {confirmDialog}
+            <div className="flex flex-col gap-nb-4">
+                {error && <Alert variant="error">{error}</Alert>}
+                {success && <Alert variant="success">Settings updated successfully</Alert>}
 
-            {error && (
-                <div className="mb-6 bg-rose-500/10 border border-rose-500/20 text-rose-400 px-4 py-3 rounded-lg flex items-center gap-3">
-                    <AlertCircle size={18} />
-                    <span>{error}</span>
-                </div>
-            )}
-
-            {success && (
-                <div className="mb-6 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-4 py-3 rounded-lg flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
-                    <CheckCircle2 size={18} />
-                    <span>Settings updated successfully</span>
-                </div>
-            )}
-
-            <div className="space-y-6">
-                {/* Units of Measure */}
-                <section className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
-                    <h2 className="text-lg font-bold text-slate-50 mb-4 flex items-center gap-2">
-                        <Box size={20} className="text-blue-500" /> Units of Measure (UoM)
-                    </h2>
-                    <div className="flex flex-wrap gap-2">
+                <SettingsCard title="Units of Measure (UoM)" description="Define standard units for stocks and services (e.g., Pcs, KG, Hrs)">
+                    <div className="flex flex-wrap gap-nb-2 items-center">
                         {settings?.uoms.map((uom: UomItem) => (
-                            <div key={uom.id} className="bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-lg text-sm text-slate-300 flex items-center gap-2 group">
+                            <div key={uom.id} className="bg-surface-raised border border-line-strong px-nb-3 py-nb-1 rounded-nb-md text-nb-body text-fg-muted flex items-center gap-nb-2">
                                 <span>{uom.name} ({uom.abbreviation})</span>
                                 {can('items.update') && (
-                                    <button
-                                        onClick={() => handleDeleteUom(uom.id)}
-                                        className="opacity-0 group-hover:opacity-100 text-rose-400 hover:text-rose-300 transition-all"
-                                    >
-                                        <X size={14} />
-                                    </button>
+                                    <IconButton label={`Remove ${uom.name}`} size="sm" variant="danger" icon={<X size={14} />} onClick={() => handleDeleteUom(uom.id)} />
                                 )}
                             </div>
                         ))}
                         {showAddUom ? (
-                            <div className="flex items-center gap-2">
-                                <input
-                                    type="text"
-                                    placeholder="Name"
-                                    value={newUomName}
-                                    onChange={(e) => setNewUomName(e.target.value)}
-                                    className="bg-slate-800 border border-slate-600 px-2 py-1 rounded text-sm text-slate-50 w-24"
-                                />
-                                <input
-                                    type="text"
-                                    placeholder="Abbr"
-                                    value={newUomAbbr}
-                                    onChange={(e) => setNewUomAbbr(e.target.value)}
-                                    className="bg-slate-800 border border-slate-600 px-2 py-1 rounded text-sm text-slate-50 w-16"
-                                />
-                                <button
-                                    onClick={handleAddUom}
-                                    disabled={addingUom}
-                                    className="bg-blue-600 hover:bg-blue-500 text-white px-2 py-1 rounded text-sm disabled:opacity-50"
-                                >
-                                    {addingUom ? '...' : 'Add'}
-                                </button>
-                                <button
-                                    onClick={() => setShowAddUom(false)}
-                                    className="text-slate-400 hover:text-slate-50"
-                                >
-                                    <X size={16} />
-                                </button>
+                            <div className="flex items-center gap-nb-2">
+                                <TextField name="uom-name" aria-label="Unit name" placeholder="Name" value={newUomName} onChange={(e) => setNewUomName(e.target.value)} />
+                                <TextField name="uom-abbr" aria-label="Unit abbreviation" placeholder="Abbr" value={newUomAbbr} onChange={(e) => setNewUomAbbr(e.target.value)} />
+                                <Button variant="primary" size="sm" onClick={handleAddUom} disabled={addingUom}>{addingUom ? '...' : 'Add'}</Button>
+                                <IconButton label="Cancel add unit" size="sm" icon={<X size={16} />} onClick={() => setShowAddUom(false)} />
                             </div>
                         ) : (
-                            <button
-                                onClick={() => setShowAddUom(true)}
-                                className="border border-dashed border-slate-700 px-3 py-1.5 rounded-lg text-sm text-slate-500 hover:text-slate-400 hover:border-slate-500 transition-all flex items-center gap-1"
-                            >
-                                <Plus size={14} /> Add Unit
-                            </button>
+                            <Button variant="secondary" size="sm" onClick={() => setShowAddUom(true)}><Plus size={14} /> Add Unit</Button>
                         )}
                     </div>
-                    <p className="mt-4 text-xs text-slate-500 italic">Define standard units for stocks and services (e.g., Pcs, KG, Hrs)</p>
-                </section>
+                </SettingsCard>
 
-                {/* Categories */}
-                <section className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
-                    <h2 className="text-lg font-bold text-slate-50 mb-4 flex items-center gap-2">
-                        <Tag size={20} className="text-purple-500" /> Item Categories
-                    </h2>
+                <SettingsCard title="Item Categories">
                     <CategoryTreeView
                         tree={buildCategoryTree(settings?.categories || [])}
                         onAdd={async (name, description, parentId) => {
@@ -285,83 +228,52 @@ const SettingsPage = () => {
                         canManage={can('items.update')}
                         onSelect={() => {}}
                     />
-                </section>
+                </SettingsCard>
 
-                {/* Item Attributes */}
-                <section className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
-                    <h2 className="text-lg font-bold text-slate-50 mb-2 flex items-center gap-2">
-                        <ListFilter size={20} className="text-emerald-500" /> Item Attributes
-                    </h2>
-                    <p className="text-sm text-slate-500 mb-4">Define custom attributes per category (e.g. Material, Finish, Shelf Life). Values are stored as flexible metadata on each item.</p>
+                <SettingsCard title="Item Attributes" description="Define custom attributes per category (e.g. Material, Finish, Shelf Life). Values are stored as flexible metadata on each item.">
                     <ItemAttributeSettingsSection
                         categories={settings?.categories || []}
                         canManage={can('items.update')}
                     />
-                </section>
+                </SettingsCard>
 
-                {/* Product Types */}
-                <section className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
-                    <h2 className="text-lg font-bold text-slate-50 mb-2 flex items-center gap-2">
-                        <Sliders size={20} className="text-blue-500" /> Product Types
-                    </h2>
-                    <p className="text-sm text-slate-500 mb-4">Define product type templates with custom attribute fields (e.g. Electronics, Clothing)</p>
-                    <button
-                        onClick={() => navigate('/inventory/settings/product-types')}
-                        className="w-full flex items-center justify-between p-4 bg-slate-800/30 rounded-xl border border-slate-700/50 hover:border-slate-600 hover:bg-slate-800/50 transition-all group"
-                    >
-                        <div className="text-left">
-                            <p className="text-sm font-semibold text-slate-200">Manage Product Types</p>
-                            <p className="text-xs text-slate-500">View system templates, create custom types, define attribute schemas</p>
-                        </div>
-                        <ChevronRight size={18} className="text-slate-600 group-hover:text-slate-400 transition-colors" />
-                    </button>
-                </section>
+                <SettingsCard title="Product Types" description="Define product type templates with custom attribute fields (e.g. Electronics, Clothing)">
+                    <Button variant="secondary" className="w-full !justify-between" onClick={() => navigate('/inventory/settings/product-types')}>
+                        <span className="text-left">
+                            <span className="block text-nb-body font-semibold text-fg">Manage Product Types</span>
+                            <span className="block text-nb-caption text-fg-subtle">View system templates, create custom types, define attribute schemas</span>
+                        </span>
+                        <ChevronRight size={18} />
+                    </Button>
+                </SettingsCard>
 
-                {/* Integration Rules */}
-                <section className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
-                    <h2 className="text-lg font-bold text-slate-50 mb-4 flex items-center gap-2">
-                        <MapPin size={20} className="text-amber-500" /> Default Logic
-                    </h2>
-                    <div className="space-y-4">
-                        <div className="flex items-center justify-between p-4 bg-slate-800/30 rounded-xl border border-slate-700/50">
-                            <div>
-                                <p className="text-sm font-semibold text-slate-200">Enforce Negative Stock Prevention</p>
-                                <p className="text-xs text-slate-500">Block transactions if available quantity would drop below zero</p>
-                            </div>
-                            <button
-                                type="button"
-                                disabled={togglingLogic}
-                                onClick={() => handleToggleLogic('allow_negative_stock', !allowNegativeStock)}
-                                className={`w-12 h-6 rounded-full relative transition-colors disabled:opacity-50 ${allowNegativeStock ? 'bg-blue-600' : 'bg-slate-700'}`}
-                            >
-                                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${allowNegativeStock ? 'right-1' : 'left-1'}`} />
-                            </button>
-                        </div>
-                        <div className="flex items-center justify-between p-4 bg-slate-800/30 rounded-xl border border-slate-700/50">
-                            <div>
-                                <p className="text-sm font-semibold text-slate-200">Auto-approve Transfers</p>
-                                <p className="text-xs text-slate-500">Mark transfers as Completed immediately after submission</p>
-                            </div>
-                            <button
-                                type="button"
-                                disabled={togglingLogic}
-                                onClick={() => handleToggleLogic('auto_approve_transfers', !autoApproveTransfers)}
-                                className={`w-12 h-6 rounded-full relative transition-colors disabled:opacity-50 ${autoApproveTransfers ? 'bg-blue-600' : 'bg-slate-700'}`}
-                            >
-                                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${autoApproveTransfers ? 'right-1' : 'left-1'}`} />
-                            </button>
-                        </div>
+                <SettingsCard title="Default Logic">
+                    <div className="flex flex-col gap-nb-3">
+                        <Switch
+                            name="allow-negative-stock"
+                            label="Enforce Negative Stock Prevention"
+                            description="Block transactions if available quantity would drop below zero"
+                            checked={allowNegativeStock}
+                            disabled={togglingLogic}
+                            onCheckedChange={(v) => handleToggleLogic('allow_negative_stock', v)}
+                        />
+                        <Switch
+                            name="auto-approve-transfers"
+                            label="Auto-approve Transfers"
+                            description="Mark transfers as Completed immediately after submission"
+                            checked={autoApproveTransfers}
+                            disabled={togglingLogic}
+                            onCheckedChange={(v) => handleToggleLogic('auto_approve_transfers', v)}
+                        />
                     </div>
-                </section>
-            </div>
+                </SettingsCard>
 
-            <div className="mt-10 p-4 bg-slate-900/40 border border-slate-800/50 rounded-2xl">
-                <p className="text-xs text-slate-500 leading-relaxed text-center">
-                    Note: These settings apply globally to the <b>{inventoryService ? 'Neonbee' : ''} Inventory</b>.
+                <p className="text-nb-caption text-fg-subtle text-center">
+                    Note: These settings apply globally to the <b>Neonbee Inventory</b>.
                     Changes may affect ledger calculations and historical reporting.
                 </p>
             </div>
-        </div>
+        </SettingsPageTemplate>
     );
 };
 

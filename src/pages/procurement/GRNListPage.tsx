@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Package, Plus, Search } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { procurementService } from '../../services/procurementService';
 import { useShellBridge } from '@so360/shell-context';
 import { useInventoryFormatters } from '../../utils/formatters';
-import { FeatureGate } from '@so360/design-system';
+import { FeatureGate, ListPageTemplate, Button, DataTable, SearchInput, KpiCard, EmptyState, Grid } from '@so360/design-system';
 
 interface GRN {
     id: string;
@@ -45,119 +45,60 @@ const GRNListPage = () => {
         grn.po?.vendor?.name?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    const kpis = (
+        <Grid columns={3} gap="sm">
+            <KpiCard label="Total GRNs" value={grns.length} data-testid="grn-kpi-total" />
+            <KpiCard label="This Month" value={grns.filter(g => new Date(g.created_at).getMonth() === new Date().getMonth()).length} data-testid="grn-kpi-month" />
+            <KpiCard label="Total Items Received" value={grns.reduce((sum, g) => sum + (g.grn_lines?.reduce((s, l) => s + l.quantity_received, 0) || 0), 0)} data-testid="grn-kpi-items" />
+        </Grid>
+    );
+
     return (
-        <div className="p-8 space-y-8 animate-in fade-in duration-700">
-            {/* Header */}
-            <div className="flex items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-4xl font-bold bg-gradient-to-r from-violet-400 to-fuchsia-400 bg-clip-text text-transparent">
-                        Goods Receipt Notes
-                    </h1>
-                    <p className="text-slate-400 mt-2 font-medium">Track all received shipments and inventory updates.</p>
-                </div>
+        <ListPageTemplate trail={[]}
+            title="Goods Receipt Notes"
+            description="Track all received shipments and inventory updates."
+            count={grns.length}
+            primaryAction={
                 <FeatureGate state={createGrnState} loading={(shell?.effectiveFlagsLoaded === false)} onUpgradeClick={() => navigate('/org/billing')}>
-                    <button
-                        onClick={() => navigate('/procurement/grn/new')}
-                        className="px-6 py-3 bg-violet-600 hover:bg-violet-500 text-white rounded-xl font-semibold transition-all shadow-lg shadow-violet-900/20 active:scale-95 flex items-center gap-2"
-                    >
-                        <Plus size={20} /> New GRN
-                    </button>
+                    <Button onClick={() => navigate('/procurement/grn/new')}><Plus size={16} aria-hidden="true" /> New GRN</Button>
                 </FeatureGate>
-            </div>
-
-            {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {[
-                    { label: 'Total GRNs', value: grns.length, icon: '📦', color: 'violet' },
-                    { label: 'This Month', value: grns.filter(g => new Date(g.created_at).getMonth() === new Date().getMonth()).length, icon: '📅', color: 'blue' },
-                    { label: 'Total Items Received', value: grns.reduce((sum, g) => sum + (g.grn_lines?.reduce((s, l) => s + l.quantity_received, 0) || 0), 0), icon: '📊', color: 'emerald' },
-                ].map((stat, i) => (
-                    <div key={i} className="bg-slate-900/50 border border-slate-800 p-6 rounded-2xl backdrop-blur-sm">
-                        <div className="flex justify-between items-start">
-                            <span className="text-2xl">{stat.icon}</span>
-                            <span className={`text-xs font-bold uppercase tracking-wider text-${stat.color}-400`}>{stat.label}</span>
-                        </div>
-                        <div className="mt-4 text-3xl font-bold text-slate-100">{stat.value}</div>
-                    </div>
-                ))}
-            </div>
-
-            {/* Search */}
-            <div className="relative">
-                <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
-                <input
-                    type="text"
-                    placeholder="Search by GRN number, PO, or vendor..."
+            }
+            kpis={kpis}
+            search={
+                <SearchInput
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full bg-slate-900/50 border border-slate-800 rounded-xl pl-11 pr-4 py-3 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50 transition-all"
+                    onChange={setSearchTerm}
+                    placeholder="Search by GRN number, PO, or vendor..."
+                    data-testid="grn-search"
                 />
-            </div>
-
-            {/* Table */}
-            <div className="bg-slate-900/50 border border-slate-800 rounded-2xl overflow-hidden backdrop-blur-sm">
-                <table className="w-full text-left border-collapse">
-                    <thead>
-                        <tr className="border-b border-slate-800 bg-slate-800/30">
-                            <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400">GRN Details</th>
-                            <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400">Purchase Order</th>
-                            <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400">Vendor</th>
-                            <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400">Warehouse</th>
-                            <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400">Items</th>
-                            <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400">Date</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800/50">
-                        {loading ? (
-                            <tr>
-                                <td colSpan={6} className="px-6 py-12 text-center text-slate-500 animate-pulse">Loading GRNs...</td>
-                            </tr>
-                        ) : filteredGrns.length === 0 ? (
-                            <tr>
-                                <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
-                                    {searchTerm ? 'No GRNs match your search.' : 'No goods receipt notes found.'}
-                                </td>
-                            </tr>
-                        ) : filteredGrns.map((grn) => (
-                            <tr
-                                key={grn.id}
-                                className="hover:bg-slate-800/20 transition-colors cursor-pointer group"
-                                onClick={() => navigate(`/procurement/grn/${grn.id}`)}
-                            >
-                                <td className="px-6 py-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-xl bg-violet-500/10 flex items-center justify-center border border-violet-500/20">
-                                            <Package size={18} className="text-violet-400" />
-                                        </div>
-                                        <div>
-                                            <div className="font-semibold text-slate-200">{grn.grn_number}</div>
-                                            <div className="text-xs text-slate-500">ID: {grn.id.slice(0, 8)}</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td className="px-6 py-4">
-                                    <span className="text-sm text-blue-400 font-medium">
-                                        #{grn.po?.po_number || 'N/A'}
-                                    </span>
-                                </td>
-                                <td className="px-6 py-4 text-sm text-slate-300">
-                                    {grn.po?.vendor?.name || '-'}
-                                </td>
-                                <td className="px-6 py-4 text-sm text-slate-300">
-                                    {grn.warehouse?.name || '-'}
-                                </td>
-                                <td className="px-6 py-4 text-sm text-slate-300 font-mono">
-                                    {grn.grn_lines?.length || 0} lines
-                                </td>
-                                <td className="px-6 py-4 text-sm text-slate-400">
-                                    {formatters.formatDate(grn.created_at)}
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-        </div>
+            }
+            loading={loading}
+            isEmpty={!loading && filteredGrns.length === 0}
+            empty={<EmptyState title={searchTerm ? 'No GRNs match your search.' : 'No goods receipt notes found.'} />}
+        >
+            <DataTable
+                data-testid="grn-table"
+                columns={[
+                    {
+                        key: 'grn_number', header: 'GRN Details',
+                        render: (grn: GRN) => (
+                            <div>
+                                <div className="text-nb-body font-medium text-fg">{grn.grn_number}</div>
+                                <div className="text-nb-caption text-fg-subtle">ID: {grn.id.slice(0, 8)}</div>
+                            </div>
+                        ),
+                    },
+                    { key: 'po', header: 'Purchase Order', render: (grn: GRN) => <span className="text-nb-body text-primary">#{grn.po?.po_number || 'N/A'}</span> },
+                    { key: 'vendor', header: 'Vendor', render: (grn: GRN) => grn.po?.vendor?.name || '-' },
+                    { key: 'warehouse', header: 'Warehouse', render: (grn: GRN) => grn.warehouse?.name || '-' },
+                    { key: 'items', header: 'Items', align: 'right', render: (grn: GRN) => `${grn.grn_lines?.length || 0} lines` },
+                    { key: 'created_at', header: 'Date', render: (grn: GRN) => formatters.formatDate(grn.created_at) },
+                ]}
+                rows={filteredGrns}
+                rowKey={(grn: GRN) => grn.id}
+                onRowClick={(grn: GRN) => navigate(`/procurement/grn/${grn.id}`)}
+            />
+        </ListPageTemplate>
     );
 };
 

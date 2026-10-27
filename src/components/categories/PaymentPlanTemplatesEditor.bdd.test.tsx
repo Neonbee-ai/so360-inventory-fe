@@ -68,7 +68,7 @@ describe('Given one valid plan', () => {
     render(<Harness initial={[tpl()]} />);
     const total = screen.getByTestId('payment-plan-0-total');
     expect(total.textContent).toBe('Total 100%');
-    expect(total.className).toContain('emerald');
+    expect(total.className).toContain('success');
     expect(screen.queryByRole('alert')).toBeNull();
     expect(screen.queryByLabelText('Remove Payment plan 1 instalment 1')).toBeNull();
   });

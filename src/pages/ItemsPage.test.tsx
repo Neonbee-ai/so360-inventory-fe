@@ -19,18 +19,6 @@ vi.mock('../hooks/useAuth', () => ({
   useAuth: () => ({ can: () => true }),
 }));
 
-vi.mock('../components/common/Table', () => ({
-  Table: ({ data, isLoading, emptyMessage, onRowClick }: any) => (
-    <div data-testid="table">
-      {isLoading ? 'Loading...' : data.length === 0 ? emptyMessage : data.map((d: any) => (
-        <div key={d.id} data-testid={`row-${d.id}`} onClick={() => onRowClick?.(d)}>
-          {d.name} | {d.sku || 'NO-SKU'} | {d.type}
-        </div>
-      ))}
-    </div>
-  ),
-}));
-
 const mockUseShellBridge = vi.fn();
 
 vi.mock('@so360/shell-context', () => ({
@@ -76,11 +64,6 @@ describe('ItemsPage', () => {
       expect(screen.getByText('Items')).toBeInTheDocument();
     });
 
-    it('When rendered / Then shows subtitle', () => {
-      render(<ItemsPage />);
-      expect(screen.getByText('Manage physical products and trackable assets')).toBeInTheDocument();
-    });
-
     it('When user has create permission / Then shows Register Item button', () => {
       render(<ItemsPage />);
       expect(screen.getByText('Register Item')).toBeInTheDocument();
@@ -119,7 +102,7 @@ describe('ItemsPage', () => {
       mockGetItems.mockResolvedValue({ data: [] });
       render(<ItemsPage />);
       await waitFor(() => {
-        expect(screen.getByTestId('table')).toHaveTextContent('No items found');
+        expect(screen.getByText(/No items found/)).toBeInTheDocument();
       });
     });
   });
@@ -159,7 +142,8 @@ describe('ItemsPage', () => {
       mockGetItems.mockResolvedValue({ data: [makeItem(), makeItem({ id: 'item-2', name: 'Consulting', type: 'service' })] });
       render(<ItemsPage />);
       await waitFor(() => screen.getByTestId('row-item-1'));
-      fireEvent.change(screen.getByDisplayValue('All Types'), { target: { value: 'product' } });
+      fireEvent.click(screen.getByTestId('filters-button'));
+      fireEvent.change(screen.getByLabelText('Type'), { target: { value: 'product' } });
       expect(screen.getByTestId('row-item-1')).toBeInTheDocument();
       expect(screen.queryByTestId('row-item-2')).not.toBeInTheDocument();
     });
@@ -231,7 +215,8 @@ describe('ItemsPage — Photos need attention filter', () => {
     render(<ItemsPage />);
     await waitFor(() => expect(screen.getByTestId('row-ok')).toBeInTheDocument());
 
-    fireEvent.click(screen.getByRole('button', { name: /Photos need attention/i }));
+    fireEvent.click(screen.getByTestId('filters-button'));
+    fireEvent.click(screen.getByLabelText('Photos need attention'));
 
     await waitFor(() =>
       expect(mockGetItems).toHaveBeenLastCalledWith(expect.objectContaining({ imageNeedsAttention: true })),
@@ -245,7 +230,8 @@ describe('ItemsPage — Photos need attention filter', () => {
     render(<ItemsPage />);
     await waitFor(() => expect(screen.getByTestId('row-legacy')).toBeInTheDocument());
 
-    fireEvent.click(screen.getByRole('button', { name: /Photos need attention/i }));
+    fireEvent.click(screen.getByTestId('filters-button'));
+    fireEvent.click(screen.getByLabelText('Photos need attention'));
 
     await waitFor(() =>
       expect(screen.getByText('No items with photos that need attention.')).toBeInTheDocument(),
@@ -254,11 +240,12 @@ describe('ItemsPage — Photos need attention filter', () => {
 
   it('Given the filter is on / When clicked again / Then the full list is requested again', async () => {
     render(<ItemsPage />);
-    const toggle = screen.getByRole('button', { name: /Photos need attention/i });
+    fireEvent.click(screen.getByTestId('filters-button'));
+    const toggle = screen.getByLabelText('Photos need attention');
     fireEvent.click(toggle);
-    await waitFor(() => expect(toggle).toHaveAttribute('aria-pressed', 'true'));
+    await waitFor(() => expect(toggle).toBeChecked());
     fireEvent.click(toggle);
-    await waitFor(() => expect(toggle).toHaveAttribute('aria-pressed', 'false'));
+    await waitFor(() => expect(toggle).not.toBeChecked());
     await waitFor(() => expect(mockGetItems.mock.calls[mockGetItems.mock.calls.length - 1]).toEqual([]));
   });
 });

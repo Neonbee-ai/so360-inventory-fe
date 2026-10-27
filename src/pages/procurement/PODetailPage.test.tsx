@@ -79,8 +79,8 @@ describe('PODetailPage', () => {
     it('When data is loading / Then shows loading spinner', () => {
       mockGetPODetail.mockReturnValue(new Promise(() => {}));
       const { container } = render(<PODetailPage />);
-      // Loading spinner is an animated div
-      expect(container.querySelector('.animate-spin')).toBeInTheDocument();
+      // Comb DetailPageTemplate renders a skeleton while loading
+      expect(container.querySelector('[data-slot="skeleton"]')).toBeInTheDocument();
     });
   });
 
@@ -121,7 +121,7 @@ describe('PODetailPage', () => {
     it('When loaded / Then shows Back to Purchase Orders button', async () => {
       render(<PODetailPage />);
       await waitFor(() => {
-        expect(screen.getByText('Back to Purchase Orders')).toBeInTheDocument();
+        expect(screen.getByLabelText('Back to Purchase Orders')).toBeInTheDocument();
       });
     });
 

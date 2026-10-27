@@ -150,7 +150,7 @@ describe('ItemCreatePage', () => {
     it('When loaded / Then shows Back to Items link', async () => {
       render(<ItemCreatePage />);
       await waitFor(() => {
-        expect(screen.getByText('Back to Items')).toBeInTheDocument();
+        expect(screen.getByLabelText('Back to Items')).toBeInTheDocument();
       });
     });
 
@@ -184,8 +184,8 @@ describe('ItemCreatePage', () => {
 
     it('When Back to Items clicked / Then navigates to items list', async () => {
       render(<ItemCreatePage />);
-      await waitFor(() => screen.getByText('Back to Items'));
-      fireEvent.click(screen.getByText('Back to Items'));
+      await waitFor(() => screen.getByLabelText('Back to Items'));
+      fireEvent.click(screen.getByLabelText('Back to Items'));
       expect(mockNavigate).toHaveBeenCalledWith('/inventory/items');
     });
 

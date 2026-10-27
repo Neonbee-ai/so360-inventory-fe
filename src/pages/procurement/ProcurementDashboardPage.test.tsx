@@ -107,14 +107,14 @@ describe('ProcurementDashboardPage', () => {
 
         it('When spend exists / Then it is broken down by vendor', async () => {
             render(<ProcurementDashboardPage />);
-            await waitFor(() => expect(screen.getByText('Spend by Vendor')).toBeInTheDocument());
+            await waitFor(() => expect(screen.getByText('Spend by vendor')).toBeInTheDocument());
             expect(screen.getByText('Alpha Supplies')).toBeInTheDocument();
             expect(screen.getByText('$1200')).toBeInTheDocument();
         });
 
         it('When trends are available / Then top purchased items are listed', async () => {
             render(<ProcurementDashboardPage />);
-            await waitFor(() => expect(screen.getByText('Top Purchased Items')).toBeInTheDocument());
+            await waitFor(() => expect(screen.getByText('Top purchased items')).toBeInTheDocument());
             expect(screen.getByText('Cement 50kg')).toBeInTheDocument();
             expect(screen.getByText('CEM-50')).toBeInTheDocument();
         });
@@ -123,7 +123,7 @@ describe('ProcurementDashboardPage', () => {
     describe('Given alerts need attention', () => {
         it('When rendered / Then each alert is shown with its count', async () => {
             render(<ProcurementDashboardPage />);
-            await waitFor(() => expect(screen.getByText('Needs Attention')).toBeInTheDocument());
+            await waitFor(() => expect(screen.getByText('Needs attention')).toBeInTheDocument());
             expect(screen.getByText('2 purchase order(s) past their delivery date')).toBeInTheDocument();
             expect(screen.getByText('1 receipt(s) holding stock pending inspection')).toBeInTheDocument();
         });
@@ -140,7 +140,7 @@ describe('ProcurementDashboardPage', () => {
             mockGetDashboard.mockResolvedValue(makeDashboard({ alerts: [] }));
             render(<ProcurementDashboardPage />);
             await waitFor(() => expect(screen.getByText('Pipeline')).toBeInTheDocument());
-            expect(screen.queryByText('Needs Attention')).not.toBeInTheDocument();
+            expect(screen.queryByText('Needs attention')).not.toBeInTheDocument();
         });
     });
 
