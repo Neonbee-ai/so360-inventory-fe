@@ -2,12 +2,28 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { vendorService } from '../../services/vendorService';
 import { useAuth } from '../../hooks/useAuth';
-import { useShellBridge, useQuota, useSandboxLimit } from '@so360/shell-context';
+import { useShellBridge, useQuota, useSandboxLimit, useBusinessSettings } from '@so360/shell-context';
 import {
     Alert, Button, Checkbox, ConfirmDialog, DataTable, EmptyState, FeatureGate, ListPageTemplate,
     Modal, QuotaBar, QuotaGate, SearchInput, Select, StatusBadge, Textarea, TextField, FieldGrid,
 } from '@so360/design-system';
 import type { DataTableColumn } from '@so360/design-system';
+import { VendorBankAccountFields } from '../../components/vendors/VendorBankAccountFields';
+import {
+    VENDOR_BANK_PERMS, emptyBankForm, isVendorBankEnabled, toBankPayload, validateBankForm,
+    type BankFormErrors, type BankFormState,
+} from '../../utils/vendorBank';
+
+/** Optional bank step in the create-vendor form; mounted only when ticked. Defaults currency from org settings. */
+const NewVendorBankStep: React.FC<{ value: BankFormState; onChange: (v: BankFormState) => void; errors: BankFormErrors }> = ({ value, onChange, errors }) => {
+    const { settings } = useBusinessSettings();
+    const orgCurrency = settings?.base_currency;
+    useEffect(() => {
+        if (!value.currency && orgCurrency) onChange({ ...value, currency: orgCurrency.toUpperCase() });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [orgCurrency]);
+    return <VendorBankAccountFields value={value} onChange={onChange} errors={errors} showPrimaryToggle={false} />;
+};
 
 interface Vendor {
     id: string;
@@ -69,6 +85,13 @@ const VendorListPage = () => {
         }
     });
 
+    // Optional bank details on create (flag submodule:inventory:vendor_bank_details)
+    const canAddBank = isVendorBankEnabled(shell) && can(VENDOR_BANK_PERMS.MANAGE);
+    const [addBank, setAddBank] = useState(false);
+    const [bankForm, setBankForm] = useState<BankFormState>(emptyBankForm());
+    const [bankErrors, setBankErrors] = useState<BankFormErrors>({});
+    const [bankWarning, setBankWarning] = useState<string | null>(null);
+
     // Delete state
     const [deletingVendor, setDeletingVendor] = useState<Vendor | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
@@ -97,10 +120,33 @@ const VendorListPage = () => {
             return;
         }
         setNameError(null);
+        const withBank = canAddBank && addBank;
+        if (withBank) {
+            const errs = validateBankForm(bankForm, 'create');
+            setBankErrors(errs);
+            if (Object.keys(errs).length) return;
+        }
         setIsCreating(true);
         setError(null);
         try {
-            await vendorService.createVendor({ ...newVendor, name: newVendor.name.trim() });
+            const created: any = await vendorService.createVendor({ ...newVendor, name: newVendor.name.trim() });
+            let bankFailed: string | null = null;
+            if (withBank) {
+                const vendorId = created?.id ?? created?.data?.id;
+                try {
+                    if (!vendorId) throw new Error('vendor id missing from response');
+                    await vendorService.createBankAccount(vendorId, { ...toBankPayload(bankForm, 'create'), is_primary: true });
+                } catch (bankErr: any) {
+                    bankFailed = bankErr?.message || 'unknown error';
+                }
+            }
+            setAddBank(false);
+            setBankForm(emptyBankForm());
+            setBankErrors({});
+            setBankWarning(null);
+            if (bankFailed) {
+                setBankWarning(`Vendor created, but the bank account was not saved (${bankFailed}). Add it from the vendor profile.`);
+            }
             setShowCreateModal(false);
             setNewVendor({
                 name: '',
@@ -225,6 +271,7 @@ const VendorListPage = () => {
                 )}
 
                 {error && <Alert variant="error" onDismiss={() => setError(null)}>{error}</Alert>}
+                {bankWarning && <Alert variant="warning" onDismiss={() => setBankWarning(null)}>{bankWarning}</Alert>}
                 {successMessage && <Alert variant="success">{successMessage}</Alert>}
 
                 {isSandboxMode && isLimited(filteredVendors.length) && (
@@ -327,6 +374,19 @@ const VendorListPage = () => {
                             vendor_profile: { ...newVendor.vendor_profile, is_preferred: e.target.checked },
                         })}
                     />
+                    {canAddBank && (
+                        <Checkbox
+                            name="add_bank_details"
+                            label="Add bank details now"
+                            description="You can also add them later from the vendor profile."
+                            checked={addBank}
+                            onChange={(e) => setAddBank(e.target.checked)}
+                            data-testid="create-vendor-add-bank"
+                        />
+                    )}
+                    {canAddBank && addBank && (
+                        <NewVendorBankStep value={bankForm} onChange={setBankForm} errors={bankErrors} />
+                    )}
                 </form>
             </Modal>
 
