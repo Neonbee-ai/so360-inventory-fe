@@ -63,7 +63,7 @@ describe('VendorDetailPage (Comb)', () => {
     mockGetVendorDetail.mockRejectedValue(new Error('boom'));
     render(<VendorDetailPage />);
     expect(await screen.findByRole('alert')).toHaveTextContent('boom');
-    fireEvent.click(screen.getByRole('button', { name: 'Back to Vendors' }));
+    fireEvent.click(screen.getByText('Back to Vendors'));
     expect(mockNavigate).toHaveBeenCalledWith('/vendors');
   });
 

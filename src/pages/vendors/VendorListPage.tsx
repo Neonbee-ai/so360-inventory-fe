@@ -204,7 +204,7 @@ const VendorListPage = () => {
                     />
                 }
                 loading={loading}
-                isEmpty={!loading && visibleVendors.length === 0}
+                isEmpty={!loading && !error && visibleVendors.length === 0}
                 empty={
                     <EmptyState
                         title="No vendors found"

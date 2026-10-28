@@ -43,7 +43,7 @@ const makeGRN = (o: any = {}) => ({
   grn_lines: [{ quantity_received: 10 }], ...o,
 });
 
-const shell = (state = 'enabled') => ({ effectiveFlagsLoaded: true, getFeatureState: () => state });
+const shell = (state = 'enabled') => ({ effectiveFlagsLoaded: true, permissionsLoaded: true, hasPermission: () => true, getFeatureState: () => state });
 
 beforeEach(() => {
   vi.clearAllMocks();

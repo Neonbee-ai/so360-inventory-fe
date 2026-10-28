@@ -203,7 +203,7 @@ describe('WarehouseDetailPage', () => {
       render(<WarehouseDetailPage />);
       await waitFor(() => expect(screen.getByText('Main Warehouse')).toBeInTheDocument());
       expect(screen.queryByTitle('Edit Warehouse')).not.toBeInTheDocument();
-      expect(screen.queryByTitle('Delete Warehouse')).not.toBeInTheDocument();
+      expect(screen.queryByText('Delete Warehouse')).not.toBeInTheDocument();
     });
 
     it('When effectiveFlagsLoaded becomes true with enabled flag / Then Edit and Delete buttons appear', async () => {
@@ -214,7 +214,7 @@ describe('WarehouseDetailPage', () => {
       render(<WarehouseDetailPage />);
       await waitFor(() => {
         expect(screen.getByTitle('Edit Warehouse')).toBeInTheDocument();
-        expect(screen.getByTitle('Delete Warehouse')).toBeInTheDocument();
+        expect(screen.getByText('Delete Warehouse')).toBeInTheDocument();
       });
     });
   });
@@ -226,7 +226,7 @@ describe('WarehouseDetailPage', () => {
       render(<WarehouseDetailPage />);
       await waitFor(() => expect(screen.getByText('Main Warehouse')).toBeInTheDocument());
       expect(screen.queryByTitle('Edit Warehouse')).not.toBeInTheDocument();
-      expect(screen.queryByTitle('Delete Warehouse')).not.toBeInTheDocument();
+      expect(screen.queryByText('Delete Warehouse')).not.toBeInTheDocument();
       expect(screen.queryByText('Add Location')).not.toBeInTheDocument();
       expect(screen.queryByTitle('Edit Location')).not.toBeInTheDocument();
       expect(screen.queryByTitle('Delete Location')).not.toBeInTheDocument();
@@ -237,7 +237,7 @@ describe('WarehouseDetailPage', () => {
       render(<WarehouseDetailPage />);
       await waitFor(() => expect(screen.getByText('Main Warehouse')).toBeInTheDocument());
       expect(screen.getByTitle('Edit Warehouse')).toBeInTheDocument();
-      expect(screen.getByTitle('Delete Warehouse')).toBeInTheDocument();
+      expect(screen.getByText('Delete Warehouse')).toBeInTheDocument();
       expect(screen.getByText('Add Location')).toBeInTheDocument();
     });
   });

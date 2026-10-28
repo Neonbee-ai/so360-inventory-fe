@@ -128,7 +128,7 @@ describe('Given a developer whose company equals its name, an inactive status an
       render(<DeveloperCard partnerId="d1" projects={projects} />);
       const card = await screen.findByTestId('developer-card');
       expect(screen.getAllByText('Emaar')).toHaveLength(1);
-      expect(screen.getByTestId('developer-status').className).toContain('line-strong');
+      expect(screen.getByTestId('developer-status').className).toContain('text-fg-muted');
       expect(screen.getByText('exa mple').tagName).not.toBe('A');
       expect(card.textContent).toContain('Createdlong ago');
     });

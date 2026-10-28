@@ -552,8 +552,6 @@ const ItemCreatePage = () => {
         <FormPageTemplate
             title="Register New Item"
             trail={[{ label: 'Items', to: '/inventory/items' }]}
-            onBack={() => navigate('/inventory/items')}
-            backLabel="Items"
             onCancel={() => navigate('/inventory/items')}
             primaryAction={
                 <Button
