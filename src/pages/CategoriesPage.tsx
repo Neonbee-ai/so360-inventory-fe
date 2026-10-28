@@ -310,6 +310,8 @@ const CategoriesPage = () => {
     const [isSaving, setIsSaving] = useState(false);
     const [saveError, setSaveError] = useState<string | null>(null);
     const [saveSuccess, setSaveSuccess] = useState(false);
+    const saveSuccessTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    useEffect(() => () => { if (saveSuccessTimer.current) clearTimeout(saveSuccessTimer.current); }, []);
     const [editMetadata, setEditMetadata] = useState<CategoryMetadata>({});
     const [showGenerate, setShowGenerate] = useState(false);
     const [showAvailability, setShowAvailability] = useState(false);
@@ -481,7 +483,8 @@ const CategoriesPage = () => {
             });
             recordActivity({ eventType: 'inventory.category.updated', eventCategory: 'data', description: `Updated category "${editName.trim()}"`, resourceType: 'category', resourceId: selectedId }).catch(() => {});
             setSaveSuccess(true);
-            setTimeout(() => setSaveSuccess(false), 2500);
+            if (saveSuccessTimer.current) clearTimeout(saveSuccessTimer.current);
+            saveSuccessTimer.current = setTimeout(() => setSaveSuccess(false), 2500);
             await fetchCategories();
         } catch (err: any) {
             setSaveError(err.message || 'Failed to save');

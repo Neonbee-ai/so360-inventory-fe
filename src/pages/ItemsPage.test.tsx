@@ -216,7 +216,7 @@ describe('ItemsPage — Photos need attention filter', () => {
     await waitFor(() => expect(screen.getByTestId('row-ok')).toBeInTheDocument());
 
     fireEvent.click(screen.getByTestId('filters-button'));
-    fireEvent.click(screen.getByLabelText('Photos need attention'));
+    fireEvent.click(screen.getByTestId('filter-attention'));
 
     await waitFor(() =>
       expect(mockGetItems).toHaveBeenLastCalledWith(expect.objectContaining({ imageNeedsAttention: true })),
@@ -231,7 +231,7 @@ describe('ItemsPage — Photos need attention filter', () => {
     await waitFor(() => expect(screen.getByTestId('row-legacy')).toBeInTheDocument());
 
     fireEvent.click(screen.getByTestId('filters-button'));
-    fireEvent.click(screen.getByLabelText('Photos need attention'));
+    fireEvent.click(screen.getByTestId('filter-attention'));
 
     await waitFor(() =>
       expect(screen.getByText('No items with photos that need attention.')).toBeInTheDocument(),
@@ -241,7 +241,7 @@ describe('ItemsPage — Photos need attention filter', () => {
   it('Given the filter is on / When clicked again / Then the full list is requested again', async () => {
     render(<ItemsPage />);
     fireEvent.click(screen.getByTestId('filters-button'));
-    const toggle = screen.getByLabelText('Photos need attention');
+    const toggle = screen.getByTestId('filter-attention');
     fireEvent.click(toggle);
     await waitFor(() => expect(toggle).toBeChecked());
     fireEvent.click(toggle);

@@ -82,7 +82,7 @@ describe('Given units whose status is a manual override', () => {
       });
       render(<AvailabilityMatrix categoryId="t9" />);
       const blocked = await screen.findByRole('button', { name: 'Unit 101 Blocked' });
-      expect(blocked.className).toContain('fg-subtle');
+      expect(blocked.className).toContain('fg-muted');
       expect(screen.getByRole('button', { name: 'Unit 102 Cancelled' }).className).toContain('orange');
       expect(screen.getByRole('button', { name: 'Unit 103 Unavailable' }).className).toContain('line-strong');
       const card = screen.getByTestId('availability-summary');

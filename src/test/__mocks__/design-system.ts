@@ -15,12 +15,12 @@ const FieldWrap = ({ id, label, hint, error, children }: any) =>
 export const TextField = ({ label, hint, error, required, name, id, size: _s, leadingIcon: _li, 'data-testid': testId, ...rest }: any) => {
   const fid = label ? `f-${name}` : id;
   return React.createElement(FieldWrap, { id: fid, label, hint, error },
-    React.createElement('input', { ...rest, id: fid, name, required, 'data-testid': testId, 'aria-invalid': error ? true : undefined }));
+    React.createElement('input', { ...rest, id: fid, name, required, 'data-testid': testId, 'aria-invalid': error ? true : rest['aria-invalid'] }));
 };
 export const Textarea = ({ label, hint, error, required, name, id, size: _s, 'data-testid': testId, ...rest }: any) => {
   const fid = label ? `f-${name}` : id;
   return React.createElement(FieldWrap, { id: fid, label, hint, error },
-    React.createElement('textarea', { ...rest, id: fid, name, required, 'data-testid': testId, 'aria-invalid': error ? true : undefined }));
+    React.createElement('textarea', { ...rest, id: fid, name, required, 'data-testid': testId, 'aria-invalid': error ? true : rest['aria-invalid'] }));
 };
 export const Select = ({ value, onChange, options = [], placeholder, label, hint: _h, error, size: _sz, required, name, className: _c, ...rest }: any) => {
   const el = React.createElement('select', { id: rest.id ?? (label ? `f-${name}` : undefined), name, required, disabled: rest.disabled, title: rest.title, multiple: rest.multiple, value: value ?? '', onChange: (e: any) => { onChange?.(e); rest.onValueChange?.(e.target.value); }, 'aria-label': rest['aria-label'] ?? (label ? undefined : placeholder), 'data-testid': rest['data-testid'] },
@@ -182,14 +182,14 @@ export const DetailPageTemplate = (p: any) =>
     slot('rail', p.sidePanel));
 export const FormPageTemplate = (p: any) =>
   React.createElement('div', { 'data-template': 'form' },
-    React.createElement('header', { 'data-slot': 'header' }, React.createElement(Trail, p), React.createElement('h1', null, p.title)),
+    React.createElement('header', { 'data-slot': 'header' }, React.createElement(Trail, p), React.createElement('h1', null, p.title), p.description ? React.createElement('p', null, p.description) : null),
     (p.sections ?? []).map((sec: any) => React.createElement('section', { key: sec.id, 'data-slot': 'section' }, React.createElement('h2', null, sec.title), sec.content)),
     p.children,
     React.createElement('footer', { 'data-slot': 'footer' }, p.destructiveAction,
       p.onCancel ? React.createElement('button', { type: 'button', onClick: p.onCancel }, p.cancelLabel ?? 'Cancel') : null, p.secondaryAction, p.primaryAction));
 export const EmptyState = ({ title, description, action }: any) =>
   React.createElement('div', { 'data-testid': 'empty-state' }, React.createElement('p', null, title), description ? React.createElement('p', null, description) : null,
-    action ? (React.isValidElement(action) ? action : React.createElement('button', { onClick: (action as any).onClick }, (action as any).label)) : null);
+    action ? (React.isValidElement(action) ? action : React.createElement('button', { type: 'button', 'data-testid': (action as any)['data-testid'] ?? 'empty-state-action', onClick: (action as any).onClick }, (action as any).label)) : null);
 export const ConfirmDialog = ({ open, title, message, confirmLabel = 'Confirm', cancelLabel = 'Cancel', onConfirm, onCancel }: any) =>
   open ? React.createElement('div', { role: 'dialog' }, React.createElement('h2', null, title), React.createElement('p', null, message),
     React.createElement('button', { onClick: onCancel }, cancelLabel), React.createElement('button', { onClick: onConfirm }, confirmLabel)) : null;
@@ -214,7 +214,7 @@ export const SettingsPageTemplate = (p: any) =>
       React.createElement('button', { key: s.id, role: 'tab', 'aria-selected': s.id === p.activeSection, onClick: () => p.onSectionChange?.(s.id) }, s.label))),
     React.createElement('main', { 'data-slot': 'main' }, p.children));
 export const SettingsCard = (p: any) =>
-  React.createElement('section', null, p.title ? React.createElement('h2', null, p.title) : null, p.children);
+  React.createElement('section', null, p.title ? React.createElement('h2', null, p.title) : null, p.actions ? React.createElement('div', { 'data-slot': 'card-actions' }, p.actions) : null, p.children);
 const slugifyId = (v: string) => v.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 // Mirrors the real Menu: items render only while open; ids derive from `name`.
 export const Menu = ({ trigger, items = [], name, 'data-testid': testId }: any) => {
