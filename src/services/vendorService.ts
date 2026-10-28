@@ -119,6 +119,37 @@ class VendorService {
     async getVendorRating(vendorId: string) {
         return this.request(`/${vendorId}/rating`);
     }
+
+    // ── Vendor bank accounts (masked in every response; reveal is audited) ──
+    async listBankAccounts(vendorId: string, activeOnly = false) {
+        return this.request(`/${vendorId}/bank-accounts${activeOnly ? '?active=true' : ''}`);
+    }
+
+    async createBankAccount(vendorId: string, dto: Record<string, unknown>) {
+        return this.request(`/${vendorId}/bank-accounts`, {
+            method: 'POST',
+            body: JSON.stringify(dto),
+        });
+    }
+
+    async updateBankAccount(vendorId: string, accountId: string, dto: Record<string, unknown>) {
+        return this.request(`/${vendorId}/bank-accounts/${accountId}`, {
+            method: 'PATCH',
+            body: JSON.stringify(dto),
+        });
+    }
+
+    async bankAccountAction(
+        vendorId: string,
+        accountId: string,
+        action: 'deactivate' | 'set-primary' | 'verify' | 'reveal',
+        body: Record<string, unknown> = {},
+    ) {
+        return this.request(`/${vendorId}/bank-accounts/${accountId}/${action}`, {
+            method: 'POST',
+            body: JSON.stringify(body),
+        });
+    }
 }
 
 export const vendorService = new VendorService();

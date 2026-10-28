@@ -10,6 +10,7 @@ import { Modal } from '../../components/common/Modal';
 import { TableSkeleton } from '../../components/common/Skeleton';
 import { useAuth } from '../../hooks/useAuth';
 import { CreateInvoiceModal } from '../../components/vendors/CreateInvoiceModal';
+import { VendorBankAccountsSection } from '../../components/vendors/VendorBankAccountsSection';
 import { useActivity } from '@so360/shell-context';
 import { useInventoryFormatters } from '../../utils/formatters';
 
@@ -304,6 +305,8 @@ const VendorDetailPage = () => {
 
                 {/* Purchase Orders & Invoices */}
                 <div className="lg:col-span-2 space-y-6">
+                    {id && <VendorBankAccountsSection vendorId={id} />}
+
                     {/* Purchase Orders */}
                     <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
                         <div className="flex items-center gap-2 mb-6">

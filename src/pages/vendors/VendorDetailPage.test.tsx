@@ -32,6 +32,10 @@ vi.mock('../../components/common/Modal', () => ({
     isOpen ? <div data-testid="modal"><h3>{title}</h3>{children}</div> : null,
 }));
 
+// Bank Details section has its own BDD spec; stub it so this page spec stays focused.
+vi.mock('../../components/vendors/VendorBankAccountsSection', () => ({
+  VendorBankAccountsSection: ({ vendorId }: any) => <div data-testid="vendor-bank-section-stub" data-vendor={vendorId} />,
+}));
 vi.mock('../../components/common/Skeleton', () => ({
   TableSkeleton: () => <div data-testid="skeleton">Loading...</div>,
 }));
