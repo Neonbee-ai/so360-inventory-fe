@@ -4,8 +4,24 @@ import { vendorService } from '../../services/vendorService';
 import { Plus, Search, Trash2, Loader2, X, AlertCircle } from 'lucide-react';
 import { Modal } from '../../components/common/Modal';
 import { useAuth } from '../../hooks/useAuth';
-import { useShellBridge, useQuota, useSandboxLimit } from '@so360/shell-context';
+import { useShellBridge, useQuota, useSandboxLimit, useBusinessSettings } from '@so360/shell-context';
 import { QuotaBar, QuotaGate, FeatureGate } from '@so360/design-system';
+import { VendorBankAccountFields } from '../../components/vendors/VendorBankAccountFields';
+import {
+    VENDOR_BANK_PERMS, emptyBankForm, isVendorBankEnabled, toBankPayload, validateBankForm,
+    type BankFormErrors, type BankFormState,
+} from '../../utils/vendorBank';
+
+/** Optional bank step in the create-vendor form; mounted only when ticked. Defaults currency from org settings. */
+const NewVendorBankStep: React.FC<{ value: BankFormState; onChange: (v: BankFormState) => void; errors: BankFormErrors }> = ({ value, onChange, errors }) => {
+    const { settings } = useBusinessSettings();
+    const orgCurrency = settings?.base_currency;
+    useEffect(() => {
+        if (!value.currency && orgCurrency) onChange({ ...value, currency: orgCurrency.toUpperCase() });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [orgCurrency]);
+    return <VendorBankAccountFields value={value} onChange={onChange} errors={errors} showPrimaryToggle={false} />;
+};
 
 interface Vendor {
     id: string;
@@ -73,12 +89,39 @@ const VendorListPage = () => {
         }
     };
 
+    // Optional bank details on create (flag submodule:inventory:vendor_bank_details)
+    const canAddBank = isVendorBankEnabled(shell) && can(VENDOR_BANK_PERMS.MANAGE);
+    const [addBank, setAddBank] = useState(false);
+    const [bankForm, setBankForm] = useState<BankFormState>(emptyBankForm());
+    const [bankErrors, setBankErrors] = useState<BankFormErrors>({});
+    const [bankWarning, setBankWarning] = useState<string | null>(null);
+
     const handleCreateVendor = async (e: React.FormEvent) => {
         e.preventDefault();
+        const withBank = canAddBank && addBank;
+        if (withBank) {
+            const errs = validateBankForm(bankForm, 'create');
+            setBankErrors(errs);
+            if (Object.keys(errs).length) return;
+        }
         setIsCreating(true);
         setError(null);
         try {
-            await vendorService.createVendor(newVendor);
+            const created: any = await vendorService.createVendor(newVendor);
+            let bankFailed: string | null = null;
+            if (withBank) {
+                const vendorId = created?.id ?? created?.data?.id;
+                try {
+                    if (!vendorId) throw new Error('vendor id missing from response');
+                    await vendorService.createBankAccount(vendorId, { ...toBankPayload(bankForm, 'create'), is_primary: true });
+                } catch (bankErr: any) {
+                    bankFailed = bankErr?.message || 'unknown error';
+                }
+            }
+            setAddBank(false);
+            setBankForm(emptyBankForm());
+            setBankErrors({});
+            setBankWarning(bankFailed ? `Vendor created, but the bank account was not saved (${bankFailed}). Add it from the vendor profile.` : null);
             setShowCreateModal(false);
             setNewVendor({
                 name: '',
@@ -171,6 +214,16 @@ const VendorListPage = () => {
                     <AlertCircle size={18} />
                     <span>{error}</span>
                     <button onClick={() => setError(null)} className="ml-auto hover:text-rose-300">
+                        <X size={16} />
+                    </button>
+                </div>
+            )}
+
+            {bankWarning && (
+                <div className="bg-amber-500/10 border border-amber-500/20 text-amber-400 px-4 py-3 rounded-lg flex items-center gap-3">
+                    <AlertCircle size={18} />
+                    <span>{bankWarning}</span>
+                    <button onClick={() => setBankWarning(null)} className="ml-auto hover:text-amber-300">
                         <X size={16} />
                     </button>
                 </div>
@@ -373,6 +426,23 @@ const VendorListPage = () => {
                         />
                         <span className="text-sm text-slate-300 group-hover:text-slate-50 transition-colors">Mark as Preferred Vendor</span>
                     </label>
+
+                    {canAddBank && (
+                        <label className="flex items-center gap-2 cursor-pointer group">
+                            <input
+                                type="checkbox"
+                                name="add_bank_details"
+                                data-testid="create-vendor-add-bank"
+                                checked={addBank}
+                                onChange={(e) => setAddBank(e.target.checked)}
+                                className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-emerald-600 focus:ring-emerald-500/50"
+                            />
+                            <span className="text-sm text-slate-300 group-hover:text-slate-50 transition-colors">Add bank details now</span>
+                        </label>
+                    )}
+                    {canAddBank && addBank && (
+                        <NewVendorBankStep value={bankForm} onChange={setBankForm} errors={bankErrors} />
+                    )}
 
                     <div className="flex gap-3 mt-8">
                         <button
