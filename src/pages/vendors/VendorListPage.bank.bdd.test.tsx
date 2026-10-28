@@ -97,7 +97,7 @@ describe('VendorListPage — bank details on create', () => {
       type('bank_account_holder', 'New Vendor LLC'); type('bank_name', 'Emirates NBD');
       type('bank_account_number', '12345');
       submit();
-      await waitFor(() => expect(screen.getByText(/9.?18 digits/i)).toBeInTheDocument());
+      await waitFor(() => expect(screen.getByText(/Account number must be 9.?18 digits/i)).toBeInTheDocument());
       expect(mockCreateVendor).not.toHaveBeenCalled();
       expect(mockCreateBank).not.toHaveBeenCalled();
     });

@@ -222,6 +222,8 @@ const VendorListPage = () => {
 
     return (
         <>
+            {/* Outside the template: the empty state replaces its children. */}
+            {bankWarning && <Alert variant="warning" onDismiss={() => setBankWarning(null)}>{bankWarning}</Alert>}
             <ListPageTemplate trail={[]}
                 title="Vendors & Subcontractors"
                 description="Manage supply chain partners and commercial contracts."
@@ -271,7 +273,6 @@ const VendorListPage = () => {
                 )}
 
                 {error && <Alert variant="error" onDismiss={() => setError(null)}>{error}</Alert>}
-                {bankWarning && <Alert variant="warning" onDismiss={() => setBankWarning(null)}>{bankWarning}</Alert>}
                 {successMessage && <Alert variant="success">{successMessage}</Alert>}
 
                 {isSandboxMode && isLimited(filteredVendors.length) && (
