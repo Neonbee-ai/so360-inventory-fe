@@ -209,7 +209,7 @@ describe('VendorBankAccountsSection', () => {
         it('When deactivate is confirmed / Then the deactivate action runs and the list reloads', async () => {
             render(<VendorBankAccountsSection vendorId="v1" />);
             fireEvent.click(await screen.findByTestId('bank-deactivate-a1'));
-            fireEvent.click(await screen.findByRole('button', { name: 'Deactivate' , hidden: false }));
+            fireEvent.click((await screen.findAllByRole('button', { name: 'Deactivate' })).at(-1)!);
             await waitFor(() => expect(mockAction).toHaveBeenCalledWith('v1', 'a1', 'deactivate'));
             expect(await screen.findByText('Bank account deactivated.')).toBeInTheDocument();
         });
@@ -248,7 +248,7 @@ describe('VendorBankAccountsSection', () => {
             fireEvent.click(await screen.findByTestId('bank-reveal-a1'));
             vi.useFakeTimers({ shouldAdvanceTime: true });
             try {
-                fireEvent.click(await screen.findByRole('button', { name: 'Reveal' }));
+                fireEvent.click((await screen.findAllByRole('button', { name: 'Reveal' })).at(-1)!);
                 expect(await screen.findByTestId('bank-revealed')).toHaveTextContent('123456789012');
                 expect(mockAction).toHaveBeenCalledWith('v1', 'a1', 'reveal');
                 await act(async () => { vi.advanceTimersByTime(30_001); });
@@ -261,7 +261,7 @@ describe('VendorBankAccountsSection', () => {
             mockAction.mockRejectedValue(new Error('Forbidden'));
             render(<VendorBankAccountsSection vendorId="v1" />);
             fireEvent.click(await screen.findByTestId('bank-reveal-a1'));
-            fireEvent.click(await screen.findByRole('button', { name: 'Reveal' }));
+            fireEvent.click((await screen.findAllByRole('button', { name: 'Reveal' })).at(-1)!);
             expect(await screen.findByText('Forbidden')).toBeInTheDocument();
             expect(screen.queryByTestId('bank-revealed')).not.toBeInTheDocument();
         });
