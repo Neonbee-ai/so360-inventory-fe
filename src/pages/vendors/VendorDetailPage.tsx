@@ -9,6 +9,7 @@ import { vendorService } from '../../services/vendorService';
 import { TableSkeleton } from '../../components/common/Skeleton';
 import { useAuth } from '../../hooks/useAuth';
 import { CreateInvoiceModal } from '../../components/vendors/CreateInvoiceModal';
+import { VendorBankAccountsSection } from '../../components/vendors/VendorBankAccountsSection';
 import { useActivity } from '@so360/shell-context';
 import { useInventoryFormatters } from '../../utils/formatters';
 
@@ -257,6 +258,8 @@ const VendorDetailPage = () => {
                 ] : undefined}
             >
                 <div className="flex flex-col gap-nb-4">
+                        {id && <VendorBankAccountsSection vendorId={id} />}
+
                         <Card title="Purchase orders">
                             <DataTable
                                 data-testid="vendor-pos-table"

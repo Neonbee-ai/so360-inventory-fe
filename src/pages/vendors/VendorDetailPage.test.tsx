@@ -27,6 +27,10 @@ vi.mock('../../hooks/useAuth', () => ({
   useAuth: () => ({ can: mockCanVendorDetail }),
 }));
 
+// Bank Details section has its own BDD spec; stub it so this page spec stays focused.
+vi.mock('../../components/vendors/VendorBankAccountsSection', () => ({
+  VendorBankAccountsSection: ({ vendorId }: any) => <div data-testid="vendor-bank-section-stub" data-vendor={vendorId} />,
+}));
 vi.mock('../../components/common/Skeleton', () => ({
   TableSkeleton: () => <div data-testid="skeleton">Loading...</div>,
 }));

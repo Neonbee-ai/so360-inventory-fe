@@ -56,6 +56,10 @@ vi.mock('react-router-dom', () => ({
   useParams: () => ({ id: 'vendor-123' }),
 }));
 
+// Bank Details section has its own BDD spec (components/vendors/__tests__).
+vi.mock('../../../components/vendors/VendorBankAccountsSection', () => ({
+  VendorBankAccountsSection: () => null,
+}));
 vi.mock('../../../hooks/useAuth', () => ({
   useAuth: () => ({ can: () => true }),
 }));

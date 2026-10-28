@@ -17,6 +17,10 @@ vi.mock('../../services/vendorService', () => ({
 }));
 vi.mock('react-router-dom', () => ({ useParams: () => ({ id: 'vendor-1' }), useNavigate: () => mockNavigate }));
 vi.mock('../../hooks/useAuth', () => ({ useAuth: () => ({ can: mockCan }) }));
+// Bank Details section has its own BDD spec; stub it so this page spec stays focused.
+vi.mock('../../components/vendors/VendorBankAccountsSection', () => ({
+  VendorBankAccountsSection: ({ vendorId }: any) => <div data-testid="vendor-bank-section-stub" data-vendor={vendorId} />,
+}));
 vi.mock('../../components/vendors/CreateInvoiceModal', () => ({
   CreateInvoiceModal: ({ isOpen }: any) => (isOpen ? <div data-testid="invoice-modal" /> : null),
 }));
@@ -45,6 +49,11 @@ describe('VendorDetailPage (Comb)', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Acme Corp' })).toBeInTheDocument();
     expect(container.querySelector('[data-template="detail"]')).toBeInTheDocument();
     expect(screen.getByText('Preferred')).toBeInTheDocument();
+  });
+
+  it('Given a loaded vendor / When the page renders / Then the Bank Details section is mounted for that vendor', async () => {
+    render(<VendorDetailPage />);
+    expect(await screen.findByTestId('vendor-bank-section-stub')).toHaveAttribute('data-vendor', 'vendor-1');
   });
 
   it('Given a pending request / When loading / Then the template shows a loading state without vendor content', () => {
