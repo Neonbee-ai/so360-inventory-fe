@@ -12,7 +12,7 @@ import { inventoryService } from '../services/inventoryService';
 import { Item, StockMovement, Unit, ItemCategory, Warehouse } from '../types/inventory';
 import { TabId, ITEM_CLASSIFICATIONS, ItemClassification } from '../types/itemTypes';
 import {
-    DetailPageTemplate, DataTable, Button, Modal, Alert, Badge, EmptyState, Tabs, Grid, FieldGrid,
+    DetailPageTemplate, DataTable, Button, Modal, Alert, Badge, EmptyState, Grid, FieldGrid,
     type DataTableColumn,
 } from '@so360/design-system';
 import { useAuth } from '../hooks/useAuth';
@@ -76,6 +76,18 @@ interface EditFormData {
 }
 
 // ── Main Component ────────────────────────────────────
+const VIEW_TABS: { id: ViewTabId; label: string; icon: React.ReactNode }[] = [
+    { id: 'basic', label: 'Basic Info', icon: <Package size={14} /> },
+    { id: 'media', label: 'Media', icon: <ImageIcon size={14} /> },
+    { id: 'pricing', label: 'Pricing', icon: <DollarSign size={14} /> },
+    { id: 'category', label: 'Category', icon: <Tag size={14} /> },
+    { id: 'stock', label: 'Stock', icon: <BarChart3 size={14} /> },
+    { id: 'shipping', label: 'Shipping', icon: <Truck size={14} /> },
+    { id: 'attributes', label: 'Attributes', icon: <Sliders size={14} /> },
+    { id: 'ledger', label: 'Ledger', icon: <History size={14} /> },
+    { id: 'sales', label: 'Sales History', icon: <TrendingUp size={14} /> },
+];
+
 const ItemDetailPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -462,6 +474,10 @@ const ItemDetailPage = () => {
                 overflowActions={!isEditing && can('items.delete')
                     ? [{ label: 'Delete', danger: true, onSelect: () => setShowDeleteConfirm(true) }]
                     : undefined}
+                tabs={isEditing ? undefined : VIEW_TABS}
+                activeTab={viewTab}
+                onTabChange={(id: string) => setViewTab(id as ViewTabId)}
+                maxVisible={VIEW_TABS.length}
             >
             {error && <Alert variant="error" action={{ label: 'Dismiss', onClick: () => setError(null) }}>{error}</Alert>}
             {taxCodesError && <Alert variant="warning">{taxCodesError}</Alert>}
@@ -682,22 +698,6 @@ const ItemDetailPage = () => {
                                 </div>
                             </Grid>
                             <div className="bg-surface/50 border border-line rounded-xl">
-                                {/* View Tab Bar — 8 tabs */}
-                                <Tabs
-                                    items={[
-                                        { id: 'basic' as ViewTabId, label: 'Basic Info', icon: <Package size={14} /> },
-                                        { id: 'media' as ViewTabId, label: 'Media', icon: <ImageIcon size={14} /> },
-                                        { id: 'pricing' as ViewTabId, label: 'Pricing', icon: <DollarSign size={14} /> },
-                                        { id: 'category' as ViewTabId, label: 'Category', icon: <Tag size={14} /> },
-                                        { id: 'stock' as ViewTabId, label: 'Stock', icon: <BarChart3 size={14} /> },
-                                        { id: 'shipping' as ViewTabId, label: 'Shipping', icon: <Truck size={14} /> },
-                                        { id: 'attributes' as ViewTabId, label: 'Attributes', icon: <Sliders size={14} /> },
-                                        { id: 'ledger' as ViewTabId, label: 'Ledger', icon: <History size={14} /> },
-                                        { id: 'sales' as ViewTabId, label: 'Sales History', icon: <TrendingUp size={14} /> },
-                                    ]}
-                                    value={viewTab}
-                                    onChange={(id: string) => setViewTab(id as ViewTabId)}
-                                />
 
                                 {/* View Tab Content */}
                                 <div className="p-6 min-h-[24rem]">
