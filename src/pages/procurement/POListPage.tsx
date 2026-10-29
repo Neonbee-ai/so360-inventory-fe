@@ -377,7 +377,7 @@ const POListPage = () => {
                         </FeatureGate>
                     </div>
                 }
-                loading={loading}
+                loading={loading && pos.length === 0}
                 isEmpty={!loading && !fetchError && !showPrMenu && pos.length === 0}
                 empty={<>{renderNotice(vendorNotice)}<EmptyState title="No purchase orders found." /></>}
             >

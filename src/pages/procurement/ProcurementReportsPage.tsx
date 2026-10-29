@@ -136,7 +136,7 @@ const ProcurementReportsPage = () => {
                 onChange: handleFilterChange,
                 onClear: () => { setSearchTerm(''); setRange({ from: '', to: '' }); run({ from: '', to: '' }); },
             }}
-            loading={loading}
+            loading={loading && rows.length === 0}
             isEmpty={!loading && !error && visibleRows.length === 0}
             empty={<EmptyState title="No rows for this report." />}
         >
@@ -147,7 +147,7 @@ const ProcurementReportsPage = () => {
                     columns={columns}
                     rows={visibleRows}
                     rowKey={(_row: any) => String(visibleRows.indexOf(_row))}
-                    loading={loading}
+                    loading={loading && rows.length === 0}
                 />
             </div>
         </ListPageTemplate>
