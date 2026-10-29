@@ -180,6 +180,21 @@ describe('VendorListPage', () => {
     });
   });
 
+  describe('Given the list endpoint is stale right after create (r282)', () => {
+    it('When a vendor is created and the refetch omits it / Then it is still listed and searchable', async () => {
+      mockCreateVendor.mockResolvedValue({ id: 'vendor-new', name: 'Fresh Vendor Co' });
+      render(<VendorListPage />);
+      await waitFor(() => screen.getByText('Add Vendor'));
+      fireEvent.click(screen.getByText('Add Vendor'));
+      await waitFor(() => screen.getByRole('dialog'));
+      fireEvent.change(screen.getByPlaceholderText('Company name'), { target: { value: 'Fresh Vendor Co' } });
+      fireEvent.click(screen.getByText('Add Vendor', { selector: 'button[type="submit"]' }));
+      await waitFor(() => expect(screen.getByText('Fresh Vendor Co')).toBeInTheDocument());
+      fireEvent.change(screen.getByPlaceholderText('Search vendors...'), { target: { value: 'Fresh' } });
+      expect(screen.getByText('Fresh Vendor Co')).toBeInTheDocument();
+    });
+  });
+
   describe('Given fetch error', () => {
     it('When getVendors fails / Then shows error message', async () => {
       mockGetVendors.mockRejectedValue(new Error('Failed to fetch vendors'));
