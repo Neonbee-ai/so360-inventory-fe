@@ -417,7 +417,7 @@ const ItemDetailPage = () => {
             render: (entry: StockMovement) => {
                 const getIcon = () => {
                     if (entry.type === 'inbound' || (entry.type === 'adjustment' && entry.quantity > 0)) return <ArrowDownLeft size={14} className="text-success" />;
-                    if (entry.type === 'outbound' || (entry.type === 'adjustment' && entry.quantity < 0)) return <ArrowUpRight size={14} className="text-rose-400" />;
+                    if (entry.type === 'outbound' || (entry.type === 'adjustment' && entry.quantity < 0)) return <ArrowUpRight size={14} className="text-danger" />;
                     return <ArrowRightLeft size={14} className="text-primary" />;
                 };
                 return (
@@ -432,7 +432,7 @@ const ItemDetailPage = () => {
             key: 'quantity',
             header: 'Quantity',
             render: (entry: StockMovement) => (
-                <span className={`font-bold ${entry.quantity > 0 ? 'text-success' : 'text-rose-400'}`}>
+                <span className={`font-bold ${entry.quantity > 0 ? 'text-success' : 'text-danger'}`}>
                     {entry.quantity > 0 ? '+' : ''}{entry.quantity}
                 </span>
             )
@@ -570,18 +570,18 @@ const ItemDetailPage = () => {
                                     <div className="absolute -right-3 -bottom-3 opacity-10">
                                         <Package size={80} />
                                     </div>
-                                    <span className="text-primary text-[10px] font-bold">Physical stock</span>
+                                    <span className="text-primary text-nb-overline font-bold">Physical stock</span>
                                     <div className="text-4xl font-black mt-2 flex items-baseline gap-1.5">
                                         {totalStock}
                                         <span className="text-nb-sm font-normal text-primary">{item.units?.abbreviation || 'PCS'}</span>
                                     </div>
-                                    <p className="mt-3 text-[10px] text-primary flex items-center gap-1.5 bg-primary/30 w-fit px-2 py-1 rounded-lg">
+                                    <p className="mt-3 text-nb-overline text-primary flex items-center gap-1.5 bg-primary/30 w-fit px-2 py-1 rounded-lg">
                                         <Info size={11} /> Real-time count
                                     </p>
                                 </div>
                                 {/* Card 2: Stock Thresholds */}
                                 <div className="bg-surface/50 border border-line rounded-2xl p-5 hover:border-line-strong transition-colors">
-                                    <h3 className="text-[10px] font-bold text-fg-muted mb-3">Stock thresholds</h3>
+                                    <h3 className="text-nb-overline font-bold text-fg-muted mb-3">Stock thresholds</h3>
                                     {(item.min_stock_threshold != null || item.reorder_level != null) ? (
                                         <div className="space-y-2">
                                             {item.min_stock_threshold != null && (
@@ -605,7 +605,7 @@ const ItemDetailPage = () => {
                                             {item.min_stock_threshold != null && totalStock < item.min_stock_threshold && (
                                                 <div className="mt-2 p-2 bg-warning/10 border border-warning/20 rounded-lg flex items-center gap-1.5">
                                                     <AlertTriangle size={12} className="text-warning flex-shrink-0" />
-                                                    <span className="text-[10px] text-warning font-medium">Below minimum!</span>
+                                                    <span className="text-nb-overline text-warning font-medium">Below minimum!</span>
                                                 </div>
                                             )}
                                         </div>
@@ -627,7 +627,7 @@ const ItemDetailPage = () => {
                             </Grid>
                             <div className="bg-surface/50 border border-line rounded-xl ring-1 ring-focus/20">
                                 <TabNavigation activeTab={editTab} onTabChange={setEditTab} tabErrors={tabErrors} />
-                                <div className="p-6 min-h-[24rem]">
+                                <div className="p-6 min-h-96">
                                     {renderEditTab()}
                                 </div>
                             </div>
@@ -642,18 +642,18 @@ const ItemDetailPage = () => {
                                     <div className="absolute -right-3 -bottom-3 opacity-10">
                                         <Package size={80} />
                                     </div>
-                                    <span className="text-primary text-[10px] font-bold">Physical stock</span>
+                                    <span className="text-primary text-nb-overline font-bold">Physical stock</span>
                                     <div className="text-4xl font-black mt-2 flex items-baseline gap-1.5">
                                         {totalStock}
                                         <span className="text-nb-sm font-normal text-primary">{item.units?.abbreviation || 'PCS'}</span>
                                     </div>
-                                    <p className="mt-3 text-[10px] text-primary flex items-center gap-1.5 bg-primary/30 w-fit px-2 py-1 rounded-lg">
+                                    <p className="mt-3 text-nb-overline text-primary flex items-center gap-1.5 bg-primary/30 w-fit px-2 py-1 rounded-lg">
                                         <Info size={11} /> Real-time count
                                     </p>
                                 </div>
                                 {/* Card 2: Stock Thresholds */}
                                 <div className="bg-surface/50 border border-line rounded-2xl p-5 hover:border-line-strong transition-colors">
-                                    <h3 className="text-[10px] font-bold text-fg-muted mb-3">Stock thresholds</h3>
+                                    <h3 className="text-nb-overline font-bold text-fg-muted mb-3">Stock thresholds</h3>
                                     {(item.min_stock_threshold != null || item.reorder_level != null) ? (
                                         <div className="space-y-2">
                                             {item.min_stock_threshold != null && (
@@ -677,7 +677,7 @@ const ItemDetailPage = () => {
                                             {item.min_stock_threshold != null && totalStock < item.min_stock_threshold && (
                                                 <div className="mt-2 p-2 bg-warning/10 border border-warning/20 rounded-lg flex items-center gap-1.5">
                                                     <AlertTriangle size={12} className="text-warning flex-shrink-0" />
-                                                    <span className="text-[10px] text-warning font-medium">Below minimum!</span>
+                                                    <span className="text-nb-overline text-warning font-medium">Below minimum!</span>
                                                 </div>
                                             )}
                                         </div>
@@ -700,7 +700,7 @@ const ItemDetailPage = () => {
                             <div className="bg-surface/50 border border-line rounded-xl">
 
                                 {/* View Tab Content */}
-                                <div className="p-6 min-h-[24rem]">
+                                <div className="p-6 min-h-96">
                                     {/* ── Basic Info ── */}
                                     {viewTab === 'basic' && (
                                         <div className="space-y-8">
@@ -746,7 +746,7 @@ const ItemDetailPage = () => {
                                             </FormSection>
 
                                             <FormSection title="Description">
-                                                <div className="w-full bg-surface-raised/50 border border-line-strong/50 rounded-lg px-4 py-2.5 text-sm min-h-[80px]">
+                                                <div className="w-full bg-surface-raised/50 border border-line-strong/50 rounded-lg px-4 py-2.5 text-sm min-h-20">
                                                     {item.description?.trim() ? (
                                                         <p className="text-fg whitespace-pre-wrap leading-relaxed">{item.description}</p>
                                                     ) : (
@@ -940,7 +940,7 @@ const ItemDetailPage = () => {
                                                     <History size={20} className="text-primary" />
                                                     <h2 className="text-lg font-semibold text-fg">Movement Ledger</h2>
                                                 </div>
-                                                <span className="text-[10px] text-fg-subtle border border-line px-3 py-1 rounded-full font-bold">
+                                                <span className="text-nb-overline text-fg-subtle border border-line px-3 py-1 rounded-full font-bold">
                                                     Audit Trail
                                                 </span>
                                             </div>
@@ -966,7 +966,7 @@ const ItemDetailPage = () => {
                                                 <div className="bg-surface/50 border border-line rounded-xl p-5">
                                                     <div className="flex items-center gap-2 text-fg-subtle mb-2">
                                                         <BarChart3 size={14} />
-                                                        <span className="text-[10px] font-black">Total Quantity Sold</span>
+                                                        <span className="text-nb-overline font-black">Total Quantity Sold</span>
                                                     </div>
                                                     <div className="text-2xl font-bold text-fg">
                                                         {salesHistory?.total_quantity_sold ?? 0}
@@ -975,7 +975,7 @@ const ItemDetailPage = () => {
                                                 <div className="bg-surface/50 border border-line rounded-xl p-5">
                                                     <div className="flex items-center gap-2 text-fg-subtle mb-2">
                                                         <FileText size={14} />
-                                                        <span className="text-[10px] font-black">Invoices Used In</span>
+                                                        <span className="text-nb-overline font-black">Invoices Used In</span>
                                                     </div>
                                                     <div className="text-2xl font-bold text-fg">
                                                         {salesHistory?.invoice_count ?? 0}
@@ -983,18 +983,18 @@ const ItemDetailPage = () => {
                                                 </div>
                                             </Grid>
 
-                                            <h3 className="text-[10px] font-black text-fg-subtle mb-3">Recent outbound movements</h3>
+                                            <h3 className="text-nb-overline font-black text-fg-subtle mb-3">Recent outbound movements</h3>
                                             {salesHistory && salesHistory.recent_movements.length > 0 ? (
                                                 <div className="border border-line rounded-xl divide-y divide-line overflow-hidden">
                                                     {salesHistory.recent_movements.map((m: any, idx: number) => (
                                                         <div key={m.id || idx} className="flex items-center justify-between px-4 py-3 bg-surface/30">
                                                             <div className="flex items-center gap-3 min-w-0">
-                                                                <ArrowUpRight size={16} className="text-rose-400 flex-shrink-0" />
+                                                                <ArrowUpRight size={16} className="text-danger flex-shrink-0" />
                                                                 <div className="min-w-0">
                                                                     <div className="text-xs text-fg truncate">
                                                                         {m.metadata?.note || (m.reference_id ? `Order ${m.reference_id}` : 'Outbound movement')}
                                                                     </div>
-                                                                    <div className="text-[11px] text-fg-subtle">
+                                                                    <div className="text-nb-overline text-fg-subtle">
                                                                         {m.created_at ? parseUtcDate(m.created_at).toLocaleString() : ''}
                                                                     </div>
                                                                 </div>
@@ -1105,7 +1105,7 @@ function initEditForm(item: Item): EditFormData {
 const ReadOnlyField = ({ label, value, mono }: { label: string; value: React.ReactNode; mono?: boolean }) => (
     <div>
         <span className="block text-sm font-medium text-fg-muted mb-1.5">{label}</span>
-        <div className={`w-full bg-surface-raised/50 border border-line-strong/50 rounded-lg px-4 py-2.5 text-sm min-h-[42px] flex items-center ${
+        <div className={`w-full bg-surface-raised/50 border border-line-strong/50 rounded-lg px-4 py-2.5 text-sm min-h-10 flex items-center ${
             mono ? 'font-mono text-fg-muted' : 'text-fg'
         }`}>
             {value || <span className="text-fg-subtle">&mdash;</span>}
@@ -1125,7 +1125,7 @@ const StatusPill = ({ label, active }: { label: string; active: boolean }) => (
         active ? 'bg-success/10 text-success border-success/20'
                : 'bg-surface-raised/50 text-fg-subtle border-line-strong'
     }`}>
-        <span className={`w-2 h-2 rounded-full ${active ? 'bg-emerald-400' : 'bg-surface-high'}`} />
+        <span className={`w-2 h-2 rounded-full ${active ? 'bg-success' : 'bg-surface-high'}`} />
         {label}: {active ? 'Yes' : 'No'}
     </div>
 );

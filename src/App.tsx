@@ -49,7 +49,7 @@ import { mediaService } from './services/mediaService';
 const UpgradeLocked = () => {
     const navigate = useNavigate();
     return (
-        <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4 text-center px-4">
+        <div className="flex flex-col items-center justify-center min-h-64 gap-4 text-center px-4">
             <h2 className="text-lg font-bold text-fg-muted">This feature is part of a higher plan</h2>
             <p className="text-fg-subtle text-sm max-w-md">Upgrade your plan to unlock it.</p>
             <Button type="button" variant="primary" onClick={() => navigate('/org/billing')}>Upgrade plan</Button>
@@ -59,7 +59,7 @@ const UpgradeLocked = () => {
 
 /** Shown when a submodule is `disabled` — turned off, no upgrade path. */
 const FeatureUnavailable = () => (
-    <div className="flex flex-col items-center justify-center min-h-[40vh] gap-3 text-center px-4">
+    <div className="flex flex-col items-center justify-center min-h-64 gap-3 text-center px-4">
         <h2 className="text-lg font-bold text-fg-muted">Feature Not Available</h2>
         <p className="text-fg-subtle text-sm max-w-md">This feature is not available for your organization. Contact your administrator.</p>
     </div>
@@ -138,7 +138,7 @@ const MfeShellInitializer = ({ children }: { children: React.ReactNode }) => {
 
     if (!isSynced) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+            <div className="flex flex-col items-center justify-center min-h-96 gap-4">
                 <div className="w-12 h-12 border-4 border-primary/10 border-t-primary rounded-full animate-spin"></div>
                 <div className="text-fg-subtle font-medium animate-pulse text-sm">Connecting to shell...</div>
             </div>
@@ -156,7 +156,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
             <MfeShellInitializer>
                 <main className="w-full">
                     <Suspense fallback={
-                        <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+                        <div className="flex flex-col items-center justify-center min-h-96 gap-4">
                             <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
                             <div className="text-fg-subtle font-medium animate-pulse text-sm">Loading Inventory Module...</div>
                         </div>

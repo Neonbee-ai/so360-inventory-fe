@@ -44,12 +44,12 @@ const PreviewTableStep: React.FC<Props> = ({ rows, onConfirm, onBack }) => {
 
     const columns: DataTableColumn<ParsedRow>[] = [
         { key: 'row_index', header: '#' },
-        { key: 'name', header: 'Name', render: (row) => <span className="font-medium text-fg max-w-[150px] truncate block">{row.data.name || '—'}</span> },
+        { key: 'name', header: 'Name', render: (row) => <span className="font-medium text-fg max-w-36 truncate block">{row.data.name || '—'}</span> },
         { key: 'sku', header: 'SKU', render: () => <span className="text-fg-subtle italic">Auto-generated</span> },
         { key: 'type', header: 'Type', render: (row) => <span className="capitalize">{row.data.type || '—'}</span> },
-        { key: 'category_name', header: 'Category', render: (row) => <span className="max-w-[100px] truncate block">{row.data.category_name || '—'}</span> },
+        { key: 'category_name', header: 'Category', render: (row) => <span className="max-w-24 truncate block">{row.data.category_name || '—'}</span> },
         { key: 'price', header: 'Price', render: (row) => (row.data.price != null ? `${row.data.price}` : '—') },
-        { key: 'description', header: 'Description', render: (row) => <span className="max-w-[220px] truncate block" title={row.data.description || undefined}>{row.data.description || '—'}</span> },
+        { key: 'description', header: 'Description', render: (row) => <span className="max-w-56 truncate block" title={row.data.description || undefined}>{row.data.description || '—'}</span> },
         { key: 'product_status', header: 'Status', render: (row) => <span className="capitalize">{row.data.product_status || '—'}</span> },
         {
             key: 'image',
@@ -67,7 +67,7 @@ const PreviewTableStep: React.FC<Props> = ({ rows, onConfirm, onBack }) => {
             key: 'issues',
             header: 'Issues',
             render: (row) => (
-                <div className="max-w-[200px]">
+                <div className="max-w-48">
                     {row.errors.map((e, i) => <span key={`e${i}`} className="block text-danger">{e}</span>)}
                     {row.warnings.map((w, i) => <span key={`w${i}`} className="block text-warning">{w}</span>)}
                 </div>

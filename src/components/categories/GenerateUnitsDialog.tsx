@@ -185,7 +185,7 @@ export const GenerateUnitsDialog: React.FC<GenerateUnitsDialogProps> = ({ isOpen
                                 <span className="text-fg-subtle ml-2">({examples.join(' … ')})</span>
                             )}
                             {tooMany && (
-                                <span className="block text-[11px] text-danger">At most {MAX_UNITS_PER_RUN} units per run</span>
+                                <span className="block text-nb-overline text-danger">At most {MAX_UNITS_PER_RUN} units per run</span>
                             )}
                             {error && <Alert variant="error">{error}</Alert>}
                         </div>

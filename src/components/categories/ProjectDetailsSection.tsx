@@ -215,7 +215,7 @@ export const ProjectDetailsSection: React.FC<ProjectDetailsSectionProps> = ({ va
                         <label className={`flex items-center gap-2 text-sm text-fg-muted bg-surface-raised border border-dashed border-line-strong rounded-lg px-3 py-2 ${disabled ? 'opacity-50' : 'cursor-pointer hover:border-primary'}`}>
                             {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
                             {uploading ? 'Uploading…' : 'Upload PDF'}
-                            <input
+                            <input // comb-exception: hidden native file input behind the upload label
                                 ref={fileRef}
                                 data-testid="brochure-input"
                                 type="file"

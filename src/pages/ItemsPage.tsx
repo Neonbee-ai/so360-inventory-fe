@@ -119,6 +119,7 @@ const ItemsPage = () => {
 
     return (
         <ListPageTemplate
+            trail={[]}
             title="Items"
             description="Manage physical products and trackable assets"
             headerSecondaryActions={importAllowed ? [

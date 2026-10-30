@@ -8,12 +8,12 @@ export type TraceDocType = 'pr' | 'rfq' | 'po' | 'grn' | 'inspection' | 'invoice
 
 const TYPE_META: Record<string, { label: string; icon: string; className: string }> = {
     pr: { label: 'Requisition', icon: '📋', className: 'border-primary/30 bg-primary/5' },
-    rfq: { label: 'RFQ', icon: '📨', className: 'border-cyan-500/30 bg-cyan-500/5' },
+    rfq: { label: 'RFQ', icon: '📨', className: 'border-info/30 bg-info/5' },
     po: { label: 'Purchase Order', icon: '📄', className: 'border-primary/30 bg-primary/5' },
-    grn: { label: 'Goods Receipt', icon: '📦', className: 'border-violet-500/30 bg-violet-500/5' },
+    grn: { label: 'Goods Receipt', icon: '📦', className: 'border-accent/30 bg-accent/5' },
     inspection: { label: 'Inspection', icon: '🔍', className: 'border-warning/30 bg-warning/5' },
     invoice: { label: 'Invoice', icon: '🧾', className: 'border-success/30 bg-success/5' },
-    return: { label: 'Return', icon: '↩️', className: 'border-rose-500/30 bg-rose-500/5' },
+    return: { label: 'Return', icon: '↩️', className: 'border-danger/30 bg-danger/5' },
 };
 
 /**
@@ -68,20 +68,20 @@ const ProcurementTrace: React.FC<{ type: TraceDocType; id: string }> = ({ type, 
                             <span className="text-lg">{meta.icon}</span>
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2">
-                                    <span className="text-[10px] font-bold text-fg-subtle">{meta.label}</span>
+                                    <span className="text-nb-overline font-bold text-fg-subtle">{meta.label}</span>
                                     {isFocus && (
-                                        <span className="text-[9px] font-bold text-fg-muted">You are here</span>
+                                        <span className="text-nb-overline font-bold text-fg-muted">You are here</span>
                                     )}
                                 </div>
                                 <div className="text-sm text-fg truncate">{node.label}</div>
-                                {node.title && <div className="text-[10px] text-fg-subtle truncate">{node.title}</div>}
+                                {node.title && <div className="text-nb-overline text-fg-subtle truncate">{node.title}</div>}
                             </div>
                             <div className="text-right shrink-0">
                                 {node.amount != null && (
                                     <div className="text-sm font-bold text-fg">{formatters.formatCurrency(node.amount)}</div>
                                 )}
-                                <div className="text-[10px] text-fg-subtle">{node.status}</div>
-                                {node.date && <div className="text-[10px] text-fg-subtle">{formatters.formatDate(node.date)}</div>}
+                                <div className="text-nb-overline text-fg-subtle">{node.status}</div>
+                                {node.date && <div className="text-nb-overline text-fg-subtle">{formatters.formatDate(node.date)}</div>}
                             </div>
                         </Button>
                     );

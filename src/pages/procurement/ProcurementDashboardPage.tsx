@@ -184,7 +184,7 @@ const ProcurementDashboardPage = () => {
                                     {vendors.map((row: any) => (
                                         <div key={row.vendor_id}>
                                             <div className="mb-1 flex justify-between text-sm">
-                                                <span className="max-w-[60%] truncate text-fg-muted">{row.vendor_name || row.vendor_id.slice(0, 8)}</span>
+                                                <span className="max-w-3/5 truncate text-fg-muted">{row.vendor_name || row.vendor_id.slice(0, 8)}</span>
                                                 <span className="font-semibold text-fg">{formatters.formatCurrency(row.amount)}</span>
                                             </div>
                                             <Progress value={Math.max(2, (row.amount / topVendor) * 100)} />

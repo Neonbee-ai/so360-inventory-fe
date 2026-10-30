@@ -26,7 +26,7 @@ const ImageThumbnail: React.FC<ImageThumbnailProps> = ({ url, isLoading, error, 
             ) : error ? (
                 <div className="w-full h-full flex flex-col items-center justify-center p-2">
                     <AlertCircle size={16} className="text-danger mb-1" />
-                    <span className="text-[10px] text-danger text-center leading-tight">Failed</span>
+                    <span className="text-nb-overline text-danger text-center leading-tight">Failed</span>
                 </div>
             ) : (
                 <img
@@ -48,7 +48,7 @@ const ImageThumbnail: React.FC<ImageThumbnailProps> = ({ url, isLoading, error, 
                 <div
                     data-testid="image-size-badge"
                     title={assessment.ok ? 'Good fit for store product cards' : assessment.issues.join('\n')}
-                    className={`absolute bottom-0 inset-x-0 px-1 py-0.5 text-[9px] leading-tight text-center truncate ${
+                    className={`absolute bottom-0 inset-x-0 px-1 py-0.5 text-nb-overline leading-tight text-center truncate ${
                         assessment.ok ? 'bg-surface/80 text-fg-muted' : 'bg-warning/90 text-primary-fg font-medium'
                     }`}
                 >

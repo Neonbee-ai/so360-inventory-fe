@@ -588,7 +588,7 @@ const StockMovementRegisterPage = () => {
                 return (
                     <span
                         data-testid="movement-type-badge"
-                        className={`inline-block text-[10px] font-bold tracking-wider px-2 py-1 rounded border ${badge.className}`}
+                        className={`inline-block text-nb-overline font-bold tracking-wider px-2 py-1 rounded border ${badge.className}`}
                     >
                         {badge.label}
                     </span>
@@ -699,7 +699,7 @@ const StockMovementRegisterPage = () => {
             render: (m: StockMovement) => {
                 const reason = reasonLabel(m.reason_code);
                 return (
-                    <div className="flex flex-col text-xs max-w-[220px]">
+                    <div className="flex flex-col text-xs max-w-56">
                         {reason && (
                             <span data-testid="movement-reason" className="text-fg-muted font-medium">
                                 {reason}

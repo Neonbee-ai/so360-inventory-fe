@@ -187,7 +187,7 @@ const CategoryTab: React.FC<CategoryTabProps> = ({
                         {/* comb-exception: no DS multi-select group; a labelled Checkbox cluster is used */}
                         <p className="mb-1.5 text-sm font-medium text-fg-muted">
                             {fieldLabel(def)}
-                            {def.is_required && <span className="ml-1 text-rose-400">*</span>}
+                            {def.is_required && <span className="ml-1 text-danger">*</span>}
                         </p>
                         <div className="flex flex-wrap gap-3">
                             {(def.options || []).map(opt => {

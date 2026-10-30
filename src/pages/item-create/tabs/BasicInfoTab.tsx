@@ -163,7 +163,7 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
                         const Icon = cls.icon;
                         const isSelected = type === cls.value;
                         return (
-                            <button
+                            <button // comb-exception: radio-style classification card with aria-pressed and custom layout
                                 key={cls.value}
                                 type="button"
                                 aria-pressed={isSelected}

@@ -277,7 +277,7 @@ const PRListPage = () => {
                                             <Badge size="sm" tone={PRIORITIES.find(p => p.value === pr.priority)?.tone || 'neutral'}>{pr.priority}</Badge>
                                         )}
                                     </div>
-                                    <div className="text-nb-caption text-fg-subtle truncate max-w-[200px]">{pr.title || pr.description}</div>
+                                    <div className="text-nb-caption text-fg-subtle truncate max-w-48">{pr.title || pr.description}</div>
                                     {sourceChips(pr).length > 0 && (
                                         <div className="flex flex-wrap gap-nb-1 mt-nb-1">
                                             {sourceChips(pr).map(chip => <Badge key={chip.label} size="sm" tone={chip.tone}>{chip.label}</Badge>)}

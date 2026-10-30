@@ -581,7 +581,7 @@ const ItemCreatePage = () => {
                     onTabChange={setActiveTab}
                     tabErrors={tabErrors}
                 />
-                <div className="p-nb-6 min-h-[24rem]">
+                <div className="p-nb-6 min-h-96">
                     {renderTab()}
                 </div>
             </div>
