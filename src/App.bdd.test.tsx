@@ -10,6 +10,7 @@ vi.mock('./pages/ItemDetailPage', () => ({ default: () => <div>ItemDetail</div> 
 vi.mock('./pages/StockLocationsPage', () => ({ default: () => <div>StockLocations</div> }));
 vi.mock('./pages/WarehouseDetailPage', () => ({ default: () => <div>WarehouseDetail</div> }));
 vi.mock('./pages/StockOverviewPage', () => ({ default: () => <div>StockOverview</div> }));
+vi.mock('./pages/SerialRegisterPage', () => ({ default: () => <div>SerialRegister</div> }));
 vi.mock('./pages/StockMovementRegisterPage', () => ({ default: () => <div>StockMovementRegister</div> }));
 vi.mock('./pages/SettingsPage', () => ({ default: () => <div>Settings</div> }));
 vi.mock('./pages/settings/ProductTypeSettingsPage', () => ({ default: () => <div>ProductTypeSettings</div> }));
