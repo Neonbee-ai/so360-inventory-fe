@@ -5,7 +5,8 @@ import {
     XCircle, Package, User, Calendar, Loader2, ShoppingCart, ExternalLink
 } from 'lucide-react';
 import { procurementService } from '../../services/procurementService';
-import { useActivity } from '@so360/shell-context';
+import { rfqService } from '../../services/rfqService';
+import { useActivity, useShellBridge } from '@so360/shell-context';
 import { toast, getErrorMessage } from '@so360/design-system';
 import { useInventoryFormatters } from '../../utils/formatters';
 
@@ -15,6 +16,7 @@ interface PRLine {
     description: string;
     quantity: number;
     estimated_unit_price: number;
+    required_delivery_date?: string;
     converted_quantity?: number;
     remaining_quantity?: number;
     items?: { name: string; sku: string };
@@ -25,6 +27,14 @@ interface LinkedPO {
     po_number: string;
     status: string;
     total_amount: number;
+    created_at: string;
+}
+
+interface LinkedRFQ {
+    id: string;
+    rfq_number: string;
+    status: string;
+    pr_id?: string;
     created_at: string;
 }
 
@@ -63,6 +73,8 @@ interface PR {
     approval_gates?: ApprovalGate[];
 }
 
+const RFQ_FLAG = 'submodule:inventory:rfq';
+
 const PRDetailPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -73,6 +85,22 @@ const PRDetailPage = () => {
     const [error, setError] = useState<string | null>(null);
     const [isApproving, setIsApproving] = useState(false);
     const [isLoadingConversion, setIsLoadingConversion] = useState(false);
+    const [isCreatingRfq, setIsCreatingRfq] = useState(false);
+    const [linkedRfqs, setLinkedRfqs] = useState<LinkedRFQ[]>([]);
+    const shell = useShellBridge() as any;
+    const rfqEnabled = (() => { try { return shell?.isFeatureEnabled?.(RFQ_FLAG) === true; } catch { return false; } })();
+
+    const fetchLinkedRfqs = async () => {
+        if (!id || !rfqEnabled) return;
+        try {
+            const rows = await rfqService.getRFQs();
+            setLinkedRfqs((Array.isArray(rows) ? rows : []).filter((r: LinkedRFQ) => r.pr_id === id));
+        } catch {
+            setLinkedRfqs([]);
+        }
+    };
+
+    useEffect(() => { fetchLinkedRfqs(); }, [id, rfqEnabled]);
 
     useEffect(() => {
         if (id) fetchPR();
@@ -127,24 +155,32 @@ const PRDetailPage = () => {
         }
     };
 
-    const handleDelegate = async (gateId: string) => {
-        const targetEmail = prompt('Enter email of user to delegate to:');
-        if (!targetEmail || !id) return;
-
-        setIsApproving(true);
+    const handleCreateRFQ = async () => {
+        if (!id || !pr) return;
+        const hasActive = linkedRfqs.some(r => r.status !== 'cancelled');
+        if (hasActive && !window.confirm('An RFQ has already been raised from this requisition. Create another one?')) return;
+        setIsCreatingRfq(true);
         try {
-            // Note: Delegation API not yet implemented, placeholder for future
-            toast.info('Delegation feature coming soon!');
-            // await procurementService.delegatePRApproval(id, {
-            //     gate_id: gateId,
-            //     delegate_to_email: targetEmail,
-            //     reason: 'Delegated approval'
-            // });
-            // fetchPR();
+            const created = await rfqService.createRFQ({
+                title: `RFQ for PR-${pr.id.slice(0, 8).toUpperCase()}`,
+                pr_id: pr.id,
+                required_date: pr.required_date ? String(pr.required_date).slice(0, 10) : undefined,
+                items: (pr.pr_lines || []).map(l => ({
+                    item_id: l.item_id || undefined,
+                    pr_line_id: l.id,
+                    description: l.description || undefined,
+                    quantity: l.quantity,
+                    target_unit_price: l.estimated_unit_price || undefined,
+                    required_delivery_date: l.required_delivery_date || pr.required_date || undefined,
+                })),
+            });
+            toast.success(`RFQ ${created?.rfq_number || ''} created`);
+            if (created?.id) navigate(`/procurement/rfq/${created.id}`);
+            else fetchLinkedRfqs();
         } catch (err: any) {
-            setError(err.message || 'Failed to delegate');
+            toast.error(getErrorMessage(err, 'Failed to create RFQ'));
         } finally {
-            setIsApproving(false);
+            setIsCreatingRfq(false);
         }
     };
 
@@ -312,6 +348,17 @@ const PRDetailPage = () => {
                                 <ShoppingCart size={20} />
                             )}
                             {isLoadingConversion ? 'Preparing...' : 'Create PO from this PR'}
+                        </button>
+                    )}
+
+                    {/* Create RFQ Button */}
+                    {pr.status === 'approved' && rfqEnabled && (
+                        <button
+                            onClick={handleCreateRFQ}
+                            disabled={isCreatingRfq}
+                            className="w-full px-6 py-3 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed text-slate-50 rounded-2xl font-bold transition-all"
+                        >
+                            {isCreatingRfq ? 'Creating RFQ...' : 'Create RFQ'}
                         </button>
                     )}
 
@@ -501,16 +548,6 @@ const PRDetailPage = () => {
                                                         <XCircle size={14} />
                                                         Reject
                                                     </button>
-                                                    {gate.metadata?.can_delegate && (
-                                                        <button
-                                                            onClick={() => handleDelegate(gate.id)}
-                                                            disabled={isApproving}
-                                                            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-xs font-bold rounded-lg transition-all flex items-center gap-1"
-                                                        >
-                                                            <User size={14} />
-                                                            Delegate
-                                                        </button>
-                                                    )}
                                                 </div>
                                             )}
 
@@ -542,6 +579,25 @@ const PRDetailPage = () => {
                             </div>
                         )}
                     </div>
+
+                    {/* Linked RFQs */}
+                    {linkedRfqs.length > 0 && (
+                        <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6" data-testid="pr-linked-rfqs">
+                            <h2 className="text-lg font-bold text-slate-50 mb-4">Linked RFQs</h2>
+                            <div className="space-y-3">
+                                {linkedRfqs.map((r) => (
+                                    <div
+                                        key={r.id}
+                                        onClick={() => navigate(`/procurement/rfq/${r.id}`)}
+                                        className="flex items-center justify-between p-4 bg-slate-800/30 rounded-xl border border-slate-700/30 hover:border-indigo-500/30 transition-all cursor-pointer"
+                                    >
+                                        <span className="text-slate-50 font-bold">{r.rfq_number}</span>
+                                        <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase border bg-slate-700/50 text-slate-400 border-slate-600">{r.status}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     {/* Linked Purchase Orders */}
                     {pr.linked_pos && pr.linked_pos.length > 0 && (
