@@ -100,8 +100,6 @@ const BulkImportPage: React.FC = () => {
             title="Bulk Import"
             description="Import multiple inventory items from a CSV file with optional images"
             trail={[{ label: 'Items', to: '/inventory/items' }]}
-            onBack={() => navigate('/inventory/items')}
-            backLabel="Items"
         >
             <StepIndicator steps={STEPS} current={step} />
 

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent, within } from '@testing-library/react';
 import React from 'react';
 
 const mockGetDashboard = vi.fn();
@@ -109,7 +109,7 @@ describe('ProcurementDashboardPage', () => {
             render(<ProcurementDashboardPage />);
             await waitFor(() => expect(screen.getByText('Spend by vendor')).toBeInTheDocument());
             expect(screen.getByText('Alpha Supplies')).toBeInTheDocument();
-            expect(screen.getByText('$1200')).toBeInTheDocument();
+            expect(within(screen.getByText('Alpha Supplies').parentElement as HTMLElement).getByText('$1200')).toBeInTheDocument();
         });
 
         it('When trends are available / Then top purchased items are listed', async () => {

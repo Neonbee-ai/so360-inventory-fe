@@ -380,8 +380,8 @@ const POListPage = () => {
                     </div>
                 }
                 loading={loading}
-                isEmpty={!loading && !fetchError && pos.length === 0}
-                empty={<EmptyState title="No purchase orders found." />}
+                isEmpty={!loading && !fetchError && !showPrMenu && pos.length === 0}
+                empty={<>{renderNotice(vendorNotice)}<EmptyState title="No purchase orders found." /></>}
             >
                 {renderNotice(fetchError)}
                 {renderNotice(vendorNotice)}

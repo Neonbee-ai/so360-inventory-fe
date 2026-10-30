@@ -348,7 +348,7 @@ const WarehouseDetailPage = () => {
                     </div>
                 }
             >
-                <form id="edit-warehouse-detail-form" onSubmit={handleSaveEdit} className="flex flex-col gap-nb-4">
+                <form id="edit-warehouse-detail-form" noValidate onSubmit={handleSaveEdit} className="flex flex-col gap-nb-4">
                     <div>
                         <TextField name="name" label="Warehouse Name" required type="text" value={editForm.name}
                             onChange={(e: any) => setEditForm({ ...editForm, name: e.target.value })} />
@@ -382,7 +382,7 @@ const WarehouseDetailPage = () => {
                     </div>
                 }
             >
-                <form id="location-form" onSubmit={handleSaveLocation} className="flex flex-col gap-nb-4">
+                <form id="location-form" noValidate onSubmit={handleSaveLocation} className="flex flex-col gap-nb-4">
                     <div>
                         <TextField name="location-name" label="Location Name" required type="text" value={locationForm.name}
                             placeholder="e.g. Zone A, Aisle 3"

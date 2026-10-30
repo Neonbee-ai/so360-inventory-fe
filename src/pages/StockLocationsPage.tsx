@@ -430,7 +430,7 @@ const StockLocationsPage = () => {
                     </div>
                 }
             >
-                <form id="create-warehouse-form" onSubmit={handleCreateWarehouse}>
+                <form id="create-warehouse-form" noValidate onSubmit={handleCreateWarehouse}>
                     {renderFields(newWarehouse, setNewWarehouse, createErrors as any, showCreateErrors)}
                 </form>
             </Modal>
@@ -448,7 +448,7 @@ const StockLocationsPage = () => {
                     </div>
                 }
             >
-                <form id="edit-warehouse-form" onSubmit={handleSaveEdit} className="flex flex-col gap-nb-4">
+                <form id="edit-warehouse-form" noValidate onSubmit={handleSaveEdit} className="flex flex-col gap-nb-4">
                     {renderFields(editForm as any, setEditForm as any, editErrors as any, showEditErrors)}
                     <Checkbox
                         name="is_active"
