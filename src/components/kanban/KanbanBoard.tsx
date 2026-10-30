@@ -96,9 +96,9 @@ export const KanbanBoard = ({ deals, stages, onDealClick, onStageChange }: Kanba
                                     onDragStart={(e) => handleDragStart(e, deal)}
                                     onDragEnd={handleDragEnd}
                                     onClick={() => onDealClick(deal)}
-                                    className={`bg-surface-raised border-2 p-4 rounded-xl shadow-sm transition-all cursor-grab active:cursor-grabbing group ${draggedDealId === deal.id
+                                    className={`bg-surface-raised border-2 p-4 rounded-xl shadow-nb-1 transition-colors cursor-grab active:cursor-grabbing group ${draggedDealId === deal.id
                                             ? 'border-primary/50 scale-95'
-                                            : 'border-line-strong/50 hover:border-primary/50 hover:shadow-xl hover:shadow-blue-900/20'
+                                            : 'border-line-strong/50 hover:border-primary/50'
                                         }`}
                                 >
                                     <div className="flex justify-between items-start mb-2">

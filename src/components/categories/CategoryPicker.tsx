@@ -72,7 +72,7 @@ const CategoryPicker: React.FC<CategoryPickerProps> = ({ categories, value, onCh
             </Button>
 
             {isOpen && (
-                <div className="absolute z-20 mt-1 w-full bg-surface-raised border border-line-strong rounded-lg shadow-xl max-h-64 overflow-hidden">
+                <div className="absolute z-20 mt-1 w-full bg-surface-raised border border-line-strong rounded-lg shadow-overlay max-h-64 overflow-hidden">
                     <div className="p-2 border-b border-line-strong">
                         <div className="relative">
                             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-fg-subtle" size={14} />

@@ -499,7 +499,7 @@ const ItemDetailPage = () => {
                                         <img
                                             src={item.image_urls![0]}
                                             alt={item.name}
-                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                            className="w-full h-full object-cover"
                                         />
                                     </div>
                                     {item.image_urls!.length > 1 && (
@@ -522,7 +522,7 @@ const ItemDetailPage = () => {
                                     )}
                                 </div>
                             ) : (
-                                <div className="w-20 h-20 rounded-2xl bg-surface-raised flex items-center justify-center border border-line-strong shadow-xl mb-4 mt-6">
+                                <div className="w-20 h-20 rounded-2xl bg-surface-raised flex items-center justify-center border border-line-strong mb-4 mt-6">
                                     <ClassIcon size={40} className="text-primary" />
                                 </div>
                             )}
@@ -566,7 +566,7 @@ const ItemDetailPage = () => {
                             {/* ═══ 3 Summary Cards ═══ */}
                             <Grid columns={3} gap="sm">
                                 {/* Card 1: Available Physical Stock */}
-                                <div className="bg-primary rounded-2xl p-5 text-primary-fg shadow-lg shadow-blue-900/40 relative overflow-hidden">
+                                <div className="bg-primary rounded-2xl p-5 text-primary-fg relative overflow-hidden">
                                     <div className="absolute -right-3 -bottom-3 opacity-10">
                                         <Package size={80} />
                                     </div>
@@ -638,7 +638,7 @@ const ItemDetailPage = () => {
                             {/* ═══ 3 Summary Cards ═══ */}
                             <Grid columns={3} gap="sm">
                                 {/* Card 1: Available Physical Stock */}
-                                <div className="bg-primary rounded-2xl p-5 text-primary-fg shadow-lg shadow-blue-900/40 relative overflow-hidden">
+                                <div className="bg-primary rounded-2xl p-5 text-primary-fg relative overflow-hidden">
                                     <div className="absolute -right-3 -bottom-3 opacity-10">
                                         <Package size={80} />
                                     </div>
@@ -776,7 +776,7 @@ const ItemDetailPage = () => {
                                                                 className="aspect-square rounded-lg overflow-hidden border border-line-strong cursor-pointer hover:border-primary transition-colors group"
                                                                 onClick={() => setPreviewImage(url)}
                                                             >
-                                                                <img src={url} alt={`${item.name} ${i + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                                                                <img src={url} alt={`${item.name} ${i + 1}`} className="w-full h-full object-cover" />
                                                             </div>
                                                         ))}
                                                     </Grid>

@@ -104,7 +104,7 @@ const ItemSearchSelector: React.FC<ItemSearchSelectorProps> = ({
                 onFocus={handleFocus}
             />
             {open && (query.length > 0 || results.length > 0) && (
-                <div className="absolute z-50 top-full mt-1 left-0 right-0 bg-surface border border-line-strong rounded-lg shadow-2xl overflow-hidden max-h-56 overflow-y-auto">
+                <div className="absolute z-50 top-full mt-1 left-0 right-0 bg-surface border border-line-strong rounded-lg shadow-overlay overflow-hidden max-h-56 overflow-y-auto">
                     {loading ? (
                         <div className="px-nb-3 py-nb-3 text-nb-caption text-fg-subtle">Searching...</div>
                     ) : results.length === 0 ? (
