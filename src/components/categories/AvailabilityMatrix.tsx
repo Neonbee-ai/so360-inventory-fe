@@ -41,9 +41,9 @@ interface AvailabilityMatrixProps {
 export const STATUS_STYLE: Record<UnitStatus, { label: string; short: string; cls: string }> = {
     available: { label: 'Available', short: 'A', cls: 'bg-success/15 text-success border-success/40 hover:bg-success/25' },
     on_hold: { label: 'On hold', short: 'H', cls: 'bg-warning/15 text-warning border-warning/40 hover:bg-warning/25' },
-    sold: { label: 'Sold', short: 'S', cls: 'bg-rose-500/15 text-rose-300 border-rose-500/40 hover:bg-rose-500/25' },
+    sold: { label: 'Sold', short: 'S', cls: 'bg-danger/15 text-danger border-danger/40 hover:bg-danger/25' },
     blocked: { label: 'Blocked', short: 'B', cls: 'bg-surface-sunken text-fg-muted border-line-strong/50 hover:bg-surface-high' },
-    cancelled: { label: 'Cancelled', short: 'C', cls: 'bg-orange-500/15 text-orange-300 border-orange-500/40 hover:bg-orange-500/25' },
+    cancelled: { label: 'Cancelled', short: 'C', cls: 'bg-warning/15 text-warning border-warning/40 hover:bg-warning/25' },
     unavailable: { label: 'Unavailable', short: 'U', cls: 'bg-surface-high text-fg-muted border-line-strong/60 hover:bg-surface-high' },
 };
 
@@ -61,7 +61,7 @@ const CountsSummary: React.FC<{ counts: AvailabilityCounts }> = ({ counts }) => 
         <span className="px-2 py-1 rounded-lg bg-surface-raised text-fg">Total {counts.total}</span>
         <span className="px-2 py-1 rounded-lg bg-success/15 text-success">Available {counts.available}</span>
         <span className="px-2 py-1 rounded-lg bg-warning/15 text-warning">Reserved {counts.on_hold}</span>
-        <span className="px-2 py-1 rounded-lg bg-rose-500/15 text-rose-300">Sold {counts.sold}</span>
+        <span className="px-2 py-1 rounded-lg bg-danger/15 text-danger">Sold {counts.sold}</span>
         {MANUAL_BUCKETS.filter((b) => counts[b.key] > 0).map((b) => (
             <span key={b.key} className="px-2 py-1 rounded-lg bg-surface-raised text-fg-muted">{b.label} {counts[b.key]}</span>
         ))}

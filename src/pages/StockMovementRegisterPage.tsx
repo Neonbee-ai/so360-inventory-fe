@@ -38,12 +38,12 @@ const MOVEMENT_BADGES: Record<string, { label: string; className: string }> = {
     adjustment: { label: 'ADJUSTMENT', className: 'bg-warning/10 text-warning border-warning/30' },
     inbound: { label: 'RECEIPT', className: 'bg-success/10 text-success border-success/30' },
     purchase_receipt: { label: 'RECEIPT', className: 'bg-success/10 text-success border-success/30' },
-    outbound: { label: 'ISSUE', className: 'bg-rose-500/10 text-rose-400 border-rose-500/30' },
-    sales_issue: { label: 'ISSUE', className: 'bg-rose-500/10 text-rose-400 border-rose-500/30' },
-    production: { label: 'PRODUCTION', className: 'bg-purple-500/10 text-purple-400 border-purple-500/30' },
-    production_receipt: { label: 'PRODUCTION', className: 'bg-purple-500/10 text-purple-400 border-purple-500/30' },
-    production_consumption: { label: 'PRODUCTION', className: 'bg-purple-500/10 text-purple-400 border-purple-500/30' },
-    return: { label: 'RETURN', className: 'bg-teal-500/10 text-teal-400 border-teal-500/30' },
+    outbound: { label: 'ISSUE', className: 'bg-danger/10 text-danger border-danger/30' },
+    sales_issue: { label: 'ISSUE', className: 'bg-danger/10 text-danger border-danger/30' },
+    production: { label: 'PRODUCTION', className: 'bg-surface-high text-fg-muted border-line-strong/50' },
+    production_receipt: { label: 'PRODUCTION', className: 'bg-surface-high text-fg-muted border-line-strong/50' },
+    production_consumption: { label: 'PRODUCTION', className: 'bg-surface-high text-fg-muted border-line-strong/50' },
+    return: { label: 'RETURN', className: 'bg-surface-high text-fg-muted border-line-strong/50' },
 };
 
 const badgeFor = (movementType?: string | null) =>
@@ -647,7 +647,7 @@ const StockMovementRegisterPage = () => {
                 m.quantity > 0 ? (
                     <span className="text-success font-bold">+{m.quantity}</span>
                 ) : (
-                    <span className="text-rose-400 font-bold">{m.quantity}</span>
+                    <span className="text-danger font-bold">{m.quantity}</span>
                 ),
         },
         {
@@ -662,7 +662,7 @@ const StockMovementRegisterPage = () => {
                     <span data-testid="movement-balance" className="text-fg-muted text-xs whitespace-nowrap">
                         {m.balance_before ?? '—'}
                         {' → '}
-                        <span className={m.quantity < 0 ? 'text-rose-400' : 'text-success'}>
+                        <span className={m.quantity < 0 ? 'text-danger' : 'text-success'}>
                             {m.quantity > 0 ? `+${m.quantity}` : m.quantity}
                         </span>
                         {' → '}
