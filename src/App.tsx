@@ -38,7 +38,7 @@ const BulkImportPage = lazy(() => import('./pages/bulk-import/BulkImportPage'));
 
 
 import { useShellBridge } from '@so360/shell-context';
-import { FeatureRoute, CombScope } from '@so360/design-system';
+import { FeatureRoute, CombScope, Button } from '@so360/design-system';
 import { inventoryService } from './services/inventoryService';
 import { procurementService } from './services/procurementService';
 import { vendorService } from './services/vendorService';
@@ -52,13 +52,7 @@ const UpgradeLocked = () => {
         <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4 text-center px-4">
             <h2 className="text-lg font-bold text-fg-muted">This feature is part of a higher plan</h2>
             <p className="text-fg-subtle text-sm max-w-md">Upgrade your plan to unlock it.</p>
-            <button
-                type="button"
-                onClick={() => navigate('/org/billing')}
-                className="px-4 py-2 rounded bg-primary hover:bg-primary-hover text-primary-fg text-sm font-medium transition-colors"
-            >
-                Upgrade plan
-            </button>
+            <Button type="button" variant="primary" onClick={() => navigate('/org/billing')}>Upgrade plan</Button>
         </div>
     );
 };
@@ -145,7 +139,7 @@ const MfeShellInitializer = ({ children }: { children: React.ReactNode }) => {
     if (!isSynced) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-                <div className="w-12 h-12 border-4 border-primary/10 border-t-blue-500 rounded-full animate-spin"></div>
+                <div className="w-12 h-12 border-4 border-primary/10 border-t-primary rounded-full animate-spin"></div>
                 <div className="text-fg-subtle font-medium animate-pulse text-sm">Connecting to shell...</div>
             </div>
         );
@@ -163,7 +157,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                 <main className="w-full">
                     <Suspense fallback={
                         <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-                            <div className="w-12 h-12 border-4 border-primary/20 border-t-blue-500 rounded-full animate-spin"></div>
+                            <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
                             <div className="text-fg-subtle font-medium animate-pulse text-sm">Loading Inventory Module...</div>
                         </div>
                     }>
