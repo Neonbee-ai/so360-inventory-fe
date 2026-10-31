@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { CheckCircle, XCircle, Clock, ShoppingCart } from 'lucide-react';
 import { procurementService } from '../../services/procurementService';
-import { useActivity } from '@so360/shell-context';
+import { rfqService } from '../../services/rfqService';
+import { useActivity, useShellBridge } from '@so360/shell-context';
 import {
     toast, getErrorMessage, useConfirm, DetailPageTemplate, Button, Badge, StatusBadge, SectionCard, DescriptionList,
     DataTable, EmptyState, Grid, Modal, TextField,
@@ -15,6 +16,7 @@ interface PRLine {
     description: string;
     quantity: number;
     estimated_unit_price: number;
+    required_delivery_date?: string;
     converted_quantity?: number;
     remaining_quantity?: number;
     items?: { name: string; sku: string };
@@ -25,6 +27,14 @@ interface LinkedPO {
     po_number: string;
     status: string;
     total_amount: number;
+    created_at: string;
+}
+
+interface LinkedRFQ {
+    id: string;
+    rfq_number: string;
+    status: string;
+    pr_id?: string;
     created_at: string;
 }
 
@@ -63,6 +73,8 @@ interface PR {
     approval_gates?: ApprovalGate[];
 }
 
+const RFQ_FLAG = 'submodule:inventory:rfq';
+
 const PRDetailPage = () => {
     const [confirm, confirmDialog] = useConfirm();
     const [inputDialog, setInputDialog] = useState<{ kind: 'reject' | 'delegate'; target: string; value: string } | null>(null);
@@ -75,6 +87,22 @@ const PRDetailPage = () => {
     const [error, setError] = useState<string | null>(null);
     const [isApproving, setIsApproving] = useState(false);
     const [isLoadingConversion, setIsLoadingConversion] = useState(false);
+    const [isCreatingRfq, setIsCreatingRfq] = useState(false);
+    const [linkedRfqs, setLinkedRfqs] = useState<LinkedRFQ[]>([]);
+    const shell = useShellBridge() as any;
+    const rfqEnabled = (() => { try { return shell?.isFeatureEnabled?.(RFQ_FLAG) === true; } catch { return false; } })();
+
+    const fetchLinkedRfqs = async () => {
+        if (!id || !rfqEnabled) return;
+        try {
+            const rows = await rfqService.getRFQs();
+            setLinkedRfqs((Array.isArray(rows) ? rows : []).filter((r: LinkedRFQ) => r.pr_id === id));
+        } catch {
+            setLinkedRfqs([]);
+        }
+    };
+
+    useEffect(() => { fetchLinkedRfqs(); }, [id, rfqEnabled]);
 
     useEffect(() => {
         if (id) fetchPR();
@@ -135,16 +163,39 @@ const PRDetailPage = () => {
         try {
             // Note: Delegation API not yet implemented, placeholder for future
             toast.info('Delegation feature coming soon!');
-            // await procurementService.delegatePRApproval(id, {
-            //     gate_id: gateId,
-            //     delegate_to_email: targetEmail,
-            //     reason: 'Delegated approval'
-            // });
-            // fetchPR();
         } catch (err: any) {
             setError(err.message || 'Failed to delegate');
         } finally {
             setIsApproving(false);
+        }
+    };
+
+    const handleCreateRFQ = async () => {
+        if (!id || !pr) return;
+        const hasActive = linkedRfqs.some(r => r.status !== 'cancelled');
+        if (hasActive && !(await confirm({ title: 'RFQ already exists', message: 'An RFQ has already been raised from this requisition. Create another one?', confirmLabel: 'Create another' }))) return;
+        setIsCreatingRfq(true);
+        try {
+            const created = await rfqService.createRFQ({
+                title: `RFQ for PR-${pr.id.slice(0, 8).toUpperCase()}`,
+                pr_id: pr.id,
+                required_date: pr.required_date ? String(pr.required_date).slice(0, 10) : undefined,
+                items: (pr.pr_lines || []).map(l => ({
+                    item_id: l.item_id || undefined,
+                    pr_line_id: l.id,
+                    description: l.description || undefined,
+                    quantity: l.quantity,
+                    target_unit_price: l.estimated_unit_price || undefined,
+                    required_delivery_date: l.required_delivery_date || pr.required_date || undefined,
+                })),
+            });
+            toast.success(`RFQ ${created?.rfq_number || ''} created`);
+            if (created?.id) navigate(`/procurement/rfq/${created.id}`);
+            else fetchLinkedRfqs();
+        } catch (err: any) {
+            toast.error(getErrorMessage(err, 'Failed to create RFQ'));
+        } finally {
+            setIsCreatingRfq(false);
         }
     };
 
@@ -237,9 +288,14 @@ const PRDetailPage = () => {
         </Button>
     ) : undefined;
 
-    const secondaryActions = canClose && pr.status !== 'closed'
-        ? [<Button key="close" variant="secondary" onClick={handleClosePR} disabled={isLoading}>Close PR</Button>]
-        : undefined;
+    const secondaryList: React.ReactNode[] = [];
+    if (pr.status === 'approved' && rfqEnabled) {
+        secondaryList.push(<Button key="rfq" variant="secondary" onClick={handleCreateRFQ} disabled={isCreatingRfq}>{isCreatingRfq ? 'Creating RFQ...' : 'Create RFQ'}</Button>);
+    }
+    if (canClose && pr.status !== 'closed') {
+        secondaryList.push(<Button key="close" variant="secondary" onClick={handleClosePR} disabled={isLoading}>Close PR</Button>);
+    }
+    const secondaryActions = secondaryList.length ? secondaryList : undefined;
 
     return (
         <DetailPageTemplate
@@ -375,6 +431,21 @@ const PRDetailPage = () => {
                             </p>
                         )}
                     </SectionCard>
+
+                    {linkedRfqs.length > 0 && (
+                        <SectionCard title="Linked RFQs">
+                            <DataTable
+                                data-testid="pr-linked-rfqs"
+                                rows={linkedRfqs}
+                                rowKey={(r: LinkedRFQ) => r.id}
+                                onRowClick={(r: LinkedRFQ) => navigate(`/procurement/rfq/${r.id}`)}
+                                columns={[
+                                    { key: 'rfq', header: 'RFQ', render: (r: LinkedRFQ) => <span className="text-fg font-bold">{r.rfq_number}</span> },
+                                    { key: 'status', header: 'Status', render: (r: LinkedRFQ) => <Badge tone={r.status === 'awarded' ? 'success' : r.status === 'cancelled' ? 'danger' : r.status === 'sent' ? 'primary' : 'neutral'}>{r.status}</Badge> },
+                                ]}
+                            />
+                        </SectionCard>
+                    )}
 
                     {pr.linked_pos && pr.linked_pos.length > 0 && (
                         <SectionCard title="Linked Purchase Orders">
