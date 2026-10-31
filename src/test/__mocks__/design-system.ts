@@ -72,7 +72,7 @@ export const usePortalContainer = () => (typeof document !== 'undefined' ? docum
 export const Card = ({ title, actions, footer, children, 'data-testid': testId }: any) =>
     React.createElement('div', { 'data-testid': testId }, title ? React.createElement('h3', null, title) : null, actions, children, footer);
 export const Badge = ({ children, onClick, tone, size, 'data-testid': testId }: any) =>
-  React.createElement('span', { onClick, 'data-testid': testId, 'data-tone': tone, 'data-size': size }, children);
+  React.createElement('span', { onClick, 'data-testid': testId, 'data-comb': 'badge', 'data-tone': tone, 'data-size': size }, children);
 export const Pagination = ({ page, currentPage, pageSize, pageSizeOptions, onPageSizeChange, total, totalItems, totalPages, onPageChange }: any) => {
   const cur = Number(page ?? currentPage ?? 1);
   const pages = totalPages ?? 1;
