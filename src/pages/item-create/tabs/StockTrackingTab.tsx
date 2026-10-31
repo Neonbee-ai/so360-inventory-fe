@@ -17,11 +17,14 @@ interface StockTrackingTabProps {
     default_warehouse_id?: string;
     warehouses?: Warehouse[];
     is_online_visible?: boolean;
+    available_on_ecommerce?: boolean;
+    show_stock?: boolean;
 }
 
 const StockTrackingTab: React.FC<StockTrackingTabProps> = ({
     min_stock_threshold, reorder_level, is_batch_tracked, is_serial_tracked, is_active,
     updateField, default_warehouse_id, warehouses, is_online_visible,
+    available_on_ecommerce = true, show_stock = true,
 }) => {
     return (
         <div className="space-y-nb-6">
@@ -117,6 +120,30 @@ const StockTrackingTab: React.FC<StockTrackingTabProps> = ({
                         <div>
                             <span className="text-sm text-fg-muted group-hover:text-fg transition-colors">Online Visible</span>
                             <p className="text-xs text-fg-subtle">Show this product in the Daily Store online catalog (requires Active status)</p>
+                        </div>
+                    </label>
+                    <label className="flex items-center gap-nb-3 cursor-pointer group">
+                        <input
+                            type="checkbox"
+                            checked={available_on_ecommerce}
+                            onChange={e => updateField('available_on_ecommerce', e.target.checked)}
+                            className="w-4 h-4"
+                        />
+                        <div>
+                            <span className="text-sm text-fg-muted group-hover:text-fg transition-colors">Available on Ecommerce</span>
+                            <p className="text-xs text-fg-subtle">Turn off to hide this product from the storefront without deactivating it</p>
+                        </div>
+                    </label>
+                    <label className="flex items-center gap-nb-3 cursor-pointer group">
+                        <input
+                            type="checkbox"
+                            checked={show_stock}
+                            onChange={e => updateField('show_stock', e.target.checked)}
+                            className="w-4 h-4"
+                        />
+                        <div>
+                            <span className="text-sm text-fg-muted group-hover:text-fg transition-colors">Show Stock</span>
+                            <p className="text-xs text-fg-subtle">Show the available quantity to storefront customers</p>
                         </div>
                     </label>
                 </div>

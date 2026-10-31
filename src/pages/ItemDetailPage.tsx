@@ -72,6 +72,8 @@ interface EditFormData {
     cost_center_id: string;
     default_warehouse_id: string;
     is_online_visible: boolean;
+    available_on_ecommerce: boolean;
+    show_stock: boolean;
     tax_code_id: string;
 }
 
@@ -260,6 +262,11 @@ const ItemDetailPage = () => {
             if (editForm.cost_center_id) dto.cost_center_id = editForm.cost_center_id; else dto.cost_center_id = null;
             if (editForm.default_warehouse_id) dto.default_warehouse_id = editForm.default_warehouse_id; else dto.default_warehouse_id = null;
             dto.is_online_visible = editForm.is_online_visible;
+            dto.ecommerce = {
+                ...(item?.ecommerce || {}),
+                available_on_ecommerce: editForm.available_on_ecommerce,
+                show_stock: editForm.show_stock,
+            };
             if (editForm.tax_code_id) dto.tax_code_id = editForm.tax_code_id; else dto.tax_code_id = null;
 
             const hasLength = editForm.dimensions_length;
@@ -346,6 +353,8 @@ const ItemDetailPage = () => {
                         default_warehouse_id={editForm.default_warehouse_id}
                         warehouses={warehouses}
                         is_online_visible={editForm.is_online_visible}
+                        available_on_ecommerce={editForm.available_on_ecommerce}
+                        show_stock={editForm.show_stock}
                     />
                 );
             case 'shipping':
@@ -1097,6 +1106,8 @@ function initEditForm(item: Item): EditFormData {
         cost_center_id: item.cost_center_id || '',
         default_warehouse_id: item.default_warehouse_id || '',
         is_online_visible: item.is_online_visible || false,
+        available_on_ecommerce: item.ecommerce?.available_on_ecommerce !== false,
+        show_stock: item.ecommerce?.show_stock !== false,
         tax_code_id: item.tax_code_id || '',
     };
 }
