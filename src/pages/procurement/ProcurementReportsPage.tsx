@@ -117,6 +117,7 @@ const ProcurementReportsPage = () => {
             primaryAction={<Button onClick={() => run()}>Run</Button>}
             headerSecondaryActions={[<Button key="export" variant="secondary" onClick={exportCsv}>Export CSV</Button>]}
             views={(
+                <div className="min-w-0 max-w-full max-md:hidden">
                 <Tabs
                     name="report"
                     variant="pill"
@@ -125,6 +126,7 @@ const ProcurementReportsPage = () => {
                     value={report}
                     onChange={id => setReport(id as ProcurementReport)}
                 />
+                </div>
             )}
             search={<SearchInput placeholder="Search this report..." value={searchTerm} onChange={setSearchTerm} />}
             filterConfig={{
@@ -140,7 +142,7 @@ const ProcurementReportsPage = () => {
             isEmpty={!loading && !error && visibleRows.length === 0}
             empty={<EmptyState title="No rows for this report." />}
         >
-            <div className="flex flex-col gap-nb-4">
+            <div className="flex min-w-0 max-w-full flex-col gap-nb-4">
                 {error && <Alert variant="error">{error}</Alert>}
                 <DataTable
                     data-testid="procurement-report-table"
