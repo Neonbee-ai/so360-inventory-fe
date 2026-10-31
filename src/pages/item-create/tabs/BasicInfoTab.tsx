@@ -55,9 +55,9 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
                         error={errorFor('name')}
                         placeholder="e.g. MacBook Pro 14"
                     />
-                    <div>
+                    <div className="min-w-0">
                         {(isSkuAutoEnabled || (isSkuManuallyEdited && onResetSku)) && (
-                            <div className="flex items-center justify-end gap-nb-2 mb-nb-1">
+                            <div className="flex flex-wrap items-center justify-end gap-nb-2 mb-nb-1">
                                 {isSkuAutoEnabled && (
                                     <span data-testid="sku-autogen-badge">
                                         <Badge tone={isSkuManuallyEdited ? 'neutral' : 'primary'} size="sm">

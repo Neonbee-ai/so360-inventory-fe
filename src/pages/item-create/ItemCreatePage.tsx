@@ -575,13 +575,13 @@ const ItemCreatePage = () => {
                 </div>
             )}
 
-            <div className="bg-surface border border-line rounded-nb-lg">
+            <div className="bg-surface border border-line rounded-nb-lg min-w-0 max-w-full">
                 <TabNavigation
                     activeTab={activeTab}
                     onTabChange={setActiveTab}
                     tabErrors={tabErrors}
                 />
-                <div className="p-nb-6 min-h-96">
+                <div className="p-nb-6 max-sm:p-nb-3 min-h-96 min-w-0">
                     {renderTab()}
                 </div>
             </div>
