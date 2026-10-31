@@ -115,15 +115,18 @@ const PRListPage = () => {
     // best-effort, so a module being down never blocks PR creation.
     useEffect(() => {
         if (!showForm || warehouses.length || projects.length) return;
+        let cancelled = false;
         Promise.all([
             inventoryService.getLocations().catch(() => []),
             inventoryService.searchProjects().catch(() => []),
             inventoryService.searchWorkOrders().catch(() => []),
         ]).then(([wh, prj, wo]) => {
+            if (cancelled) return;
             setWarehouses(Array.isArray(wh) ? wh : []);
             setProjects(Array.isArray(prj) ? prj : []);
             setWorkOrders(Array.isArray(wo) ? wo : []);
         });
+        return () => { cancelled = true; };
     }, [showForm]);
 
     const fetchData = async () => {

@@ -513,4 +513,18 @@ describe('PRListPage', () => {
       await waitFor(() => expect(screen.getByText('New Requisition')).toBeInTheDocument());
     });
   });
+  describe('Feature: sourcing context after unmount', () => {
+    it('Given the form is open and sourcing lookups pending / When page unmounts / Then no unhandled error is raised', async () => {
+      const errors: any[] = [];
+      const onErr = (e: any) => errors.push(e);
+      process.on('unhandledRejection', onErr);
+      const { unmount } = render(<PRListPage />);
+      await waitFor(() => screen.getByText('New Requisition'));
+      fireEvent.click(screen.getByText('New Requisition'));
+      unmount();
+      await new Promise((r) => setTimeout(r, 20));
+      process.off('unhandledRejection', onErr);
+      expect(errors).toHaveLength(0);
+    });
+  });
 });
