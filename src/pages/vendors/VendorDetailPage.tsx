@@ -247,7 +247,7 @@ const VendorDetailPage = () => {
                         {(profile?.rating_count ?? 0) > 0 && (
                             <p className="text-xs text-fg-muted">from {profile?.rating_count} rating{profile?.rating_count !== 1 ? 's' : ''}</p>
                         )}
-                        {canManage && <p className="mt-1 text-[11px] text-fg-subtle">Click to rate</p>}
+                        {canManage && <p className="mt-1 text-nb-overline text-fg-subtle">Click to rate</p>}
                         <p className="mt-2 text-sm text-fg-muted">Payment Terms: {profile?.payment_terms || 'Not set'}</p>
                     </Card>
                     </div>

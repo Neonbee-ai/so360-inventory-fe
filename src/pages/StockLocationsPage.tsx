@@ -333,9 +333,9 @@ const StockLocationsPage = () => {
             header: '',
             alwaysVisible: true,
             align: 'right',
+            interactive: true,
             render: (wh) => (
                 <div className="flex justify-end gap-nb-2">
-                    <Button variant="ghost" size="sm" onClick={() => navigate(`/inventory/warehouses/${wh.id}`)}>View</Button>
                     {canManage && (
                         <>
                             <Button variant="ghost" size="sm" onClick={() => handleEditClick(wh)}>Edit</Button>
@@ -413,6 +413,7 @@ const StockLocationsPage = () => {
                 columns={columns}
                 rows={warehouses as any[]}
                 rowKey={(wh: any) => wh.id}
+                onRowClick={(wh: any) => navigate(`/inventory/warehouses/${wh.id}`)}
                 loading={isLoading}
                 emptyState={emptyState}
             />

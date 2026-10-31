@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { qualityService } from '../../services/qualityService';
 import { procurementService } from '../../services/procurementService';
 import { useInventoryFormatters } from '../../utils/formatters';
+import { validateText } from '../../utils/validateText';
 import { Alert, Button, Checkbox, DataTable, EmptyState, Grid, GridItem, KpiCard, ListPageTemplate, Modal, Select, StatusBadge, TextField, Textarea, toast, getErrorMessage, type DataTableColumn, FieldGrid } from '@so360/design-system';
 
 const REASONS = [
@@ -39,6 +40,7 @@ const VendorReturnsPage = () => {
     const [form, setForm] = useState({ reason: 'damaged', resolution: 'credit_note', remarks: '' });
     const [lines, setLines] = useState<any[]>([]);
     const [saving, setSaving] = useState(false);
+    const [errors, setErrors] = useState<{ grn?: string; remarks?: string; lines?: string }>({});
     const [settling, setSettling] = useState<any>(null);
     const [creditNote, setCreditNote] = useState({ credit_note_number: '', credit_note_date: '' });
 
@@ -64,6 +66,7 @@ const VendorReturnsPage = () => {
     }, [showForm]);
 
     const selectGrn = (id: string) => {
+        setErrors(e => ({ ...e, grn: undefined, lines: undefined }));
         const grn = grns.find(g => g.id === id);
         setSelectedGrn(grn || null);
         // Default to the units that were rejected or damaged on receipt — the
@@ -93,10 +96,17 @@ const VendorReturnsPage = () => {
 
     const submit = async () => {
         const payloadLines = lines.filter(l => parseFloat(l.quantity) > 0);
+        const nextErrors = {
+            grn: selectedGrn ? undefined : 'Goods receipt is required.',
+            remarks: validateText('Remarks', form.remarks, { required: false, max: 500 }),
+            lines: selectedGrn && payloadLines.length === 0 ? 'Enter a quantity on at least one line.' : undefined,
+        };
+        setErrors(nextErrors);
         if (!selectedGrn) {
             toast.warning('Select the receipt the goods came in on.');
             return;
         }
+        if (nextErrors.remarks) return;
         if (payloadLines.length === 0) {
             toast.warning('Enter a quantity on at least one line.');
             return;
@@ -222,7 +232,7 @@ const VendorReturnsPage = () => {
                 title="Vendor Returns"
                 description="Send back damaged, wrong, excess or expired goods and track the credit."
                 count={returns.length > 0 ? `${returns.length} return(s)` : undefined}
-                primaryAction={<Button onClick={() => setShowForm(true)}>+ New Return</Button>}
+                primaryAction={<Button onClick={() => { setErrors({}); setShowForm(true); }}>+ New Return</Button>}
                 filterConfig={{
                     fields: [{
                         key: 'status',
@@ -286,6 +296,7 @@ const VendorReturnsPage = () => {
                             name="ret-grn"
                             label="Goods Receipt"
                             value={selectedGrn?.id || ''}
+                            error={errors.grn}
                             onChange={(e: any) => selectGrn(e.target.value)}
                             options={[{ value: '', label: 'Select a receipt' }, ...grns.map(g => ({ value: g.id, label: g.grn_number }))]}
                         />
@@ -310,6 +321,7 @@ const VendorReturnsPage = () => {
                     ) : (
                         <div className="flex flex-col gap-nb-3">
                             <span className="text-xs font-semibold text-fg-subtle">Lines returned</span>
+                            {errors.lines && <Alert variant="error">{errors.lines}</Alert>}
                             {lines.map((l, idx) => (
                                 <div key={l.grn_line_id} className="flex flex-wrap items-center gap-nb-3 rounded-xl border border-line p-nb-3">
                                     <div className="min-w-0 flex-1">
@@ -351,7 +363,8 @@ const VendorReturnsPage = () => {
                         name="ret-remarks"
                         label="Remarks"
                         value={form.remarks}
-                        onChange={(e: any) => setForm({ ...form, remarks: e.target.value })}
+                        error={errors.remarks}
+                        onChange={(e: any) => { setForm({ ...form, remarks: e.target.value }); setErrors(er => ({ ...er, remarks: undefined })); }}
                     />
                 </div>
             </Modal>

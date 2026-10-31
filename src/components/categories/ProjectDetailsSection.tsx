@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { FileText, Upload, Loader2, X } from 'lucide-react';
-import { Alert, Button, Card, IconButton, Select, Textarea, TextField, FieldGrid } from '@so360/design-system';
+import { Alert, Card, IconButton, SegmentedControl, Select, Textarea, TextField, FieldGrid } from '@so360/design-system';
 import { inventoryService } from '../../services/inventoryService';
 import { mediaService } from '../../services/mediaService';
 import { PROJECT_STATUSES, type CategoryMetadata, type DeveloperOption, type DeveloperRole, type ProjectStatus } from '../../types/inventory';
@@ -154,20 +154,14 @@ export const ProjectDetailsSection: React.FC<ProjectDetailsSectionProps> = ({ va
                         onValueChange={(v: string) => set({ developer_partner_id: v || null })}
                     />
                     {hasOwners && (
-                        <div className="flex gap-1" role="group" aria-label="Developer filter">
-                            {DEV_FILTERS.map((f) => (
-                                <Button
-                                    key={f.key}
-                                    type="button"
-                                    size="sm"
-                                    variant={devFilter === f.key ? 'tonal' : 'ghost'}
-                                    aria-pressed={devFilter === f.key}
-                                    onClick={() => setDevFilter(f.key)}
-                                >
-                                    {f.label}
-                                </Button>
-                            ))}
-                        </div>
+                        <SegmentedControl
+                            name="developer-filter"
+                            size="sm"
+                            aria-label="Developer filter"
+                            value={devFilter}
+                            onChange={(v: string) => setDevFilter(v as DeveloperRole | 'all')}
+                            options={DEV_FILTERS.map((f) => ({ value: f.key, label: f.label }))}
+                        />
                     )}
                     {devError && <Alert variant="error">{devError}</Alert>}
                 </div>
@@ -215,7 +209,7 @@ export const ProjectDetailsSection: React.FC<ProjectDetailsSectionProps> = ({ va
                         <label className={`flex items-center gap-2 text-sm text-fg-muted bg-surface-raised border border-dashed border-line-strong rounded-lg px-3 py-2 ${disabled ? 'opacity-50' : 'cursor-pointer hover:border-primary'}`}>
                             {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
                             {uploading ? 'Uploading…' : 'Upload PDF'}
-                            <input
+                            <input // comb-exception: hidden native file input behind the upload label
                                 ref={fileRef}
                                 data-testid="brochure-input"
                                 type="file"

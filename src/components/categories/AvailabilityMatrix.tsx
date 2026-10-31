@@ -41,9 +41,9 @@ interface AvailabilityMatrixProps {
 export const STATUS_STYLE: Record<UnitStatus, { label: string; short: string; cls: string }> = {
     available: { label: 'Available', short: 'A', cls: 'bg-success/15 text-success border-success/40 hover:bg-success/25' },
     on_hold: { label: 'On hold', short: 'H', cls: 'bg-warning/15 text-warning border-warning/40 hover:bg-warning/25' },
-    sold: { label: 'Sold', short: 'S', cls: 'bg-rose-500/15 text-rose-300 border-rose-500/40 hover:bg-rose-500/25' },
+    sold: { label: 'Sold', short: 'S', cls: 'bg-danger/15 text-danger border-danger/40 hover:bg-danger/25' },
     blocked: { label: 'Blocked', short: 'B', cls: 'bg-surface-sunken text-fg-muted border-line-strong/50 hover:bg-surface-high' },
-    cancelled: { label: 'Cancelled', short: 'C', cls: 'bg-orange-500/15 text-orange-300 border-orange-500/40 hover:bg-orange-500/25' },
+    cancelled: { label: 'Cancelled', short: 'C', cls: 'bg-warning/15 text-warning border-warning/40 hover:bg-warning/25' },
     unavailable: { label: 'Unavailable', short: 'U', cls: 'bg-surface-high text-fg-muted border-line-strong/60 hover:bg-surface-high' },
 };
 
@@ -61,12 +61,12 @@ const CountsSummary: React.FC<{ counts: AvailabilityCounts }> = ({ counts }) => 
         <span className="px-2 py-1 rounded-lg bg-surface-raised text-fg">Total {counts.total}</span>
         <span className="px-2 py-1 rounded-lg bg-success/15 text-success">Available {counts.available}</span>
         <span className="px-2 py-1 rounded-lg bg-warning/15 text-warning">Reserved {counts.on_hold}</span>
-        <span className="px-2 py-1 rounded-lg bg-rose-500/15 text-rose-300">Sold {counts.sold}</span>
+        <span className="px-2 py-1 rounded-lg bg-danger/15 text-danger">Sold {counts.sold}</span>
         {MANUAL_BUCKETS.filter((b) => counts[b.key] > 0).map((b) => (
             <span key={b.key} className="px-2 py-1 rounded-lg bg-surface-raised text-fg-muted">{b.label} {counts[b.key]}</span>
         ))}
         <span className="px-2 py-1 rounded-lg bg-primary/15 text-primary font-semibold" data-testid="percent-sold">
-            {percentSold(counts)}% Sold
+            {`${percentSold(counts)}%`} Sold
         </span>
     </div>
 );
@@ -148,14 +148,14 @@ const UnitPanel: React.FC<UnitPanelProps> = ({ unit, orgCurrency, canManage, onC
                 <Row label="Area (sq ft)" value={unit.area_sqft} />
                 <Row label="Built-up area" value={unit.built_up_area} />
                 <Row label="Plot area" value={unit.plot_area} />
-                <Row label="View" value={unit.view} />
+                <Row label="View" value={unit.view} />{/* comb-exception: "View" is a property attribute (e.g. sea view), not a row action */}
                 <Row label="Original price" value={money(unit.original_price)} />
                 <Row label="Discount" value={money(unit.discount)} />
                 <Row label="Final price" value={money(unit.final_price ?? unit.price)} />
             </dl>
             {ref && (
                 <div className="border-t border-line pt-2 space-y-1" data-testid="unit-deal-ref">
-                    <p className="text-fg-subtle text-[10px]">
+                    <p className="text-fg-subtle text-nb-overline">
                         {ref.reservation_status === 'committed' ? 'Sale record' : 'Reservation'}
                     </p>
                     <dl className="space-y-1">
@@ -331,7 +331,8 @@ export const AvailabilityMatrix: React.FC<AvailabilityMatrixProps> = ({
             ) : (
                 <div className="overflow-x-auto">
                     {/* comb-exception: floor x unit-type matrix with per-cell toggles; DataTable cannot express a sparse 2-D cell grid */}
-                    <table className="border-separate border-spacing-1 text-xs" data-testid="availability-grid">
+                    <table // comb-exception: sparse floor x unit-type matrix, DataTable cannot express it
+                        className="border-separate border-spacing-1 text-xs" data-testid="availability-grid">
                         <thead>
                             <tr>
                                 <th className="text-fg-subtle font-medium text-left pr-2">Floor</th>
@@ -357,7 +358,7 @@ export const AvailabilityMatrix: React.FC<AvailabilityMatrixProps> = ({
                                                     aria-pressed={selectedUnitId === u.item_id}
                                                     title={`${u.unit_number} · ${st.label}${u.bedrooms != null ? ` · ${u.bedrooms} BR` : ''}`}
                                                     aria-label={`Unit ${u.unit_number} ${st.label}`}
-                                                    className={`min-w-[52px] border font-mono ${st.cls}`}
+                                                    className={`min-w-14 border font-mono ${st.cls}`}
                                                 >
                                                     {u.unit_number} <span className="opacity-70">{st.short}</span>
                                                 </Button>
@@ -388,7 +389,7 @@ export const AvailabilityMatrix: React.FC<AvailabilityMatrixProps> = ({
                 />
             )}
 
-            <div className="flex flex-wrap items-center gap-3 text-[11px] text-fg-subtle">
+            <div className="flex flex-wrap items-center gap-3 text-nb-overline text-fg-subtle">
                 {(Object.keys(STATUS_STYLE) as UnitStatus[]).map((k) => (
                     <span key={k} className="flex items-center gap-1">
                         <span className={`inline-block w-2.5 h-2.5 rounded-sm border ${STATUS_STYLE[k].cls}`} /> {STATUS_STYLE[k].short} = {STATUS_STYLE[k].label}

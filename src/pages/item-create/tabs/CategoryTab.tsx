@@ -78,7 +78,7 @@ const CategoryTab: React.FC<CategoryTabProps> = ({
                 return (
                     <div>
                         <div className="flex items-end gap-2">
-                            <div className="flex-1">
+                            <div className="flex-1 min-w-0">
                                 <TextField
                                     {...common}
                                     type="number"
@@ -112,7 +112,7 @@ const CategoryTab: React.FC<CategoryTabProps> = ({
                         <div className="flex items-end gap-2">
                             {/* comb-exception: TextField has no prefix/unit node slot */}
                             {def.unit && <span className="pb-2 text-sm text-fg-subtle whitespace-nowrap">{def.unit}</span>}
-                            <div className="flex-1">
+                            <div className="flex-1 min-w-0">
                                 <TextField
                                     {...common}
                                     type="number"
@@ -187,7 +187,7 @@ const CategoryTab: React.FC<CategoryTabProps> = ({
                         {/* comb-exception: no DS multi-select group; a labelled Checkbox cluster is used */}
                         <p className="mb-1.5 text-sm font-medium text-fg-muted">
                             {fieldLabel(def)}
-                            {def.is_required && <span className="ml-1 text-rose-400">*</span>}
+                            {def.is_required && <span className="ml-1 text-danger">*</span>}
                         </p>
                         <div className="flex flex-wrap gap-3">
                             {(def.options || []).map(opt => {

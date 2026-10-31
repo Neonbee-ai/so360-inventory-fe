@@ -6,7 +6,7 @@ import { rfqService } from '../../services/rfqService';
 import { useActivity, useShellBridge } from '@so360/shell-context';
 import {
     toast, getErrorMessage, useConfirm, DetailPageTemplate, Button, Badge, StatusBadge, SectionCard, DescriptionList,
-    DataTable, EmptyState, Grid,
+    DataTable, EmptyState, Grid, Modal, TextField,
 } from '@so360/design-system';
 import { useInventoryFormatters } from '../../utils/formatters';
 
@@ -77,6 +77,7 @@ const RFQ_FLAG = 'submodule:inventory:rfq';
 
 const PRDetailPage = () => {
     const [confirm, confirmDialog] = useConfirm();
+    const [inputDialog, setInputDialog] = useState<{ kind: 'reject' | 'delegate'; target: string; value: string } | null>(null);
     const { id } = useParams();
     const navigate = useNavigate();
     const { recordActivity } = useActivity();
@@ -138,8 +139,7 @@ const PRDetailPage = () => {
         }
     };
 
-    const handleReject = async (gateName: string) => {
-        const reason = prompt('Enter rejection reason:');
+    const handleReject = async (gateName: string, reason: string) => {
         if (!reason || !id) return;
         setIsApproving(true);
         try {
@@ -151,6 +151,20 @@ const PRDetailPage = () => {
             fetchPR();
         } catch (err: any) {
             setError(err.message || 'Failed to reject');
+        } finally {
+            setIsApproving(false);
+        }
+    };
+
+    const handleDelegate = async (gateId: string, targetEmail: string) => {
+        if (!targetEmail || !id) return;
+
+        setIsApproving(true);
+        try {
+            // Note: Delegation API not yet implemented, placeholder for future
+            toast.info('Delegation feature coming soon!');
+        } catch (err: any) {
+            setError(err.message || 'Failed to delegate');
         } finally {
             setIsApproving(false);
         }
@@ -183,6 +197,16 @@ const PRDetailPage = () => {
         } finally {
             setIsCreatingRfq(false);
         }
+    };
+
+    const submitInputDialog = async () => {
+        if (!inputDialog) return;
+        const value = inputDialog.value.trim();
+        if (!value) return;
+        const { kind, target } = inputDialog;
+        setInputDialog(null);
+        if (kind === 'reject') await handleReject(target, value);
+        else await handleDelegate(target, value);
     };
 
     const handleCreatePO = async () => {
@@ -231,13 +255,13 @@ const PRDetailPage = () => {
         sum + (line.quantity * line.estimated_unit_price), 0) || 0;
 
     if (isLoading) {
-        return <DetailPageTemplate title="Purchase Requisition" loading onBack={() => navigate('/procurement/pr')} backLabel="Back to Purchase Requisitions">{null}</DetailPageTemplate>;
+        return <DetailPageTemplate trail={[{ label: 'Purchase Requisitions', onClick: () => navigate('/procurement/pr') }]} title="Purchase Requisition" loading>{null}</DetailPageTemplate>;
     }
 
     if (error || !pr) {
         // Keep the page shell (title) around the not-found state so the route settles with a real page, not a bare fragment.
         return (
-            <DetailPageTemplate title="Purchase Requisition">
+            <DetailPageTemplate trail={[{ label: 'Purchase Requisitions', onClick: () => navigate('/procurement/pr') }]} title="Purchase Requisition">
                 <EmptyState
                     title={error || 'PR not found'}
                     action={{ label: 'Back to PRs', onClick: () => navigate('/procurement/pr') }}
@@ -275,14 +299,37 @@ const PRDetailPage = () => {
 
     return (
         <DetailPageTemplate
+            trail={[{ label: 'Purchase Requisitions', onClick: () => navigate('/procurement/pr') }]}
             title={`#PR-${pr.id.slice(0, 8).toUpperCase()}`}
             status={<StatusBadge status={statusText} map={{ [statusText]: STATUS_TONES[pr.status] || 'neutral' }} />}
-            onBack={() => navigate('/procurement/pr')}
-            backLabel="Back to Purchase Requisitions"
             primaryAction={primaryAction}
             secondaryActions={secondaryActions}
         >
             {confirmDialog}
+            <Modal
+                open={!!inputDialog}
+                onClose={() => setInputDialog(null)}
+                size="sm"
+                name="pr-input-dialog"
+                title={inputDialog?.kind === 'reject' ? 'Reject approval gate' : 'Delegate approval'}
+                footer={(
+                    <>
+                        <Button variant="secondary" onClick={() => setInputDialog(null)}>Cancel</Button>
+                        <Button variant={inputDialog?.kind === 'reject' ? 'danger' : 'primary'} onClick={submitInputDialog} disabled={!inputDialog?.value.trim()}>
+                            {inputDialog?.kind === 'reject' ? 'Reject' : 'Delegate'}
+                        </Button>
+                    </>
+                )}
+            >
+                <TextField
+                    name="pr-input-dialog-value"
+                    label={inputDialog?.kind === 'reject' ? 'Rejection reason' : 'Email of user to delegate to'}
+                    type={inputDialog?.kind === 'reject' ? 'text' : 'email'}
+                    value={inputDialog?.value ?? ''}
+                    onChange={(e) => setInputDialog((d) => (d ? { ...d, value: e.target.value } : d))}
+                    autoFocus
+                />
+            </Modal>
             <Grid>
                 <Grid.Item span={4} className="space-y-6">
                     <SectionCard title="Overview"><DescriptionList items={overview} /></SectionCard>
@@ -365,7 +412,10 @@ const PRDetailPage = () => {
                                         {gate.status === 'pending' && (
                                             <div className="flex gap-2">
                                                 <Button size="sm" onClick={() => handleApprove(gate.gate_name)} disabled={isApproving}>Approve</Button>
-                                                <Button size="sm" variant="danger" onClick={() => handleReject(gate.gate_name)} disabled={isApproving}>Reject</Button>
+                                                <Button size="sm" variant="danger" onClick={() => setInputDialog({ kind: 'reject', target: gate.gate_name, value: '' })} disabled={isApproving}>Reject</Button>
+                                                {gate.metadata?.can_delegate && (
+                                                    <Button size="sm" variant="secondary" onClick={() => setInputDialog({ kind: 'delegate', target: gate.id, value: '' })} disabled={isApproving}>Delegate</Button>
+                                                )}
                                             </div>
                                         )}
                                         {isOverdue && gate.metadata?.escalation_role_id && <Badge tone="danger">Will escalate</Badge>}

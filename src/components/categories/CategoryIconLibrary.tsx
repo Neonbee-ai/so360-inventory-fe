@@ -38,7 +38,7 @@ const CategoryIconLibrary: React.FC<CategoryIconLibraryProps> = ({ currentUrl, c
         <div className="px-4 pb-4 pt-1 bg-surface/30">
           {GROUPS.map(group => (
             <div key={group} className="mb-3">
-              <p className="text-[10px] font-semibold text-fg-subtle mb-2">{group}</p>
+              <p className="text-nb-overline font-semibold text-fg-subtle mb-2">{group}</p>
               <Grid columns={4} gap="sm">
                 {PRESET_ICONS.filter(icon => icon.group === group).map(icon => {
                   const IconComp = icon.icon;
@@ -63,7 +63,7 @@ const CategoryIconLibrary: React.FC<CategoryIconLibraryProps> = ({ currentUrl, c
                       >
                         <IconComp size={16} className="text-fg" />
                       </div>
-                      <span className="text-[10px] text-fg-subtle leading-tight text-center truncate w-full">{icon.label}</span>
+                      <span className="text-nb-overline text-fg-subtle leading-tight text-center truncate w-full">{icon.label}</span>
                     </Button>
                   );
                 })}
@@ -71,7 +71,7 @@ const CategoryIconLibrary: React.FC<CategoryIconLibraryProps> = ({ currentUrl, c
             </div>
           ))}
 
-          <p className="text-[10px] text-fg-subtle mt-2 text-center">
+          <p className="text-nb-overline text-fg-subtle mt-2 text-center">
             Or upload a custom image ↑
           </p>
         </div>

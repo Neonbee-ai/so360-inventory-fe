@@ -130,46 +130,44 @@ const POListPage = () => {
         const canReadVendors = can('suppliers.read');
         setVendorNotice(canReadVendors ? null : { kind: 'permission', message: VENDOR_PERMISSION_MESSAGE });
 
-        // Settled (not `all`) so a vendor denial can never discard purchase
-        // orders that loaded perfectly well.
-        const [poResult, vendorResult] = await Promise.allSettled([
-            procurementService.getPOs(),
-            canReadVendors ? vendorService.getVendors() : Promise.resolve([]),
-        ]);
+        // Vendors only feed the create-PO form and labels; PO rows already carry
+        // their vendor. Load them (and PRs) in the background so the list
+        // renders as soon as purchase orders arrive, and a vendor denial can
+        // never discard purchase orders that loaded perfectly well.
+        void (canReadVendors ? vendorService.getVendors() : Promise.resolve([])).then(
+            (value) => setVendors(unwrap(value)),
+            (reason) => {
+                setVendors([]);
+                if (isForbidden(reason)) {
+                    setVendorNotice({ kind: 'permission', message: VENDOR_PERMISSION_MESSAGE });
+                } else {
+                    console.error('Failed to fetch vendors', reason);
+                    setVendorNotice({
+                        kind: 'error',
+                        message: 'Vendor information could not be loaded. Purchase orders are still shown below.',
+                    });
+                }
+            },
+        );
+        // PRs loaded independently so a failure doesn't block the PO list
+        loadPRs();
 
-        if (poResult.status === 'fulfilled') {
-            setPos(unwrap(poResult.value));
-        } else {
+        try {
+            setPos(unwrap(await procurementService.getPOs()));
+        } catch (reason: any) {
             setPos([]);
-            if (isForbidden(poResult.reason)) {
+            if (isForbidden(reason)) {
                 setFetchError({
                     kind: 'permission',
                     message: 'You do not have permission to view purchase orders. Please contact your administrator.',
                 });
             } else {
-                console.error('Failed to fetch POs', poResult.reason);
+                console.error('Failed to fetch POs', reason);
                 setFetchError({ kind: 'error', message: 'Failed to load purchase orders. Please try again.' });
             }
+        } finally {
+            setLoading(false);
         }
-
-        if (vendorResult.status === 'fulfilled') {
-            setVendors(unwrap(vendorResult.value));
-        } else {
-            setVendors([]);
-            if (isForbidden(vendorResult.reason)) {
-                setVendorNotice({ kind: 'permission', message: VENDOR_PERMISSION_MESSAGE });
-            } else {
-                console.error('Failed to fetch vendors', vendorResult.reason);
-                setVendorNotice({
-                    kind: 'error',
-                    message: 'Vendor information could not be loaded. Purchase orders are still shown below.',
-                });
-            }
-        }
-
-        setLoading(false);
-        // PRs loaded independently so a failure doesn't block the PO list
-        loadPRs();
     };
 
     const loadPRs = async () => {
@@ -379,7 +377,7 @@ const POListPage = () => {
                         </FeatureGate>
                     </div>
                 }
-                loading={loading}
+                loading={loading && pos.length === 0}
                 isEmpty={!loading && !fetchError && !showPrMenu && pos.length === 0}
                 empty={<>{renderNotice(vendorNotice)}<EmptyState title="No purchase orders found." /></>}
             >

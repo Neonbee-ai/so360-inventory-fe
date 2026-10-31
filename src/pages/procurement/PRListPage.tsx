@@ -115,15 +115,18 @@ const PRListPage = () => {
     // best-effort, so a module being down never blocks PR creation.
     useEffect(() => {
         if (!showForm || warehouses.length || projects.length) return;
+        let cancelled = false;
         Promise.all([
             inventoryService.getLocations().catch(() => []),
             inventoryService.searchProjects().catch(() => []),
             inventoryService.searchWorkOrders().catch(() => []),
         ]).then(([wh, prj, wo]) => {
+            if (cancelled) return;
             setWarehouses(Array.isArray(wh) ? wh : []);
             setProjects(Array.isArray(prj) ? prj : []);
             setWorkOrders(Array.isArray(wo) ? wo : []);
         });
+        return () => { cancelled = true; };
     }, [showForm]);
 
     const fetchData = async () => {
@@ -277,7 +280,7 @@ const PRListPage = () => {
                                             <Badge size="sm" tone={PRIORITIES.find(p => p.value === pr.priority)?.tone || 'neutral'}>{pr.priority}</Badge>
                                         )}
                                     </div>
-                                    <div className="text-nb-caption text-fg-subtle truncate max-w-[200px]">{pr.title || pr.description}</div>
+                                    <div className="text-nb-caption text-fg-subtle truncate max-w-48">{pr.title || pr.description}</div>
                                     {sourceChips(pr).length > 0 && (
                                         <div className="flex flex-wrap gap-nb-1 mt-nb-1">
                                             {sourceChips(pr).map(chip => <Badge key={chip.label} size="sm" tone={chip.tone}>{chip.label}</Badge>)}

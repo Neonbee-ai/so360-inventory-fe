@@ -100,12 +100,16 @@ const VendorListPage = () => {
         fetchData();
     }, []);
 
-    const fetchData = async () => {
+    // `ensure`: a just-created vendor. The list endpoint is cached per BE
+    // instance (pm2 cluster), so an immediate refetch can miss the new row;
+    // keep it visible so create -> search/edit/delete works (r282).
+    const fetchData = async (ensure?: any) => {
         setLoading(true);
         setError(null);
         try {
             const data = await vendorService.getVendors();
-            setVendors(data);
+            const list = Array.isArray(data) ? data : [];
+            setVendors(ensure?.id && !list.some((v: any) => v.id === ensure.id) ? [ensure, ...list] : list);
         } catch (error: any) {
             setError(error.message || 'Failed to fetch vendors');
         } finally {
@@ -159,7 +163,8 @@ const VendorListPage = () => {
                     payment_terms: 'Net 30'
                 }
             });
-            fetchData();
+            const createdRow = created?.data ?? created;
+            fetchData(createdRow?.id ? { vendor_profiles: [], ...createdRow, name: createdRow.name ?? newVendor.name.trim() } : undefined);
             setSuccessMessage('Vendor created successfully');
             setTimeout(() => setSuccessMessage(null), 3000);
         } catch (err: any) {

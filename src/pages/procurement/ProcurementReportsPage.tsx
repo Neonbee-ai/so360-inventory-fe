@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { procurementInsightsService, type ProcurementReport } from '../../services/procurementInsightsService';
 import { useInventoryFormatters } from '../../utils/formatters';
 import { buildCsv, downloadCsv } from '../../utils/csvDownload';
-import { Alert, Button, DataTable, EmptyState, ListPageTemplate, Tabs, TextField, getErrorMessage, toast, type DataTableColumn } from '@so360/design-system';
+import { Alert, Button, DataTable, EmptyState, ListPageTemplate, SearchInput, Tabs, getErrorMessage, toast, type DataTableColumn, type FilterValues } from '@so360/design-system';
 
 const REPORTS: Array<{ key: ProcurementReport; label: string; hint: string }> = [
     { key: 'purchase_register', label: 'Purchase Register', hint: 'Every purchase order with its value' },
@@ -31,23 +31,32 @@ const CURRENCY_KEYS = new Set([
 const humanise = (key: string) =>
     key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
+/** Case-insensitive match of the search text against every cell of a row. */
+export const filterReportRows = (rows: any[], term: string) => {
+    const q = term.trim().toLowerCase();
+    if (!q) return rows;
+    return rows.filter(row => Object.values(row ?? {}).some(v => v != null && String(v).toLowerCase().includes(q)));
+};
+
 const ProcurementReportsPage = () => {
     const formatters = useInventoryFormatters();
     const [report, setReport] = useState<ProcurementReport>('purchase_register');
     const [range, setRange] = useState({ from: '', to: '' });
     const [rows, setRows] = useState<any[]>([]);
+    const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => { run(); }, [report]);
 
-    const run = async () => {
+    const run = async (override?: { from: string; to: string }) => {
+        const r = override ?? range;
         setLoading(true);
         setError(null);
         try {
             const res = await procurementInsightsService.getReport(report, {
-                from: range.from || undefined,
-                to: range.to || undefined,
+                from: r.from || undefined,
+                to: r.to || undefined,
             });
             setRows(Array.isArray(res?.rows) ? res.rows : []);
         } catch (err) {
@@ -70,7 +79,21 @@ const ProcurementReportsPage = () => {
         toast.success(`Exported ${rows.length} row(s)`);
     };
 
+    const visibleRows = filterReportRows(rows, searchTerm);
     const columnKeys = rows.length ? Object.keys(rows[0]) : [];
+
+    const filterValues: FilterValues = {
+        period: range.from || range.to ? { start: range.from, end: range.to } : null,
+        report,
+    };
+    const handleFilterChange = (v: FilterValues) => {
+        const p = (v.period ?? {}) as { start?: string; end?: string };
+        const next = { from: p.start ?? '', to: p.end ?? '' };
+        const rangeChanged = next.from !== range.from || next.to !== range.to;
+        setRange(next);
+        if (typeof v.report === 'string' && v.report && v.report !== report) setReport(v.report as ProcurementReport);
+        else if (rangeChanged && (!next.from || !next.to || next.from <= next.to)) run(next);
+    };
     const active = REPORTS.find(r => r.key === report);
 
     const columns: DataTableColumn<any>[] = columnKeys.map(c => ({
@@ -90,10 +113,11 @@ const ProcurementReportsPage = () => {
         <ListPageTemplate trail={[]}
             title="Procurement Reports"
             description={active?.hint}
-            count={rows.length > 0 ? `${rows.length} row(s)` : undefined}
-            primaryAction={<Button onClick={run}>Run</Button>}
+            count={visibleRows.length > 0 ? `${visibleRows.length} row(s)` : undefined}
+            primaryAction={<Button onClick={() => run()}>Run</Button>}
             headerSecondaryActions={[<Button key="export" variant="secondary" onClick={exportCsv}>Export CSV</Button>]}
             views={(
+                <div className="min-w-0 max-w-full max-md:hidden">
                 <Tabs
                     name="report"
                     variant="pill"
@@ -102,38 +126,33 @@ const ProcurementReportsPage = () => {
                     value={report}
                     onChange={id => setReport(id as ProcurementReport)}
                 />
-            )}
-            toolbar={(
-                <div className="flex flex-wrap items-end gap-nb-3">
-                    <TextField
-                        name="rep-from"
-                        label="From"
-                        type="date"
-                        value={range.from}
-                        onChange={e => setRange({ ...range, from: e.target.value })}
-                    />
-                    <TextField
-                        name="rep-to"
-                        label="To"
-                        type="date"
-                        value={range.to}
-                        onChange={e => setRange({ ...range, to: e.target.value })}
-                    />
                 </div>
             )}
-            loading={loading}
-            isEmpty={!loading && !error && rows.length === 0}
+            search={<SearchInput placeholder="Search this report..." value={searchTerm} onChange={setSearchTerm} />}
+            filterConfig={{
+                fields: [
+                    { key: 'period', label: 'Period', type: 'daterange' },
+                    { key: 'report', label: 'Report', type: 'select', options: REPORTS.map(r => ({ value: r.key, label: r.label })) },
+                ],
+                values: filterValues,
+                onChange: handleFilterChange,
+                onClear: () => { setSearchTerm(''); setRange({ from: '', to: '' }); run({ from: '', to: '' }); },
+            }}
+            loading={loading && rows.length === 0}
+            isEmpty={!loading && !error && visibleRows.length === 0}
             empty={<EmptyState title="No rows for this report." />}
         >
-            <div className="flex flex-col gap-nb-4">
+            <div className="flex min-w-0 max-w-full flex-col gap-nb-4">
                 {error && <Alert variant="error">{error}</Alert>}
+                <div className="min-w-0 max-w-full overflow-x-auto">
                 <DataTable
                     data-testid="procurement-report-table"
                     columns={columns}
-                    rows={rows}
-                    rowKey={(_row: any) => String(rows.indexOf(_row))}
-                    loading={loading}
+                    rows={visibleRows}
+                    rowKey={(_row: any) => String(visibleRows.indexOf(_row))}
+                    loading={loading && rows.length === 0}
                 />
+                </div>
             </div>
         </ListPageTemplate>
     );

@@ -12,7 +12,7 @@ import { inventoryService } from '../services/inventoryService';
 import { Item, StockMovement, Unit, ItemCategory, Warehouse } from '../types/inventory';
 import { TabId, ITEM_CLASSIFICATIONS, ItemClassification } from '../types/itemTypes';
 import {
-    DetailPageTemplate, DataTable, Button, Modal, Alert, Badge, EmptyState, Tabs, Grid, FieldGrid,
+    DetailPageTemplate, DataTable, Button, Modal, Alert, Badge, EmptyState, Grid, FieldGrid, KpiCard,
     type DataTableColumn,
 } from '@so360/design-system';
 import { useAuth } from '../hooks/useAuth';
@@ -76,6 +76,18 @@ interface EditFormData {
 }
 
 // ── Main Component ────────────────────────────────────
+const VIEW_TABS: { id: ViewTabId; label: string; icon: React.ReactNode }[] = [
+    { id: 'basic', label: 'Basic Info', icon: <Package size={14} /> },
+    { id: 'media', label: 'Media', icon: <ImageIcon size={14} /> },
+    { id: 'pricing', label: 'Pricing', icon: <DollarSign size={14} /> },
+    { id: 'category', label: 'Category', icon: <Tag size={14} /> },
+    { id: 'stock', label: 'Stock', icon: <BarChart3 size={14} /> },
+    { id: 'shipping', label: 'Shipping', icon: <Truck size={14} /> },
+    { id: 'attributes', label: 'Attributes', icon: <Sliders size={14} /> },
+    { id: 'ledger', label: 'Ledger', icon: <History size={14} /> },
+    { id: 'sales', label: 'Sales History', icon: <TrendingUp size={14} /> },
+];
+
 const ItemDetailPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -405,7 +417,7 @@ const ItemDetailPage = () => {
             render: (entry: StockMovement) => {
                 const getIcon = () => {
                     if (entry.type === 'inbound' || (entry.type === 'adjustment' && entry.quantity > 0)) return <ArrowDownLeft size={14} className="text-success" />;
-                    if (entry.type === 'outbound' || (entry.type === 'adjustment' && entry.quantity < 0)) return <ArrowUpRight size={14} className="text-rose-400" />;
+                    if (entry.type === 'outbound' || (entry.type === 'adjustment' && entry.quantity < 0)) return <ArrowUpRight size={14} className="text-danger" />;
                     return <ArrowRightLeft size={14} className="text-primary" />;
                 };
                 return (
@@ -420,7 +432,7 @@ const ItemDetailPage = () => {
             key: 'quantity',
             header: 'Quantity',
             render: (entry: StockMovement) => (
-                <span className={`font-bold ${entry.quantity > 0 ? 'text-success' : 'text-rose-400'}`}>
+                <span className={`font-bold ${entry.quantity > 0 ? 'text-success' : 'text-danger'}`}>
                     {entry.quantity > 0 ? '+' : ''}{entry.quantity}
                 </span>
             )
@@ -462,6 +474,10 @@ const ItemDetailPage = () => {
                 overflowActions={!isEditing && can('items.delete')
                     ? [{ label: 'Delete', danger: true, onSelect: () => setShowDeleteConfirm(true) }]
                     : undefined}
+                tabs={isEditing ? undefined : VIEW_TABS}
+                activeTab={viewTab}
+                onTabChange={(id: string) => setViewTab(id as ViewTabId)}
+                maxVisible={VIEW_TABS.length}
             >
             {error && <Alert variant="error" action={{ label: 'Dismiss', onClick: () => setError(null) }}>{error}</Alert>}
             {taxCodesError && <Alert variant="warning">{taxCodesError}</Alert>}
@@ -483,7 +499,7 @@ const ItemDetailPage = () => {
                                         <img
                                             src={item.image_urls![0]}
                                             alt={item.name}
-                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                            className="w-full h-full object-cover"
                                         />
                                     </div>
                                     {item.image_urls!.length > 1 && (
@@ -506,7 +522,7 @@ const ItemDetailPage = () => {
                                     )}
                                 </div>
                             ) : (
-                                <div className="w-20 h-20 rounded-2xl bg-surface-raised flex items-center justify-center border border-line-strong shadow-xl mb-4 mt-6">
+                                <div className="w-20 h-20 rounded-2xl bg-surface-raised flex items-center justify-center border border-line-strong mb-4 mt-6">
                                     <ClassIcon size={40} className="text-primary" />
                                 </div>
                             )}
@@ -548,24 +564,24 @@ const ItemDetailPage = () => {
                         /* ── EDIT MODE ── */
                         <Grid.Item span={8} className="space-y-4">
                             {/* ═══ 3 Summary Cards ═══ */}
-                            <Grid columns={3} gap="sm">
+                            <FieldGrid columns={3} className="gap-nb-2">
                                 {/* Card 1: Available Physical Stock */}
-                                <div className="bg-primary rounded-2xl p-5 text-primary-fg shadow-lg shadow-blue-900/40 relative overflow-hidden">
+                                <div className="bg-primary rounded-2xl p-5 text-primary-fg relative overflow-hidden">
                                     <div className="absolute -right-3 -bottom-3 opacity-10">
                                         <Package size={80} />
                                     </div>
-                                    <span className="text-primary text-[10px] font-bold">Physical stock</span>
+                                    <span className="text-primary-fg text-nb-overline font-bold">Physical stock</span>
                                     <div className="text-4xl font-black mt-2 flex items-baseline gap-1.5">
                                         {totalStock}
-                                        <span className="text-nb-sm font-normal text-primary">{item.units?.abbreviation || 'PCS'}</span>
+                                        <span className="text-nb-sm font-normal text-primary-fg">{item.units?.abbreviation || 'PCS'}</span>
                                     </div>
-                                    <p className="mt-3 text-[10px] text-primary flex items-center gap-1.5 bg-primary/30 w-fit px-2 py-1 rounded-lg">
+                                    <p className="mt-3 text-nb-overline text-primary-fg flex items-center gap-1.5 bg-primary/30 w-fit px-2 py-1 rounded-lg">
                                         <Info size={11} /> Real-time count
                                     </p>
                                 </div>
                                 {/* Card 2: Stock Thresholds */}
                                 <div className="bg-surface/50 border border-line rounded-2xl p-5 hover:border-line-strong transition-colors">
-                                    <h3 className="text-[10px] font-bold text-fg-muted mb-3">Stock thresholds</h3>
+                                    <h3 className="text-nb-overline font-bold text-fg-muted mb-3">Stock thresholds</h3>
                                     {(item.min_stock_threshold != null || item.reorder_level != null) ? (
                                         <div className="space-y-2">
                                             {item.min_stock_threshold != null && (
@@ -589,7 +605,7 @@ const ItemDetailPage = () => {
                                             {item.min_stock_threshold != null && totalStock < item.min_stock_threshold && (
                                                 <div className="mt-2 p-2 bg-warning/10 border border-warning/20 rounded-lg flex items-center gap-1.5">
                                                     <AlertTriangle size={12} className="text-warning flex-shrink-0" />
-                                                    <span className="text-[10px] text-warning font-medium">Below minimum!</span>
+                                                    <span className="text-nb-overline text-warning font-medium">Below minimum!</span>
                                                 </div>
                                             )}
                                         </div>
@@ -608,10 +624,10 @@ const ItemDetailPage = () => {
                                         }}
                                     />
                                 </div>
-                            </Grid>
+                            </FieldGrid>
                             <div className="bg-surface/50 border border-line rounded-xl ring-1 ring-focus/20">
                                 <TabNavigation activeTab={editTab} onTabChange={setEditTab} tabErrors={tabErrors} />
-                                <div className="p-6 min-h-[24rem]">
+                                <div className="p-6 min-h-96">
                                     {renderEditTab()}
                                 </div>
                             </div>
@@ -620,24 +636,24 @@ const ItemDetailPage = () => {
                         /* ── VIEW MODE ── */
                         <Grid.Item span={8} className="space-y-4">
                             {/* ═══ 3 Summary Cards ═══ */}
-                            <Grid columns={3} gap="sm">
+                            <FieldGrid columns={3} className="gap-nb-2">
                                 {/* Card 1: Available Physical Stock */}
-                                <div className="bg-primary rounded-2xl p-5 text-primary-fg shadow-lg shadow-blue-900/40 relative overflow-hidden">
+                                <div className="bg-primary rounded-2xl p-5 text-primary-fg relative overflow-hidden">
                                     <div className="absolute -right-3 -bottom-3 opacity-10">
                                         <Package size={80} />
                                     </div>
-                                    <span className="text-primary text-[10px] font-bold">Physical stock</span>
+                                    <span className="text-primary-fg text-nb-overline font-bold">Physical stock</span>
                                     <div className="text-4xl font-black mt-2 flex items-baseline gap-1.5">
                                         {totalStock}
-                                        <span className="text-nb-sm font-normal text-primary">{item.units?.abbreviation || 'PCS'}</span>
+                                        <span className="text-nb-sm font-normal text-primary-fg">{item.units?.abbreviation || 'PCS'}</span>
                                     </div>
-                                    <p className="mt-3 text-[10px] text-primary flex items-center gap-1.5 bg-primary/30 w-fit px-2 py-1 rounded-lg">
+                                    <p className="mt-3 text-nb-overline text-primary-fg flex items-center gap-1.5 bg-primary/30 w-fit px-2 py-1 rounded-lg">
                                         <Info size={11} /> Real-time count
                                     </p>
                                 </div>
                                 {/* Card 2: Stock Thresholds */}
                                 <div className="bg-surface/50 border border-line rounded-2xl p-5 hover:border-line-strong transition-colors">
-                                    <h3 className="text-[10px] font-bold text-fg-muted mb-3">Stock thresholds</h3>
+                                    <h3 className="text-nb-overline font-bold text-fg-muted mb-3">Stock thresholds</h3>
                                     {(item.min_stock_threshold != null || item.reorder_level != null) ? (
                                         <div className="space-y-2">
                                             {item.min_stock_threshold != null && (
@@ -661,7 +677,7 @@ const ItemDetailPage = () => {
                                             {item.min_stock_threshold != null && totalStock < item.min_stock_threshold && (
                                                 <div className="mt-2 p-2 bg-warning/10 border border-warning/20 rounded-lg flex items-center gap-1.5">
                                                     <AlertTriangle size={12} className="text-warning flex-shrink-0" />
-                                                    <span className="text-[10px] text-warning font-medium">Below minimum!</span>
+                                                    <span className="text-nb-overline text-warning font-medium">Below minimum!</span>
                                                 </div>
                                             )}
                                         </div>
@@ -680,27 +696,11 @@ const ItemDetailPage = () => {
                                         }}
                                     />
                                 </div>
-                            </Grid>
+                            </FieldGrid>
                             <div className="bg-surface/50 border border-line rounded-xl">
-                                {/* View Tab Bar — 8 tabs */}
-                                <Tabs
-                                    items={[
-                                        { id: 'basic' as ViewTabId, label: 'Basic Info', icon: <Package size={14} /> },
-                                        { id: 'media' as ViewTabId, label: 'Media', icon: <ImageIcon size={14} /> },
-                                        { id: 'pricing' as ViewTabId, label: 'Pricing', icon: <DollarSign size={14} /> },
-                                        { id: 'category' as ViewTabId, label: 'Category', icon: <Tag size={14} /> },
-                                        { id: 'stock' as ViewTabId, label: 'Stock', icon: <BarChart3 size={14} /> },
-                                        { id: 'shipping' as ViewTabId, label: 'Shipping', icon: <Truck size={14} /> },
-                                        { id: 'attributes' as ViewTabId, label: 'Attributes', icon: <Sliders size={14} /> },
-                                        { id: 'ledger' as ViewTabId, label: 'Ledger', icon: <History size={14} /> },
-                                        { id: 'sales' as ViewTabId, label: 'Sales History', icon: <TrendingUp size={14} /> },
-                                    ]}
-                                    value={viewTab}
-                                    onChange={(id: string) => setViewTab(id as ViewTabId)}
-                                />
 
                                 {/* View Tab Content */}
-                                <div className="p-6 min-h-[24rem]">
+                                <div className="p-6 min-h-96">
                                     {/* ── Basic Info ── */}
                                     {viewTab === 'basic' && (
                                         <div className="space-y-8">
@@ -717,7 +717,7 @@ const ItemDetailPage = () => {
                                             </FormSection>
 
                                             <FormSection title="Classification">
-                                                <Grid columns={3} gap="sm">
+                                                <FieldGrid columns={3} className="gap-nb-2">
                                                     {ITEM_CLASSIFICATIONS.map(cls => {
                                                         const Icon = cls.icon;
                                                         const isSelected = item.type === cls.value;
@@ -738,7 +738,7 @@ const ItemDetailPage = () => {
                                                             </div>
                                                         );
                                                     })}
-                                                </Grid>
+                                                </FieldGrid>
                                             </FormSection>
 
                                             <FormSection title="Product Type">
@@ -746,7 +746,7 @@ const ItemDetailPage = () => {
                                             </FormSection>
 
                                             <FormSection title="Description">
-                                                <div className="w-full bg-surface-raised/50 border border-line-strong/50 rounded-lg px-4 py-2.5 text-sm min-h-[80px]">
+                                                <div className="w-full bg-surface-raised/50 border border-line-strong/50 rounded-lg px-4 py-2.5 text-sm min-h-20">
                                                     {item.description?.trim() ? (
                                                         <p className="text-fg whitespace-pre-wrap leading-relaxed">{item.description}</p>
                                                     ) : (
@@ -776,7 +776,7 @@ const ItemDetailPage = () => {
                                                                 className="aspect-square rounded-lg overflow-hidden border border-line-strong cursor-pointer hover:border-primary transition-colors group"
                                                                 onClick={() => setPreviewImage(url)}
                                                             >
-                                                                <img src={url} alt={`${item.name} ${i + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                                                                <img src={url} alt={`${item.name} ${i + 1}`} className="w-full h-full object-cover" />
                                                             </div>
                                                         ))}
                                                     </Grid>
@@ -866,15 +866,15 @@ const ItemDetailPage = () => {
 
                                             <FormSection title="Dimensions (L x W x H)">
                                                 <div className="flex gap-2 items-end">
-                                                    <div className="flex-1">
+                                                    <div className="flex-1 min-w-0">
                                                         <ReadOnlyField label="Length" value={item.dimensions?.length != null ? String(item.dimensions.length) : null} />
                                                     </div>
                                                     <span className="text-fg-subtle pb-3">&times;</span>
-                                                    <div className="flex-1">
+                                                    <div className="flex-1 min-w-0">
                                                         <ReadOnlyField label="Width" value={item.dimensions?.width != null ? String(item.dimensions.width) : null} />
                                                     </div>
                                                     <span className="text-fg-subtle pb-3">&times;</span>
-                                                    <div className="flex-1">
+                                                    <div className="flex-1 min-w-0">
                                                         <ReadOnlyField label="Height" value={item.dimensions?.height != null ? String(item.dimensions.height) : null} />
                                                     </div>
                                                     <div className="w-20 flex-shrink-0">
@@ -940,7 +940,7 @@ const ItemDetailPage = () => {
                                                     <History size={20} className="text-primary" />
                                                     <h2 className="text-lg font-semibold text-fg">Movement Ledger</h2>
                                                 </div>
-                                                <span className="text-[10px] text-fg-subtle border border-line px-3 py-1 rounded-full font-bold">
+                                                <span className="text-nb-overline text-fg-subtle border border-line px-3 py-1 rounded-full font-bold">
                                                     Audit Trail
                                                 </span>
                                             </div>
@@ -962,39 +962,25 @@ const ItemDetailPage = () => {
                                                 <h2 className="text-lg font-semibold text-fg">Sales History</h2>
                                             </div>
 
-                                            <Grid columns={2} gap="sm" className="mb-nb-6">
-                                                <div className="bg-surface/50 border border-line rounded-xl p-5">
-                                                    <div className="flex items-center gap-2 text-fg-subtle mb-2">
-                                                        <BarChart3 size={14} />
-                                                        <span className="text-[10px] font-black">Total Quantity Sold</span>
-                                                    </div>
-                                                    <div className="text-2xl font-bold text-fg">
-                                                        {salesHistory?.total_quantity_sold ?? 0}
-                                                    </div>
+                                                                                        <div className="mb-nb-6">
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <KpiCard label="Total Quantity Sold" value={salesHistory?.total_quantity_sold ?? 0} icon={BarChart3} />
+                                                    <KpiCard label="Invoices Used In" value={salesHistory?.invoice_count ?? 0} icon={FileText} />
                                                 </div>
-                                                <div className="bg-surface/50 border border-line rounded-xl p-5">
-                                                    <div className="flex items-center gap-2 text-fg-subtle mb-2">
-                                                        <FileText size={14} />
-                                                        <span className="text-[10px] font-black">Invoices Used In</span>
-                                                    </div>
-                                                    <div className="text-2xl font-bold text-fg">
-                                                        {salesHistory?.invoice_count ?? 0}
-                                                    </div>
-                                                </div>
-                                            </Grid>
+                                            </div>
 
-                                            <h3 className="text-[10px] font-black text-fg-subtle mb-3">Recent outbound movements</h3>
+                                            <h3 className="text-nb-overline font-black text-fg-subtle mb-3">Recent outbound movements</h3>
                                             {salesHistory && salesHistory.recent_movements.length > 0 ? (
                                                 <div className="border border-line rounded-xl divide-y divide-line overflow-hidden">
                                                     {salesHistory.recent_movements.map((m: any, idx: number) => (
                                                         <div key={m.id || idx} className="flex items-center justify-between px-4 py-3 bg-surface/30">
                                                             <div className="flex items-center gap-3 min-w-0">
-                                                                <ArrowUpRight size={16} className="text-rose-400 flex-shrink-0" />
+                                                                <ArrowUpRight size={16} className="text-danger flex-shrink-0" />
                                                                 <div className="min-w-0">
                                                                     <div className="text-xs text-fg truncate">
                                                                         {m.metadata?.note || (m.reference_id ? `Order ${m.reference_id}` : 'Outbound movement')}
                                                                     </div>
-                                                                    <div className="text-[11px] text-fg-subtle">
+                                                                    <div className="text-nb-overline text-fg-subtle">
                                                                         {m.created_at ? parseUtcDate(m.created_at).toLocaleString() : ''}
                                                                     </div>
                                                                 </div>
@@ -1105,7 +1091,7 @@ function initEditForm(item: Item): EditFormData {
 const ReadOnlyField = ({ label, value, mono }: { label: string; value: React.ReactNode; mono?: boolean }) => (
     <div>
         <span className="block text-sm font-medium text-fg-muted mb-1.5">{label}</span>
-        <div className={`w-full bg-surface-raised/50 border border-line-strong/50 rounded-lg px-4 py-2.5 text-sm min-h-[42px] flex items-center ${
+        <div className={`w-full bg-surface-raised/50 border border-line-strong/50 rounded-lg px-4 py-2.5 text-sm min-h-10 flex items-center ${
             mono ? 'font-mono text-fg-muted' : 'text-fg'
         }`}>
             {value || <span className="text-fg-subtle">&mdash;</span>}
@@ -1125,7 +1111,7 @@ const StatusPill = ({ label, active }: { label: string; active: boolean }) => (
         active ? 'bg-success/10 text-success border-success/20'
                : 'bg-surface-raised/50 text-fg-subtle border-line-strong'
     }`}>
-        <span className={`w-2 h-2 rounded-full ${active ? 'bg-emerald-400' : 'bg-surface-high'}`} />
+        <span className={`w-2 h-2 rounded-full ${active ? 'bg-success' : 'bg-surface-high'}`} />
         {label}: {active ? 'Yes' : 'No'}
     </div>
 );
