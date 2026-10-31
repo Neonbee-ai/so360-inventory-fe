@@ -12,7 +12,7 @@ import { inventoryService } from '../services/inventoryService';
 import { Item, StockMovement, Unit, ItemCategory, Warehouse } from '../types/inventory';
 import { TabId, ITEM_CLASSIFICATIONS, ItemClassification } from '../types/itemTypes';
 import {
-    DetailPageTemplate, DataTable, Button, Modal, Alert, Badge, EmptyState, Grid, FieldGrid, KpiCard, KpiGrid,
+    DetailPageTemplate, DataTable, Button, Modal, Alert, Badge, EmptyState, Grid, FieldGrid, KpiCard,
     type DataTableColumn,
 } from '@so360/design-system';
 import { useAuth } from '../hooks/useAuth';
@@ -963,10 +963,10 @@ const ItemDetailPage = () => {
                                             </div>
 
                                                                                         <div className="mb-nb-6">
-                                                <KpiGrid>
+                                                <div className="grid grid-cols-2 gap-4">
                                                     <KpiCard label="Total Quantity Sold" value={salesHistory?.total_quantity_sold ?? 0} icon={BarChart3} />
                                                     <KpiCard label="Invoices Used In" value={salesHistory?.invoice_count ?? 0} icon={FileText} />
-                                                </KpiGrid>
+                                                </div>
                                             </div>
 
                                             <h3 className="text-nb-overline font-black text-fg-subtle mb-3">Recent outbound movements</h3>

@@ -5,7 +5,7 @@ import { useInventoryFormatters } from '../../utils/formatters';
 import { useActivity, useShell, useBusinessSettings } from '@so360/shell-context';
 import {
     toast, getErrorMessage, useConfirm, DetailPageTemplate, Button, Badge, StatusBadge, SectionCard, DescriptionList,
-    DataTable, EmptyState, Select, TextField, Textarea, Progress, CountUp,
+    DataTable, EmptyState, Select, TextField, Textarea, Progress,
 } from '@so360/design-system';
 import { poToDocumentData } from '../../utils/poToDocumentData';
 import ProcurementTrace from '../../components/ProcurementTrace';
@@ -303,7 +303,7 @@ const PODetailPage = () => {
     const sidePanel = (
         <div className="space-y-6">
             <SectionCard title="Order Total">
-                <div className="text-3xl font-bold"><CountUp value={formatters.formatCurrency(totalAmount)} /></div>
+                <div className="text-3xl font-bold">{formatters.formatCurrency(totalAmount)}</div>
                 {hasTax ? (
                     <DescriptionList items={[
                         { label: 'Subtotal', value: formatters.formatCurrency(subtotalAmount) },

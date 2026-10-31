@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Loader2, X, ExternalLink } from 'lucide-react';
-import { Alert, Button, Card, CountUp, EmptyState, IconButton, Select, Tabs, TextField } from '@so360/design-system';
+import { Alert, Button, Card, EmptyState, IconButton, Select, Tabs, TextField } from '@so360/design-system';
 import { useBusinessSettings } from '@so360/shell-context';
 import { inventoryService } from '../../services/inventoryService';
 import {
@@ -58,15 +58,15 @@ const MANUAL_BUCKETS: { key: 'blocked' | 'cancelled' | 'unavailable'; label: str
 /** Project dashboard card (RFP §4): Total / Available / Reserved / Sold / % Sold. */
 const CountsSummary: React.FC<{ counts: AvailabilityCounts }> = ({ counts }) => (
     <div className="flex flex-wrap items-center gap-2 text-xs" data-testid="availability-summary">
-        <span className="px-2 py-1 rounded-lg bg-surface-raised text-fg">Total <CountUp value={counts.total} /></span>
-        <span className="px-2 py-1 rounded-lg bg-success/15 text-success">Available <CountUp value={counts.available} /></span>
-        <span className="px-2 py-1 rounded-lg bg-warning/15 text-warning">Reserved <CountUp value={counts.on_hold} /></span>
-        <span className="px-2 py-1 rounded-lg bg-danger/15 text-danger">Sold <CountUp value={counts.sold} /></span>
+        <span className="px-2 py-1 rounded-lg bg-surface-raised text-fg">Total {counts.total}</span>
+        <span className="px-2 py-1 rounded-lg bg-success/15 text-success">Available {counts.available}</span>
+        <span className="px-2 py-1 rounded-lg bg-warning/15 text-warning">Reserved {counts.on_hold}</span>
+        <span className="px-2 py-1 rounded-lg bg-danger/15 text-danger">Sold {counts.sold}</span>
         {MANUAL_BUCKETS.filter((b) => counts[b.key] > 0).map((b) => (
-            <span key={b.key} className="px-2 py-1 rounded-lg bg-surface-raised text-fg-muted">{b.label} <CountUp value={counts[b.key]} /></span>
+            <span key={b.key} className="px-2 py-1 rounded-lg bg-surface-raised text-fg-muted">{b.label} {counts[b.key]}</span>
         ))}
         <span className="px-2 py-1 rounded-lg bg-primary/15 text-primary font-semibold" data-testid="percent-sold">
-            <CountUp value={`${percentSold(counts)}%`} /> Sold
+            {`${percentSold(counts)}%`} Sold
         </span>
     </div>
 );
