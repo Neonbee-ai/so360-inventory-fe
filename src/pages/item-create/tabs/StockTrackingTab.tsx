@@ -17,11 +17,14 @@ interface StockTrackingTabProps {
     default_warehouse_id?: string;
     warehouses?: Warehouse[];
     is_online_visible?: boolean;
+    available_on_ecommerce?: boolean;
+    show_stock?: boolean;
 }
 
 const StockTrackingTab: React.FC<StockTrackingTabProps> = ({
     min_stock_threshold, reorder_level, is_batch_tracked, is_serial_tracked, is_active,
     updateField, default_warehouse_id, warehouses, is_online_visible,
+    available_on_ecommerce = true, show_stock = true,
 }) => {
     return (
         <div className="space-y-nb-6">
@@ -75,6 +78,8 @@ const StockTrackingTab: React.FC<StockTrackingTabProps> = ({
                 <div className="flex flex-col gap-nb-3 p-nb-4 bg-surface-raised border border-line rounded-nb-md">
                     <Checkbox name="is_active" label="Active" description="Inactive items are hidden from selection lists and ordering" checked={is_active} onChange={e => updateField('is_active', e.target.checked)} />
                     <Checkbox name="is_online_visible" label="Online Visible" description="Show this product in the Daily Store online catalog (requires Active status)" checked={is_online_visible || false} onChange={e => updateField('is_online_visible', e.target.checked)} />
+                    <Checkbox name="available_on_ecommerce" label="Available on Ecommerce" description="Turn off to hide this product from the storefront without deactivating it" checked={available_on_ecommerce} onChange={e => updateField('available_on_ecommerce', e.target.checked)} />
+                    <Checkbox name="show_stock" label="Show Stock" description="Show the available quantity to storefront customers" checked={show_stock} onChange={e => updateField('show_stock', e.target.checked)} />
                 </div>
             </FormSection>
         </div>
