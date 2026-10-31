@@ -238,7 +238,7 @@ const SettingsPage = () => {
                 </SettingsCard>
 
                 <SettingsCard title="Product Types" description="Define product type templates with custom attribute fields (e.g. Electronics, Clothing)">
-                    <Button variant="secondary" className="w-full !justify-between h-auto py-nb-3 whitespace-normal" onClick={() => navigate('/inventory/settings/product-types')}>
+                    <Button variant="secondary" className="w-full !justify-between !h-auto !py-nb-3 !whitespace-normal" onClick={() => navigate('/inventory/settings/product-types')}>
                         <span className="min-w-0 flex-1 text-left">
                             <span className="block text-nb-body font-semibold text-fg">Manage Product Types</span>
                             <span className="block text-nb-caption text-fg-subtle">View system templates, create custom types, define attribute schemas</span>
