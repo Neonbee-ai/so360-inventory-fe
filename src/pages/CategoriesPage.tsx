@@ -29,7 +29,7 @@ import {
 import { fitImageFile, describeFit, IMAGE_FIT_SLOTS, type ImageFitSlot } from '../utils/imageFit';
 import ImageSpecChip from '../components/media/ImageSpecChip';
 import { useActivity, useShellBridge } from '@so360/shell-context';
-import { Alert, Button, Card, Cluster, FeatureGate, IconButton, ListPageTemplate, SegmentedControl, TextField, Textarea, Grid } from '@so360/design-system';
+import { Alert, Button, Card, Cluster, FeatureGate, IconButton, ListPageTemplate, SegmentedControl, TextField, Textarea, Grid, GridItem } from '@so360/design-system';
 
 const PRESET_COLORS = ['#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#EC4899', '#06B6D4', '#64748B'];
 
@@ -529,9 +529,9 @@ const CategoriesPage = () => {
                 </div>
             )}
 
-            <div className="flex gap-6 items-start">
+            <Grid className="items-start">
                 {/* Left panel — tree / cards */}
-                <div className="w-1/3 min-w-64">
+                <GridItem span={{ base: 'full', lg: 4 }}>
                   <Card
                     title={labels.categories}
                     actions={
@@ -569,10 +569,10 @@ const CategoriesPage = () => {
                         )}
                     </div>
                   </Card>
-                </div>
+                </GridItem>
 
                 {/* Right panel — detail editor */}
-                <div className="flex-1">
+                <GridItem span={{ base: 'full', lg: 8 }}>
                   <Card
                     title={selectedCategory ? `Edit ${selectedCategory.parent_id ? labels.subcategory : labels.category}` : undefined}
                     actions={selectedCategory ? (
@@ -939,8 +939,8 @@ const CategoriesPage = () => {
                         </div>
                     )}
                   </Card>
-                </div>
-            </div>
+                </GridItem>
+            </Grid>
         </ListPageTemplate>
     );
 };

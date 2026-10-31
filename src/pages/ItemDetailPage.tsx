@@ -564,18 +564,18 @@ const ItemDetailPage = () => {
                         /* ── EDIT MODE ── */
                         <Grid.Item span={8} className="space-y-4">
                             {/* ═══ 3 Summary Cards ═══ */}
-                            <Grid columns={3} gap="sm">
+                            <FieldGrid columns={3} className="gap-nb-2">
                                 {/* Card 1: Available Physical Stock */}
                                 <div className="bg-primary rounded-2xl p-5 text-primary-fg relative overflow-hidden">
                                     <div className="absolute -right-3 -bottom-3 opacity-10">
                                         <Package size={80} />
                                     </div>
-                                    <span className="text-primary text-nb-overline font-bold">Physical stock</span>
+                                    <span className="text-primary-fg/80 text-nb-overline font-bold">Physical stock</span>
                                     <div className="text-4xl font-black mt-2 flex items-baseline gap-1.5">
                                         {totalStock}
-                                        <span className="text-nb-sm font-normal text-primary">{item.units?.abbreviation || 'PCS'}</span>
+                                        <span className="text-nb-sm font-normal text-primary-fg/80">{item.units?.abbreviation || 'PCS'}</span>
                                     </div>
-                                    <p className="mt-3 text-nb-overline text-primary flex items-center gap-1.5 bg-primary/30 w-fit px-2 py-1 rounded-lg">
+                                    <p className="mt-3 text-nb-overline text-primary-fg flex items-center gap-1.5 bg-primary/30 w-fit px-2 py-1 rounded-lg">
                                         <Info size={11} /> Real-time count
                                     </p>
                                 </div>
@@ -624,7 +624,7 @@ const ItemDetailPage = () => {
                                         }}
                                     />
                                 </div>
-                            </Grid>
+                            </FieldGrid>
                             <div className="bg-surface/50 border border-line rounded-xl ring-1 ring-focus/20">
                                 <TabNavigation activeTab={editTab} onTabChange={setEditTab} tabErrors={tabErrors} />
                                 <div className="p-6 min-h-96">
@@ -636,18 +636,18 @@ const ItemDetailPage = () => {
                         /* ── VIEW MODE ── */
                         <Grid.Item span={8} className="space-y-4">
                             {/* ═══ 3 Summary Cards ═══ */}
-                            <Grid columns={3} gap="sm">
+                            <FieldGrid columns={3} className="gap-nb-2">
                                 {/* Card 1: Available Physical Stock */}
                                 <div className="bg-primary rounded-2xl p-5 text-primary-fg relative overflow-hidden">
                                     <div className="absolute -right-3 -bottom-3 opacity-10">
                                         <Package size={80} />
                                     </div>
-                                    <span className="text-primary text-nb-overline font-bold">Physical stock</span>
+                                    <span className="text-primary-fg/80 text-nb-overline font-bold">Physical stock</span>
                                     <div className="text-4xl font-black mt-2 flex items-baseline gap-1.5">
                                         {totalStock}
-                                        <span className="text-nb-sm font-normal text-primary">{item.units?.abbreviation || 'PCS'}</span>
+                                        <span className="text-nb-sm font-normal text-primary-fg/80">{item.units?.abbreviation || 'PCS'}</span>
                                     </div>
-                                    <p className="mt-3 text-nb-overline text-primary flex items-center gap-1.5 bg-primary/30 w-fit px-2 py-1 rounded-lg">
+                                    <p className="mt-3 text-nb-overline text-primary-fg flex items-center gap-1.5 bg-primary/30 w-fit px-2 py-1 rounded-lg">
                                         <Info size={11} /> Real-time count
                                     </p>
                                 </div>
@@ -696,7 +696,7 @@ const ItemDetailPage = () => {
                                         }}
                                     />
                                 </div>
-                            </Grid>
+                            </FieldGrid>
                             <div className="bg-surface/50 border border-line rounded-xl">
 
                                 {/* View Tab Content */}
@@ -717,7 +717,7 @@ const ItemDetailPage = () => {
                                             </FormSection>
 
                                             <FormSection title="Classification">
-                                                <Grid columns={3} gap="sm">
+                                                <FieldGrid columns={3} className="gap-nb-2">
                                                     {ITEM_CLASSIFICATIONS.map(cls => {
                                                         const Icon = cls.icon;
                                                         const isSelected = item.type === cls.value;
@@ -738,7 +738,7 @@ const ItemDetailPage = () => {
                                                             </div>
                                                         );
                                                     })}
-                                                </Grid>
+                                                </FieldGrid>
                                             </FormSection>
 
                                             <FormSection title="Product Type">

@@ -2,7 +2,7 @@ import React from 'react';
 import FormSection from '../components/FormSection';
 import { ITEM_CLASSIFICATIONS, ItemClassification } from '../../../types/itemTypes';
 import { Unit } from '../../../types/inventory';
-import { Badge, Button, Select, TextField, Textarea, FieldGrid, Grid } from '@so360/design-system';
+import { Badge, Button, Select, TextField, Textarea, FieldGrid } from '@so360/design-system';
 import ProductTypePicker from '../../../components/attributes/ProductTypePicker';
 
 export type FieldErrors = Record<string, string | null>;
@@ -158,7 +158,7 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
             </FormSection>
 
             <FormSection title="Classification *" description="Choose what kind of item this is">
-                <Grid columns={3} gap="sm">
+                <FieldGrid columns={3} className="gap-nb-2">
                     {ITEM_CLASSIFICATIONS.map(cls => {
                         const Icon = cls.icon;
                         const isSelected = type === cls.value;
@@ -180,7 +180,7 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
                             </button>
                         );
                     })}
-                </Grid>
+                </FieldGrid>
                 {errorFor('type') && <p role="alert" data-testid="error-type" className="text-danger text-nb-caption mt-nb-1">{errorFor('type')}</p>}
             </FormSection>
 
