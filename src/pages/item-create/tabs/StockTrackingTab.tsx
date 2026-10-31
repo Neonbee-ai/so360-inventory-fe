@@ -1,6 +1,9 @@
 import React from 'react';
 import { Select, TextField, FieldGrid } from '@so360/design-system';
+import { useShellBridge } from '@so360/shell-context';
 import FormSection from '../components/FormSection';
+
+export const ECOMMERCE_CONTROLS_FLAG = 'submodule:inventory:ecommerce_controls';
 
 interface Warehouse {
     id: string;
@@ -26,6 +29,9 @@ const StockTrackingTab: React.FC<StockTrackingTabProps> = ({
     updateField, default_warehouse_id, warehouses, is_online_visible,
     available_on_ecommerce = true, show_stock = true,
 }) => {
+    const shell: any = useShellBridge();
+    let ecommerceControls = false;
+    try { ecommerceControls = shell?.isFeatureEnabled?.(ECOMMERCE_CONTROLS_FLAG) === true; } catch { ecommerceControls = false; }
     return (
         <div className="space-y-nb-6">
             <FormSection title="Stock Thresholds" description="Set alerts and automatic reorder levels">
@@ -122,6 +128,8 @@ const StockTrackingTab: React.FC<StockTrackingTabProps> = ({
                             <p className="text-xs text-fg-subtle">Show this product in the Daily Store online catalog (requires Active status)</p>
                         </div>
                     </label>
+                    {ecommerceControls && (
+                        <>
                     <label className="flex items-center gap-nb-3 cursor-pointer group">
                         <input
                             type="checkbox"
@@ -146,6 +154,8 @@ const StockTrackingTab: React.FC<StockTrackingTabProps> = ({
                             <p className="text-xs text-fg-subtle">Show the available quantity to storefront customers</p>
                         </div>
                     </label>
+                        </>
+                    )}
                 </div>
             </FormSection>
         </div>
