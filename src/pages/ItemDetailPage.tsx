@@ -12,7 +12,7 @@ import { inventoryService } from '../services/inventoryService';
 import { Item, StockMovement, Unit, ItemCategory, Warehouse } from '../types/inventory';
 import { TabId, ITEM_CLASSIFICATIONS, ItemClassification } from '../types/itemTypes';
 import {
-    DetailPageTemplate, DataTable, Button, Modal, Alert, Badge, EmptyState, Grid, FieldGrid,
+    DetailPageTemplate, DataTable, Button, Modal, Alert, Badge, EmptyState, Grid, FieldGrid, KpiCard, KpiGrid,
     type DataTableColumn,
 } from '@so360/design-system';
 import { useAuth } from '../hooks/useAuth';
@@ -962,26 +962,12 @@ const ItemDetailPage = () => {
                                                 <h2 className="text-lg font-semibold text-fg">Sales History</h2>
                                             </div>
 
-                                            <Grid columns={2} gap="sm" className="mb-nb-6">
-                                                <div className="bg-surface/50 border border-line rounded-xl p-5">
-                                                    <div className="flex items-center gap-2 text-fg-subtle mb-2">
-                                                        <BarChart3 size={14} />
-                                                        <span className="text-nb-overline font-black">Total Quantity Sold</span>
-                                                    </div>
-                                                    <div className="text-2xl font-bold text-fg">
-                                                        {salesHistory?.total_quantity_sold ?? 0}
-                                                    </div>
-                                                </div>
-                                                <div className="bg-surface/50 border border-line rounded-xl p-5">
-                                                    <div className="flex items-center gap-2 text-fg-subtle mb-2">
-                                                        <FileText size={14} />
-                                                        <span className="text-nb-overline font-black">Invoices Used In</span>
-                                                    </div>
-                                                    <div className="text-2xl font-bold text-fg">
-                                                        {salesHistory?.invoice_count ?? 0}
-                                                    </div>
-                                                </div>
-                                            </Grid>
+                                                                                        <div className="mb-nb-6">
+                                                <KpiGrid>
+                                                    <KpiCard label="Total Quantity Sold" value={salesHistory?.total_quantity_sold ?? 0} icon={BarChart3} />
+                                                    <KpiCard label="Invoices Used In" value={salesHistory?.invoice_count ?? 0} icon={FileText} />
+                                                </KpiGrid>
+                                            </div>
 
                                             <h3 className="text-nb-overline font-black text-fg-subtle mb-3">Recent outbound movements</h3>
                                             {salesHistory && salesHistory.recent_movements.length > 0 ? (

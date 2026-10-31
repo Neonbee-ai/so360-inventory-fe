@@ -29,7 +29,7 @@ import {
 import { fitImageFile, describeFit, IMAGE_FIT_SLOTS, type ImageFitSlot } from '../utils/imageFit';
 import ImageSpecChip from '../components/media/ImageSpecChip';
 import { useActivity, useShellBridge } from '@so360/shell-context';
-import { Alert, Button, Card, Cluster, FeatureGate, IconButton, ListPageTemplate, TextField, Textarea, Grid } from '@so360/design-system';
+import { Alert, Button, Card, Cluster, FeatureGate, IconButton, ListPageTemplate, SegmentedControl, TextField, Textarea, Grid } from '@so360/design-system';
 
 const PRESET_COLORS = ['#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#EC4899', '#06B6D4', '#64748B'];
 
@@ -535,10 +535,14 @@ const CategoriesPage = () => {
                   <Card
                     title={labels.categories}
                     actions={
-                        <Cluster gap="tight">
-                            <Button size="sm" variant={viewMode === 'tree' ? 'tonal' : 'ghost'} onClick={() => setViewMode('tree')}>Tree</Button>
-                            <Button size="sm" variant={viewMode === 'cards' ? 'tonal' : 'ghost'} onClick={() => setViewMode('cards')}>Cards</Button>
-                        </Cluster>
+                        <SegmentedControl
+                            name="categories-view"
+                            size="sm"
+                            aria-label="Categories view"
+                            value={viewMode}
+                            onChange={(v: string) => setViewMode(v as 'tree' | 'cards')}
+                            options={[{ value: 'tree', label: 'Tree' }, { value: 'cards', label: 'Cards' }]}
+                        />
                     }
                   >
                     <p className="text-nb-caption text-fg-muted mb-3">
