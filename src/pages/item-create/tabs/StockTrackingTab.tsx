@@ -1,6 +1,9 @@
 import React from 'react';
 import { Select, TextField, FieldGrid, Checkbox } from '@so360/design-system';
+import { useShellBridge } from '@so360/shell-context';
 import FormSection from '../components/FormSection';
+
+export const ECOMMERCE_CONTROLS_FLAG = 'submodule:inventory:ecommerce_controls';
 
 interface Warehouse {
     id: string;
@@ -26,6 +29,9 @@ const StockTrackingTab: React.FC<StockTrackingTabProps> = ({
     updateField, default_warehouse_id, warehouses, is_online_visible,
     available_on_ecommerce = true, show_stock = true,
 }) => {
+    const shell: any = useShellBridge();
+    let ecommerceControls = false;
+    try { ecommerceControls = shell?.isFeatureEnabled?.(ECOMMERCE_CONTROLS_FLAG) === true; } catch { ecommerceControls = false; }
     return (
         <div className="space-y-nb-6">
             <FormSection title="Stock Thresholds" description="Set alerts and automatic reorder levels">
@@ -78,8 +84,12 @@ const StockTrackingTab: React.FC<StockTrackingTabProps> = ({
                 <div className="flex flex-col gap-nb-3 p-nb-4 bg-surface-raised border border-line rounded-nb-md">
                     <Checkbox name="is_active" label="Active" description="Inactive items are hidden from selection lists and ordering" checked={is_active} onChange={e => updateField('is_active', e.target.checked)} />
                     <Checkbox name="is_online_visible" label="Online Visible" description="Show this product in the Daily Store online catalog (requires Active status)" checked={is_online_visible || false} onChange={e => updateField('is_online_visible', e.target.checked)} />
+                    {ecommerceControls && (
+                        <>
                     <Checkbox name="available_on_ecommerce" label="Available on Ecommerce" description="Turn off to hide this product from the storefront without deactivating it" checked={available_on_ecommerce} onChange={e => updateField('available_on_ecommerce', e.target.checked)} />
                     <Checkbox name="show_stock" label="Show Stock" description="Show the available quantity to storefront customers" checked={show_stock} onChange={e => updateField('show_stock', e.target.checked)} />
+                        </>
+                    )}
                 </div>
             </FormSection>
         </div>
