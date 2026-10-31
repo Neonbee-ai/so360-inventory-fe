@@ -14,8 +14,8 @@ import { isSerialTrackingEnabled, validateSerialSelection } from '../utils/seria
 import { SerialPicker } from '../components/serials/SerialPicker';
 import {
     FeatureGate, ListPageTemplate, DataTable, Button, IconButton, Modal, TextField, Textarea, Select,
-    SegmentedControl, Alert, Card, EmptyState,
-    type DataTableColumn, FieldGrid, FieldGridItem, Grid,
+    SegmentedControl, Alert, Card, EmptyState, Badge,
+    type BadgeTone, type DataTableColumn, FieldGrid, FieldGridItem, Grid,
 } from '@so360/design-system';
 
 type TransactionType = 'stock_in' | 'stock_out' | 'adjustment' | 'transfer';
@@ -33,23 +33,23 @@ const PARTY_REQUIRED_SOURCES = new Set(['supplier', 'vendor', 'customer']);
  * and leaves company totals untouched, the other changes them — so they get
  * distinct colours rather than a shared grey row that has to be read carefully.
  */
-const MOVEMENT_BADGES: Record<string, { label: string; className: string }> = {
-    transfer: { label: 'TRANSFER', className: 'bg-primary/10 text-primary border-primary/30' },
-    adjustment: { label: 'ADJUSTMENT', className: 'bg-warning/10 text-warning border-warning/30' },
-    inbound: { label: 'RECEIPT', className: 'bg-success/10 text-success border-success/30' },
-    purchase_receipt: { label: 'RECEIPT', className: 'bg-success/10 text-success border-success/30' },
-    outbound: { label: 'ISSUE', className: 'bg-danger/10 text-danger border-danger/30' },
-    sales_issue: { label: 'ISSUE', className: 'bg-danger/10 text-danger border-danger/30' },
-    production: { label: 'PRODUCTION', className: 'bg-surface-high text-fg-muted border-line-strong/50' },
-    production_receipt: { label: 'PRODUCTION', className: 'bg-surface-high text-fg-muted border-line-strong/50' },
-    production_consumption: { label: 'PRODUCTION', className: 'bg-surface-high text-fg-muted border-line-strong/50' },
-    return: { label: 'RETURN', className: 'bg-surface-high text-fg-muted border-line-strong/50' },
+const MOVEMENT_BADGES: Record<string, { label: string; tone: BadgeTone }> = {
+    transfer: { label: 'TRANSFER', tone: 'primary' },
+    adjustment: { label: 'ADJUSTMENT', tone: 'warning' },
+    inbound: { label: 'RECEIPT', tone: 'success' },
+    purchase_receipt: { label: 'RECEIPT', tone: 'success' },
+    outbound: { label: 'ISSUE', tone: 'danger' },
+    sales_issue: { label: 'ISSUE', tone: 'danger' },
+    production: { label: 'PRODUCTION', tone: 'neutral' },
+    production_receipt: { label: 'PRODUCTION', tone: 'neutral' },
+    production_consumption: { label: 'PRODUCTION', tone: 'neutral' },
+    return: { label: 'RETURN', tone: 'neutral' },
 };
 
-const badgeFor = (movementType?: string | null) =>
+const badgeFor = (movementType?: string | null): { label: string; tone: BadgeTone } =>
     MOVEMENT_BADGES[(movementType || '').toLowerCase()] || {
         label: (movementType || 'MOVEMENT').replace(/_/g, ' ').toUpperCase(),
-        className: 'bg-surface-high text-fg-muted border-line-strong',
+        tone: 'neutral',
     };
 
 /** Human label for a reason code — falls back to the raw code, never blank. */
@@ -586,12 +586,9 @@ const StockMovementRegisterPage = () => {
             render: (m: StockMovement) => {
                 const badge = badgeFor(m.movement_type || (m as any).type);
                 return (
-                    <span
-                        data-testid="movement-type-badge"
-                        className={`inline-block text-nb-overline font-bold tracking-wider px-2 py-1 rounded border ${badge.className}`}
-                    >
+                    <Badge data-testid="movement-type-badge" tone={badge.tone} size="sm">
                         {badge.label}
-                    </span>
+                    </Badge>
                 );
             },
         },
