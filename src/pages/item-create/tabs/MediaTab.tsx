@@ -49,7 +49,7 @@ const MediaTab: React.FC<MediaTabProps> = ({ image_urls, image_meta, updateField
 
             <FormSection title="Or Paste Image URL" description="Add images by URL if upload isn't available">
                 <div className="flex items-end gap-2">
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                         <TextField
                             name="image_url"
                             type="url"

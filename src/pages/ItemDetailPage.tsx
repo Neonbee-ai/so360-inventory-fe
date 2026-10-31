@@ -866,15 +866,15 @@ const ItemDetailPage = () => {
 
                                             <FormSection title="Dimensions (L x W x H)">
                                                 <div className="flex gap-2 items-end">
-                                                    <div className="flex-1">
+                                                    <div className="flex-1 min-w-0">
                                                         <ReadOnlyField label="Length" value={item.dimensions?.length != null ? String(item.dimensions.length) : null} />
                                                     </div>
                                                     <span className="text-fg-subtle pb-3">&times;</span>
-                                                    <div className="flex-1">
+                                                    <div className="flex-1 min-w-0">
                                                         <ReadOnlyField label="Width" value={item.dimensions?.width != null ? String(item.dimensions.width) : null} />
                                                     </div>
                                                     <span className="text-fg-subtle pb-3">&times;</span>
-                                                    <div className="flex-1">
+                                                    <div className="flex-1 min-w-0">
                                                         <ReadOnlyField label="Height" value={item.dimensions?.height != null ? String(item.dimensions.height) : null} />
                                                     </div>
                                                     <div className="w-20 flex-shrink-0">

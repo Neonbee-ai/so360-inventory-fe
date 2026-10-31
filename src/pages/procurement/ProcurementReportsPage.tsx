@@ -144,6 +144,7 @@ const ProcurementReportsPage = () => {
         >
             <div className="flex min-w-0 max-w-full flex-col gap-nb-4">
                 {error && <Alert variant="error">{error}</Alert>}
+                <div className="min-w-0 max-w-full overflow-x-auto">
                 <DataTable
                     data-testid="procurement-report-table"
                     columns={columns}
@@ -151,6 +152,7 @@ const ProcurementReportsPage = () => {
                     rowKey={(_row: any) => String(visibleRows.indexOf(_row))}
                     loading={loading && rows.length === 0}
                 />
+                </div>
             </div>
         </ListPageTemplate>
     );

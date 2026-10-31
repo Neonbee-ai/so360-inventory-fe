@@ -709,7 +709,7 @@ const CategoriesPage = () => {
                                     hint="Read by screen readers and search engines. Blank uses the category name."
                                 />
                             </div>
-                            <div className="w-48">
+                            <div className="w-48 max-w-full">
                                 <ImageUploadZone
                                     label="Category image"
                                     subLabel="Shown on category tiles"
@@ -745,7 +745,7 @@ const CategoriesPage = () => {
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="flex-shrink-0 w-36">
+                                    <div className="w-36 max-w-full shrink min-w-0">
                                         <ImageUploadZone
                                             label="Icon"
                                             subLabel="Click or drag"
@@ -813,7 +813,7 @@ const CategoriesPage = () => {
                                 </div>
 
                                 <div>
-                                    <div className="w-32">
+                                    <div className="w-32 max-w-full">
                                         <TextField
                                             name="category-sort-order"
                                             label="Sort Order"

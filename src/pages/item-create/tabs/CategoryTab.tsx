@@ -78,7 +78,7 @@ const CategoryTab: React.FC<CategoryTabProps> = ({
                 return (
                     <div>
                         <div className="flex items-end gap-2">
-                            <div className="flex-1">
+                            <div className="flex-1 min-w-0">
                                 <TextField
                                     {...common}
                                     type="number"
@@ -112,7 +112,7 @@ const CategoryTab: React.FC<CategoryTabProps> = ({
                         <div className="flex items-end gap-2">
                             {/* comb-exception: TextField has no prefix/unit node slot */}
                             {def.unit && <span className="pb-2 text-sm text-fg-subtle whitespace-nowrap">{def.unit}</span>}
-                            <div className="flex-1">
+                            <div className="flex-1 min-w-0">
                                 <TextField
                                     {...common}
                                     type="number"
