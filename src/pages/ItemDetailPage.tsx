@@ -570,10 +570,10 @@ const ItemDetailPage = () => {
                                     <div className="absolute -right-3 -bottom-3 opacity-10">
                                         <Package size={80} />
                                     </div>
-                                    <span className="text-primary-fg/80 text-nb-overline font-bold">Physical stock</span>
+                                    <span className="text-primary-fg text-nb-overline font-bold">Physical stock</span>
                                     <div className="text-4xl font-black mt-2 flex items-baseline gap-1.5">
                                         {totalStock}
-                                        <span className="text-nb-sm font-normal text-primary-fg/80">{item.units?.abbreviation || 'PCS'}</span>
+                                        <span className="text-nb-sm font-normal text-primary-fg">{item.units?.abbreviation || 'PCS'}</span>
                                     </div>
                                     <p className="mt-3 text-nb-overline text-primary-fg flex items-center gap-1.5 bg-primary/30 w-fit px-2 py-1 rounded-lg">
                                         <Info size={11} /> Real-time count
@@ -642,10 +642,10 @@ const ItemDetailPage = () => {
                                     <div className="absolute -right-3 -bottom-3 opacity-10">
                                         <Package size={80} />
                                     </div>
-                                    <span className="text-primary-fg/80 text-nb-overline font-bold">Physical stock</span>
+                                    <span className="text-primary-fg text-nb-overline font-bold">Physical stock</span>
                                     <div className="text-4xl font-black mt-2 flex items-baseline gap-1.5">
                                         {totalStock}
-                                        <span className="text-nb-sm font-normal text-primary-fg/80">{item.units?.abbreviation || 'PCS'}</span>
+                                        <span className="text-nb-sm font-normal text-primary-fg">{item.units?.abbreviation || 'PCS'}</span>
                                     </div>
                                     <p className="mt-3 text-nb-overline text-primary-fg flex items-center gap-1.5 bg-primary/30 w-fit px-2 py-1 rounded-lg">
                                         <Info size={11} /> Real-time count
