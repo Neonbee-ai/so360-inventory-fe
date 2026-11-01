@@ -188,7 +188,10 @@ export const UserAgentPicker: React.FC<PickerProps> = ({ value, onChange, disabl
 const IdListFallback: React.FC<PickerProps & { label: string }> = ({ value, onChange, disabled, label }) => {
     const joined = (value || []).join(', ');
     const [draft, setDraft] = useState(joined);
-    useEffect(() => { setDraft(joined); }, [joined]);
+    // Resync during render when the saved value changes (not in an effect):
+    // a mount effect could run after the first keystroke and wipe it.
+    const [synced, setSynced] = useState(joined);
+    if (synced !== joined) { setSynced(joined); setDraft(joined); }
     return (
         <TextField name="agent-id-list" aria-label={label} value={draft} disabled={disabled}
             onChange={(e) => setDraft(e.target.value)}
