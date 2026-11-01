@@ -52,6 +52,8 @@ export interface FormData {
     cost_center_id: string;
     default_warehouse_id: string;
     is_online_visible: boolean;
+    available_on_ecommerce: boolean;
+    show_stock: boolean;
     tax_code_id: string;
 }
 
@@ -87,6 +89,8 @@ export const createFreshItemForm = (): FormData => ({
     cost_center_id: '',
     default_warehouse_id: '',
     is_online_visible: false,
+    available_on_ecommerce: true,
+    show_stock: true,
     tax_code_id: '',
 });
 
@@ -414,6 +418,9 @@ const ItemCreatePage = () => {
             if (form.cost_center_id) dto.cost_center_id = form.cost_center_id;
             if (form.default_warehouse_id) dto.default_warehouse_id = form.default_warehouse_id;
             if (form.is_online_visible) dto.is_online_visible = form.is_online_visible;
+            if (!form.available_on_ecommerce || !form.show_stock) {
+                dto.ecommerce = { available_on_ecommerce: form.available_on_ecommerce, show_stock: form.show_stock };
+            }
             if (form.tax_code_id) dto.tax_code_id = form.tax_code_id;
 
             const hasLength = form.dimensions_length;
@@ -523,6 +530,8 @@ const ItemCreatePage = () => {
                         default_warehouse_id={form.default_warehouse_id}
                         warehouses={warehouses}
                         is_online_visible={form.is_online_visible}
+                        available_on_ecommerce={form.available_on_ecommerce}
+                        show_stock={form.show_stock}
                     />
                 );
             case 'shipping':
