@@ -49,7 +49,7 @@ describe('ProcurementReportsPage', () => {
             await waitFor(() => {
                 expect(mockGetReport).toHaveBeenCalledWith('purchase_register', expect.any(Object));
             });
-            expect(screen.getByText('PO-001')).toBeInTheDocument();
+            expect(await screen.findByText('PO-001')).toBeInTheDocument();
         });
 
         it('When it loads / Then columns are derived from the rows and made readable', async () => {
