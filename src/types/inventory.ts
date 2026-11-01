@@ -302,6 +302,7 @@ export interface Item {
     cost_center_id?: string;
     default_warehouse_id?: string;
     is_online_visible?: boolean;
+    ecommerce?: Record<string, any>;
     lifecycle_flow_instance_id?: string;
     tax_code_id?: string;
     product_status?: string;

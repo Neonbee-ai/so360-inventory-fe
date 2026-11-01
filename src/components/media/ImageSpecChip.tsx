@@ -1,5 +1,6 @@
 import React, { useEffect, useId, useRef, useState } from 'react';
 import { Info } from 'lucide-react';
+import { Badge, IconButton } from '@so360/design-system';
 import { slotSpecLabel, type ImageFitSlot } from '../../utils/imageFit';
 
 interface ImageSpecChipProps {
@@ -39,36 +40,31 @@ const ImageSpecChip: React.FC<ImageSpecChipProps> = ({ slot, acceptedTypes = 'PN
 
     return (
         <span ref={rootRef} className={`relative inline-flex items-center gap-1 align-middle ${className}`}>
-            <span
-                data-testid="image-spec-chip"
-                className="inline-flex items-center rounded-md border border-slate-700 bg-slate-800/70 px-1.5 py-0.5 text-[10px] font-medium text-slate-300 whitespace-nowrap"
-            >
-                {slotSpecLabel(slot)}
+            <span data-testid="image-spec-chip" className="inline-flex whitespace-nowrap">
+                <Badge tone="neutral" size="sm">{slotSpecLabel(slot)}</Badge>
             </span>
-            <button
-                type="button"
-                aria-label="About this image size"
+            <IconButton
+                label="About this image size"
+                size="sm"
+                icon={<Info size={13} />}
                 aria-expanded={open}
                 aria-controls={popoverId}
                 aria-describedby={popoverId}
-                onClick={e => { e.stopPropagation(); e.preventDefault(); setOpen(o => !o); }}
-                className="inline-flex h-5 w-5 items-center justify-center rounded-full text-slate-500 hover:text-slate-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-            >
-                <Info size={13} />
-            </button>
+                onClick={(e: React.MouseEvent) => { e.stopPropagation(); e.preventDefault(); setOpen(o => !o); }}
+            />
             <span
                 id={popoverId}
                 role="tooltip"
                 hidden={!open}
                 onClick={e => e.stopPropagation()}
-                className={`absolute left-0 top-full z-30 mt-1 ${open ? 'block' : 'hidden'} w-64 rounded-lg border border-slate-700 bg-slate-900 p-3 text-[11px] font-normal leading-snug text-slate-300 shadow-xl`}
+                className={`absolute left-0 top-full z-30 mt-1 ${open ? 'block' : 'hidden'} w-64 rounded-nb-md border border-line-strong bg-surface p-nb-3 text-nb-caption font-normal text-fg-muted shadow-nb-2`}
             >
                 <span className="block">{slot.where}</span>
                 <span className="mt-1 block">{slot.cropNote}</span>
                 <span className="mt-1 block">
                     Best at {slot.width}×{slot.height}. Bigger files are shrunk automatically to {cap} with no visible quality loss.
                 </span>
-                <span className="mt-1 block text-slate-500">Accepted: {acceptedTypes}</span>
+                <span className="mt-1 block text-fg-subtle">Accepted: {acceptedTypes}</span>
             </span>
         </span>
     );

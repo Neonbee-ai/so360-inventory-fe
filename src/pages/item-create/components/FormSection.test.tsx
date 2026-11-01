@@ -26,13 +26,6 @@ describe('Given FormSection', () => {
 });
 
 describe('Given FormSection display variants', () => {
-  it('When rendered / Then title has uppercase styling via className', () => {
-    const { container } = render(<FormSection title="Inventory"><span /></FormSection>);
-    const heading = container.querySelector('h3');
-    expect(heading).not.toBeNull();
-    expect(heading!.className).toContain('uppercase');
-  });
-
   it('When rendered with long title / Then title is still visible in DOM', () => {
     const longTitle = 'A Very Long Section Title That Should Still Render Correctly';
     render(<FormSection title={longTitle}><div /></FormSection>);

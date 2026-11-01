@@ -291,3 +291,4 @@ export const FlaskConical = createIcon('FlaskConical');
 export const SlidersHorizontal = createIcon('SlidersHorizontal');
 
 export type LucideIcon = any;
+export const Scale = createIcon('Scale');

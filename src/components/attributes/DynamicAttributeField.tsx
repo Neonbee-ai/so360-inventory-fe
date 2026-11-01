@@ -1,4 +1,5 @@
 import React from 'react';
+import { Checkbox, Select, Textarea, TextField } from '@so360/design-system';
 import { ProductTypeAttribute } from '../../types/productTypes';
 
 interface DynamicAttributeFieldProps {
@@ -7,119 +8,102 @@ interface DynamicAttributeFieldProps {
     onChange: (fieldName: string, value: any) => void;
 }
 
-const inputClass = 'w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all placeholder:text-slate-600';
-const labelClass = 'block text-sm font-medium text-slate-400 mb-1.5';
-
 const DynamicAttributeField: React.FC<DynamicAttributeFieldProps> = ({ attribute, value, onChange }) => {
     const handleChange = (val: any) => {
         onChange(attribute.field_name, val);
     };
 
-    const renderField = () => {
-        switch (attribute.field_type) {
-            case 'text':
-                return (
-                    <input
-                        type="text"
-                        value={value || ''}
-                        onChange={e => handleChange(e.target.value)}
-                        className={inputClass}
-                        placeholder={attribute.placeholder || ''}
-                    />
-                );
+    const name = `attr-${attribute.field_name}`;
+    const required = !!attribute.is_required;
+    const unitHint = attribute.unit && attribute.field_type !== 'number' ? `(${attribute.unit})` : undefined;
 
-            case 'number':
-                return (
-                    <div className="flex items-center gap-2">
-                        <input
+    switch (attribute.field_type) {
+        case 'number':
+            return (
+                <div className="flex items-end gap-nb-2">
+                    <div className="flex-1">
+                        <TextField
                             type="number"
+                            label={attribute.label}
+                            name={name}
+                            required={required}
                             value={value || ''}
                             onChange={e => handleChange(e.target.value ? parseFloat(e.target.value) : '')}
-                            className={inputClass}
                             placeholder={attribute.placeholder || ''}
                         />
-                        {attribute.unit && (
-                            <span className="text-sm text-slate-500 whitespace-nowrap">{attribute.unit}</span>
-                        )}
                     </div>
-                );
-
-            case 'select':
-                return (
-                    <select
-                        value={value || ''}
-                        onChange={e => handleChange(e.target.value)}
-                        className={inputClass}
-                    >
-                        <option value="">Select...</option>
-                        {(attribute.options || []).map(opt => (
-                            <option key={opt} value={opt}>{opt}</option>
-                        ))}
-                    </select>
-                );
-
-            case 'boolean':
-                return (
-                    <label className="flex items-center gap-3 cursor-pointer group">
-                        <input
-                            type="checkbox"
-                            checked={!!value}
-                            onChange={e => handleChange(e.target.checked)}
-                            className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-blue-600 focus:ring-blue-500/50"
-                        />
-                        <span className="text-sm text-slate-300 group-hover:text-slate-50 transition-colors">
-                            {attribute.label}
-                        </span>
-                    </label>
-                );
-
-            case 'date':
-                return (
-                    <input
-                        type="date"
-                        value={value || ''}
-                        onChange={e => handleChange(e.target.value)}
-                        className={inputClass}
-                    />
-                );
-
-            case 'textarea':
-                return (
-                    <textarea
-                        rows={3}
-                        value={value || ''}
-                        onChange={e => handleChange(e.target.value)}
-                        className={inputClass + ' resize-none'}
-                        placeholder={attribute.placeholder || ''}
-                    />
-                );
-
-            default:
-                return (
-                    <input
-                        type="text"
-                        value={value || ''}
-                        onChange={e => handleChange(e.target.value)}
-                        className={inputClass}
-                    />
-                );
-        }
-    };
-
-    return (
-        <div>
-            {attribute.field_type !== 'boolean' && (
-                <label className={labelClass}>
-                    {attribute.label}
-                    {attribute.is_required && <span className="text-rose-400 ml-1">*</span>}
-                    {attribute.unit && attribute.field_type !== 'number' && (
-                        <span className="text-slate-600 ml-1">({attribute.unit})</span>
+                    {attribute.unit && (
+                        <span className="pb-nb-2 text-nb-body text-fg-subtle whitespace-nowrap">{attribute.unit}</span>
                     )}
-                </label>
-            )}
-            {renderField()}
-        </div>
-    );
+                </div>
+            );
+
+        case 'select':
+            return (
+                <Select
+                    label={attribute.label}
+                    name={name}
+                    required={required}
+                    hint={unitHint}
+                    value={value || ''}
+                    placeholder="Select..."
+                    options={(attribute.options || []).map(opt => ({ value: opt, label: opt }))}
+                    onChange={e => handleChange(e.target.value)}
+                />
+            );
+
+        case 'boolean':
+            return (
+                <Checkbox
+                    label={attribute.label}
+                    name={name}
+                    checked={!!value}
+                    onChange={e => handleChange(e.target.checked)}
+                />
+            );
+
+        case 'date':
+            return (
+                <TextField
+                    type="date"
+                    label={attribute.label}
+                    name={name}
+                    required={required}
+                    hint={unitHint}
+                    value={value || ''}
+                    onChange={e => handleChange(e.target.value)}
+                />
+            );
+
+        case 'textarea':
+            return (
+                <Textarea
+                    rows={3}
+                    label={attribute.label}
+                    name={name}
+                    required={required}
+                    hint={unitHint}
+                    value={value || ''}
+                    onChange={e => handleChange(e.target.value)}
+                    placeholder={attribute.placeholder || ''}
+                />
+            );
+
+        case 'text':
+        default:
+            return (
+                <TextField
+                    type="text"
+                    label={attribute.label}
+                    name={name}
+                    required={required}
+                    hint={unitHint}
+                    value={value || ''}
+                    onChange={e => handleChange(e.target.value)}
+                    placeholder={attribute.field_type === 'text' ? attribute.placeholder || '' : undefined}
+                />
+            );
+    }
 };
 
 export default DynamicAttributeField;

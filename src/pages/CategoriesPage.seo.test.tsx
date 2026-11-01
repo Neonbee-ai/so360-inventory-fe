@@ -304,7 +304,7 @@ describe('Given the meta title and description counters', () => {
       await openEditor();
       openSeo();
       type(/meta title/i, 'Short');
-      expect(screen.getByTestId('meta-title-count').className).toContain('text-slate-500');
+      expect(screen.getByTestId('meta-title-count').className).toContain('text-fg-subtle');
     });
   });
 
@@ -315,17 +315,17 @@ describe('Given the meta title and description counters', () => {
       type(/meta title/i, 'x'.repeat(64));
       const counter = screen.getByTestId('meta-title-count');
       expect(counter).toHaveTextContent('64/70');
-      expect(counter.className).toContain('text-amber-400');
+      expect(counter.className).toContain('text-warning');
     });
   });
 
   describe('When the value exceeds the limit (e.g. a saved legacy value)', () => {
-    it('Then the counter turns red (rose)', async () => {
+    it('Then the counter turns red (danger token)', async () => {
       await openEditor({ meta_description: 'y'.repeat(161) });
       openSeo();
       const counter = screen.getByTestId('meta-description-count');
       expect(counter).toHaveTextContent('161/160');
-      expect(counter.className).toContain('text-rose-400');
+      expect(counter.className).toContain('text-danger');
     });
   });
 });

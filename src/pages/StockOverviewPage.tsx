@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, MapPin, Clock, AlertTriangle, Box, X, RefreshCcw, BookOpen } from 'lucide-react';
+import { RefreshCcw } from 'lucide-react';
 import { inventoryService } from '../services/inventoryService';
 import { StockBalance } from '../types/inventory';
-import { Table } from '../components/common/Table';
 import { useInventoryFormatters } from '../utils/formatters';
 import { useShellBridge } from '@so360/shell-context';
-import { FeatureGate } from '@so360/design-system';
+import { FeatureGate, ListPageTemplate, DataTable, Button, SearchInput, KpiCard, Grid, Badge, Alert, EmptyState, Pagination, type DataTableColumn, type FilterValues } from '@so360/design-system';
 
 const PAGE_SIZE = 25;
 
@@ -76,232 +75,123 @@ const StockOverviewPage = () => {
     // Pagination
     const totalPages = Math.max(1, Math.ceil(filteredStock.length / PAGE_SIZE));
     const paginatedData = filteredStock.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
-    const showStart = filteredStock.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
-    const showEnd = Math.min(currentPage * PAGE_SIZE, filteredStock.length);
 
     const uniqueLocations = Array.from(new Set(stockLevels.map(sl => sl.warehouses?.name).filter(Boolean)));
 
-    const columns = [
+    const isLowRow = (sl: StockBalance) => sl.items?.min_stock_threshold != null && sl.quantity < sl.items.min_stock_threshold;
+
+    const columns: DataTableColumn<StockBalance>[] = [
         {
+            key: 'item',
             header: 'Item',
-            accessor: (sl: StockBalance) => (
-                <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded bg-slate-800 flex items-center justify-center border border-slate-700">
-                        <Box size={16} className="text-blue-400" />
-                    </div>
-                    <div className="flex flex-col">
-                        <span className="font-semibold text-slate-50 text-sm">{sl.items?.name || 'Unknown Item'}</span>
-                        <span className="text-[11px] text-slate-500 font-mono">{sl.items?.sku || '-'}</span>
-                    </div>
+            alwaysVisible: true,
+            render: (sl) => (
+                <div className="flex flex-col">
+                    <span className="text-nb-body font-semibold text-fg">{sl.items?.name || 'Unknown Item'}</span>
+                    <span className="text-nb-caption text-fg-subtle font-mono">{sl.items?.sku || '-'}</span>
                 </div>
-            )
+            ),
         },
         {
+            key: 'warehouse',
             header: 'Warehouse',
-            accessor: (sl: StockBalance) => (
-                <div className="flex items-center gap-1.5 text-slate-300">
-                    <MapPin size={14} className="text-slate-500" />
+            render: (sl) => (
+                <div className="flex items-center gap-nb-2 text-fg-muted">
                     <span>{sl.warehouses?.name || 'Unknown Location'}</span>
-                    {sl.warehouse_locations && (
-                        <span className="text-[10px] text-slate-500 bg-slate-800 px-1 rounded">
-                            {sl.warehouse_locations.name}
-                        </span>
-                    )}
+                    {sl.warehouse_locations && <Badge size="sm">{sl.warehouse_locations.name}</Badge>}
                 </div>
-            )
+            ),
         },
         {
+            key: 'quantity',
             header: 'Quantity',
-            accessor: (sl: StockBalance) => {
-                const threshold = sl.items?.min_stock_threshold;
-                const isLow = threshold != null && sl.quantity < threshold;
-                return (
-                    <div className="flex items-center gap-2">
-                        <span className={`font-bold text-lg ${isLow ? 'text-rose-400' : 'text-emerald-400'}`}>
-                            {sl.quantity}
-                        </span>
-                        <span className="text-xs text-slate-500 uppercase">{sl.items?.units?.abbreviation || 'PCS'}</span>
-                        {isLow && (
-                            <div className="group relative">
-                                <AlertTriangle size={14} className="text-amber-500" />
-                            </div>
-                        )}
-                    </div>
-                );
-            }
-        },
-        {
-            header: 'Value (FIFO/W.Avg)',
-            accessor: (sl: StockBalance) => (
-                <span className="text-slate-300 font-mono text-sm">
-                    {formatters.formatCurrency(sl.valuation || 0)}
-                </span>
-            )
-        },
-        {
-            header: 'Last Update',
-            accessor: (sl: StockBalance) => (
-                <div className="flex items-center gap-1.5 text-slate-400 text-xs text-right">
-                    <Clock size={12} />
-                    <span>{formatters.formatDate(sl.last_updated_at)}</span>
+            align: 'right',
+            render: (sl) => (
+                <div className="flex items-center justify-end gap-nb-2">
+                    <span className={`text-nb-body font-semibold tabular-nums ${isLowRow(sl) ? 'text-danger' : 'text-success'}`}>{sl.quantity}</span>
+                    <span className="text-nb-caption text-fg-subtle">{sl.items?.units?.abbreviation || 'PCS'}</span>
+                    {isLowRow(sl) && <Badge tone="warning" size="sm">Low</Badge>}
                 </div>
-            )
-        }
+            ),
+        },
+        {
+            key: 'valuation',
+            header: 'Value (FIFO/W.Avg)',
+            align: 'right',
+            render: (sl) => <span className="text-fg-muted tabular-nums">{formatters.formatCurrency(sl.valuation || 0)}</span>,
+        },
+        {
+            key: 'last_updated_at',
+            header: 'Last Update',
+            render: (sl) => <span className="text-fg-muted text-nb-sm">{formatters.formatDate(sl.last_updated_at)}</span>,
+        },
     ];
 
+    const totalValue = stockLevels.reduce((sum, sl) => sum + (sl.valuation || 0), 0);
+    const drift = glValuation ? Math.abs(totalValue - glValuation.gl_balance) : 0;
+    const filterValues: FilterValues = {
+        warehouse: locationFilter === 'All' ? null : locationFilter,
+        lowStock: lowStockFilter || null,
+    };
+
+    const kpis = (
+        <Grid columns={5} gap="md">
+            <KpiCard label="Total Positions" value={stockLevels.length} />
+            <KpiCard label="Stock Value" value={formatters.formatCurrency(totalValue)} />
+            <FeatureGate state={viewGlValuationState} loading={(shell?.effectiveFlagsLoaded === false)} onUpgradeClick={() => navigate('/org/billing')}>
+                <KpiCard
+                    label="GL Balance"
+                    value={glValuation?.source === 'accounting_gl' ? formatters.formatCurrency(glValuation.gl_balance) : 'Unavailable'}
+                    hint={glValuation?.source === 'accounting_gl' ? (drift > 0.01 ? `Drift: ${formatters.formatCurrency(drift)}` : 'In sync') : undefined}
+                />
+            </FeatureGate>
+            <KpiCard label="Low Stock" value={stockLevels.filter(isLowRow).length} />
+            <KpiCard label="Stock Out" value={stockLevels.filter(sl => sl.quantity === 0).length} />
+        </Grid>
+    );
+
     return (
-        <div className="p-8">
-            {error && (
-                <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 px-4 py-3 rounded-lg text-sm flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-2">
-                        <AlertTriangle size={16} />
-                        <span>{error}</span>
-                    </div>
-                    <button onClick={() => setError(null)} className="hover:text-rose-300 transition-colors">
-                        <X size={16} />
-                    </button>
-                </div>
-            )}
-
-            <header className="mb-8 flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl font-bold text-slate-50 tracking-tight">Stock Overview</h1>
-                    <p className="text-slate-400 mt-1">Real-time physical stock levels and valuation</p>
-                </div>
-                <button
-                    onClick={() => { setError(null); fetchStock(); }}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-800 bg-slate-900/50 text-slate-300 hover:border-slate-700 hover:text-slate-50 transition-all text-sm font-medium"
-                >
-                    <RefreshCcw size={16} className={isLoading ? 'animate-spin' : ''} />
+        <ListPageTemplate trail={[]}
+            title="Stock Overview"
+            description="Real-time physical stock levels and valuation"
+            headerSecondaryActions={[
+                <Button key="refresh" variant="secondary" onClick={() => { setError(null); fetchStock(); }}><RefreshCcw size={16} />
                     Refresh
-                </button>
-            </header>
-
-            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-                <div className="bg-slate-900/40 border border-slate-800/50 p-4 rounded-xl">
-                    <span className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Total Positions</span>
-                    <div className="text-xl font-bold text-slate-50 mt-0.5">{stockLevels.length}</div>
-                </div>
-                <div className="bg-slate-900/40 border border-slate-800/50 p-4 rounded-xl">
-                    <span className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Stock Value</span>
-                    <div className="text-xl font-bold text-blue-400 mt-0.5">
-                        {formatters.formatCurrency(stockLevels.reduce((sum, sl) => sum + (sl.valuation || 0), 0))}
-                    </div>
-                </div>
-                <FeatureGate state={viewGlValuationState} loading={(shell?.effectiveFlagsLoaded === false)} onUpgradeClick={() => navigate('/org/billing')}>
-                <div className="bg-slate-900/40 border border-slate-800/50 p-4 rounded-xl">
-                    <span className="text-slate-500 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
-                        <BookOpen size={10} /> GL Balance
-                    </span>
-                    {glValuation?.source === 'accounting_gl' ? (
-                        <>
-                            <div className="text-xl font-bold text-emerald-400 mt-0.5">
-                                {formatters.formatCurrency(glValuation.gl_balance)}
-                            </div>
-                            {(() => {
-                                const stockVal = stockLevels.reduce((sum, sl) => sum + (sl.valuation || 0), 0);
-                                const drift = Math.abs(stockVal - glValuation.gl_balance);
-                                return drift > 0.01 ? (
-                                    <span className="text-[10px] text-amber-400">
-                                        Drift: {formatters.formatCurrency(drift)}
-                                    </span>
-                                ) : (
-                                    <span className="text-[10px] text-emerald-500">In sync</span>
-                                );
-                            })()}
-                        </>
-                    ) : (
-                        <div className="text-sm text-slate-500 mt-0.5">Unavailable</div>
-                    )}
-                </div>
-                </FeatureGate>
-                <div className="bg-slate-900/40 border border-slate-800/50 p-4 rounded-xl">
-                    <span className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Low Stock</span>
-                    <div className="text-xl font-bold text-amber-400 mt-0.5">
-                        {stockLevels.filter(sl =>
-                            sl.items?.min_stock_threshold != null &&
-                            sl.quantity < sl.items.min_stock_threshold
-                        ).length}
-                    </div>
-                </div>
-                <div className="bg-slate-900/40 border border-slate-800/50 p-4 rounded-xl">
-                    <span className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Stock Out</span>
-                    <div className="text-xl font-bold text-rose-400 mt-0.5">
-                        {stockLevels.filter(sl => sl.quantity === 0).length}
-                    </div>
-                </div>
-            </div>
-
-            <div className="flex flex-col md:flex-row gap-4 mb-6">
-                <div className="relative flex-1">
-                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" size={18} />
-                    <input
-                        type="text"
-                        placeholder="Filter by item or SKU..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full bg-slate-900/50 border border-slate-800 pl-12 pr-4 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-slate-200"
-                    />
-                </div>
-
-                <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2 bg-slate-900/50 border border-slate-800 rounded-lg px-3 py-1">
-                        <MapPin size={16} className="text-slate-500" />
-                        <select
-                            value={locationFilter}
-                            onChange={(e) => setLocationFilter(e.target.value)}
-                            className="bg-transparent text-sm text-slate-300 focus:outline-none py-1.5 cursor-pointer"
-                        >
-                            <option value="All">All Warehouses</option>
-                            {uniqueLocations.map(loc => (
-                                <option key={loc} value={loc!}>{loc}</option>
-                            ))}
-                        </select>
-                    </div>
-
-                    <button
-                        onClick={() => setLowStockFilter(!lowStockFilter)}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all text-sm font-medium ${lowStockFilter
-                            ? 'bg-amber-500/10 border-amber-500/50 text-amber-400'
-                            : 'bg-slate-900/50 border-slate-800 text-slate-400 hover:border-slate-700'
-                            }`}
-                    >
-                        <AlertTriangle size={16} />
-                        Low Stock Only
-                    </button>
-                </div>
-            </div>
-
-            <Table
-                data={paginatedData}
+                </Button>,
+            ]}
+            kpis={kpis}
+            search={<SearchInput placeholder="Filter by item or SKU..." value={searchTerm} onChange={setSearchTerm} />}
+            filterConfig={{
+                fields: [
+                    { key: 'warehouse', label: 'Warehouse', type: 'select', options: uniqueLocations.map(loc => ({ value: loc as string, label: loc as string })) },
+                    { key: 'lowStock', label: 'Low Stock Only', type: 'boolean' },
+                ],
+                values: filterValues,
+                onChange: (v) => {
+                    setLocationFilter(typeof v.warehouse === 'string' && v.warehouse ? v.warehouse : 'All');
+                    setLowStockFilter(v.lowStock === true);
+                },
+                onClear: () => { setLocationFilter('All'); setLowStockFilter(false); },
+            }}
+            pagination={filteredStock.length > PAGE_SIZE ? (
+                <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    totalItems={filteredStock.length}
+                    pageSize={PAGE_SIZE}
+                    onPageChange={setCurrentPage}
+                />
+            ) : undefined}
+        >
+            {error && <Alert variant="error" className="mb-nb-4">{error}</Alert>}
+            <DataTable
                 columns={columns}
-                isLoading={isLoading}
-                emptyMessage="No stock balances found. Perform an adjustment or transfer to see stock here."
+                rows={paginatedData}
+                rowKey={(sl) => sl.id}
+                loading={isLoading}
+                emptyState=<EmptyState title="No stock balances found. Perform an adjustment or transfer to see stock here." />
             />
-
-            {filteredStock.length > PAGE_SIZE && (
-                <div className="flex items-center justify-between mt-4 text-sm text-slate-400">
-                    <span>Showing {showStart}–{showEnd} of {filteredStock.length} positions</span>
-                    <div className="flex items-center gap-2">
-                        <button
-                            disabled={currentPage === 1}
-                            onClick={() => setCurrentPage(p => p - 1)}
-                            className="px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900/50 hover:border-slate-700 hover:text-slate-50 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                        >
-                            Previous
-                        </button>
-                        <span className="text-slate-500">Page {currentPage} of {totalPages}</span>
-                        <button
-                            disabled={currentPage === totalPages}
-                            onClick={() => setCurrentPage(p => p + 1)}
-                            className="px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900/50 hover:border-slate-700 hover:text-slate-50 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                        >
-                            Next
-                        </button>
-                    </div>
-                </div>
-            )}
-        </div>
+        </ListPageTemplate>
     );
 };
 

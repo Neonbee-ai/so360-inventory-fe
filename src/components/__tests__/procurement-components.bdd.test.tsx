@@ -342,7 +342,7 @@ describe('Given ProductTypePicker', () => {
     expect(onChange).toHaveBeenCalledWith('pt-1');
   });
 
-  it('Given a type is already selected / When rendered / Then that card has the selected visual ring', async () => {
+  it('Given a type is already selected / When rendered / Then that card is pressed and uses the selected (tonal) variant', async () => {
     productTypeService.getAll.mockResolvedValueOnce([
       { id: 'pt-99', name: 'Raw Materials', code: 'RAW', description: 'Input materials', icon: null, is_system: false },
     ]);
@@ -352,7 +352,8 @@ describe('Given ProductTypePicker', () => {
     await waitFor(() => screen.getByText('Raw Materials'));
 
     const btn = screen.getByRole('button', { name: /Raw Materials/i });
-    expect(btn.className).toContain('ring-1');
+    expect(btn).toHaveAttribute('aria-pressed', 'true');
+    expect(btn).toHaveAttribute('data-variant', 'tonal');
   });
 });
 

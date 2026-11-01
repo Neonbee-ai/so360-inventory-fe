@@ -95,7 +95,7 @@ export function renderCategoryIcon({
           className: `flex items-center justify-center rounded-lg overflow-hidden ${className}`,
           style: { background: bg, width: size, height: size, flexShrink: 0 },
         },
-        React.createElement(IconComp, { size: Math.round(size * 0.6), className: 'text-white' })
+        React.createElement(IconComp, { size: Math.round(size * 0.6), className: 'text-primary-fg' })
       );
     }
   }
@@ -125,7 +125,7 @@ export function renderCategoryIcon({
   return React.createElement(
     'div',
     {
-      className: `flex items-center justify-center rounded-lg text-white font-bold ${className}`,
+      className: `flex items-center justify-center rounded-lg text-primary-fg font-bold ${className}`,
       style: { background: bg, width: size, height: size, flexShrink: 0, fontSize: Math.round(size * 0.4) },
     },
     name.charAt(0).toUpperCase()

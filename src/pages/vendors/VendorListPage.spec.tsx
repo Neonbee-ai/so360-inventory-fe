@@ -20,7 +20,8 @@ vi.mock('../../services/vendorService', () => ({
   },
 }));
 
-vi.mock('@so360/design-system', () => ({
+vi.mock('@so360/design-system', async () => ({
+  ...(await vi.importActual<any>('@so360/design-system')),
   QuotaBar: ({ used, isUnlimited, limit }: any) =>
     React.createElement('div', {
       'data-testid': 'quota-bar',

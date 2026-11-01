@@ -37,7 +37,7 @@ describe('DynamicAttributeField', () => {
 
     it('When is_required is true / Then shows required indicator', () => {
       render(<DynamicAttributeField attribute={makeAttr({ is_required: true })} value="" onChange={vi.fn()} />);
-      expect(screen.getByText('*')).toBeInTheDocument();
+      expect(screen.getByRole('textbox')).toBeRequired();
     });
   });
 

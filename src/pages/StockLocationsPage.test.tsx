@@ -27,14 +27,7 @@ vi.mock('../hooks/useAuth', () => ({
   useAuth: () => ({ can: () => true }),
 }));
 
-vi.mock('../components/common/Modal', () => ({
-  Modal: ({ isOpen, title, children }: any) =>
-    isOpen ? <div data-testid="modal"><h3>{title}</h3>{children}</div> : null,
-}));
 
-vi.mock('../components/common/Skeleton', () => ({
-  TableSkeleton: () => <div data-testid="skeleton">Loading...</div>,
-}));
 
 const mockUseShellBridgeLoc = vi.fn();
 vi.mock('@so360/shell-context', () => ({
@@ -91,7 +84,7 @@ describe('StockLocationsPage', () => {
     it('When loading / Then shows skeleton', () => {
       mockGetLocations.mockReturnValue(new Promise(() => {})); // never resolves
       render(<StockLocationsPage />);
-      expect(screen.getByTestId('skeleton')).toBeInTheDocument();
+      expect(screen.getByTestId('datatable-loading')).toBeInTheDocument();
     });
   });
 
@@ -128,11 +121,11 @@ describe('StockLocationsPage', () => {
       });
     });
 
-    it('When warehouse card has View link / Then navigates on click', async () => {
+    it('When a warehouse row is clicked / Then navigates to its detail page', async () => {
       mockGetLocations.mockResolvedValue([makeWarehouse()]);
       render(<StockLocationsPage />);
-      await waitFor(() => screen.getByText('View'));
-      fireEvent.click(screen.getByText('View'));
+      await waitFor(() => screen.getByText('Main Warehouse'));
+      fireEvent.click(screen.getByText('Main Warehouse'));
       expect(mockNavigate).toHaveBeenCalledWith('/inventory/warehouses/wh-1');
     });
   });
@@ -143,7 +136,7 @@ describe('StockLocationsPage', () => {
       await waitFor(() => screen.getByText('New Warehouse'));
       fireEvent.click(screen.getByText('New Warehouse'));
       await waitFor(() => {
-        expect(screen.getByTestId('modal')).toBeInTheDocument();
+        expect(screen.getByRole('dialog')).toBeInTheDocument();
         expect(screen.getByText('Register New Warehouse')).toBeInTheDocument();
       });
     });
@@ -179,7 +172,7 @@ describe('StockLocationsPage', () => {
       await waitFor(() => screen.getByText('Edit'));
       fireEvent.click(screen.getByText('Edit'));
       await waitFor(() => {
-        expect(screen.getByTestId('modal')).toBeInTheDocument();
+        expect(screen.getByRole('dialog')).toBeInTheDocument();
         expect(screen.getByText('Edit Warehouse')).toBeInTheDocument();
       });
     });

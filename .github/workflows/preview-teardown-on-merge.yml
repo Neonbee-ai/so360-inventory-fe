@@ -1,0 +1,23 @@
+name: Preview teardown on merge
+
+# Removes this branch's preview component — and, once it is the last one, the
+# preview's Cloudflare DNS record and Access app — as soon as its PR is merged
+# into develop. The `on: delete` teardown in deploy.yml only fires from the
+# default branch (main), so it never runs for branches merged into develop.
+# The nightly preview-reconcile in neonbee-devops still catches anything missed.
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [develop]
+
+jobs:
+  preview-teardown:
+    if: >-
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      (startsWith(github.event.pull_request.head.ref, 'feat/') || startsWith(github.event.pull_request.head.ref, 'fix/'))
+    uses: Neonbee-ai/neonbee-devops/.github/workflows/neonbee-preview-teardown.yml@main
+    with:
+      branch: ${{ github.event.pull_request.head.ref }}
+    secrets: inherit

@@ -17,7 +17,7 @@ vi.mock('react-router-dom', () => ({ useNavigate: () => vi.fn() }));
 const mockCan = vi.hoisted(() => vi.fn((_p: string) => true));
 vi.mock('../../hooks/useAuth', () => ({ useAuth: () => ({ can: mockCan }) }));
 vi.mock('@so360/design-system', async () => ({
-  ...(await import('../../test/__mocks__/design-system.full')),
+  ...(await vi.importActual<any>('@so360/design-system')),
   QuotaBar: () => null,
   QuotaGate: ({ children }: any) => <>{children}</>,
   FeatureGate: ({ children }: any) => <>{children}</>,
@@ -43,7 +43,7 @@ async function openForm() {
   render(<VendorListPage />);
   await waitFor(() => screen.getByText('Add Vendor'));
   fireEvent.click(screen.getByText('Add Vendor'));
-  await waitFor(() => screen.getByPlaceholderText('Company name'));
+  await waitFor(() => screen.getByRole('dialog'));
   fireEvent.change(screen.getByPlaceholderText('Company name'), { target: { value: 'New Vendor' } });
 }
 const submit = () => fireEvent.click(screen.getByText('Add Vendor', { selector: 'button[type="submit"]' }));
@@ -97,7 +97,7 @@ describe('VendorListPage — bank details on create', () => {
       type('bank_account_holder', 'New Vendor LLC'); type('bank_name', 'Emirates NBD');
       type('bank_account_number', '12345');
       submit();
-      expect((await screen.findAllByText(/9.?18 digits/i)).length).toBeGreaterThan(0);
+      await waitFor(() => expect(screen.getByText(/Account number must be 9.?18 digits/i)).toBeInTheDocument());
       expect(mockCreateVendor).not.toHaveBeenCalled();
       expect(mockCreateBank).not.toHaveBeenCalled();
     });

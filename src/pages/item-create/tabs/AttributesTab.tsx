@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Sliders } from 'lucide-react';
+import { FieldGrid } from '@so360/design-system';
 import { ProductType, ProductTypeAttribute } from '../../../types/productTypes';
 import { productTypeService } from '../../../services/productTypeService';
 import DynamicAttributeField from '../../../components/attributes/DynamicAttributeField';
@@ -45,10 +46,10 @@ const AttributesTab: React.FC<AttributesTabProps> = ({ product_type_id, custom_a
     if (!product_type_id) {
         return (
             <div className="flex flex-col items-center justify-center py-16 text-center">
-                <Sliders size={48} className="text-slate-700 mb-4" />
-                <h3 className="text-lg font-semibold text-slate-400 mb-2">No Product Type Selected</h3>
-                <p className="text-sm text-slate-500 max-w-md">
-                    Select a product type on the <span className="text-blue-400 font-medium">Basic Info</span> tab to see
+                <Sliders size={48} className="text-fg-subtle mb-4" />
+                <h3 className="text-lg font-semibold text-fg-muted mb-2">No Product Type Selected</h3>
+                <p className="text-sm text-fg-subtle max-w-md">
+                    Select a product type on the <span className="text-primary font-medium">Basic Info</span> tab to see
                     type-specific attributes here.
                 </p>
             </div>
@@ -56,15 +57,15 @@ const AttributesTab: React.FC<AttributesTabProps> = ({ product_type_id, custom_a
     }
 
     if (loading) {
-        return <div className="text-sm text-slate-500 animate-pulse py-8 text-center">Loading attributes...</div>;
+        return <div className="text-sm text-fg-subtle animate-pulse py-8 text-center">Loading attributes...</div>;
     }
 
     if (!productType || !productType.product_type_attributes || productType.product_type_attributes.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center py-16 text-center">
-                <Sliders size={48} className="text-slate-700 mb-4" />
-                <h3 className="text-lg font-semibold text-slate-400 mb-2">{productType?.name || 'Product Type'}</h3>
-                <p className="text-sm text-slate-500">No attribute fields defined for this product type.</p>
+                <Sliders size={48} className="text-fg-subtle mb-4" />
+                <h3 className="text-lg font-semibold text-fg-muted mb-2">{productType?.name || 'Product Type'}</h3>
+                <p className="text-sm text-fg-subtle">No attribute fields defined for this product type.</p>
             </div>
         );
     }
@@ -75,7 +76,7 @@ const AttributesTab: React.FC<AttributesTabProps> = ({ product_type_id, custom_a
                 title={`${productType.name} Attributes`}
                 description={`Fill in the type-specific fields for ${productType.name.toLowerCase()}`}
             >
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FieldGrid columns={2}>
                     {productType.product_type_attributes.map((attr: ProductTypeAttribute) => (
                         <DynamicAttributeField
                             key={attr.id}
@@ -84,7 +85,7 @@ const AttributesTab: React.FC<AttributesTabProps> = ({ product_type_id, custom_a
                             onChange={handleAttributeChange}
                         />
                     ))}
-                </div>
+                </FieldGrid>
             </FormSection>
         </div>
     );

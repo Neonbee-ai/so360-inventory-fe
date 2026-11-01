@@ -38,16 +38,6 @@ vi.mock('../hooks/useAuth', () => ({
   useAuth: () => ({ can: mockCanItemDetail }),
 }));
 
-vi.mock('../components/common/Skeleton', () => ({
-  TableSkeleton: () => <div data-testid="skeleton">Loading...</div>,
-  Skeleton: () => <div data-testid="skeleton-el">Loading...</div>,
-}));
-
-vi.mock('../components/common/Modal', () => ({
-  Modal: ({ isOpen, title, children }: any) =>
-    isOpen ? <div data-testid="modal"><h3>{title}</h3>{children}</div> : null,
-}));
-
 vi.mock('../components/lifecycle/LifecycleStatusPanel', () => ({
   default: ({ productStatus }: any) => (
     <div data-testid="lifecycle-panel">Status: {productStatus}</div>
@@ -173,7 +163,7 @@ describe('ItemDetailPage', () => {
       mockGetItem.mockReturnValue(new Promise(() => {}));
       mockGetLedger.mockReturnValue(new Promise(() => {}));
       render(<ItemDetailPage />);
-      expect(screen.getByTestId('skeleton')).toBeInTheDocument();
+      expect(document.querySelector('[data-slot="skeleton"]')).toBeInTheDocument();
     });
   });
 
@@ -207,7 +197,7 @@ describe('ItemDetailPage', () => {
     it('When loaded / Then shows Back to Catalog button', async () => {
       render(<ItemDetailPage />);
       await waitFor(() => {
-        expect(screen.getByText('Back to Catalog')).toBeInTheDocument();
+        expect(screen.getByLabelText('Back to Catalog')).toBeInTheDocument();
       });
     });
 
@@ -267,11 +257,9 @@ describe('ItemDetailPage', () => {
       await waitFor(() => expect(screen.getAllByText('Premium Widget').length).toBeGreaterThan(0));
       fireEvent.click(screen.getByText('Edit'));
       await waitFor(() => expect(screen.getByText('Cancel Editing')).toBeInTheDocument());
-      // Click "Cancel" button (short form next to Save Changes in editing mode)
-      const cancelBtn = screen.getAllByText('Cancel').find(el => el.tagName === 'BUTTON');
-      if (cancelBtn) fireEvent.click(cancelBtn);
+      fireEvent.click(screen.getByText('Cancel Editing'));
       await waitFor(() => {
-        expect(screen.getByText('Back to Catalog')).toBeInTheDocument();
+        expect(screen.getByLabelText('Back to Catalog')).toBeInTheDocument();
       });
     });
   });
@@ -291,7 +279,7 @@ describe('ItemDetailPage', () => {
     it('When Back to Catalog clicked / Then navigates to items list', async () => {
       render(<ItemDetailPage />);
       await waitFor(() => expect(screen.getAllByText('Premium Widget').length).toBeGreaterThan(0));
-      fireEvent.click(screen.getByText('Back to Catalog'));
+      fireEvent.click(screen.getByLabelText('Back to Catalog'));
       expect(mockNavigate).toHaveBeenCalledWith('/inventory/items');
     });
   });

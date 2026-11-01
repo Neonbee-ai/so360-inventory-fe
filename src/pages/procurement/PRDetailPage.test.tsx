@@ -79,7 +79,7 @@ describe('PRDetailPage', () => {
     it('When data is loading / Then shows loading spinner', () => {
       mockGetPRDetail.mockReturnValue(new Promise(() => {}));
       const { container } = render(<PRDetailPage />);
-      expect(container.querySelector('.animate-spin')).toBeInTheDocument();
+      expect(container.querySelector('[data-slot="skeleton"]')).toBeInTheDocument();
     });
   });
 
@@ -128,7 +128,7 @@ describe('PRDetailPage', () => {
     it('When loaded / Then shows Back to Purchase Requisitions button', async () => {
       render(<PRDetailPage />);
       await waitFor(() => {
-        expect(screen.getByText('Back to Purchase Requisitions')).toBeInTheDocument();
+        expect(screen.getByLabelText('Back to Purchase Requisitions')).toBeInTheDocument();
       });
     });
 

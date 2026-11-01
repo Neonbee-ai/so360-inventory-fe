@@ -1,4 +1,5 @@
 import React from 'react';
+import { FormSection as DsFormSection } from '@so360/design-system';
 
 interface FormSectionProps {
     title: string;
@@ -6,18 +7,10 @@ interface FormSectionProps {
     children: React.ReactNode;
 }
 
-const FormSection: React.FC<FormSectionProps> = ({ title, description, children }) => {
-    return (
-        <div className="space-y-4">
-            <div>
-                <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">{title}</h3>
-                {description && (
-                    <p className="text-xs text-slate-500 mt-1">{description}</p>
-                )}
-            </div>
-            {children}
-        </div>
-    );
-};
+const FormSection: React.FC<FormSectionProps> = ({ title, description, children }) => (
+    <DsFormSection title={title} description={description}>
+        {children}
+    </DsFormSection>
+);
 
 export default FormSection;

@@ -38,7 +38,6 @@ const REQUIRED_SHARED_SINGLETONS = [
   'react',
   'react-dom',
   'react-router-dom',
-  'lucide-react',
   '@so360/shell-context',
   '@so360/design-system',
   '@so360/event-bus',
@@ -71,6 +70,11 @@ describe('Production build configuration (MFE perf contract)', () => {
     it('Then the federation plugin declares a shared map', () => {
       expect(captured.federation).toBeDefined();
       expect(captured.federation?.shared).toBeDefined();
+    });
+
+    it('Then lucide-react is not a shared singleton (tree-shaken per remote)', () => {
+      const shared = captured.federation?.shared ?? {};
+      expect(shared['lucide-react'], 'lucide-react must not be in the federation shared list').toBeUndefined();
     });
 
     it.each(REQUIRED_SHARED_SINGLETONS)('Then %s is shared as a singleton', (dep) => {

@@ -56,6 +56,7 @@ describe('ContractsPage', () => {
     });
 
     it('When loaded / Then shows Duration column header', async () => {
+      mockGetContracts.mockResolvedValue([makeContract()]);
       render(<ContractsPage />);
       await waitFor(() => {
         expect(screen.getByText(/Duration/i)).toBeInTheDocument();
@@ -130,12 +131,13 @@ describe('ContractsPage', () => {
   });
 
   describe('Given API error', () => {
-    it('When getContracts fails / Then still renders page without crashing', async () => {
+    it('When getContracts fails / Then the page renders with an error alert instead of a false empty state', async () => {
       mockGetContracts.mockRejectedValue(new Error('Network error'));
       render(<ContractsPage />);
       await waitFor(() => {
-        expect(screen.getByText(/No active contracts found/i)).toBeInTheDocument();
+        expect(screen.getByText(/Failed to load contracts/i)).toBeInTheDocument();
       });
+      expect(screen.queryByText(/No active contracts found/i)).not.toBeInTheDocument();
     });
   });
 });

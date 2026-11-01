@@ -21,6 +21,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 vi.mock('../services/inventoryService', () => ({
   inventoryService: {
     getStockOverview: vi.fn(),
+    getOrgId: vi.fn(() => 'org-1'),
     getGLInventoryValuation: vi.fn(),
     getItems: vi.fn(),
     getLocations: vi.fn(),

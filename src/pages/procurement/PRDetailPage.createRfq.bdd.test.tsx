@@ -121,22 +121,16 @@ describe('PRDetailPage Create RFQ', () => {
     expect(screen.queryByText('Linked RFQs')).not.toBeInTheDocument();
   });
 
-  it('Given an active RFQ exists / When Create RFQ is clicked and the user declines / Then no RFQ is created', async () => {
+  it('Given an active RFQ exists / When Create RFQ is clicked / Then a duplicate confirmation is shown before creating', async () => {
     mockGetRFQs.mockResolvedValue([{ id: 'r1', rfq_number: 'RFQ-0001', status: 'sent', pr_id: 'pr-1234567-aaaa', created_at: '2026-10-02' }]);
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
     render(<PRDetailPage />);
     await screen.findByText('RFQ-0001');
+    // useConfirm (DS stub) resolves from window.confirm.
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValueOnce(true);
     fireEvent.click(screen.getByText('Create RFQ'));
-    expect(confirmSpy).toHaveBeenCalled();
+    await waitFor(() => expect(confirmSpy).toHaveBeenCalledTimes(1));
+    expect(String(confirmSpy.mock.calls[0][0])).toMatch(/already been raised/);
     expect(mockCreateRFQ).not.toHaveBeenCalled();
-    confirmSpy.mockRestore();
-  });
-
-  it('Given an active RFQ exists / When Create RFQ is clicked and the user confirms / Then another RFQ is created', async () => {
-    mockGetRFQs.mockResolvedValue([{ id: 'r1', rfq_number: 'RFQ-0001', status: 'sent', pr_id: 'pr-1234567-aaaa', created_at: '2026-10-02' }]);
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
-    render(<PRDetailPage />);
-    await screen.findByText('RFQ-0001');
     fireEvent.click(screen.getByText('Create RFQ'));
     await waitFor(() => expect(mockCreateRFQ).toHaveBeenCalled());
     confirmSpy.mockRestore();

@@ -8,10 +8,9 @@
 
 body {
   margin: 0;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: rgb(var(--s-950));
+  background-color: rgb(var(--nb-bg));
 }
 
 /* Custom Scrollbar */
@@ -80,15 +79,8 @@ body {
 /* Near-white slate shades (slate-50→400) have no built-in .light override —
    they stay near-white in light mode, making headings and labels invisible.
    Map them to readable dark equivalents so both themes stay legible. */
-.light .text-slate-50  { color: rgb(15  23  42); }
-.light .text-slate-100 { color: rgb(30  41  59); }
-.light .text-slate-200 { color: rgb(51  65  85); }
-.light .text-slate-300 { color: rgb(71  85 105); }
-.light .text-slate-400 { color: rgb(100 116 139); }
 
 /* Muted / secondary text */
-.light .text-slate-500 { color: rgb(71  85 105); }
-.light .text-slate-600 { color: rgb(51  65  85); }
 
 /* Badge / chip backgrounds — 10–20% tints near-invisible on white */
 .light .bg-blue-500\/10    { background-color: rgb(239 246 255); }
@@ -109,18 +101,6 @@ body {
 .light .bg-violet-500\/10  { background-color: rgb(245 243 255); }
 .light .bg-cyan-500\/10    { background-color: rgb(236 254 255); }
 .light .bg-cyan-500\/20    { background-color: rgb(207 250 254); }
-.light .bg-slate-500\/10   { background-color: rgb(248 250 252); }
-.light .bg-slate-500\/15   { background-color: rgb(241 245 249); }
-.light .bg-slate-700\/30   { background-color: rgb(241 245 249); }
-.light .bg-slate-800\/50   { background-color: rgb(241 245 249); }
-.light .bg-slate-800\/60   { background-color: rgb(236 240 245); }
-.light .bg-slate-900       { background-color: #ffffff; }
-.light .bg-slate-900\/30   { background-color: rgb(249 250 251); }
-.light .bg-slate-900\/40   { background-color: rgb(248 250 252); }
-.light .bg-slate-900\/50   { background-color: rgb(248 250 252); }
-.light .bg-slate-900\/60   { background-color: #ffffff; }
-.light .bg-slate-950\/30   { background-color: rgb(248 250 252); }
-.light .bg-slate-950\/40   { background-color: rgb(248 250 252); }
 
 /* Dropdown / popup containers — white card with drop shadow */
 .light .bg-slate-900\/95 {
@@ -152,17 +132,8 @@ body {
 .light .border-violet-500\/10  { border-color: rgb(221 214 254); }
 .light .border-violet-500\/20  { border-color: rgb(196 181 253); }
 .light .border-cyan-500\/20    { border-color: rgb(165 243 252); }
-.light .border-slate-500\/20   { border-color: rgb(226 232 240); }
-.light .border-slate-500\/30   { border-color: rgb(203 213 225); }
-.light .border-slate-600\/20   { border-color: rgb(209 213 219); }
-.light .border-slate-700\/30   { border-color: rgb(209 213 219); }
-.light .border-slate-700\/40   { border-color: rgb(203 213 225); }
-.light .border-slate-700\/60   { border-color: rgb(203 213 225); }
-.light .border-slate-800\/50   { border-color: rgb(226 232 240); }
 
 /* Structural borders */
-.light .border-slate-800 { border-color: rgb(209 213 219); }
-.light .border-slate-700 { border-color: rgb(229 231 235); }
 
 /* Table row dividers */
 .light .divide-slate-800 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(229 231 235); }
@@ -181,13 +152,10 @@ body {
 .light .hover\:border-slate-600:hover  { border-color: rgb(156 163 175); }
 
 /* Modal backdrop — white fog → dark semi-transparent overlay */
-.light .bg-slate-950\/80 { background-color: rgba(0,0,0,0.45); }
 
 /* Skeleton pulse */
-.light .bg-slate-700\/50 { background-color: rgba(203,213,225,0.8); }
 
 /* Toggle / switch track */
-.light .bg-slate-700 { background-color: rgb(203 213 225); }
 
 /* Input focus rings */
 .light .focus\:border-blue-500\/50:focus { border-color: rgb(59 130 246); }

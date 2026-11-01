@@ -31,10 +31,6 @@ vi.mock('../services/inventoryService', () => ({
 
 vi.mock('react-router-dom', () => ({ useNavigate: () => vi.fn() }));
 vi.mock('../hooks/useAuth', () => ({ useAuth: () => ({ can: () => true }) }));
-vi.mock('../components/common/Modal', () => ({
-  Modal: ({ isOpen, children }: any) => (isOpen ? <div data-testid="modal">{children}</div> : null),
-}));
-vi.mock('../components/common/Skeleton', () => ({ TableSkeleton: () => <div data-testid="skeleton" /> }));
 
 vi.mock('@so360/shell-context', () => ({
   useActivity: () => ({ recordActivity: vi.fn() }),
@@ -48,11 +44,6 @@ vi.mock('@so360/shell-context', () => ({
 }));
 
 // Passthrough gates — isolate the page's own limit logic.
-vi.mock('@so360/design-system', () => ({
-  FeatureGate: ({ children }: any) => <>{children}</>,
-  QuotaGate: ({ children }: any) => <>{children}</>,
-  QuotaBar: () => <div data-testid="quota-bar" />,
-}));
 
 import StockLocationsPage from './StockLocationsPage';
 

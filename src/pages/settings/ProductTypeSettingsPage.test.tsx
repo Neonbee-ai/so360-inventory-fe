@@ -72,7 +72,7 @@ describe('ProductTypeSettingsPage', () => {
     it('When product types loading / Then shows loading indicator', () => {
       mockGetAll.mockReturnValue(new Promise(() => {}));
       const { container } = render(<ProductTypeSettingsPage />);
-      expect(container.querySelector('.animate-pulse')).toBeInTheDocument();
+      expect(container.querySelector('[aria-busy="true"]')).toBeInTheDocument();
     });
   });
 
@@ -87,7 +87,7 @@ describe('ProductTypeSettingsPage', () => {
     it('When loaded / Then shows Back to Settings button', async () => {
       render(<ProductTypeSettingsPage />);
       await waitFor(() => {
-        expect(screen.getByText('Back to Settings')).toBeInTheDocument();
+        expect(screen.getByLabelText('Back to Settings')).toBeInTheDocument();
       });
     });
 
@@ -110,7 +110,7 @@ describe('ProductTypeSettingsPage', () => {
     it('When Back to Settings clicked / Then navigates', async () => {
       render(<ProductTypeSettingsPage />);
       await waitFor(() => expect(screen.getByText('Product Types')).toBeInTheDocument());
-      fireEvent.click(screen.getByText('Back to Settings'));
+      fireEvent.click(screen.getByLabelText('Back to Settings'));
       expect(mockNavigate).toHaveBeenCalledWith('/inventory/settings');
     });
   });

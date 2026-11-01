@@ -1,1 +1,7 @@
-{ "name": "@so360/design-system", "version": "0.0.0-stub", "main": "index.js", "module": "index.js", "types": "index.d.ts" }
+{
+  "name": "@so360/design-system",
+  "version": "0.0.0-ci-stub",
+  "type": "module",
+  "main": "index.js",
+  "types": "index.d.ts"
+}

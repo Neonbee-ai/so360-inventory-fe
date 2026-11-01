@@ -78,7 +78,7 @@ describe('GRNDetailPage', () => {
     it('When data is loading / Then shows loading spinner', () => {
       mockGetGRNDetail.mockReturnValue(new Promise(() => {}));
       const { container } = render(<GRNDetailPage />);
-      expect(container.querySelector('.animate-spin')).toBeInTheDocument();
+      expect(container.querySelector('[data-slot="skeleton"]')).toBeInTheDocument();
     });
   });
 
@@ -140,7 +140,7 @@ describe('GRNDetailPage', () => {
     it('When loaded / Then shows back navigation button', async () => {
       render(<GRNDetailPage />);
       await waitFor(() => {
-        expect(screen.getByText('Back to Goods Receipt Notes')).toBeInTheDocument();
+        expect(screen.getByLabelText('Back to Goods Receipt Notes')).toBeInTheDocument();
       });
     });
 

@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Building2, Globe, Mail, Phone, MapPin, User, Loader2, AlertCircle, RefreshCw, Pencil } from 'lucide-react';
+import { Building2, Globe, Mail, Phone, MapPin, User, Loader2, Pencil } from 'lucide-react';
+import { Alert, Button, IconButton, Select, TextField, FieldGrid, FieldGridItem } from '@so360/design-system';
 import { inventoryService } from '../../services/inventoryService';
 import type { DeveloperProfile, DeveloperUpdate } from '../../types/inventory';
 
@@ -21,9 +22,6 @@ interface EditDraft {
     status: '' | 'active' | 'inactive';
     account_manager_user_id: string;
 }
-
-const inputCls =
-    'w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500';
 
 const toDraft = (d: DeveloperProfile): EditDraft => {
     const st = (d.status || '').toLowerCase();
@@ -63,9 +61,9 @@ const safeHref = (v: string): string | null => {
 
 const Line: React.FC<{ icon?: React.ReactNode; label: string; children: React.ReactNode }> = ({ icon, label, children }) => (
     <div className="flex items-start gap-2">
-        <span className="text-slate-500 mt-0.5">{icon}</span>
-        <span className="text-slate-500 w-28 shrink-0">{label}</span>
-        <span className="text-slate-200 break-words min-w-0">{children}</span>
+        <span className="text-fg-subtle mt-0.5">{icon}</span>
+        <span className="text-fg-subtle w-28 shrink-0">{label}</span>
+        <span className="text-fg break-words min-w-0">{children}</span>
     </div>
 );
 
@@ -101,7 +99,7 @@ export const DeveloperCard: React.FC<DeveloperCardProps> = ({ partnerId, project
 
     if (loading) {
         return (
-            <div className="flex items-center gap-2 text-xs text-slate-400 p-4" data-testid="developer-loading">
+            <div className="flex items-center gap-2 text-xs text-fg-muted p-4" data-testid="developer-loading">
                 <Loader2 size={14} className="animate-spin" /> Loading developer…
             </div>
         );
@@ -109,11 +107,10 @@ export const DeveloperCard: React.FC<DeveloperCardProps> = ({ partnerId, project
 
     if (error || !dev) {
         return (
-            <div className="flex items-center gap-2 text-xs text-rose-300 p-4" data-testid="developer-error">
-                <AlertCircle size={14} /> {error || 'Failed to load developer'}
-                <button onClick={retry} className="ml-2 flex items-center gap-1 text-slate-300 hover:text-white">
-                    <RefreshCw size={12} /> Retry
-                </button>
+            <div className="p-4" data-testid="developer-error">
+                <Alert variant="error" action={{ label: 'Retry', onClick: retry }}>
+                    {error || 'Failed to load developer'}
+                </Alert>
             </div>
         );
     }
@@ -138,89 +135,80 @@ export const DeveloperCard: React.FC<DeveloperCardProps> = ({ partnerId, project
     const website = dev.website ? safeHref(dev.website) : null;
     const status = (dev.status || '').toLowerCase();
     const statusCls = status === 'active'
-        ? 'bg-emerald-500/15 text-emerald-300'
+        ? 'bg-success/15 text-success'
         : status
-            ? 'bg-slate-700 text-slate-300'
+            ? 'bg-surface-high text-fg-muted'
             : '';
 
     return (
-        <section className="rounded-xl border border-slate-800 p-4 space-y-3 text-xs" aria-label="Developer" data-testid="developer-card">
+        <section className="rounded-xl border border-line p-4 space-y-3 text-xs" aria-label="Developer" data-testid="developer-card">
             <div className="flex items-center gap-3">
                 {dev.logo_url && !logoFailed ? (
                     <img
                         src={dev.logo_url}
                         alt={`${dev.name} logo`}
-                        className="w-10 h-10 rounded-lg object-cover bg-slate-800"
+                        className="w-10 h-10 rounded-lg object-cover bg-surface-raised"
                         onError={() => setLogoFailed(true)}
                     />
                 ) : (
-                    <div className="w-10 h-10 rounded-lg bg-blue-500/15 text-blue-300 flex items-center justify-center text-sm font-semibold" data-testid="developer-initial">
+                    <div className="w-10 h-10 rounded-lg bg-primary/15 text-primary flex items-center justify-center text-sm font-semibold" data-testid="developer-initial">
                         {dev.name.charAt(0).toUpperCase()}
                     </div>
                 )}
                 <div className="min-w-0">
-                    <p className="text-sm font-semibold text-slate-100 truncate">{dev.name}</p>
-                    {dev.company && dev.company !== dev.name && <p className="text-slate-400 truncate">{dev.company}</p>}
+                    <p className="text-sm font-semibold text-fg truncate">{dev.name}</p>
+                    {dev.company && dev.company !== dev.name && <p className="text-fg-muted truncate">{dev.company}</p>}
                 </div>
                 {dev.status && (
                     <span className={`ml-auto px-2 py-0.5 rounded-md capitalize ${statusCls}`} data-testid="developer-status">{dev.status}</span>
                 )}
                 {canEdit && !draft && (
-                    <button
-                        type="button"
-                        aria-label="Edit developer"
-                        onClick={() => { setSaveError(null); setDraft(toDraft(dev)); }}
-                        className={`${dev.status ? '' : 'ml-auto '}p-1 text-slate-500 hover:text-slate-200`}
-                    >
-                        <Pencil size={12} />
-                    </button>
+                    <span className={dev.status ? '' : 'ml-auto'}>
+                        <IconButton
+                            label="Edit developer"
+                            icon={<Pencil size={12} />}
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => { setSaveError(null); setDraft(toDraft(dev)); }}
+                        />
+                    </span>
                 )}
             </div>
 
             {draft && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 border border-slate-800 rounded-lg p-3" data-testid="developer-edit">
-                    <label className="block text-slate-400">
-                        Website
-                        <input aria-label="Developer website" className={inputCls} value={draft.website} placeholder="https://"
-                            onChange={(e) => setDraft({ ...draft, website: e.target.value })} />
-                    </label>
-                    <label className="block text-slate-400">
-                        Logo URL
-                        <input aria-label="Developer logo URL" className={inputCls} value={draft.logo_url} placeholder="https://"
-                            onChange={(e) => setDraft({ ...draft, logo_url: e.target.value })} />
-                    </label>
-                    <label className="block text-slate-400">
-                        Status
-                        <select aria-label="Developer status" className={inputCls} value={draft.status}
-                            onChange={(e) => {
-                                const v = e.target.value;
-                                setDraft({ ...draft, status: v === 'active' || v === 'inactive' ? v : '' });
-                            }}>
-                            <option value="">Not set</option>
-                            <option value="active">Active</option>
-                            <option value="inactive">Inactive</option>
-                        </select>
-                    </label>
-                    <label className="block text-slate-400">
-                        Account manager (user ID)
-                        <input aria-label="Account manager user ID" className={inputCls} value={draft.account_manager_user_id}
-                            onChange={(e) => setDraft({ ...draft, account_manager_user_id: e.target.value })} />
-                    </label>
-                    {saveError && <p className="text-rose-400 md:col-span-2">{saveError}</p>}
-                    <div className="flex gap-2 md:col-span-2">
-                        <button type="button" onClick={saveEdit} disabled={saving}
-                            className="px-3 py-1.5 rounded-lg bg-blue-600 text-white disabled:opacity-50">
+                <FieldGrid className="border-t border-line pt-nb-3" data-testid="developer-edit">
+                    <TextField label="Website" name="developer_website" aria-label="Developer website" size="sm" value={draft.website} placeholder="https://"
+                        onChange={(e) => setDraft({ ...draft, website: e.target.value })} />
+                    <TextField label="Logo URL" name="developer_logo_url" aria-label="Developer logo URL" size="sm" value={draft.logo_url} placeholder="https://"
+                        onChange={(e) => setDraft({ ...draft, logo_url: e.target.value })} />
+                    <Select
+                        label="Status"
+                        name="developer_status"
+                        aria-label="Developer status"
+                        size="sm"
+                        value={draft.status}
+                        options={[
+                            { value: '', label: 'Not set' },
+                            { value: 'active', label: 'Active' },
+                            { value: 'inactive', label: 'Inactive' },
+                        ]}
+                        onValueChange={(v: string) => setDraft({ ...draft, status: v === 'active' || v === 'inactive' ? v : '' })}
+                    />
+                    <TextField label="Account manager (user ID)" name="developer_account_manager" aria-label="Account manager user ID" size="sm" value={draft.account_manager_user_id}
+                        onChange={(e) => setDraft({ ...draft, account_manager_user_id: e.target.value })} />
+                    {saveError && <FieldGridItem span="full"><Alert variant="error">{saveError}</Alert></FieldGridItem>}
+                    <FieldGridItem span="full" className="flex gap-2">
+                        <Button type="button" variant="primary" size="sm" onClick={saveEdit} disabled={saving}>
                             {saving ? 'Saving…' : 'Save developer'}
-                        </button>
-                        <button type="button" onClick={() => setDraft(null)} disabled={saving}
-                            className="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300">
+                        </Button>
+                        <Button type="button" variant="secondary" size="sm" onClick={() => setDraft(null)} disabled={saving}>
                             Cancel
-                        </button>
-                    </div>
-                </div>
+                        </Button>
+                    </FieldGridItem>
+                </FieldGrid>
             )}
 
-            {dev.description && <p className="text-slate-300">{dev.description}</p>}
+            {dev.description && <p className="text-fg-muted">{dev.description}</p>}
 
             <div className="space-y-1.5">
                 {dev.contact_name && <Line icon={<User size={12} />} label="Contact">{dev.contact_name}</Line>}
@@ -228,7 +216,7 @@ export const DeveloperCard: React.FC<DeveloperCardProps> = ({ partnerId, project
                 {dev.email && <Line icon={<Mail size={12} />} label="Email"><a href={`mailto:${dev.email}`} className="hover:underline">{dev.email}</a></Line>}
                 {dev.website && (
                     <Line icon={<Globe size={12} />} label="Website">
-                        {website ? <a href={website} target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">{dev.website}</a> : dev.website}
+                        {website ? <a href={website} target="_blank" rel="noreferrer" className="text-primary hover:underline">{dev.website}</a> : dev.website}
                     </Line>
                 )}
                 {dev.address && <Line icon={<MapPin size={12} />} label="Address">{dev.address}</Line>}
@@ -241,22 +229,23 @@ export const DeveloperCard: React.FC<DeveloperCardProps> = ({ partnerId, project
                 {fmtDate(dev.updated_at) && <Line label="Modified">{fmtDate(dev.updated_at)}</Line>}
             </div>
 
-            <div className="border-t border-slate-800 pt-2">
-                <p className="text-slate-500 mb-1 flex items-center gap-1"><Building2 size={12} /> Projects ({projects.length})</p>
+            <div className="border-t border-line pt-2">
+                <p className="text-fg-subtle mb-1 flex items-center gap-1"><Building2 size={12} /> Projects ({projects.length})</p>
                 {projects.length === 0 ? (
-                    <p className="text-slate-500">No projects linked yet.</p>
+                    <p className="text-fg-subtle">No projects linked yet.</p>
                 ) : (
                     <ul className="flex flex-wrap gap-1.5" data-testid="developer-projects">
                         {projects.map((p) => (
                             <li key={p.id}>
-                                <button
+                                <Button
                                     type="button"
+                                    variant={p.id === currentProjectId ? 'tonal' : 'ghost'}
+                                    size="sm"
                                     onClick={() => onSelectProject?.(p.id)}
                                     aria-current={p.id === currentProjectId ? 'true' : undefined}
-                                    className={`px-2 py-1 rounded-lg border ${p.id === currentProjectId ? 'border-blue-500 text-blue-300' : 'border-slate-700 text-slate-300 hover:border-slate-500'}`}
                                 >
                                     {p.name}
-                                </button>
+                                </Button>
                             </li>
                         ))}
                     </ul>

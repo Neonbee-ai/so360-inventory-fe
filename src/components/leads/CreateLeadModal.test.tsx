@@ -2,11 +2,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import React from 'react';
 
-vi.mock('../common/Modal', () => ({
-  Modal: ({ isOpen, title, children }: any) =>
-    isOpen ? <div data-testid="modal"><h3>{title}</h3>{children}</div> : null,
-}));
-
 const mockGetSettings = vi.fn();
 const mockCreateLead = vi.fn();
 
@@ -29,7 +24,7 @@ describe('CreateLeadModal', () => {
   describe('Given modal is closed', () => {
     it('When isOpen is false / Then modal is not in DOM', () => {
       render(<CreateLeadModal isOpen={false} onClose={vi.fn()} onSuccess={vi.fn()} existingLeads={[]} />);
-      expect(screen.queryByTestId('modal')).not.toBeInTheDocument();
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
   });
 
@@ -115,7 +110,7 @@ describe('CreateLeadModal', () => {
       fireEvent.change(inputs[1], { target: { value: 'John Doe' } });
       fireEvent.change(inputs[2], { target: { value: 'john@test.com' } });
 
-      const form = screen.getByTestId('modal').querySelector('form')!;
+      const form = screen.getByRole('dialog').querySelector('form')!;
       fireEvent.submit(form);
 
       await waitFor(() => {
