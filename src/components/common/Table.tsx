@@ -17,7 +17,7 @@ interface TableProps<T> {
 }
 
 /** Thin wrapper over Comb DataTable; keeps the legacy accessor-based column API. */
-export const Table = <T extends { id: string }>({
+export const Table = <T extends { id: string }>({ // comb-exception: thin legacy-API wrapper over DS DataTable, not a reimplementation
     data,
     columns,
     isLoading,

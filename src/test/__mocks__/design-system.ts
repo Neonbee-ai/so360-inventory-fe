@@ -23,7 +23,7 @@ export const Textarea = ({ label, hint, error, required, name, id, size: _s, 'da
     React.createElement('textarea', { ...rest, id: fid, name, required, 'data-testid': testId, 'aria-invalid': error ? true : rest['aria-invalid'] }));
 };
 export const Select = ({ value, onChange, options = [], placeholder, label, hint: _h, error, size: _sz, required, name, className: _c, ...rest }: any) => {
-  const el = React.createElement('select', { id: rest.id ?? (label ? `f-${name}` : undefined), name, required, disabled: rest.disabled, title: rest.title, multiple: rest.multiple, value: value ?? '', onChange: (e: any) => { onChange?.(e); rest.onValueChange?.(e.target.value); }, 'aria-label': rest['aria-label'] ?? (label ? undefined : placeholder), 'data-testid': rest['data-testid'] },
+  const el = React.createElement('select', { id: rest.id ?? (label ? `f-${name}` : undefined), name, required, disabled: rest.disabled, title: rest.title, multiple: rest.multiple, 'aria-invalid': error ? true : rest['aria-invalid'], value: value ?? '', onChange: (e: any) => { onChange?.(e); rest.onValueChange?.(e.target.value); }, 'aria-label': rest['aria-label'] ?? (label ? undefined : placeholder), 'data-testid': rest['data-testid'] },
     placeholder ? React.createElement('option', { key: '__ph', value: '', disabled: true }, placeholder) : null,
     options.map((o: any) => React.createElement('option', { key: String(o.value), value: o.value, disabled: o.disabled }, o.label)));
   return label || error ? React.createElement('div', null, label ? React.createElement('label', { htmlFor: el?.props?.id ?? `f-${name}` }, label) : null, el, error ? React.createElement('p', { role: 'alert' }, error) : null) : el;
@@ -72,7 +72,7 @@ export const usePortalContainer = () => (typeof document !== 'undefined' ? docum
 export const Card = ({ title, actions, footer, children, 'data-testid': testId }: any) =>
     React.createElement('div', { 'data-testid': testId }, title ? React.createElement('h3', null, title) : null, actions, children, footer);
 export const Badge = ({ children, onClick, tone, size, 'data-testid': testId }: any) =>
-  React.createElement('span', { onClick, 'data-testid': testId, 'data-tone': tone, 'data-size': size }, children);
+  React.createElement('span', { onClick, 'data-testid': testId, 'data-comb': 'badge', 'data-tone': tone, 'data-size': size }, children);
 export const Pagination = ({ page, currentPage, pageSize, pageSizeOptions, onPageSizeChange, total, totalItems, totalPages, onPageChange }: any) => {
   const cur = Number(page ?? currentPage ?? 1);
   const pages = totalPages ?? 1;
@@ -239,6 +239,9 @@ export const Menu = ({ trigger, items = [], name, 'data-testid': testId }: any) 
 export const KpiCard = ({ label, value, hint, onClick, 'data-testid': testId }: any) =>
     React.createElement('div', { 'data-testid': testId, onClick }, React.createElement('span', null, label), React.createElement('span', null, value),
         hint != null && hint !== false ? React.createElement('span', { 'data-slot': 'kpi-hint' }, hint) : null);
+export const KpiGrid = ({ children }: any) => React.createElement('div', null, children);
+export const CountUp = ({ value }: any) => React.createElement(React.Fragment, null, String(value));
+export const useCountUp = (target: number) => target;
 export const StatusBadge = ({ status, 'data-testid': testId }: any) => React.createElement('span', { 'data-testid': testId }, status);
 export const Alert = ({ title, children, variant, action, 'data-testid': testId }: any) =>
     React.createElement('div', { role: 'alert', 'data-variant': variant, 'data-testid': testId }, title ? React.createElement('p', null, title) : null, children,

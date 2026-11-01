@@ -398,7 +398,7 @@ const OpeningBalancePage = () => {
                             <EmptyState
                                 title="No item lines yet"
                                 description="Use Load Unlinked Stock to auto-fill items, or add a line manually."
-                                action={{ label: 'add a line manually', onClick: addEmptyLine }}
+                                action={{ label: 'Add line manually', onClick: addEmptyLine }}
                             />
                         }
                         footer={

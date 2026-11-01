@@ -567,6 +567,15 @@ describe('Given the movement register list', () => {
         );
     });
 
+    it('Given an issue row / When rendered / Then the badge is the DS Badge in the danger tone (AA contrast)', async () => {
+        inv.getMovements.mockResolvedValue(movementPage([movement({ movement_type: 'outbound', reference_number: 'ISS-1' })]));
+        renderPage();
+        const badge = await screen.findByTestId('movement-type-badge');
+        expect(badge).toHaveTextContent('ISSUE');
+        expect(badge.getAttribute('data-comb')).toBe('badge');
+        expect(badge.getAttribute('data-tone')).toBe('danger');
+    });
+
     it('Given transfer and adjustment rows / When rendered / Then their badges differ', async () => {
         inv.getMovements.mockResolvedValue(movementPage([
             movement({ movement_type: 'adjustment', reference_number: 'ADJ-00012' }),

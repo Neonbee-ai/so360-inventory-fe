@@ -45,11 +45,11 @@ const ProductTypePicker: React.FC<ProductTypePickerProps> = ({ value, onChange }
             <Button
                 type="button"
                 variant={!value ? 'tonal' : 'secondary'}
-                className="!h-auto !justify-start !text-left !py-nb-3"
+                className="min-w-0 !h-auto !justify-start !whitespace-normal !text-left !py-nb-3"
                 aria-pressed={!value}
                 onClick={() => onChange('')}
             >
-                <span className="flex flex-col items-start gap-nb-1">
+                <span className="flex min-w-0 flex-col items-start gap-nb-1">
                     <span className="flex items-center gap-nb-2">
                         <Package size={16} />
                         <span className="text-nb-body font-semibold">None</span>
@@ -66,14 +66,14 @@ const ProductTypePicker: React.FC<ProductTypePickerProps> = ({ value, onChange }
                         key={pt.id}
                         type="button"
                         variant={isSelected ? 'tonal' : 'secondary'}
-                        className="!h-auto !justify-start !text-left !py-nb-3"
+                        className="min-w-0 !h-auto !justify-start !whitespace-normal !text-left !py-nb-3"
                         aria-pressed={isSelected}
                         onClick={() => onChange(pt.id)}
                     >
-                        <span className="flex flex-col items-start gap-nb-1">
+                        <span className="flex min-w-0 flex-col items-start gap-nb-1">
                             <span className="flex items-center gap-nb-2">
                                 <Icon size={16} />
-                                <span className="text-nb-body font-semibold">{pt.name}</span>
+                                <span className="break-words text-nb-body font-semibold">{pt.name}</span>
                             </span>
                             <span className="text-nb-caption text-fg-subtle line-clamp-2">{pt.description || pt.code}</span>
                             {pt.is_system && <span className="text-nb-caption text-fg-subtle">System</span>}

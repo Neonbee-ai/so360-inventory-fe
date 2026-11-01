@@ -121,7 +121,7 @@ export const PaymentPlanTemplatesEditor: React.FC<PaymentPlanTemplatesEditorProp
                             <TextField
                                 name={`payment_plan_${n}_name`}
                                 aria-label={`Payment plan ${n} name`}
-                                className="flex-1 min-w-[10rem]"
+                                className="flex-1 min-w-40"
                                 size="sm"
                                 value={t.name}
                                 disabled={disabled}
@@ -163,7 +163,7 @@ export const PaymentPlanTemplatesEditor: React.FC<PaymentPlanTemplatesEditorProp
                                 }}
                             />
                             <div className="flex flex-wrap items-center gap-1" role="group" aria-label={`Payment plan ${n} payment modes`}>
-                                <span className="text-[11px] text-fg-subtle mr-1">{t.allowed_modes ? 'Modes:' : 'Any mode'}</span>
+                                <span className="text-nb-overline text-fg-subtle mr-1">{t.allowed_modes ? 'Modes:' : 'Any mode'}</span>
                                 {PAYMENT_MODES.map((m) => {
                                     const on = !!t.allowed_modes?.includes(m);
                                     return (

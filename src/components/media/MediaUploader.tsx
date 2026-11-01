@@ -146,7 +146,7 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({ imageUrls, onImagesChange
                 </p>
                 <p className="text-xs text-fg-subtle mt-1">PNG, JPG, SVG, WebP — large photos are shrunk automatically</p>
                 {/* comb-exception: hidden native file input driven by the drop zone (no DS file-picker trigger) */}
-                <input
+                <input // comb-exception: hidden native file input driven by the drop zone
                     ref={fileInputRef}
                     type="file"
                     accept="image/png,image/jpeg,image/jpg,image/svg+xml,image/webp"

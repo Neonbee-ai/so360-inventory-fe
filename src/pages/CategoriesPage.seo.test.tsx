@@ -320,12 +320,12 @@ describe('Given the meta title and description counters', () => {
   });
 
   describe('When the value exceeds the limit (e.g. a saved legacy value)', () => {
-    it('Then the counter turns red (rose)', async () => {
+    it('Then the counter turns red (danger token)', async () => {
       await openEditor({ meta_description: 'y'.repeat(161) });
       openSeo();
       const counter = screen.getByTestId('meta-description-count');
       expect(counter).toHaveTextContent('161/160');
-      expect(counter.className).toContain('text-rose-400');
+      expect(counter.className).toContain('text-danger');
     });
   });
 });

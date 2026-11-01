@@ -1,5 +1,5 @@
 import React from 'react';
-import { Select, TextField, FieldGrid } from '@so360/design-system';
+import { Select, TextField, FieldGrid, Checkbox } from '@so360/design-system';
 import { useShellBridge } from '@so360/shell-context';
 import FormSection from '../components/FormSection';
 
@@ -61,30 +61,8 @@ const StockTrackingTab: React.FC<StockTrackingTabProps> = ({
 
             <FormSection title="Tracking Options">
                 <div className="flex flex-col gap-nb-3 p-nb-4 bg-surface-raised border border-line rounded-nb-md">
-                    <label className="flex items-center gap-nb-3 cursor-pointer group">
-                        <input
-                            type="checkbox"
-                            checked={is_batch_tracked}
-                            onChange={e => updateField('is_batch_tracked', e.target.checked)}
-                            className="w-4 h-4"
-                        />
-                        <div>
-                            <span className="text-sm text-fg-muted group-hover:text-fg transition-colors">Batch Tracked</span>
-                            <p className="text-xs text-fg-subtle">Track items by batch/lot numbers for expiry and recalls</p>
-                        </div>
-                    </label>
-                    <label className="flex items-center gap-nb-3 cursor-pointer group">
-                        <input
-                            type="checkbox"
-                            checked={is_serial_tracked}
-                            onChange={e => updateField('is_serial_tracked', e.target.checked)}
-                            className="w-4 h-4"
-                        />
-                        <div>
-                            <span className="text-sm text-fg-muted group-hover:text-fg transition-colors">Serial Tracked</span>
-                            <p className="text-xs text-fg-subtle">Track each individual item by unique serial number</p>
-                        </div>
-                    </label>
+                    <Checkbox name="is_batch_tracked" label="Batch Tracked" description="Track items by batch/lot numbers for expiry and recalls" checked={is_batch_tracked} onChange={e => updateField('is_batch_tracked', e.target.checked)} />
+                    <Checkbox name="is_serial_tracked" label="Serial Tracked" description="Track each individual item by unique serial number" checked={is_serial_tracked} onChange={e => updateField('is_serial_tracked', e.target.checked)} />
                 </div>
             </FormSection>
 
@@ -104,56 +82,12 @@ const StockTrackingTab: React.FC<StockTrackingTabProps> = ({
 
             <FormSection title="Status & Visibility">
                 <div className="flex flex-col gap-nb-3 p-nb-4 bg-surface-raised border border-line rounded-nb-md">
-                    <label className="flex items-center gap-nb-3 cursor-pointer group">
-                        <input
-                            type="checkbox"
-                            checked={is_active}
-                            onChange={e => updateField('is_active', e.target.checked)}
-                            className="w-4 h-4"
-                        />
-                        <div>
-                            <span className="text-sm text-fg-muted group-hover:text-fg transition-colors">Active</span>
-                            <p className="text-xs text-fg-subtle">Inactive items are hidden from selection lists and ordering</p>
-                        </div>
-                    </label>
-                    <label className="flex items-center gap-nb-3 cursor-pointer group">
-                        <input
-                            type="checkbox"
-                            checked={is_online_visible || false}
-                            onChange={e => updateField('is_online_visible', e.target.checked)}
-                            className="w-4 h-4"
-                        />
-                        <div>
-                            <span className="text-sm text-fg-muted group-hover:text-fg transition-colors">Online Visible</span>
-                            <p className="text-xs text-fg-subtle">Show this product in the Daily Store online catalog (requires Active status)</p>
-                        </div>
-                    </label>
+                    <Checkbox name="is_active" label="Active" description="Inactive items are hidden from selection lists and ordering" checked={is_active} onChange={e => updateField('is_active', e.target.checked)} />
+                    <Checkbox name="is_online_visible" label="Online Visible" description="Show this product in the Daily Store online catalog (requires Active status)" checked={is_online_visible || false} onChange={e => updateField('is_online_visible', e.target.checked)} />
                     {ecommerceControls && (
                         <>
-                    <label className="flex items-center gap-nb-3 cursor-pointer group">
-                        <input
-                            type="checkbox"
-                            checked={available_on_ecommerce}
-                            onChange={e => updateField('available_on_ecommerce', e.target.checked)}
-                            className="w-4 h-4"
-                        />
-                        <div>
-                            <span className="text-sm text-fg-muted group-hover:text-fg transition-colors">Available on Ecommerce</span>
-                            <p className="text-xs text-fg-subtle">Turn off to hide this product from the storefront without deactivating it</p>
-                        </div>
-                    </label>
-                    <label className="flex items-center gap-nb-3 cursor-pointer group">
-                        <input
-                            type="checkbox"
-                            checked={show_stock}
-                            onChange={e => updateField('show_stock', e.target.checked)}
-                            className="w-4 h-4"
-                        />
-                        <div>
-                            <span className="text-sm text-fg-muted group-hover:text-fg transition-colors">Show Stock</span>
-                            <p className="text-xs text-fg-subtle">Show the available quantity to storefront customers</p>
-                        </div>
-                    </label>
+                    <Checkbox name="available_on_ecommerce" label="Available on Ecommerce" description="Turn off to hide this product from the storefront without deactivating it" checked={available_on_ecommerce} onChange={e => updateField('available_on_ecommerce', e.target.checked)} />
+                    <Checkbox name="show_stock" label="Show Stock" description="Show the available quantity to storefront customers" checked={show_stock} onChange={e => updateField('show_stock', e.target.checked)} />
                         </>
                     )}
                 </div>

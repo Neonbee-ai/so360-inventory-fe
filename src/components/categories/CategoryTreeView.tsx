@@ -89,7 +89,7 @@ const CategoryAvatar: React.FC<{
                 />
             )}
             {uploadError && (
-                <div className="absolute left-0 top-8 z-10 bg-rose-900 border border-rose-500/50 text-rose-300 text-xs px-2 py-1 rounded whitespace-nowrap">
+                <div className="absolute left-0 top-8 z-10 bg-danger-container border border-danger/50 text-danger-on-container text-xs px-2 py-1 rounded whitespace-nowrap">
                     {uploadError}
                 </div>
             )}

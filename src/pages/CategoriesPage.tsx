@@ -29,7 +29,7 @@ import {
 import { fitImageFile, describeFit, IMAGE_FIT_SLOTS, type ImageFitSlot } from '../utils/imageFit';
 import ImageSpecChip from '../components/media/ImageSpecChip';
 import { useActivity, useShellBridge } from '@so360/shell-context';
-import { Alert, Button, Card, Cluster, FeatureGate, IconButton, ListPageTemplate, TextField, Textarea, Grid } from '@so360/design-system';
+import { Alert, Button, Card, Cluster, FeatureGate, IconButton, ListPageTemplate, SegmentedControl, TextField, Textarea, Grid, GridItem } from '@so360/design-system';
 
 const PRESET_COLORS = ['#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#EC4899', '#06B6D4', '#64748B'];
 
@@ -49,7 +49,7 @@ const slugFromName = (name: string) =>
 const CharCount: React.FC<{ value: string; max: number; testId: string }> = ({ value, max, testId }) => (
     <span
         data-testid={testId}
-        className={`text-[11px] tabular-nums ${value.length > max ? 'text-rose-400' : value.length > max * 0.9 ? 'text-warning' : 'text-fg-subtle'}`}
+        className={`text-nb-overline tabular-nums ${value.length > max ? 'text-danger' : value.length > max * 0.9 ? 'text-warning' : 'text-fg-subtle'}`}
     >
         {value.length}/{max}
     </span>
@@ -132,7 +132,7 @@ const ImageUploadZone: React.FC<{
                         <div
                             data-testid="slot-size-badge"
                             title={assessment.ok ? 'Good fit for this slot' : assessment.issues.join('\n')}
-                            className={`absolute bottom-0 inset-x-0 px-2 py-0.5 text-[10px] leading-tight text-center truncate ${
+                            className={`absolute bottom-0 inset-x-0 px-2 py-0.5 text-nb-overline leading-tight text-center truncate ${
                                 assessment.ok ? 'bg-surface/80 text-fg-muted' : 'bg-warning/90 text-primary-fg font-medium'
                             }`}
                         >
@@ -170,7 +170,7 @@ const ImageUploadZone: React.FC<{
                 <p className="text-xs text-danger mt-1">{uploadError}</p>
             )}
             {fitNote && !uploadError && (
-                <p data-testid="image-fit-note" className="text-[11px] text-fg-subtle mt-1 break-words">{fitNote}</p>
+                <p data-testid="image-fit-note" className="text-nb-overline text-fg-subtle mt-1 break-words">{fitNote}</p>
             )}
         </div>
     );
@@ -233,14 +233,14 @@ const CategoryCardsView: React.FC<{
                 {/* Name bottom */}
                 <div className="absolute bottom-2 left-2 right-2">
                     {!isRoot && getParentName(cat.parent_id) && (
-                        <p className="text-[10px] text-fg/60 leading-none mb-0.5 truncate">{getParentName(cat.parent_id)}</p>
+                        <p className="text-nb-overline text-fg/60 leading-none mb-0.5 truncate">{getParentName(cat.parent_id)}</p>
                     )}
                     <p className={`text-fg font-semibold truncate ${isRoot ? 'text-base' : 'text-sm'}`}>{cat.name}</p>
                 </div>
 
                 {/* Banner indicator */}
                 {cat.image_url && (
-                    <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-emerald-400" title="Has banner image" />
+                    <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-success" title="Has banner image" />
                 )}
             </div>
         );
@@ -529,22 +529,26 @@ const CategoriesPage = () => {
                 </div>
             )}
 
-            <div className="flex gap-6 items-start">
+            <Grid className="items-start">
                 {/* Left panel — tree / cards */}
-                <div className="w-1/3 min-w-[260px]">
+                <GridItem span={{ base: 'full', lg: 4 }}>
                   <Card
                     title={labels.categories}
                     actions={
-                        <Cluster gap="tight">
-                            <Button size="sm" variant={viewMode === 'tree' ? 'tonal' : 'ghost'} onClick={() => setViewMode('tree')}>Tree</Button>
-                            <Button size="sm" variant={viewMode === 'cards' ? 'tonal' : 'ghost'} onClick={() => setViewMode('cards')}>Cards</Button>
-                        </Cluster>
+                        <SegmentedControl
+                            name="categories-view"
+                            size="sm"
+                            aria-label="Categories view"
+                            value={viewMode}
+                            onChange={(v: string) => setViewMode(v as 'tree' | 'cards')}
+                            options={[{ value: 'tree', label: 'Tree' }, { value: 'cards', label: 'Cards' }]}
+                        />
                     }
                   >
                     <p className="text-nb-caption text-fg-muted mb-3">
                         {categories.filter(c => c.icon_url || c.image_url || c.banner_url).length} of {categories.length} have images
                     </p>
-                    <div className="overflow-y-auto max-h-[600px]">
+                    <div className="overflow-y-auto max-h-96">
                         {viewMode === 'tree' ? (
                             <CategoryTreeView
                                 tree={tree}
@@ -565,10 +569,10 @@ const CategoriesPage = () => {
                         )}
                     </div>
                   </Card>
-                </div>
+                </GridItem>
 
                 {/* Right panel — detail editor */}
-                <div className="flex-1">
+                <GridItem span={{ base: 'full', lg: 8 }}>
                   <Card
                     title={selectedCategory ? `Edit ${selectedCategory.parent_id ? labels.subcategory : labels.category}` : undefined}
                     actions={selectedCategory ? (
@@ -705,7 +709,7 @@ const CategoriesPage = () => {
                                     hint="Read by screen readers and search engines. Blank uses the category name."
                                 />
                             </div>
-                            <div className="w-48">
+                            <div className="w-48 max-w-full">
                                 <ImageUploadZone
                                     label="Category image"
                                     subLabel="Shown on category tiles"
@@ -741,7 +745,7 @@ const CategoriesPage = () => {
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="flex-shrink-0 w-36">
+                                    <div className="w-36 max-w-full shrink min-w-0">
                                         <ImageUploadZone
                                             label="Icon"
                                             subLabel="Click or drag"
@@ -788,7 +792,7 @@ const CategoriesPage = () => {
                                     <label className="text-xs font-medium text-fg-muted mb-2 block">Color</label>
                                     <div className="flex items-center gap-2 flex-wrap">
                                         {PRESET_COLORS.map(c => (
-                                            <button
+                                            <button // comb-exception: colour swatch, inline-styled by dynamic hex
                                                 key={c}
                                                 type="button"
                                                 onClick={() => setEditColor(editColor === c ? '' : c)}
@@ -809,7 +813,7 @@ const CategoriesPage = () => {
                                 </div>
 
                                 <div>
-                                    <div className="w-32">
+                                    <div className="w-32 max-w-full">
                                         <TextField
                                             name="category-sort-order"
                                             label="Sort Order"
@@ -826,7 +830,7 @@ const CategoriesPage = () => {
                             {/* Search engine listing (storefront /c/<slug>) */}
                             <div className="border-t border-line pt-5">
                                 {/* comb-exception: disclosure header needs aria-expanded/aria-controls on the trigger plus an inline collapsed URL hint; Comb Collapsible owns its own trigger */}
-                                <button
+                                <button // comb-exception: disclosure header needs aria-expanded/aria-controls and an inline URL hint
                                     type="button"
                                     onClick={() => setSeoOpen(o => !o)}
                                     aria-expanded={seoOpen}
@@ -867,7 +871,7 @@ const CategoriesPage = () => {
                                                 hint={slugError ? undefined : 'Leave blank to generate it from the name. Changing it changes the page address.'}
                                             />
                                             {slugError && (
-                                                <p data-testid="slug-error" className="text-[11px] text-danger mt-1">{slugError}</p>
+                                                <p data-testid="slug-error" className="text-nb-overline text-danger mt-1">{slugError}</p>
                                             )}
                                         </div>
 
@@ -935,8 +939,8 @@ const CategoriesPage = () => {
                         </div>
                     )}
                   </Card>
-                </div>
-            </div>
+                </GridItem>
+            </Grid>
         </ListPageTemplate>
     );
 };

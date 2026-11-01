@@ -166,6 +166,26 @@ describe('ItemDetailPage (Comb)', () => {
     expect(screen.getAllByText('Active').length).toBeGreaterThan(0);
   });
 
+  it('Given an item in view mode / When loaded / Then the section tabs live in the template tabs slot and switch content', async () => {
+    render(<ItemDetailPage />);
+    await waitFor(() => expect(screen.getAllByRole('heading', { name: 'Premium Widget' })[0]).toBeInTheDocument());
+    const slot = document.querySelector('[data-slot="tabs"]') as HTMLElement;
+    expect(slot).toBeInTheDocument();
+    for (const label of ['Basic Info', 'Pricing', 'Category', 'Stock', 'Attributes', 'Ledger']) {
+      expect(slot.textContent).toContain(label);
+    }
+    expect(screen.queryByText(/Selling Price/)).toBeNull();
+    fireEvent.click(screen.getByRole('tab', { name: /Pricing/ }));
+    await waitFor(() => expect(screen.getByText(/Selling Price/)).toBeInTheDocument());
+  });
+
+  it('Given edit mode / When Edit is clicked / Then the view tab slot is hidden', async () => {
+    render(<ItemDetailPage />);
+    await waitFor(() => expect(screen.getByText('Edit')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('Edit'));
+    await waitFor(() => expect(document.querySelector('[data-slot="tabs"]')).not.toBeInTheDocument());
+  });
+
   it('Given pending requests / When loading / Then shows the template skeleton', () => {
     mockGetItem.mockReturnValue(new Promise(() => {}));
     mockGetLedger.mockReturnValue(new Promise(() => {}));

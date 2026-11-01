@@ -17,7 +17,7 @@ const ShippingTab: React.FC<ShippingTabProps> = ({
     updateField,
 }) => {
     const dim = (label: string, field: string, value: string, ph: string) => (
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
             <TextField
                 label={label}
                 name={field}
@@ -55,13 +55,13 @@ const ShippingTab: React.FC<ShippingTabProps> = ({
             </FormSection>
 
             <FormSection title="Dimensions (L x W x H)" description="Package dimensions for shipping">
-                <div className="flex gap-nb-2 items-end">
+                <div className="flex gap-nb-2 items-end min-w-0 max-w-full">
                     {dim('Length', 'dimensions_length', dimensions_length, 'L')}
                     <span className="text-fg-subtle pb-nb-3">&times;</span>
                     {dim('Width', 'dimensions_width', dimensions_width, 'W')}
                     <span className="text-fg-subtle pb-nb-3">&times;</span>
                     {dim('Height', 'dimensions_height', dimensions_height, 'H')}
-                    <div className="w-24 flex-shrink-0">
+                    <div className="w-20 shrink-0">
                         <Select
                             label="Unit"
                             name="dimensions_unit"

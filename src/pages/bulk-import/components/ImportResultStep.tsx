@@ -66,17 +66,19 @@ const ImportResultStep: React.FC<Props> = ({ result, loading, submittedRows, onG
                         {successes.map((r) => {
                             const name = submittedRows[r.row_index - 1]?.name || `Row ${r.row_index}`;
                             return (
-                                <button
+                                <Button
                                     key={r.row_index}
+                                    type="button"
+                                    variant="ghost"
                                     onClick={() => r.item_id && onNavigateToItem(r.item_id)}
-                                    className="w-full flex items-center gap-nb-3 px-nb-3 py-nb-2 rounded-nb-md bg-surface border border-line hover:bg-surface-raised text-left"
+                                    className="w-full justify-start gap-nb-3 border border-line"
                                 >
                                     <CheckCircle2 size={13} className="text-success shrink-0" />
                                     <span className="text-fg text-nb-caption flex-1 truncate">{name}</span>
                                     <span className="text-fg-subtle text-nb-caption font-mono">
                                         {r.sku ? `SKU ${r.sku}` : `${r.item_id?.slice(0, 8)}…`}
                                     </span>
-                                </button>
+                                </Button>
                             );
                         })}
                     </div>

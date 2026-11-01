@@ -183,7 +183,7 @@ const PODetailPage = () => {
 
     if (error || (!isLoading && !po)) {
         return (
-            <DetailPageTemplate title="Purchase Order">
+            <DetailPageTemplate trail={[{ label: 'Purchase Orders', onClick: backToList }]} title="Purchase Order">
                 <EmptyState
                     title={error || 'PO not found'}
                     action={{ label: 'Back to Purchase Orders', onClick: backToList }}
@@ -193,7 +193,7 @@ const PODetailPage = () => {
     }
 
     if (isLoading || !po) {
-        return <DetailPageTemplate title="Purchase Order" loading onBack={backToList} backLabel="Back to Purchase Orders">{null}</DetailPageTemplate>;
+        return <DetailPageTemplate trail={[{ label: 'Purchase Orders', onClick: backToList }]} title="Purchase Order" loading>{null}</DetailPageTemplate>;
     }
 
     const statusText = po.status.replace(/_/g, ' ');
@@ -406,10 +406,9 @@ const PODetailPage = () => {
         <>
             {confirmDialog}
             <DetailPageTemplate
+                trail={[{ label: 'Purchase Orders', onClick: backToList }]}
                 title={`#${po.po_number}`}
                 status={<StatusBadge status={statusText} map={{ [statusText]: STATUS_TONES[po.status] || 'neutral' }} />}
-                onBack={backToList}
-                backLabel="Back to Purchase Orders"
                 primaryAction={primaryAction}
                 secondaryActions={secondaryActions}
                 overflowActions={overflowActions}

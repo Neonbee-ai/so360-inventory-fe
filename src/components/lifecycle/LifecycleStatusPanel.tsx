@@ -23,7 +23,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bgColor: str
     draft: { label: 'Draft', color: 'text-fg-muted', bgColor: 'bg-surface-sunken', borderColor: 'border-line-strong/20' },
     pending_review: { label: 'Pending Review', color: 'text-warning', bgColor: 'bg-warning/10', borderColor: 'border-warning/20' },
     active: { label: 'Active', color: 'text-success', bgColor: 'bg-success/10', borderColor: 'border-success/20' },
-    archived: { label: 'Archived', color: 'text-rose-400', bgColor: 'bg-rose-500/10', borderColor: 'border-rose-500/20' },
+    archived: { label: 'Archived', color: 'text-danger', bgColor: 'bg-danger/10', borderColor: 'border-danger/20' },
 };
 
 const TRANSITIONS: Record<string, Array<{ code: string; label: string; icon: React.ReactNode; variant: 'primary' | 'secondary' | 'danger' }>> = {
@@ -105,7 +105,7 @@ const LifecycleStatusPanel: React.FC<LifecycleStatusPanelProps> = ({
 
             {/* Current Status Badge */}
             <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg ${statusConfig.bgColor} ${statusConfig.borderColor} border mb-4`}>
-                <span className={`w-2 h-2 rounded-full ${currentStatus === 'active' ? 'bg-emerald-400 animate-pulse' : currentStatus === 'archived' ? 'bg-rose-400' : 'bg-fg-muted'}`} />
+                <span className={`w-2 h-2 rounded-full ${currentStatus === 'active' ? 'bg-success animate-pulse' : currentStatus === 'archived' ? 'bg-danger' : 'bg-fg-muted'}`} />
                 <span className={`text-sm font-semibold ${statusConfig.color}`}>{statusConfig.label}</span>
             </div>
 
@@ -116,7 +116,7 @@ const LifecycleStatusPanel: React.FC<LifecycleStatusPanelProps> = ({
                     const isPast = i < currentIndex;
                     return (
                         <React.Fragment key={state}>
-                            <div className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] font-bold whitespace-nowrap ${
+                            <div className={`flex items-center gap-1 px-2 py-1 rounded text-nb-overline font-bold whitespace-nowrap ${
                                 isActive ? 'bg-primary/10 text-primary border border-primary/30'
                                 : isPast ? 'text-fg-subtle line-through'
                                 : 'text-fg-subtle'
@@ -136,7 +136,7 @@ const LifecycleStatusPanel: React.FC<LifecycleStatusPanelProps> = ({
             {/* Activation Gates */}
             {currentStatus !== 'active' && currentStatus !== 'archived' && (
                 <div className="mb-4">
-                    <h4 className="text-[10px] font-bold text-fg-subtle mb-2">Activation gates</h4>
+                    <h4 className="text-nb-overline font-bold text-fg-subtle mb-2">Activation gates</h4>
                     {isLoadingGates ? (
                         <div className="flex items-center gap-2 text-fg-subtle text-xs">
                             <Loader2 size={12} className="animate-spin" />
@@ -149,7 +149,7 @@ const LifecycleStatusPanel: React.FC<LifecycleStatusPanelProps> = ({
                                     {gate.passed ? (
                                         <CheckCircle2 size={14} className="text-success flex-shrink-0" />
                                     ) : (
-                                        <XCircle size={14} className="text-rose-400 flex-shrink-0" />
+                                        <XCircle size={14} className="text-danger flex-shrink-0" />
                                     )}
                                     <span className={gate.passed ? 'text-fg-muted' : 'text-fg-muted'}>{gate.name}</span>
                                 </div>
@@ -163,9 +163,9 @@ const LifecycleStatusPanel: React.FC<LifecycleStatusPanelProps> = ({
 
             {/* Error */}
             {transitionError && (
-                <div className="mb-3 p-2 bg-rose-500/10 border border-rose-500/20 rounded-lg flex items-start gap-2">
-                    <AlertTriangle size={14} className="text-rose-400 flex-shrink-0 mt-0.5" />
-                    <p className="text-xs text-rose-400">{transitionError}</p>
+                <div className="mb-3 p-2 bg-danger/10 border border-danger/20 rounded-lg flex items-start gap-2">
+                    <AlertTriangle size={14} className="text-danger flex-shrink-0 mt-0.5" />
+                    <p className="text-xs text-danger">{transitionError}</p>
                 </div>
             )}
 

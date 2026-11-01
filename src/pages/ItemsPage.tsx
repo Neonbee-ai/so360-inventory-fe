@@ -119,6 +119,7 @@ const ItemsPage = () => {
 
     return (
         <ListPageTemplate
+            trail={[]}
             title="Items"
             description="Manage physical products and trackable assets"
             headerSecondaryActions={importAllowed ? [
@@ -167,7 +168,7 @@ const ItemsPage = () => {
                 onChange: handleFilterChange,
                 onClear: () => { setTypeFilter('All'); setAttentionOnly(false); },
             }}
-            loading={isLoading}
+            loading={isLoading && items.length === 0}
         >
             {quotaData && totalItemCount !== null && (
                 <div className="mb-nb-4">
@@ -184,7 +185,7 @@ const ItemsPage = () => {
                 columns={columns}
                 rows={visibleItems}
                 rowKey={(item) => item.id}
-                loading={isLoading}
+                loading={isLoading && items.length === 0}
                 onRowClick={(item) => navigate(`/inventory/items/${item.id}`)}
                 getRowProps={(item) => ({ 'data-testid': `row-${item.id}` })}
                 emptyState={

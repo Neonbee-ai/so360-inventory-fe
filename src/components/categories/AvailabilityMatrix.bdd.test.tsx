@@ -78,7 +78,7 @@ describe('Given a project with two towers and tower-tagged units', () => {
       await screen.findByTestId('availability-grid');
       expect(screen.getByRole('button', { name: 'Unit 101 Available' }).className).toContain('success');
       expect(screen.getByRole('button', { name: 'Unit 102 On hold' }).className).toContain('warning');
-      expect(screen.getByRole('button', { name: 'Unit 201 Sold' }).className).toContain('rose');
+      expect(screen.getByRole('button', { name: 'Unit 201 Sold' }).className).toContain('text-danger');
     });
   });
 

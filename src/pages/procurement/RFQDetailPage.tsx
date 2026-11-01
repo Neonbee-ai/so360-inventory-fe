@@ -160,7 +160,7 @@ const RFQDetailPage = () => {
     };
 
     if (isLoading) {
-        return <DetailPageTemplate title="RFQ" loading onBack={() => navigate('/procurement/rfq')} backLabel="Back to RFQs">{null}</DetailPageTemplate>;
+        return <DetailPageTemplate trail={[{ label: 'RFQs', onClick: () => navigate('/procurement/rfq') }]} title="RFQ" loading>{null}</DetailPageTemplate>;
     }
 
     if (error || !rfq) {
@@ -206,10 +206,9 @@ const RFQDetailPage = () => {
 
     return (
         <DetailPageTemplate
+            trail={[{ label: 'RFQs', onClick: () => navigate('/procurement/rfq') }]}
             title={rfq.rfq_number}
             status={<StatusBadge status={rfq.status} map={{ [rfq.status]: RFQ_STATUS_TONES[rfq.status] || 'neutral' }} />}
-            onBack={() => navigate('/procurement/rfq')}
-            backLabel="Back to RFQs"
             secondaryActions={secondaryActions}
             primaryAction={primaryAction}
             overflowActions={canAct ? [{ label: 'Cancel RFQ', danger: true, onSelect: handleCancel, disabled: busy === 'cancel' }] : undefined}

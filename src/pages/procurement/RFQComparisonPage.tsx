@@ -66,7 +66,7 @@ const RFQComparisonPage = () => {
     };
 
     if (isLoading) {
-        return <DetailPageTemplate title="Quotation Comparison" loading onBack={() => navigate(`/procurement/rfq/${id}`)} backLabel="Back to RFQ">{null}</DetailPageTemplate>;
+        return <DetailPageTemplate trail={[{ label: 'RFQ', onClick: () => navigate(`/procurement/rfq/${id}`) }]} title="Quotation Comparison" loading>{null}</DetailPageTemplate>;
     }
 
     if (error || !data) {
@@ -164,10 +164,9 @@ const RFQComparisonPage = () => {
 
     return (
         <DetailPageTemplate
+            trail={[{ label: 'RFQ', onClick: () => navigate(`/procurement/rfq/${id}`) }]}
             title="Quotation Comparison"
             meta={`${rfq.rfq_number}${rfq.title ? ` — ${rfq.title}` : ''}`}
-            onBack={() => navigate(`/procurement/rfq/${id}`)}
-            backLabel="Back to RFQ"
         >
             {confirmDialog}
             <div className="space-y-6">

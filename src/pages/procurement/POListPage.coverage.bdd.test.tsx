@@ -252,6 +252,23 @@ describe('POListPage — permission-aware loading', () => {
     });
   });
 
+  describe('Given the vendor list is slow', () => {
+    it('When purchase orders arrive first / Then the list renders without waiting for vendors', async () => {
+      h.getPOs.mockResolvedValue([makePO()]);
+      h.getVendors.mockReturnValue(new Promise(() => {}));
+      renderPage();
+      await waitFor(() => expect(screen.getByText('#PO-2025-0001')).toBeInTheDocument());
+      expect(h.getVendors).toHaveBeenCalled();
+    });
+
+    it('When the PO list is still pending / Then vendors and requisitions are already requested', async () => {
+      h.getPOs.mockReturnValue(new Promise(() => {}));
+      renderPage();
+      await waitFor(() => expect(h.getVendors).toHaveBeenCalled());
+      expect(h.getPRs).toHaveBeenCalled();
+    });
+  });
+
   describe('Given the vendor API fails with a server error', () => {
     beforeEach(() => {
       h.getVendors.mockRejectedValue(Object.assign(new Error('boom'), { status: 500 }));

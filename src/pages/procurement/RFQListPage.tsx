@@ -39,7 +39,7 @@ export const RFQ_STATUS_STYLES: Record<string, string> = {
     sent: 'bg-primary/10 text-primary border-primary/20',
     closed: 'bg-warning/10 text-warning border-warning/20',
     awarded: 'bg-success/10 text-success border-success/20',
-    cancelled: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
+    cancelled: 'bg-danger/10 text-danger border-danger/20',
 };
 
 const EMPTY_FORM = {
@@ -199,7 +199,7 @@ const RFQListPage = () => {
                             render: (rfq: RFQ) => (
                                 <div>
                                     <div className="text-nb-body font-medium text-fg">{rfq.rfq_number}</div>
-                                    <div className="text-nb-caption text-fg-subtle truncate max-w-[220px]">{rfq.title || `${rfq.line_count} lines`}</div>
+                                    <div className="text-nb-caption text-fg-subtle truncate max-w-56">{rfq.title || `${rfq.line_count} lines`}</div>
                                 </div>
                             ),
                         },
