@@ -59,10 +59,10 @@ describe('StockLocationsPage on the Comb list floorplan', () => {
     expect(screen.getByTestId('empty-state-add-warehouse')).toHaveTextContent('Add New Warehouse');
   });
 
-  it('Given a warehouse row / When View is clicked / Then navigates to its detail page', async () => {
+  it('Given a warehouse row / When the row is clicked / Then navigates to its detail page', async () => {
     render(<StockLocationsPage />);
-    await waitFor(() => screen.getByText('View'));
-    fireEvent.click(screen.getByText('View'));
+    await waitFor(() => screen.getByText('Dubai South Hub'));
+    fireEvent.click(screen.getByText('Dubai South Hub'));
     expect(mockNavigate).toHaveBeenCalledWith('/inventory/warehouses/wh-1');
   });
 

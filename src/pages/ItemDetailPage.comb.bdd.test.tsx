@@ -174,8 +174,9 @@ describe('ItemDetailPage (Comb)', () => {
     for (const label of ['Basic Info', 'Pricing', 'Category', 'Stock', 'Attributes', 'Ledger']) {
       expect(slot.textContent).toContain(label);
     }
+    expect(screen.queryByText(/Selling Price/)).toBeNull();
     fireEvent.click(screen.getByRole('tab', { name: /Pricing/ }));
-    await waitFor(() => expect(screen.getByTestId('pricing-tab')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/Selling Price/)).toBeInTheDocument());
   });
 
   it('Given edit mode / When Edit is clicked / Then the view tab slot is hidden', async () => {

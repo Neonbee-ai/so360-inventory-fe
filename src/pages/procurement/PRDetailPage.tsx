@@ -77,7 +77,7 @@ const RFQ_FLAG = 'submodule:inventory:rfq';
 
 const PRDetailPage = () => {
     const [confirm, confirmDialog] = useConfirm();
-    const [inputDialog, setInputDialog] = useState<{ kind: 'reject' | 'delegate'; target: string; value: string } | null>(null);
+    const [inputDialog, setInputDialog] = useState<{ kind: 'reject'; target: string; value: string } | null>(null);
     const { id } = useParams();
     const navigate = useNavigate();
     const { recordActivity } = useActivity();
@@ -156,20 +156,6 @@ const PRDetailPage = () => {
         }
     };
 
-    const handleDelegate = async (gateId: string, targetEmail: string) => {
-        if (!targetEmail || !id) return;
-
-        setIsApproving(true);
-        try {
-            // Note: Delegation API not yet implemented, placeholder for future
-            toast.info('Delegation feature coming soon!');
-        } catch (err: any) {
-            setError(err.message || 'Failed to delegate');
-        } finally {
-            setIsApproving(false);
-        }
-    };
-
     const handleCreateRFQ = async () => {
         if (!id || !pr) return;
         const hasActive = linkedRfqs.some(r => r.status !== 'cancelled');
@@ -203,10 +189,9 @@ const PRDetailPage = () => {
         if (!inputDialog) return;
         const value = inputDialog.value.trim();
         if (!value) return;
-        const { kind, target } = inputDialog;
+        const { target } = inputDialog;
         setInputDialog(null);
-        if (kind === 'reject') await handleReject(target, value);
-        else await handleDelegate(target, value);
+        await handleReject(target, value);
     };
 
     const handleCreatePO = async () => {
@@ -311,20 +296,20 @@ const PRDetailPage = () => {
                 onClose={() => setInputDialog(null)}
                 size="sm"
                 name="pr-input-dialog"
-                title={inputDialog?.kind === 'reject' ? 'Reject approval gate' : 'Delegate approval'}
+                title="Reject approval gate"
                 footer={(
                     <>
                         <Button variant="secondary" onClick={() => setInputDialog(null)}>Cancel</Button>
-                        <Button variant={inputDialog?.kind === 'reject' ? 'danger' : 'primary'} onClick={submitInputDialog} disabled={!inputDialog?.value.trim()}>
-                            {inputDialog?.kind === 'reject' ? 'Reject' : 'Delegate'}
+                        <Button variant="danger" onClick={submitInputDialog} disabled={!inputDialog?.value.trim()}>
+                            Reject
                         </Button>
                     </>
                 )}
             >
                 <TextField
                     name="pr-input-dialog-value"
-                    label={inputDialog?.kind === 'reject' ? 'Rejection reason' : 'Email of user to delegate to'}
-                    type={inputDialog?.kind === 'reject' ? 'text' : 'email'}
+                    label="Rejection reason"
+                    type="text"
                     value={inputDialog?.value ?? ''}
                     onChange={(e) => setInputDialog((d) => (d ? { ...d, value: e.target.value } : d))}
                     autoFocus
@@ -413,9 +398,6 @@ const PRDetailPage = () => {
                                             <div className="flex gap-2">
                                                 <Button size="sm" onClick={() => handleApprove(gate.gate_name)} disabled={isApproving}>Approve</Button>
                                                 <Button size="sm" variant="danger" onClick={() => setInputDialog({ kind: 'reject', target: gate.gate_name, value: '' })} disabled={isApproving}>Reject</Button>
-                                                {gate.metadata?.can_delegate && (
-                                                    <Button size="sm" variant="secondary" onClick={() => setInputDialog({ kind: 'delegate', target: gate.id, value: '' })} disabled={isApproving}>Delegate</Button>
-                                                )}
                                             </div>
                                         )}
                                         {isOverdue && gate.metadata?.escalation_role_id && <Badge tone="danger">Will escalate</Badge>}

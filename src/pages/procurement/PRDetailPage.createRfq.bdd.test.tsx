@@ -125,11 +125,15 @@ describe('PRDetailPage Create RFQ', () => {
     mockGetRFQs.mockResolvedValue([{ id: 'r1', rfq_number: 'RFQ-0001', status: 'sent', pr_id: 'pr-1234567-aaaa', created_at: '2026-10-02' }]);
     render(<PRDetailPage />);
     await screen.findByText('RFQ-0001');
+    // useConfirm (DS stub) resolves from window.confirm.
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValueOnce(true);
     fireEvent.click(screen.getByText('Create RFQ'));
-    expect(await screen.findByText('RFQ already exists')).toBeInTheDocument();
+    await waitFor(() => expect(confirmSpy).toHaveBeenCalledTimes(1));
+    expect(String(confirmSpy.mock.calls[0][0])).toMatch(/already been raised/);
     expect(mockCreateRFQ).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByText('Create another'));
+    fireEvent.click(screen.getByText('Create RFQ'));
     await waitFor(() => expect(mockCreateRFQ).toHaveBeenCalled());
+    confirmSpy.mockRestore();
   });
 
   it('Given a pending gate allowing delegation / When loaded / Then there is no Delegate control or coming-soon text', async () => {
