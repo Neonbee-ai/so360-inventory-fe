@@ -74,10 +74,10 @@ describe('ProcurementReportsPage', () => {
 
         it('When a date range is applied / Then it is passed to the report', async () => {
             render(<ProcurementReportsPage />);
-            await waitFor(() => screen.getByLabelText('From'));
-
-            fireEvent.change(screen.getByLabelText('From'), { target: { value: '2026-01-01' } });
-            fireEvent.change(screen.getByLabelText('To'), { target: { value: '2026-08-14' } });
+            // The date range lives in the Filters drawer as the "Period" daterange field.
+            fireEvent.click(await screen.findByTestId('filters-button'));
+            fireEvent.change(screen.getByLabelText('Period start'), { target: { value: '2026-01-01' } });
+            fireEvent.change(screen.getByLabelText('Period end'), { target: { value: '2026-08-14' } });
             fireEvent.click(screen.getByText('Run'));
 
             await waitFor(() => {

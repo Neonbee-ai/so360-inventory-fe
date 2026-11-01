@@ -301,7 +301,7 @@ describe('ProjectDetailsSection developer roles (G1)', () => {
     it('Then no filter chips are shown', async () => {
       render(<Harness />);
       await waitFor(() => expect(screen.getByRole('option', { name: 'Emaar' })).toBeInTheDocument());
-      expect(screen.queryByRole('group', { name: 'Developer filter' })).toBeNull();
+      expect(screen.queryByRole('radiogroup', { name: 'Developer filter' })).toBeNull();
     });
   });
 
@@ -310,16 +310,16 @@ describe('ProjectDetailsSection developer roles (G1)', () => {
       mockSearchDevelopers.mockResolvedValue(mixed);
       render(<Harness />);
       await waitFor(() => expect(screen.getByRole('option', { name: 'Ali Hassan (Property owner)' })).toBeInTheDocument());
-      const group = screen.getByRole('group', { name: 'Developer filter' });
+      const group = screen.getByRole('radiogroup', { name: 'Developer filter' });
       expect(group).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'All' }).getAttribute('aria-pressed')).toBe('true');
+      expect(screen.getByRole('radio', { name: 'All' }).getAttribute('aria-checked')).toBe('true');
 
-      fireEvent.click(screen.getByRole('button', { name: 'Property owners' }));
-      expect(screen.getByRole('button', { name: 'Property owners' }).getAttribute('aria-pressed')).toBe('true');
+      fireEvent.click(screen.getByRole('radio', { name: 'Property owners' }));
+      expect(screen.getByRole('radio', { name: 'Property owners' }).getAttribute('aria-checked')).toBe('true');
       expect(screen.queryByRole('option', { name: 'Emaar' })).toBeNull();
       expect(screen.getByRole('option', { name: 'Ali Hassan (Property owner)' })).toBeInTheDocument();
 
-      fireEvent.click(screen.getByRole('button', { name: 'Developers' }));
+      fireEvent.click(screen.getByRole('radio', { name: 'Developers' }));
       expect(screen.getByRole('option', { name: 'Emaar' })).toBeInTheDocument();
       expect(screen.queryByRole('option', { name: 'Ali Hassan (Property owner)' })).toBeNull();
     });
@@ -327,8 +327,8 @@ describe('ProjectDetailsSection developer roles (G1)', () => {
     it('When the saved developer is filtered out Then it stays selectable', async () => {
       mockSearchDevelopers.mockResolvedValue(mixed);
       render(<Harness initial={{ developer_partner_id: 'o1' }} />);
-      await waitFor(() => expect(screen.getByRole('group', { name: 'Developer filter' })).toBeInTheDocument());
-      fireEvent.click(screen.getByRole('button', { name: 'Developers' }));
+      await waitFor(() => expect(screen.getByRole('radiogroup', { name: 'Developer filter' })).toBeInTheDocument());
+      fireEvent.click(screen.getByRole('radio', { name: 'Developers' }));
       expect(screen.getByRole('option', { name: 'Ali Hassan (Property owner)' })).toBeInTheDocument();
       expect((screen.getByLabelText('Developer') as HTMLSelectElement).value).toBe('o1');
     });
