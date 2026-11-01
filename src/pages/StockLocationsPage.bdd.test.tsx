@@ -113,9 +113,9 @@ describe('StockLocationsPage — atWarehouseLimit enforced (NOT unlimited)', () 
     });
 
     it('disables the New Warehouse button', async () => {
-      const { findByRole } = renderPage();
-      const btn = await findByRole('button', { name: /New Warehouse/i });
-      expect(btn).toBeDisabled();
+      const { getByRole } = renderPage();
+      // The button renders enabled until warehouses + quota load; wait for the limit to apply.
+      await waitFor(() => expect(getByRole('button', { name: /New Warehouse/i })).toBeDisabled());
     });
 
     it('shows the "X of Y used" limit banner', async () => {
