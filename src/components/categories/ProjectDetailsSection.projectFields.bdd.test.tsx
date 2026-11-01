@@ -270,3 +270,31 @@ describe('Given a saved project with every field', () => {
     });
   });
 });
+
+describe('Given list inputs that keep their own draft', () => {
+  describe('When the saved value changes from outside after mount', () => {
+    it('Then Amenities shows the new saved list', () => {
+      const { rerender } = render(<ProjectDetailsSection value={{ amenities: ['Pool'] }} onChange={onChangeSpy} />);
+      expect(screen.getByLabelText('Amenities')).toHaveValue('Pool');
+      rerender(<ProjectDetailsSection value={{ amenities: ['Gym', 'Spa'] }} onChange={onChangeSpy} />);
+      expect(screen.getByLabelText('Amenities')).toHaveValue('Gym, Spa');
+    });
+
+    it('Then the team id fallback shows the new saved ids', async () => {
+      mockListTeams.mockRejectedValue(new Error('Request failed (403)'));
+      const { rerender } = render(<ProjectDetailsSection value={{ assigned_team_ids: ['t-1'] }} onChange={onChangeSpy} />);
+      expect(await screen.findByLabelText('Assigned team IDs')).toHaveValue('t-1');
+      rerender(<ProjectDetailsSection value={{ assigned_team_ids: ['t-2', 't-3'] }} onChange={onChangeSpy} />);
+      expect(screen.getByLabelText('Assigned team IDs')).toHaveValue('t-2, t-3');
+    });
+  });
+
+  describe('When text is typed and the parent re-renders with the same saved value', () => {
+    it('Then the typed draft is kept until blur', () => {
+      const { rerender } = render(<ProjectDetailsSection value={{ amenities: ['Pool'] }} onChange={onChangeSpy} />);
+      type('Amenities', 'Pool, Gym');
+      rerender(<ProjectDetailsSection value={{ amenities: ['Pool'] }} onChange={onChangeSpy} />);
+      expect(screen.getByLabelText('Amenities')).toHaveValue('Pool, Gym');
+    });
+  });
+});

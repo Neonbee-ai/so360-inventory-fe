@@ -64,7 +64,10 @@ export const ListInput: React.FC<{
 }> = ({ label, value, onCommit, disabled, placeholder }) => {
     const joined = (value || []).join(', ');
     const [draft, setDraft] = useState(joined);
-    useEffect(() => { setDraft(joined); }, [joined]);
+    // Resync during render when the saved value changes (not in an effect):
+    // a mount effect could run after the first keystroke and wipe it.
+    const [synced, setSynced] = useState(joined);
+    if (synced !== joined) { setSynced(joined); setDraft(joined); }
     return (
         <TextField
             label={label}
