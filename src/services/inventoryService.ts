@@ -66,6 +66,10 @@ class InventoryService {
     // pages. Coalesce concurrent reads and serve a short TTL keyed by org; a fresh
     // org via setOrgId clears it so we never serve another org's data.
     private orgStaticCache = createRequestCache({ defaultTtlMs: 30_000, maxEntries: 50 });
+    // Set by any successful write: the next getItems() asks the backend to
+    // skip its stale-while-revalidate list cache (?fresh=1) so the list shows
+    // the write at once.
+    private itemsListDirty = false;
 
     constructor() {
         const win = typeof window !== 'undefined' ? (window as any) : undefined;
@@ -113,6 +117,7 @@ class InventoryService {
     /** Drop the org-static (locations/tax-codes/settings) cache. */
     clearOrgStaticCache() {
         this.orgStaticCache.invalidate();
+        this.itemsListDirty = false;
     }
 
     public async request(endpoint: string, options: RequestInit = {}) {
@@ -140,6 +145,7 @@ class InventoryService {
         // A successful settings write (UoMs, categories, …) makes the cached
         // settings stale — drop it so the next getSettings reads fresh.
         const method = (options.method || 'GET').toUpperCase();
+        if (method !== 'GET') this.itemsListDirty = true;
         if (method !== 'GET' && endpoint.startsWith('/settings/')) {
             this.orgStaticCache.invalidate(`settings|${this.orgId}`);
         }
@@ -171,6 +177,10 @@ class InventoryService {
         if (params?.sortOrder) query.append('sort_order', params.sortOrder);
         if (params?.page) query.append('page', params.page.toString());
         if (params?.limit) query.append('limit', params.limit.toString());
+        if (this.itemsListDirty) {
+            query.append('fresh', '1');
+            this.itemsListDirty = false;
+        }
         const queryStr = query.toString();
         // The param-less call is the org reference catalog read that the
         // Adjustments/Transfers tabs re-run on every toggle. Serve it from the

@@ -145,3 +145,61 @@ describe('inventoryService org-static cache', () => {
     });
   });
 });
+
+describe('inventoryService items list ?fresh after a write', () => {
+  const urlOf = (i: number) => String(mockFetch.mock.calls[i][0]);
+
+  describe('Given no write has happened', () => {
+    it('When getItems runs / Then the request carries no fresh flag', async () => {
+      mockFetch.mockReturnValue(jsonOk({ data: [] }));
+      await inventoryService.getItems({ page: 1 });
+      expect(urlOf(0)).not.toContain('fresh=');
+    });
+  });
+
+  describe('Given a successful write', () => {
+    it('When the next getItems runs / Then it sends fresh=1 once, and later reads do not', async () => {
+      mockFetch.mockReturnValue(jsonOk({ id: 'i2' }));
+      await inventoryService.createItem({ name: 'New' });
+      mockFetch.mockReturnValue(jsonOk({ data: [] }));
+      await inventoryService.getItems({ page: 1 });
+      await inventoryService.getItems({ page: 1 });
+      expect(urlOf(1)).toContain('fresh=1');
+      expect(urlOf(2)).not.toContain('fresh=');
+    });
+
+    it('When the next read is the param-less catalog / Then it bypasses the local cache and sends fresh=1', async () => {
+      mockFetch.mockReturnValue(jsonOk({ data: [] }));
+      await inventoryService.getItems();
+      mockFetch.mockReturnValue(jsonOk({ id: 'i2' }));
+      await inventoryService.createItem({ name: 'New' });
+      mockFetch.mockReturnValue(jsonOk({ data: [] }));
+      await inventoryService.getItems();
+      expect(mockFetch).toHaveBeenCalledTimes(3);
+      expect(urlOf(2)).toMatch(/\/items\/org-1\?fresh=1$/);
+    });
+  });
+
+  describe('Given a write that fails', () => {
+    it('When the next getItems runs / Then no fresh flag is sent', async () => {
+      mockFetch.mockReturnValue(
+        Promise.resolve({ ok: false, json: () => Promise.resolve({ message: 'bad' }) } as any),
+      );
+      await expect(inventoryService.createItem({ name: 'New' })).rejects.toThrow('bad');
+      mockFetch.mockReturnValue(jsonOk({ data: [] }));
+      await inventoryService.getItems({ page: 1 });
+      expect(urlOf(1)).not.toContain('fresh=');
+    });
+  });
+
+  describe('Given a pending fresh flag', () => {
+    it('When clearOrgStaticCache runs / Then the flag is dropped', async () => {
+      mockFetch.mockReturnValue(jsonOk({ id: 'i2' }));
+      await inventoryService.createItem({ name: 'New' });
+      inventoryService.clearOrgStaticCache();
+      mockFetch.mockReturnValue(jsonOk({ data: [] }));
+      await inventoryService.getItems({ page: 1 });
+      expect(urlOf(1)).not.toContain('fresh=');
+    });
+  });
+});
