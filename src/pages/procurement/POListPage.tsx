@@ -9,7 +9,7 @@ import { useAuth } from '../../hooks/useAuth';
 import ItemSearchSelector from '../../components/ItemSearchSelector';
 import {
     QuotaBar, QuotaGate, FeatureGate, toast, getErrorMessage,
-    ListPageTemplate, Button, DataTable, EmptyState, Alert, Badge, StatusBadge,
+    ListPageTemplate, Button, DataTable, SearchInput, EmptyState, Alert, Badge, StatusBadge,
     Modal, TextField, Select, Textarea, Progress, SectionCard, FieldGrid,
 } from '@so360/design-system';
 
@@ -51,6 +51,7 @@ const POListPage = () => {
     const formatters = useInventoryFormatters();
     const { recordActivity } = useActivity();
     const [pos, setPos] = useState<any[]>([]);
+    const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(true);
     const [fetchError, setFetchError] = useState<PageNotice>(null);
     const [vendorNotice, setVendorNotice] = useState<PageNotice>(null);
@@ -320,6 +321,17 @@ const POListPage = () => {
     const { subtotal, taxTotal, total } = calculateTotals();
 
     const PR_DONE = ['approved', 'partially_converted', 'converted_to_po'];
+    // Client-side search over what the row shows (PO number, vendor, status) plus
+    // the free-text fields a buyer types on create, so a just-created PO is findable.
+    const filteredPos = useMemo(() => {
+        const q = searchTerm.trim().toLowerCase();
+        if (!q) return pos;
+        return pos.filter((po: any) =>
+            [po.po_number, po.vendor?.name, po.status, po.terms, po.shipping_address]
+                .some((v) => typeof v === 'string' && v.toLowerCase().includes(q)),
+        );
+    }, [pos, searchTerm]);
+
     const pendingPrs = allPrs.filter(pr => !PR_DONE.includes(pr.status) && pr.status !== 'rejected' && pr.status !== 'closed');
     const prLabel = (pr: any) => `PR-${pr.id.slice(0, 8).toUpperCase()} — ${pr.pr_lines?.length || 0} items — ${pr.status.replace(/_/g, ' ')}`;
     const prOptions = [
@@ -377,9 +389,17 @@ const POListPage = () => {
                         </FeatureGate>
                     </div>
                 }
+                search={
+                    <SearchInput
+                        value={searchTerm}
+                        onChange={setSearchTerm}
+                        placeholder="Search by PO number, vendor, or status..."
+                        data-testid="po-search"
+                    />
+                }
                 loading={loading && pos.length === 0}
-                isEmpty={!loading && !fetchError && !showPrMenu && pos.length === 0}
-                empty={<>{renderNotice(vendorNotice)}<EmptyState title="No purchase orders found." /></>}
+                isEmpty={!loading && !fetchError && !showPrMenu && filteredPos.length === 0}
+                empty={<>{renderNotice(vendorNotice)}<EmptyState title={searchTerm.trim() ? 'No purchase orders match your search.' : 'No purchase orders found.'} /></>}
             >
                 {renderNotice(fetchError)}
                 {renderNotice(vendorNotice)}
@@ -408,7 +428,7 @@ const POListPage = () => {
                 )}
                 <DataTable
                     data-testid="po-table"
-                    rows={pos}
+                    rows={filteredPos}
                     rowKey={(po: any) => po.id}
                     onRowClick={(po: any) => navigate(`/procurement/po/${po.id}`)}
                     columns={[
