@@ -121,11 +121,11 @@ describe('StockLocationsPage', () => {
       });
     });
 
-    it('When warehouse card has View link / Then navigates on click', async () => {
+    it('When a warehouse row is clicked / Then navigates to its detail page', async () => {
       mockGetLocations.mockResolvedValue([makeWarehouse()]);
       render(<StockLocationsPage />);
-      await waitFor(() => screen.getByText('View'));
-      fireEvent.click(screen.getByText('View'));
+      await waitFor(() => screen.getByText('Main Warehouse'));
+      fireEvent.click(screen.getByText('Main Warehouse'));
       expect(mockNavigate).toHaveBeenCalledWith('/inventory/warehouses/wh-1');
     });
   });

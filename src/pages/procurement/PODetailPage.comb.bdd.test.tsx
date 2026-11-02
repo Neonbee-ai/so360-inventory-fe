@@ -54,8 +54,12 @@ describe('PODetailPage (Comb)', () => {
     mockGetPODetail.mockRejectedValue(new Error('boom'));
     render(<PODetailPage />);
     expect(await screen.findByText('boom')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Back to Purchase Orders' }));
-    expect(mockNavigate).toHaveBeenCalledWith('/procurement/po');
+    // Both the page-trail back control and the empty-state action lead to the list.
+    const backs = screen.getAllByRole('button', { name: 'Back to Purchase Orders' });
+    expect(backs.length).toBeGreaterThan(0);
+    backs.forEach((b) => fireEvent.click(b));
+    expect(mockNavigate).toHaveBeenCalledTimes(backs.length);
+    mockNavigate.mock.calls.forEach((c: any[]) => expect(c[0]).toBe('/procurement/po'));
   });
 
   it('Given the API answers 404 / When loaded / Then it settles on "PO not found" inside the page shell', async () => {
