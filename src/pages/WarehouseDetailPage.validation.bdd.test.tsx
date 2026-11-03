@@ -189,3 +189,70 @@ describe('Given the warehouse edit form on the detail page', () => {
         );
     });
 });
+
+describe('Given the zone / aisle / rack hierarchy (bd9e7544)', () => {
+    const HIER = {
+        ...WAREHOUSE,
+        warehouse_locations: [
+            { id: 'zA', name: 'Zone A', code: 'ZA', location_type: 'zone', is_active: true, warehouse_bins: [] },
+            { id: 'r1', name: 'Rack 1', code: 'R1', location_type: 'rack', parent_location_id: 'zA', is_active: true, warehouse_bins: [] },
+        ],
+    };
+    const dialog = () => screen.getByRole('dialog', { name: 'Add Storage Location' });
+    const select = (name: string) => dialog().querySelector(`select[name="${name}"]`) as HTMLSelectElement;
+
+    beforeEach(() => mockGetWarehouse.mockResolvedValue(HIER));
+
+    it('When a rack is added without a parent / Then it is blocked with a parent error', async () => {
+        await openLocationModal();
+        setLocation('e.g. Zone A, Aisle 3', 'Rack 2');
+        setLocation('e.g. ZA, A3', 'R2');
+        fireEvent.change(select('location-type'), { target: { value: 'rack' } });
+        fireEvent.click(screen.getAllByText('Add Location')[1]);
+        await waitFor(() => expect(screen.getByTestId('error-location-parent')).toHaveTextContent(/zone or aisle/));
+        expect(mockCreateLocation).not.toHaveBeenCalled();
+    });
+
+    it('When a rack is added under a zone / Then type and parent are sent', async () => {
+        await openLocationModal();
+        setLocation('e.g. Zone A, Aisle 3', 'Rack 2');
+        setLocation('e.g. ZA, A3', 'R2');
+        fireEvent.change(select('location-type'), { target: { value: 'rack' } });
+        const parentValues = Array.from(select('location-parent').options).map((o) => o.value);
+        expect(parentValues).toEqual(['', 'zA']);
+        fireEvent.change(select('location-parent'), { target: { value: 'zA' } });
+        fireEvent.click(screen.getAllByText('Add Location')[1]);
+        await waitFor(() =>
+            expect(mockCreateLocation).toHaveBeenCalledWith('wh-1', {
+                name: 'Rack 2', code: 'R2', location_type: 'rack', parent_location_id: 'zA',
+            }),
+        );
+    });
+
+    it('When the type switches to zone / Then no parent picker is shown and the parent is cleared', async () => {
+        await openLocationModal();
+        fireEvent.change(select('location-type'), { target: { value: 'rack' } });
+        fireEvent.change(select('location-parent'), { target: { value: 'zA' } });
+        fireEvent.change(select('location-type'), { target: { value: 'zone' } });
+        expect(select('location-parent')).toBeNull();
+    });
+
+    it('When the list renders / Then racks sit under their zone with a type badge', async () => {
+        render(<WarehouseDetailPage />);
+        const rack = await screen.findByTestId('location-row-r1');
+        expect(rack.className).toContain('ml-nb-6');
+        expect(rack).toHaveTextContent('Rack');
+        expect(screen.getByTestId('location-row-zA').className).not.toContain('ml-nb-');
+    });
+
+    it('When an existing location is renamed only / Then no hierarchy fields are sent', async () => {
+        mockUpdateLocation.mockResolvedValue({});
+        render(<WarehouseDetailPage />);
+        await screen.findByTestId('location-row-r1');
+        fireEvent.click(screen.getAllByTitle('Edit Location')[1]);
+        const dlg = await screen.findByRole('dialog', { name: 'Edit Storage Location' });
+        fireEvent.change(dlg.querySelector('input[placeholder="e.g. Zone A, Aisle 3"]') as HTMLElement, { target: { value: 'Rack One' } });
+        fireEvent.click(screen.getByText('Save Changes'));
+        await waitFor(() => expect(mockUpdateLocation).toHaveBeenCalledWith('r1', { name: 'Rack One', code: 'R1' }));
+    });
+});

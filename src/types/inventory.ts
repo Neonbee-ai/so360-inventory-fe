@@ -326,6 +326,10 @@ export interface WarehouseLocation {
     code: string;
     is_active: boolean;
     created_at?: string;
+    /** bd9e7544 hierarchy; absent before migration 064 (treated as 'general'). */
+    location_type?: 'general' | 'zone' | 'aisle' | 'rack';
+    parent_location_id?: string | null;
+    capacity_metadata?: Record<string, unknown> | null;
     warehouse_bins?: WarehouseBin[];
 }
 
