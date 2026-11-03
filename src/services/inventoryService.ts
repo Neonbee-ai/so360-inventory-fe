@@ -298,7 +298,7 @@ class InventoryService {
     }
 
     // Storage Locations
-    async createLocation(warehouseId: string, dto: { name: string; code: string }) {
+    async createLocation(warehouseId: string, dto: { name: string; code: string; location_type?: 'general' | 'zone' | 'aisle' | 'rack'; parent_location_id?: string | null }) {
         const response = await fetch(`${this.inventoryOrigin}/v1/warehouses/${warehouseId}/locations`, {
             method: 'POST',
             headers: {
@@ -317,7 +317,7 @@ class InventoryService {
         return response.json();
     }
 
-    async updateLocation(locationId: string, dto: { name?: string; code?: string; is_active?: boolean }) {
+    async updateLocation(locationId: string, dto: { name?: string; code?: string; is_active?: boolean; location_type?: 'general' | 'zone' | 'aisle' | 'rack'; parent_location_id?: string | null }) {
         const response = await fetch(`${this.inventoryOrigin}/v1/warehouses/locations/${locationId}`, {
             method: 'PATCH',
             headers: {
