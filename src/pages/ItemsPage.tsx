@@ -6,7 +6,7 @@ import { Item } from '../types/inventory';
 import PhotoAttentionIndicator from '../components/media/PhotoAttentionIndicator';
 import { useAuth } from '../hooks/useAuth';
 import { useShellBridge, useQuota, useSandboxLimit } from '@so360/shell-context';
-import { QuotaBar, QuotaGate, FeatureGate, ListPageTemplate, DataTable, Button, SearchInput, StatusBadge, Badge, EmptyState, Alert, Tooltip, type DataTableColumn, type FilterValues } from '@so360/design-system';
+import { QuotaBar, QuotaGate, FeatureGate, ListPageTemplate, DataTable, Button, SearchInput, StatusBadge, Badge, EmptyState, Alert, Tooltip, Pagination, type DataTableColumn, type FilterValues } from '@so360/design-system';
 
 const ItemsPage = () => {
     const navigate = useNavigate();
@@ -24,7 +24,23 @@ const ItemsPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [typeFilter, setTypeFilter] = useState<'All' | 'product' | 'service' | 'raw_material' | 'finished_good' | 'consumable' | 'fixed_asset'>('All');
     const [attentionOnly, setAttentionOnly] = useState(false);
+    const [debouncedSearch, setDebouncedSearch] = useState('');
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(50);
+    const [matchCount, setMatchCount] = useState(0);
     const [error, setError] = useState<string | null>(null);
+
+    // Search is debounced and sent to the server so it covers the whole
+    // catalogue, not just the rows already loaded.
+    useEffect(() => {
+        const t = setTimeout(() => setDebouncedSearch(searchTerm.trim()), 300);
+        return () => clearTimeout(t);
+    }, [searchTerm]);
+
+    // Any change of search/filter/page size restarts from page 1.
+    useEffect(() => {
+        setPage(1);
+    }, [debouncedSearch, typeFilter, attentionOnly, pageSize]);
 
     const fetchItems = async () => {
         setIsLoading(true);
@@ -34,10 +50,21 @@ const ItemsPage = () => {
             // beyond the first page are found too.
             const response = attentionOnly
                 ? await inventoryService.getItems({ imageNeedsAttention: true, limit: 1000 })
-                : await inventoryService.getItems();
+                : await inventoryService.getItems({
+                    page,
+                    limit: pageSize,
+                    ...(debouncedSearch ? { search: debouncedSearch } : {}),
+                    ...(typeFilter !== 'All' ? { type: typeFilter } : {}),
+                    sortBy: 'created_at',
+                    sortOrder: 'desc',
+                });
             setItems(response.data || []);
             if (!attentionOnly) {
-                setTotalItemCount(response.pagination?.total ?? (response.data?.length ?? 0));
+                setMatchCount(response.pagination?.total ?? (response.data?.length ?? 0));
+                // Unfiltered total drives the SKU quota bar.
+                if (!debouncedSearch && typeFilter === 'All') {
+                    setTotalItemCount(response.pagination?.total ?? (response.data?.length ?? 0));
+                }
             }
         } catch (err) {
             setError('Failed to load items. Please try again.');
@@ -48,18 +75,12 @@ const ItemsPage = () => {
 
     useEffect(() => {
         fetchItems();
-    }, [attentionOnly]);
+    }, [attentionOnly, page, pageSize, debouncedSearch, typeFilter]);
 
-    const filteredItems = items.filter(item => {
-        const matchesSearch =
-            item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (item.sku?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false);
-        const matchesType = typeFilter === 'All' || item.type === typeFilter;
-        // Also checked here: until the flag exists the API ignores the filter
-        // and returns everything.
-        const matchesAttention = !attentionOnly || item.image_needs_attention === true;
-        return matchesSearch && matchesType && matchesAttention;
-    });
+    // Search and type are applied by the API; only the attention view still
+    // filters locally (it loads the flagged set in one call).
+    const filteredItems = items.filter(item => !attentionOnly || item.image_needs_attention === true);
+    const totalPages = Math.max(1, Math.ceil(matchCount / pageSize));
 
     const TYPE_LABEL: Record<string, string> = {
         product: 'Product', consumable: 'Consumable', fixed_asset: 'Fixed Asset', raw_material: 'Raw Material',
@@ -169,6 +190,16 @@ const ItemsPage = () => {
                 onClear: () => { setTypeFilter('All'); setAttentionOnly(false); },
             }}
             loading={isLoading && items.length === 0}
+            pagination={!attentionOnly && matchCount > 0 ? (
+                <Pagination
+                    currentPage={page}
+                    totalPages={totalPages}
+                    totalItems={matchCount}
+                    pageSize={pageSize}
+                    onPageChange={setPage}
+                    onPageSizeChange={setPageSize}
+                />
+            ) : undefined}
         >
             {quotaData && totalItemCount !== null && (
                 <div className="mb-nb-4">
