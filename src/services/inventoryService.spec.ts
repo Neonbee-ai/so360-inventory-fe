@@ -80,6 +80,13 @@ describe('inventoryService', () => {
       expect(url).toContain('page=2');
       expect(url).toContain('limit=25');
     });
+
+    it('When called with a type / Then appends the type param so the server filters', async () => {
+      mockFetch.mockReturnValue(jsonOk({ data: [] }));
+      await inventoryService.getItems({ type: 'service' });
+      const [url] = mockFetch.mock.calls[0];
+      expect(url).toContain('type=service');
+    });
   });
 
   describe('Given getItem', () => {
