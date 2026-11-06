@@ -55,6 +55,11 @@ const CLOSED_WORK_ORDER_STATUSES = new Set([
     'done',
 ]);
 
+/** Backend caps `limit` at 1000 (default 50). */
+const ITEMS_PAGE_LIMIT = 1000;
+/** Safety stop: 100k items. */
+const ITEMS_MAX_PAGES = 100;
+
 class InventoryService {
     private orgId: string | null = null;
     private tenantId: string | null = null;
@@ -198,10 +203,38 @@ class InventoryService {
         return this.request(`/items/${this.orgId}?${queryStr}`);
     }
 
+    /**
+     * Every item for the org, paged server-side (the API caps a page at 1000
+     * and defaults to 50, so a param-less or limit=10000 read silently drops
+     * items). Pages through using the response total; cached per org with the
+     * same short TTL / invalidation key family as the reference catalog read.
+     * Use only where the full list is truly needed; pickers should call
+     * getItems({ search, limit }) instead.
+     */
+    async getAllItems(): Promise<any[]> {
+        const PAGE = ITEMS_PAGE_LIMIT;
+        return this.orgStaticCache.run(`items|${this.orgId}|all`, async () => {
+            const all: any[] = [];
+            for (let page = 1; page <= ITEMS_MAX_PAGES; page++) {
+                const res: any = await this.getItems({ page, limit: PAGE });
+                const rows: any[] = Array.isArray(res) ? res : res?.data || [];
+                all.push(...rows);
+                const total = res?.pagination?.total;
+                const totalPages = res?.pagination?.totalPages;
+                const done =
+                    rows.length === 0 ||
+                    (typeof totalPages === 'number' && page >= totalPages) ||
+                    (typeof total === 'number' && all.length >= total) ||
+                    (typeof total !== 'number' && typeof totalPages !== 'number' && rows.length < PAGE);
+                if (done) break;
+            }
+            return all;
+        });
+    }
+
     async getItemsLegacy() {
         // Legacy method for backward compatibility - returns all items
-        const result = await this.getItems({ limit: 10000 });
-        return result.data || result; // Handle both old and new response format
+        return this.getAllItems();
     }
 
     async getItem(id: string) {

@@ -58,24 +58,70 @@ describe('inventoryService — extended coverage', () => {
     });
   });
 
-  describe('Given getItemsLegacy', () => {
-    it('When response has data property / Then returns data array', async () => {
-      mockFetch.mockReturnValue(jsonOk({ data: [{ id: 'i1' }] }));
+  describe('Given getAllItems / getItemsLegacy', () => {
+    const rows = (n: number, from: number) => Array.from({ length: n }, (_, i) => ({ id: `i${from + i}` }));
+
+    it('When one page holds everything / Then returns it with one request at limit=1000', async () => {
+      mockFetch.mockReturnValue(jsonOk({ data: [{ id: 'i1' }], pagination: { page: 1, limit: 1000, total: 1, totalPages: 1 } }));
       const result = await inventoryService.getItemsLegacy();
       expect(result).toEqual([{ id: 'i1' }]);
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(mockFetch.mock.calls[0][0]).toContain('limit=1000');
+      expect(mockFetch.mock.calls[0][0]).toContain('page=1');
     });
 
-    it('When response is a direct array / Then returns array as-is', async () => {
+    it('When the response is a direct array shorter than a page / Then returns it as-is', async () => {
       mockFetch.mockReturnValue(jsonOk([{ id: 'i2' }]));
-      const result = await inventoryService.getItemsLegacy();
-      expect(Array.isArray(result)).toBe(true);
+      const result = await inventoryService.getAllItems();
+      expect(result).toEqual([{ id: 'i2' }]);
+      expect(mockFetch).toHaveBeenCalledTimes(1);
     });
 
-    it('When called / Then passes limit=10000 to getItems', async () => {
-      mockFetch.mockReturnValue(jsonOk({ data: [] }));
-      await inventoryService.getItemsLegacy();
-      const [url] = mockFetch.mock.calls[0];
-      expect(url).toContain('limit=10000');
+    it('When the total spans 3 pages / Then pages through and concatenates in order', async () => {
+      mockFetch.mockImplementation((url: string) => {
+        const page = Number(new URL(url, 'http://x').searchParams.get('page'));
+        const n = page === 3 ? 500 : 1000;
+        return jsonOk({ data: rows(n, (page - 1) * 1000 + 1), pagination: { total: 2500, totalPages: 3 } });
+      });
+      const result = await inventoryService.getAllItems();
+      expect(mockFetch).toHaveBeenCalledTimes(3);
+      expect(result).toHaveLength(2500);
+      expect(result[0]).toEqual({ id: 'i1' });
+      expect(result[2499]).toEqual({ id: 'i2500' });
+    });
+
+    it('When pagination is absent and a page is full / Then keeps going until a short page', async () => {
+      mockFetch
+        .mockReturnValueOnce(jsonOk({ data: rows(1000, 1) }))
+        .mockReturnValueOnce(jsonOk({ data: rows(10, 1001) }));
+      const result = await inventoryService.getAllItems();
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+      expect(result).toHaveLength(1010);
+    });
+
+    it('When a page comes back empty before the total / Then stops instead of looping', async () => {
+      mockFetch
+        .mockReturnValueOnce(jsonOk({ data: rows(1000, 1), pagination: { total: 5000 } }))
+        .mockReturnValueOnce(jsonOk({ data: [], pagination: { total: 5000 } }));
+      const result = await inventoryService.getAllItems();
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+      expect(result).toHaveLength(1000);
+    });
+
+    it('When called twice within the TTL / Then the second call is served from cache', async () => {
+      mockFetch.mockReturnValue(jsonOk({ data: [{ id: 'i1' }], pagination: { total: 1, totalPages: 1 } }));
+      await inventoryService.getAllItems();
+      await inventoryService.getAllItems();
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+
+    it('When an item is written in between / Then the cache is dropped and it refetches', async () => {
+      mockFetch.mockReturnValue(jsonOk({ data: [{ id: 'i1' }], pagination: { total: 1, totalPages: 1 } }));
+      await inventoryService.getAllItems();
+      await inventoryService.createItem({ name: 'x' });
+      mockFetch.mockClear();
+      await inventoryService.getAllItems();
+      expect(mockFetch).toHaveBeenCalled();
     });
   });
 
