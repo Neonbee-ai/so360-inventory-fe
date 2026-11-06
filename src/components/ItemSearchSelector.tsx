@@ -46,6 +46,11 @@ const ItemSearchSelector: React.FC<ItemSearchSelectorProps> = ({
         return () => document.removeEventListener('mousedown', handleMouseDown);
     }, []);
 
+    // Cancel a pending search on unmount so it never fires after teardown
+    useEffect(() => () => {
+        if (debounceRef.current) clearTimeout(debounceRef.current);
+    }, []);
+
     const search = (term: string) => {
         if (debounceRef.current) clearTimeout(debounceRef.current);
         debounceRef.current = setTimeout(async () => {
