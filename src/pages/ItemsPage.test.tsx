@@ -118,34 +118,78 @@ describe('ItemsPage', () => {
   });
 
   describe('Given search filter', () => {
-    it('When typing a name / Then filters items by name', async () => {
-      mockGetItems.mockResolvedValue({ data: [makeItem(), makeItem({ id: 'item-2', name: 'Gadget Z', sku: 'GZ-003' })] });
+    it('When typing a name / Then the term is sent to the API (whole catalogue) after the debounce', async () => {
+      mockGetItems.mockResolvedValue({ data: [makeItem()], pagination: { total: 1 } });
       render(<ItemsPage />);
       await waitFor(() => screen.getByTestId('row-item-1'));
       fireEvent.change(screen.getByPlaceholderText('Search SKU or Item Name...'), { target: { value: 'Gadget' } });
-      expect(screen.queryByTestId('row-item-1')).not.toBeInTheDocument();
-      expect(screen.getByTestId('row-item-2')).toBeInTheDocument();
+      await waitFor(() =>
+        expect(mockGetItems).toHaveBeenLastCalledWith(expect.objectContaining({ search: 'Gadget', page: 1 })),
+      );
     });
 
-    it('When typing a SKU / Then filters items by SKU', async () => {
-      mockGetItems.mockResolvedValue({ data: [makeItem(), makeItem({ id: 'item-2', name: 'Gadget Z', sku: 'GZ-003' })] });
+    it('When the search is cleared / Then the search param is dropped again', async () => {
       render(<ItemsPage />);
-      await waitFor(() => screen.getByTestId('row-item-1'));
-      fireEvent.change(screen.getByPlaceholderText('Search SKU or Item Name...'), { target: { value: 'WA-001' } });
-      expect(screen.getByTestId('row-item-1')).toBeInTheDocument();
-      expect(screen.queryByTestId('row-item-2')).not.toBeInTheDocument();
+      const box = screen.getByPlaceholderText('Search SKU or Item Name...');
+      fireEvent.change(box, { target: { value: 'abc' } });
+      await waitFor(() => expect(mockGetItems).toHaveBeenLastCalledWith(expect.objectContaining({ search: 'abc' })));
+      fireEvent.change(box, { target: { value: '' } });
+      await waitFor(() => expect(mockGetItems.mock.calls[mockGetItems.mock.calls.length - 1][0]).not.toHaveProperty('search'));
     });
   });
 
   describe('Given type filter', () => {
-    it('When filtering by product / Then hides service items', async () => {
-      mockGetItems.mockResolvedValue({ data: [makeItem(), makeItem({ id: 'item-2', name: 'Consulting', type: 'service' })] });
+    it('When filtering by product / Then the API is asked for type=product', async () => {
+      mockGetItems.mockResolvedValue({ data: [makeItem()], pagination: { total: 1 } });
       render(<ItemsPage />);
       await waitFor(() => screen.getByTestId('row-item-1'));
       fireEvent.click(screen.getByTestId('filters-button'));
       fireEvent.change(screen.getByLabelText('Type'), { target: { value: 'product' } });
-      expect(screen.getByTestId('row-item-1')).toBeInTheDocument();
-      expect(screen.queryByTestId('row-item-2')).not.toBeInTheDocument();
+      await waitFor(() =>
+        expect(mockGetItems).toHaveBeenLastCalledWith(expect.objectContaining({ type: 'product', page: 1 })),
+      );
+    });
+  });
+
+  describe('Given more items than one page (65 items, 50 per page)', () => {
+    const pageOf = (n: number, from: number) =>
+      Array.from({ length: n }, (_, i) => makeItem({ id: `p${from + i}`, name: `Item ${from + i}`, sku: `S${from + i}` }));
+
+    beforeEach(() => {
+      mockGetItems.mockImplementation(async (p: any) =>
+        p?.page === 2
+          ? { data: pageOf(15, 51), pagination: { page: 2, limit: 50, total: 65, totalPages: 2 } }
+          : { data: pageOf(50, 1), pagination: { page: 1, limit: 50, total: 65, totalPages: 2 } },
+      );
+    });
+
+    it('When the page loads / Then the first page is requested with an explicit limit and the total is shown', async () => {
+      render(<ItemsPage />);
+      await waitFor(() => screen.getByTestId('row-p1'));
+      expect(mockGetItems.mock.calls[0][0]).toMatchObject({ page: 1, limit: 50 });
+      expect(screen.getByTestId('pagination')).toHaveAttribute('data-total', '65');
+      expect(screen.getByText('Page 1 of 2')).toBeInTheDocument();
+      expect(screen.queryByTestId('row-p51')).not.toBeInTheDocument();
+    });
+
+    it('When the next page is chosen / Then items 51-65 are fetched and shown', async () => {
+      render(<ItemsPage />);
+      await waitFor(() => screen.getByTestId('row-p1'));
+      fireEvent.click(screen.getByText('Next'));
+      await waitFor(() => expect(screen.getByTestId('row-p65')).toBeInTheDocument());
+      expect(mockGetItems).toHaveBeenLastCalledWith(expect.objectContaining({ page: 2, limit: 50 }));
+      expect(screen.queryByTestId('row-p1')).not.toBeInTheDocument();
+    });
+
+    it('When on page 2 and a search is typed / Then it returns to page 1', async () => {
+      render(<ItemsPage />);
+      await waitFor(() => screen.getByTestId('row-p1'));
+      fireEvent.click(screen.getByText('Next'));
+      await waitFor(() => screen.getByTestId('row-p65'));
+      fireEvent.change(screen.getByPlaceholderText('Search SKU or Item Name...'), { target: { value: 'x' } });
+      await waitFor(() =>
+        expect(mockGetItems).toHaveBeenLastCalledWith(expect.objectContaining({ search: 'x', page: 1 })),
+      );
     });
   });
 
@@ -199,10 +243,10 @@ describe('ItemsPage — Register Item permission gating', () => {
 });
 
 describe('ItemsPage — Photos need attention filter', () => {
-  it('Given the page loads / When the filter is off / Then the plain item list is requested', async () => {
+  it('Given the page loads / When the filter is off / Then the first server page is requested', async () => {
     render(<ItemsPage />);
     await waitFor(() => expect(mockGetItems).toHaveBeenCalledTimes(1));
-    expect(mockGetItems.mock.calls[0]).toEqual([]);
+    expect(mockGetItems.mock.calls[0][0]).toEqual({ page: 1, limit: 50, sortBy: 'created_at', sortOrder: 'desc' });
   });
 
   it('Given flagged and unflagged items / When the filter is turned on / Then the API is asked for flagged items and only those are shown', async () => {
@@ -246,6 +290,6 @@ describe('ItemsPage — Photos need attention filter', () => {
     await waitFor(() => expect(toggle).toBeChecked());
     fireEvent.click(toggle);
     await waitFor(() => expect(toggle).not.toBeChecked());
-    await waitFor(() => expect(mockGetItems.mock.calls[mockGetItems.mock.calls.length - 1]).toEqual([]));
+    await waitFor(() => expect(mockGetItems.mock.calls[mockGetItems.mock.calls.length - 1][0]).toMatchObject({ page: 1, limit: 50 }));
   });
 });

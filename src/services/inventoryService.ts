@@ -162,6 +162,8 @@ class InventoryService {
     async getItems(params?: {
         search?: string;
         categoryId?: string;
+        /** Comma-separated item types, filtered on the server. */
+        type?: string;
         sortBy?: string;
         sortOrder?: 'asc' | 'desc';
         page?: number;
@@ -172,6 +174,7 @@ class InventoryService {
         const query = new URLSearchParams();
         if (params?.search) query.append('search', params.search);
         if (params?.categoryId) query.append('category_id', params.categoryId);
+        if (params?.type) query.append('type', params.type);
         if (params?.imageNeedsAttention) query.append('image_needs_attention', 'true');
         if (params?.sortBy) query.append('sort_by', params.sortBy);
         if (params?.sortOrder) query.append('sort_order', params.sortOrder);
