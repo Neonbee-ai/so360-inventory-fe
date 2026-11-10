@@ -164,11 +164,14 @@ const ItemCreatePage = () => {
 
         // The three reads are independent: fire them together instead of as a
         // 3-step waterfall (the page spinner used to last the sum of all three).
-        // Each read starts inside a promise chain so a synchronous throw is
-        // still caught by the .catch below (as the old try/catch did).
+        // Each read starts synchronously; a synchronous throw becomes a rejection
+        // so the .catch below handles it (as the old try/catch did).
+        const safe = <T,>(fn: () => Promise<T>): Promise<T> => {
+            try { return fn(); } catch (e) { return Promise.reject(e); }
+        };
         const settingsLoad = Promise.all([
-            Promise.resolve().then(() => inventoryService.getSettings()),
-            Promise.resolve().then(() => inventoryService.getLocations()),
+            safe(() => inventoryService.getSettings()),
+            safe(() => inventoryService.getLocations()),
         ]).then(([settings, warehouseData]) => {
             setCategories(settings.categories || []);
             setUoms(settings.uoms || []);
@@ -177,7 +180,7 @@ const ItemCreatePage = () => {
             // Settings are optional, don't block the form
         });
 
-        const numberingLoad = Promise.resolve().then(() => inventoryService.getNumberingSettings()).then((numberingData: any) => {
+        const numberingLoad = safe(() => inventoryService.getNumberingSettings()).then((numberingData: any) => {
             const skuConfig = numberingData?.sku || numberingData?.data?.sku;
             if (skuConfig) {
                 setSkuScheme(skuConfig);
@@ -187,7 +190,7 @@ const ItemCreatePage = () => {
             setSkuScheme({ enabled: true, prefix: 'SKU-', start_number: 1, padding: 5, separator: '-' });
         });
 
-        const taxCodeLoad = Promise.resolve().then(() => inventoryService.getTaxCodes()).then((taxCodeData: any) => {
+        const taxCodeLoad = safe(() => inventoryService.getTaxCodes()).then((taxCodeData: any) => {
             setTaxCodes(taxCodeData);
         }).catch(() => {
             setTaxCodes([]);
