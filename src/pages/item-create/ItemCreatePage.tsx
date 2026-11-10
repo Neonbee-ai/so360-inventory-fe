@@ -164,9 +164,11 @@ const ItemCreatePage = () => {
 
         // The three reads are independent: fire them together instead of as a
         // 3-step waterfall (the page spinner used to last the sum of all three).
+        // Each read starts inside a promise chain so a synchronous throw is
+        // still caught by the .catch below (as the old try/catch did).
         const settingsLoad = Promise.all([
-            inventoryService.getSettings(),
-            inventoryService.getLocations(),
+            Promise.resolve().then(() => inventoryService.getSettings()),
+            Promise.resolve().then(() => inventoryService.getLocations()),
         ]).then(([settings, warehouseData]) => {
             setCategories(settings.categories || []);
             setUoms(settings.uoms || []);
@@ -175,7 +177,7 @@ const ItemCreatePage = () => {
             // Settings are optional, don't block the form
         });
 
-        const numberingLoad = inventoryService.getNumberingSettings().then((numberingData: any) => {
+        const numberingLoad = Promise.resolve().then(() => inventoryService.getNumberingSettings()).then((numberingData: any) => {
             const skuConfig = numberingData?.sku || numberingData?.data?.sku;
             if (skuConfig) {
                 setSkuScheme(skuConfig);
@@ -185,7 +187,7 @@ const ItemCreatePage = () => {
             setSkuScheme({ enabled: true, prefix: 'SKU-', start_number: 1, padding: 5, separator: '-' });
         });
 
-        const taxCodeLoad = inventoryService.getTaxCodes().then((taxCodeData: any) => {
+        const taxCodeLoad = Promise.resolve().then(() => inventoryService.getTaxCodes()).then((taxCodeData: any) => {
             setTaxCodes(taxCodeData);
         }).catch(() => {
             setTaxCodes([]);
