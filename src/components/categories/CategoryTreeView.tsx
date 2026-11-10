@@ -161,22 +161,22 @@ const TreeItem: React.FC<TreeItemProps> = ({ node, onAdd, onUpdate, onDelete, ca
                 <CategoryAvatar node={node} canManage={canManage} onUpdate={onUpdate} />
 
                 {isEditing ? (
-                    <div className="flex flex-col gap-2 flex-1 mt-0.5">
-                        <div className="flex items-center gap-2">
+                    <div className="flex flex-col gap-2 flex-1 min-w-0 mt-0.5">
+                        <div className="flex min-w-0 items-center gap-2">
                             <TextField
                                 name={`edit-category-${node.id}`}
                                 aria-label="Category name"
                                 type="text"
                                 value={editName}
                                 onChange={e => setEditName(e.target.value)}
-                                className="flex-1"
+                                className="flex-1 min-w-0"
                                 autoFocus
                                 onKeyDown={e => { if (e.key === 'Enter') handleSaveEdit(); if (e.key === 'Escape') { setIsEditing(false); setEditName(node.name); setEditColor(node.color || ''); } }}
                             />
                             <IconButton label="Save" size="sm" onClick={handleSaveEdit} disabled={isSaving} icon={<Check size={14} />} />
                             <IconButton label="Cancel" size="sm" onClick={() => { setIsEditing(false); setEditName(node.name); setEditColor(node.color || ''); }} icon={<X size={14} />} />
                         </div>
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex flex-wrap items-center gap-1.5 max-w-full">
                             {PRESET_COLORS.map(c => (
                                 <IconButton
                                     key={c}

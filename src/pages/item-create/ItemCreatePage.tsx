@@ -162,38 +162,39 @@ const ItemCreatePage = () => {
         setIsTaxCodesLoading(true);
         setTaxCodesError(null);
 
-        try {
-            const [settings, warehouseData] = await Promise.all([
-                inventoryService.getSettings(),
-                inventoryService.getLocations(),
-            ]);
+        // The three reads are independent: fire them together instead of as a
+        // 3-step waterfall (the page spinner used to last the sum of all three).
+        const settingsLoad = Promise.all([
+            inventoryService.getSettings(),
+            inventoryService.getLocations(),
+        ]).then(([settings, warehouseData]) => {
             setCategories(settings.categories || []);
             setUoms(settings.uoms || []);
             setWarehouses(Array.isArray(warehouseData) ? warehouseData : []);
-        } catch {
+        }).catch(() => {
             // Settings are optional, don't block the form
-        }
+        });
 
-        try {
-            const numberingData = await inventoryService.getNumberingSettings();
+        const numberingLoad = inventoryService.getNumberingSettings().then((numberingData: any) => {
             const skuConfig = numberingData?.sku || numberingData?.data?.sku;
             if (skuConfig) {
                 setSkuScheme(skuConfig);
             }
-        } catch {
+        }).catch(() => {
             // Fallback default numbering scheme
             setSkuScheme({ enabled: true, prefix: 'SKU-', start_number: 1, padding: 5, separator: '-' });
-        }
+        });
 
-        try {
-            const taxCodeData = await inventoryService.getTaxCodes();
+        const taxCodeLoad = inventoryService.getTaxCodes().then((taxCodeData: any) => {
             setTaxCodes(taxCodeData);
-        } catch {
+        }).catch(() => {
             setTaxCodes([]);
             setTaxCodesError('Failed to load organization tax codes from Core settings.');
-        } finally {
+        }).finally(() => {
             setIsTaxCodesLoading(false);
-        }
+        });
+
+        await Promise.all([settingsLoad, numberingLoad, taxCodeLoad]);
     };
 
     const debouncedCheckSku = (candidateSku: string) => {
