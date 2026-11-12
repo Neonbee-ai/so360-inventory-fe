@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { RefreshCcw } from 'lucide-react';
 import { inventoryService } from '../services/inventoryService';
@@ -8,6 +8,30 @@ import { useShellBridge } from '@so360/shell-context';
 import { FeatureGate, ListPageTemplate, DataTable, Button, SearchInput, KpiCard, Grid, Badge, Alert, EmptyState, Pagination, type DataTableColumn, type FilterValues } from '@so360/design-system';
 
 const PAGE_SIZE = 25;
+/** BE page cap for stock-overview (default and max 1000). */
+export const SNAPSHOT_LIMIT = 1000;
+/** Every Nth poll tick re-reads the full snapshot (KPIs, warehouse list); other ticks refresh only the visible page. */
+export const FULL_REFRESH_EVERY = 5;
+const MAX_SNAPSHOT_PAGES = 50;
+
+/** Read all positions in pages of SNAPSHOT_LIMIT. A BE that ignores paging returns a bare array: that is the full set. */
+export async function loadStockSnapshot(): Promise<StockBalance[]> {
+    const all: StockBalance[] = [];
+    for (let i = 0; i < MAX_SNAPSHOT_PAGES; i++) {
+        const res: any = await inventoryService.getStockOverview({ limit: SNAPSHOT_LIMIT, offset: all.length, include_total: true });
+        if (Array.isArray(res)) {
+            if (i === 0) return res; // BE ignored the params or returned a bare array
+            all.push(...res);
+            if (res.length < SNAPSHOT_LIMIT) break;
+            continue;
+        }
+        const rows: StockBalance[] = res?.data ?? [];
+        all.push(...rows);
+        const total = typeof res?.total === 'number' ? res.total : all.length;
+        if (rows.length === 0 || all.length >= total) break;
+    }
+    return all;
+}
 
 const StockOverviewPage = () => {
     const navigate = useNavigate();
@@ -27,12 +51,17 @@ const StockOverviewPage = () => {
     // first load and manual refresh, but background poll ticks pass false so the
     // table is refreshed in place instead of flashing back to a skeleton every
     // minute. Same data, no flash.
+    const inFlightRef = useRef(false);
+    const tickRef = useRef(0);
+    const stateRef = useRef({ page: 1, filtered: false, total: 0 });
     const fetchStock = async (showSkeleton = true) => {
+        if (inFlightRef.current) return;
+        inFlightRef.current = true;
         if (showSkeleton) setIsLoading(true);
         setError(null);
         try {
             const [stockLevelsData, glData] = await Promise.all([
-                inventoryService.getStockOverview(),
+                loadStockSnapshot(),
                 inventoryService.getGLInventoryValuation(),
             ]);
             setStockLevels(stockLevelsData);
@@ -41,7 +70,42 @@ const StockOverviewPage = () => {
             console.error('Failed to fetch stock levels', err);
             setError('Failed to load stock data. Please try again.');
         } finally {
+            inFlightRef.current = false;
             setIsLoading(false);
+        }
+    };
+
+    // Poll tick: refresh only the visible server page and splice it into the snapshot.
+    // Falls back to a full snapshot every FULL_REFRESH_EVERY ticks, while filters are
+    // active, or when the row count changed.
+    const refreshVisiblePage = async () => {
+        const { page, filtered, total } = stateRef.current;
+        tickRef.current += 1;
+        if (filtered || tickRef.current % FULL_REFRESH_EVERY === 0) return fetchStock(false);
+        if (inFlightRef.current) return;
+        inFlightRef.current = true;
+        try {
+            const offset = (page - 1) * PAGE_SIZE;
+            const res: any = await inventoryService.getStockOverview({ limit: PAGE_SIZE, offset, include_total: true });
+            if (Array.isArray(res)) {
+                // BE ignored paging: a longer-than-page response is the full set.
+                if (res.length > PAGE_SIZE) setStockLevels(res);
+                return;
+            }
+            if (typeof res?.total === 'number' && res.total !== total) {
+                inFlightRef.current = false;
+                return fetchStock(false);
+            }
+            const rows: StockBalance[] = res?.data ?? [];
+            setStockLevels(prev => {
+                const next = prev.slice();
+                next.splice(offset, rows.length, ...rows);
+                return next;
+            });
+        } catch (err) {
+            console.error('Failed to refresh stock page', err);
+        } finally {
+            inFlightRef.current = false;
         }
     };
 
@@ -50,7 +114,7 @@ const StockOverviewPage = () => {
         // Skip the 60s refresh while the tab is hidden so backgrounded tabs stop
         // polling the stock endpoint.
         const pollInterval = setInterval(() => {
-            if (!document.hidden) fetchStock(false);
+            if (!document.hidden) refreshVisiblePage();
         }, 60 * 1000);
         return () => clearInterval(pollInterval);
     }, []);
@@ -77,6 +141,8 @@ const StockOverviewPage = () => {
     const paginatedData = filteredStock.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
     const uniqueLocations = Array.from(new Set(stockLevels.map(sl => sl.warehouses?.name).filter(Boolean)));
+
+    stateRef.current = { page: currentPage, filtered: !!searchTerm || locationFilter !== 'All' || lowStockFilter, total: stockLevels.length };
 
     const isLowRow = (sl: StockBalance) => sl.items?.min_stock_threshold != null && sl.quantity < sl.items.min_stock_threshold;
 
