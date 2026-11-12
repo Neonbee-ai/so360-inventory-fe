@@ -94,7 +94,7 @@ const StockOverviewPage = () => {
             }
             if (typeof res?.total === 'number' && res.total !== total) {
                 inFlightRef.current = false;
-                return fetchStock(false);
+                return await fetchStock(false);
             }
             const rows: StockBalance[] = res?.data ?? [];
             setStockLevels(prev => {
