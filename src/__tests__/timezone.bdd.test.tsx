@@ -456,7 +456,7 @@ describe('PRDetailPage — timezone date rendering', () => {
         </MemoryRouter>,
       );
       await waitFor(() =>
-        expect(screen.getByText(/PR not found/i)).toBeInTheDocument(),
+        expect(screen.getByText(/Record not found/i)).toBeInTheDocument(),
       );
     });
   });
@@ -558,7 +558,7 @@ describe('GRNDetailPage — timezone date rendering', () => {
         </MemoryRouter>,
       );
       await waitFor(() =>
-        expect(screen.getByText(/GRN not found/i)).toBeInTheDocument(),
+        expect(screen.getByText(/Record not found/i)).toBeInTheDocument(),
       );
     });
   });
@@ -640,7 +640,7 @@ describe('ItemDetailPage — timezone date rendering', () => {
     it('When fetch fails / Then error is shown', async () => {
       renderWithId(<ItemDetailPage />, 'bad-id');
       await waitFor(() =>
-        expect(screen.getByText(/Failed to load item details/i)).toBeInTheDocument(),
+        expect(screen.getByText(/Record not found/i)).toBeInTheDocument(),
       );
     });
   });

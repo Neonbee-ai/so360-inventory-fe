@@ -88,7 +88,7 @@ describe('PRDetailPage', () => {
       mockGetPRDetail.mockRejectedValue(new Error('PR not found'));
       render(<PRDetailPage />);
       await waitFor(() => {
-        expect(screen.getByText('PR not found')).toBeInTheDocument();
+        expect(screen.getByText(/Record not found/i)).toBeInTheDocument();
       });
     });
 

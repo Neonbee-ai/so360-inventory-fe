@@ -89,7 +89,7 @@ describe('PODetailPage', () => {
       mockGetPODetail.mockRejectedValue(new Error('PO not found'));
       render(<PODetailPage />);
       await waitFor(() => {
-        expect(screen.getByText('PO not found')).toBeInTheDocument();
+        expect(screen.getByText(/Record not found/i)).toBeInTheDocument();
       });
     });
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { RecordNotFound, NOT_FOUND_ERROR, isNotFoundError } from '../../components/RecordNotFound';
 import { Star, FileText, Plus, ExternalLink } from 'lucide-react';
 import {
     DetailPageTemplate, Alert, Button, Card, DataTable, DescriptionList, StatusBadge,
@@ -88,7 +89,7 @@ const VendorDetailPage = () => {
             const data = await vendorService.getVendorDetail(id);
             setVendor(data);
         } catch (err: any) {
-            setError(err.message || 'Failed to load vendor details');
+            setError(isNotFoundError(err) ? NOT_FOUND_ERROR : (err.message || 'Failed to load vendor details'));
         } finally {
             setIsLoading(false);
         }
@@ -183,6 +184,13 @@ const VendorDetailPage = () => {
         return (
             <DetailPageTemplate title="Vendor" trail={[{ label: 'Vendors', to: '/vendors', onClick: () => navigate('/vendors') }]}>
                 <TableSkeleton />
+            </DetailPageTemplate>
+        );
+    }
+    if (!vendor && (error === NOT_FOUND_ERROR || !error)) {
+        return (
+            <DetailPageTemplate trail={[{ label: 'Vendors', to: '/inventory/vendors' }]} title="Vendor">
+                <RecordNotFound listPath="/vendors" listLabel="Vendors" />
             </DetailPageTemplate>
         );
     }

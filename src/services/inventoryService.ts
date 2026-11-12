@@ -144,7 +144,9 @@ class InventoryService {
 
         if (!response.ok) {
             const error = await response.json().catch(() => ({ message: 'API Request failed' }));
-            throw new Error(error.message || 'API Request failed');
+            const message = Array.isArray(error?.message) ? error.message.join(', ') : error?.message;
+            // Keep the HTTP status so callers can tell blocked (400/409) from other failures.
+            throw Object.assign(new Error(message || 'API Request failed'), { status: response.status });
         }
 
         // A successful settings write (UoMs, categories, …) makes the cached

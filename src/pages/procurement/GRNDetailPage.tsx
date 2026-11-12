@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { RecordNotFound, NOT_FOUND_ERROR, isNotFoundError } from '../../components/RecordNotFound';
 import {
     Alert, Badge, Button, Card, DataTable, DescriptionList, DetailPageTemplate, EmptyState,
     type DataTableColumn, type BadgeTone,
@@ -79,7 +80,7 @@ const GRNDetailPage = () => {
             const data = await procurementService.getGRNDetail(id!);
             setGrn(data);
         } catch (err: any) {
-            setError(err.message || 'Failed to load GRN details');
+            setError(isNotFoundError(err) ? NOT_FOUND_ERROR : (err.message || 'Failed to load GRN details'));
         } finally {
             setIsLoading(false);
         }
@@ -105,6 +106,14 @@ const GRNDetailPage = () => {
 
     if (isLoading) {
         return <DetailPageTemplate title="Loading goods receipt" trail={GRN_TRAIL} loading />;
+    }
+
+    if (!grn && (error === NOT_FOUND_ERROR || !error)) {
+        return (
+            <DetailPageTemplate title="Goods receipt" trail={GRN_TRAIL}>
+                <RecordNotFound listPath="/procurement/grn" listLabel="GRNs" />
+            </DetailPageTemplate>
+        );
     }
 
     if (error || !grn) {

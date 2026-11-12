@@ -102,7 +102,7 @@ describe('VendorDetailPage', () => {
       mockGetVendorDetail.mockRejectedValue(new Error('Vendor not found'));
       render(<VendorDetailPage />);
       await waitFor(() => {
-        expect(screen.getByText('Vendor not found')).toBeInTheDocument();
+        expect(screen.getByText(/Record not found/i)).toBeInTheDocument();
       });
     });
 
