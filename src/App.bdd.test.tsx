@@ -42,6 +42,7 @@ vi.mock('react-router-dom', () => ({
   Route: ({ element }: any) => element || null,
   Navigate: ({ to }: any) => <div data-testid="navigate-to">{to}</div>,
   useLocation: () => ({ pathname: '/inventory/items' }),
+  useParams: () => ({}),
   useNavigate: () => vi.fn(),
 }));
 
