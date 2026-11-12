@@ -74,6 +74,20 @@ class VendorService {
         return this.request(`/${inventoryService.getOrgId()}`);
     }
 
+    /**
+     * Paged read. A BE that knows `include_total` answers `{ data, total }`;
+     * an older BE ignores the params and returns the bare array, which is
+     * reported as `legacy: true` so callers can page it client-side.
+     */
+    async getVendorsPage(opts: { limit: number; offset: number; search?: string }): Promise<{ data: any[]; total: number; legacy: boolean }> {
+        const qs = new URLSearchParams({ include_total: 'true', limit: String(opts.limit), offset: String(opts.offset) });
+        if (opts.search && opts.search.trim()) qs.set('search', opts.search.trim());
+        const res = await this.request(`/${inventoryService.getOrgId()}?${qs.toString()}`);
+        if (Array.isArray(res)) return { data: res, total: res.length, legacy: true };
+        const data = Array.isArray(res?.data) ? res.data : [];
+        return { data, total: typeof res?.total === 'number' ? res.total : data.length, legacy: false };
+    }
+
     async createVendor(dto: any) {
         return this.request('', {
             method: 'POST',
