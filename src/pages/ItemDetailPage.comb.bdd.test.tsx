@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent, within } from '@testing-library/react';
+import { toast } from '@so360/design-system';
 import React from 'react';
 
 const mockGetItem = vi.fn();
@@ -204,10 +205,10 @@ describe('ItemDetailPage (Comb)', () => {
     render(<ItemDetailPage />);
     await waitFor(() => expect(screen.getAllByRole('heading', { name: 'Premium Widget' })[0]).toBeInTheDocument());
     fireEvent.click(screen.getByText('Delete'));
-    const dialog = await screen.findByRole('dialog', { name: 'Delete Item' });
+    const dialog = await screen.findByRole('dialog', { name: 'Delete product' });
     expect(dialog).toBeInTheDocument();
     fireEvent.click(screen.getByText('Cancel'));
-    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Delete Item' })).not.toBeInTheDocument());
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Delete product' })).not.toBeInTheDocument());
   });
 
   it('Given edit mode / When Edit is clicked / Then footer shows Cancel and Save Changes, not in header', async () => {
@@ -242,5 +243,70 @@ describe('ItemDetailPage (Comb)', () => {
     await waitFor(() => expect(screen.queryByText('Cancel Editing')).not.toBeInTheDocument());
     expect(screen.getByText('Edit')).toBeInTheDocument();
     expect(screen.queryByText('Save Changes')).not.toBeInTheDocument();
+  });
+});
+
+describe('ItemDetailPage delete outcomes', () => {
+  const confirmDelete = async () => {
+    render(<ItemDetailPage />);
+    await waitFor(() => expect(screen.getAllByRole('heading', { name: 'Premium Widget' })[0]).toBeInTheDocument());
+    fireEvent.click(screen.getByText('Delete'));
+    const dialog = await screen.findByRole('dialog', { name: 'Delete product' });
+    fireEvent.click(within(dialog).getByText('Delete'));
+  };
+
+  beforeEach(() => {
+    mockNavigate.mockClear();
+    vi.spyOn(toast, 'success').mockReturnValue('t');
+    vi.spyOn(toast, 'info').mockReturnValue('t');
+    vi.spyOn(toast, 'error').mockReturnValue('t');
+  });
+
+  it('Given the confirm dialog / When it opens / Then it explains delete vs archive and the blocking cases', async () => {
+    render(<ItemDetailPage />);
+    await waitFor(() => expect(screen.getAllByRole('heading', { name: 'Premium Widget' })[0]).toBeInTheDocument());
+    fireEvent.click(screen.getByText('Delete'));
+    const dialog = await screen.findByRole('dialog', { name: 'Delete product' });
+    expect(dialog.textContent).toContain('archived instead');
+    expect(dialog.textContent).toContain('purchase order lines');
+  });
+
+  it('Given a product without history / When delete succeeds / Then a deleted toast shows and it navigates to the list', async () => {
+    mockDeleteItem.mockResolvedValue({ success: true, archived: false, message: 'Item deleted successfully' });
+    await confirmDelete();
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith('"Premium Widget" was deleted.'));
+    expect(toast.info).not.toHaveBeenCalled();
+    expect(mockNavigate).toHaveBeenCalledWith('/inventory/items');
+  });
+
+  it('Given a product with stock history / When the backend archives it / Then an archived notice shows and it navigates to the list', async () => {
+    mockDeleteItem.mockResolvedValue({ success: true, archived: true, message: 'This product has stock history, so it was archived instead of deleted.' });
+    await confirmDelete();
+    await waitFor(() => expect(toast.info).toHaveBeenCalledWith('This product has stock history, so it was archived instead of deleted.'));
+    expect(toast.success).not.toHaveBeenCalled();
+    expect(mockNavigate).toHaveBeenCalledWith('/inventory/items');
+  });
+
+  it('Given stock remains / When the backend returns 400 / Then the blocked reason is shown and it stays on the page', async () => {
+    mockDeleteItem.mockRejectedValue(Object.assign(new Error('Cannot delete item with reserved stock. Release the reservations first.'), { status: 400 }));
+    await confirmDelete();
+    const msg = "Can't delete this product: Cannot delete item with reserved stock. Release the reservations first.";
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith(msg));
+    expect(screen.getByText(msg)).toBeInTheDocument();
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  it('Given purchase order lines reference it / When the backend returns 409 / Then the in-use reason is shown and it stays on the page', async () => {
+    mockDeleteItem.mockRejectedValue(Object.assign(new Error('Cannot delete item referenced by purchase order lines. Consider archiving instead.'), { status: 409 }));
+    await confirmDelete();
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Can't delete this product: Cannot delete item referenced by purchase order lines. Consider archiving instead."));
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  it('Given a network failure / When delete fails / Then the generic error is shown and it stays on the page', async () => {
+    mockDeleteItem.mockRejectedValue(new Error('Network down'));
+    await confirmDelete();
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Network down'));
+    expect(mockNavigate).not.toHaveBeenCalled();
   });
 });

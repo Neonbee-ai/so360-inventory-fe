@@ -123,6 +123,14 @@ describe('inventoryService', () => {
       const [, opts] = mockFetch.mock.calls[0];
       expect(opts.method).toBe('DELETE');
     });
+
+    it('When the backend blocks with 409 / Then the error keeps the status and message', async () => {
+      mockFetch.mockReturnValue(jsonFail(409, 'Cannot delete item referenced by purchase order lines.'));
+      await expect(inventoryService.deleteItem('i1')).rejects.toMatchObject({
+        status: 409,
+        message: 'Cannot delete item referenced by purchase order lines.',
+      });
+    });
   });
 
   describe('Given getLocations', () => {
