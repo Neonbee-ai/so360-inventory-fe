@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { RecordNotFound, NOT_FOUND_ERROR, isNotFoundError } from '../../components/RecordNotFound';
 import { Send, Scale } from 'lucide-react';
 import { rfqService } from '../../services/rfqService';
 import { vendorService } from '../../services/vendorService';
@@ -42,7 +43,7 @@ const RFQDetailPage = () => {
             const data = await rfqService.getRFQ(id!);
             setRfq(data);
         } catch (err: any) {
-            setError(getErrorMessage(err, 'Failed to load RFQ'));
+            setError(isNotFoundError(err) ? NOT_FOUND_ERROR : getErrorMessage(err, 'Failed to load RFQ'));
         } finally {
             setIsLoading(false);
         }
@@ -161,6 +162,14 @@ const RFQDetailPage = () => {
 
     if (isLoading) {
         return <DetailPageTemplate trail={[{ label: 'RFQs', onClick: () => navigate('/procurement/rfq') }]} title="RFQ" loading>{null}</DetailPageTemplate>;
+    }
+
+    if (!rfq && (error === NOT_FOUND_ERROR || !error)) {
+        return (
+            <DetailPageTemplate trail={[{ label: 'RFQs', onClick: () => navigate('/procurement/rfq') }]} title="RFQ">
+                <RecordNotFound listPath="/procurement/rfq" listLabel="RFQs" />
+            </DetailPageTemplate>
+        );
     }
 
     if (error || !rfq) {

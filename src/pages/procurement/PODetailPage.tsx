@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { RecordNotFound, NOT_FOUND_ERROR, isNotFoundError } from '../../components/RecordNotFound';
 import { procurementService } from '../../services/procurementService';
 import { useInventoryFormatters } from '../../utils/formatters';
 import { useActivity, useShell, useBusinessSettings } from '@so360/shell-context';
@@ -92,7 +93,7 @@ const PODetailPage = () => {
             const data = await procurementService.getPODetail(id!);
             setPo(data);
         } catch (err: any) {
-            setError(err?.status === 404 || err?.status === 400 ? 'PO not found' : (err.message || 'Failed to load PO details'));
+            setError(isNotFoundError(err) ? NOT_FOUND_ERROR : (err.message || 'Failed to load PO details'));
         } finally {
             setIsLoading(false);
         }
@@ -180,6 +181,14 @@ const PODetailPage = () => {
     };
 
     const backToList = () => navigate('/procurement/po');
+
+    if (!po && !isLoading && (error === NOT_FOUND_ERROR || !error)) {
+        return (
+            <DetailPageTemplate trail={[{ label: 'Purchase Orders', onClick: backToList }]} title="Purchase Order">
+                <RecordNotFound listPath="/procurement/po" listLabel="Purchase Orders" />
+            </DetailPageTemplate>
+        );
+    }
 
     if (error || (!isLoading && !po)) {
         return (

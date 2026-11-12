@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { RecordNotFound, NOT_FOUND_ERROR, isNotFoundError } from '../components/RecordNotFound';
 import {
     Package, Info, AlertCircle,
     ArrowDownLeft, ArrowUpRight, ArrowRightLeft,
@@ -165,10 +166,10 @@ const ItemDetailPage = () => {
                     .then((sh) => setSalesHistory(sh))
                     .catch(() => setSalesHistory(null));
             } else {
-                setError('Item not found');
+                setError(NOT_FOUND_ERROR);
             }
-        } catch {
-            setError('Failed to load item details');
+        } catch (err) {
+            setError(isNotFoundError(err) ? NOT_FOUND_ERROR : 'Failed to load item details');
         } finally {
             setIsLoading(false);
         }
@@ -385,6 +386,11 @@ const ItemDetailPage = () => {
 
     // ── Loading / Error States ────────────────────────
     if (isLoading) return <DetailPageTemplate trail={[{ label: 'Items', to: '/inventory/items' }]} title="Item" loading>{null}</DetailPageTemplate>;
+    if (!item && (error === NOT_FOUND_ERROR || !error)) return (
+        <DetailPageTemplate trail={[{ label: 'Items', to: '/inventory/items' }]} title="Item">
+            <RecordNotFound listPath="/inventory/items" listLabel="Items" />
+        </DetailPageTemplate>
+    );
     if (error && !item) return (
         <EmptyState
             icon={AlertCircle}

@@ -87,7 +87,7 @@ describe('GRNDetailPage', () => {
       mockGetGRNDetail.mockRejectedValue(new Error('GRN not found'));
       render(<GRNDetailPage />);
       await waitFor(() => {
-        expect(screen.getByText('GRN not found')).toBeInTheDocument();
+        expect(screen.getByText(/Record not found/i)).toBeInTheDocument();
       });
     });
 

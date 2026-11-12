@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { RecordNotFound, NOT_FOUND_ERROR, isNotFoundError } from '../../components/RecordNotFound';
 import { Trophy, Clock, Star, TrendingDown } from 'lucide-react';
 import { rfqService } from '../../services/rfqService';
 import { useInventoryFormatters } from '../../utils/formatters';
@@ -33,7 +34,7 @@ const RFQComparisonPage = () => {
         try {
             setData(await rfqService.getComparison(id!));
         } catch (err: any) {
-            setError(getErrorMessage(err, 'Failed to load comparison'));
+            setError(isNotFoundError(err) ? NOT_FOUND_ERROR : getErrorMessage(err, 'Failed to load comparison'));
         } finally {
             setIsLoading(false);
         }
@@ -67,6 +68,14 @@ const RFQComparisonPage = () => {
 
     if (isLoading) {
         return <DetailPageTemplate trail={[{ label: 'RFQ', onClick: () => navigate(`/procurement/rfq/${id}`) }]} title="Quotation Comparison" loading>{null}</DetailPageTemplate>;
+    }
+
+    if (!data && (error === NOT_FOUND_ERROR || !error)) {
+        return (
+            <DetailPageTemplate trail={[{ label: 'RFQs', onClick: () => navigate('/procurement/rfq') }]} title="Quotation Comparison">
+                <RecordNotFound listPath="/procurement/rfq" listLabel="RFQs" />
+            </DetailPageTemplate>
+        );
     }
 
     if (error || !data) {

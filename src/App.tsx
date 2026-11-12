@@ -1,5 +1,5 @@
 import React, { Suspense, lazy } from 'react';
-import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom';
 
 // Lazy load pages for performance
 const ItemsPage = lazy(() => import('./pages/ItemsPage'));
@@ -171,6 +171,12 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 };
 
 
+/** Legacy products/:id -> items/:id, keeping the real id (a literal ":id" would never resolve). */
+const ProductIdRedirect = () => {
+    const { id } = useParams<{ id: string }>();
+    return <Navigate to={`../../items/${id ?? ''}`} replace />;
+};
+
 const ContextAwareIndex = () => {
     const location = useLocation();
     const basePath = location.pathname.split('/')[1]; // 'inventory' | 'procurement' | 'vendors'
@@ -252,7 +258,7 @@ const App = () => {
 
                 {/* Legacy Redirects */}
                 <Route path="products" element={<Navigate to="../items" replace />} />
-                <Route path="products/:id" element={<Navigate to="../../items/:id" replace />} />
+                <Route path="products/:id" element={<ProductIdRedirect />} />
             </Routes>
         </Layout>
     );

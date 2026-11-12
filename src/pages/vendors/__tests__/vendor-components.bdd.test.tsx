@@ -347,7 +347,7 @@ describe('Given VendorDetailPage', () => {
     render(<VendorDetailPage />);
 
     await waitFor(() => {
-      expect(screen.getByText(/Vendor not found/i)).toBeInTheDocument();
+      expect(screen.getByText(/Record not found/i)).toBeInTheDocument();
     });
   });
 });

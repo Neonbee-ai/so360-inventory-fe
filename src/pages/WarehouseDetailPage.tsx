@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { RecordNotFound, NOT_FOUND_ERROR, isNotFoundError } from '../components/RecordNotFound';
 import { Package, MapPin, Edit2, Trash2, Plus } from 'lucide-react';
 import { inventoryService } from '../services/inventoryService';
 import { Warehouse } from '../types/inventory';
@@ -56,7 +57,7 @@ const WarehouseDetailPage = () => {
             const data = await inventoryService.getWarehouse(id);
             setWarehouse(data);
         } catch (err: any) {
-            setError(err.message || 'Failed to load warehouse details');
+            setError(isNotFoundError(err) ? NOT_FOUND_ERROR : (err.message || 'Failed to load warehouse details'));
         } finally {
             setIsLoading(false);
         }
@@ -197,6 +198,14 @@ const WarehouseDetailPage = () => {
     };
 
     if (isLoading) return <DetailPageTemplate trail={[{ label: 'Locations', to: '/inventory/locations' }]} title="Warehouse" loading />;
+
+    if (!warehouse && (error === NOT_FOUND_ERROR || !error)) {
+        return (
+            <DetailPageTemplate trail={[{ label: 'Locations', to: '/inventory/locations' }]} title="Warehouse">
+                <RecordNotFound listPath="/inventory/locations" listLabel="Warehouses" />
+            </DetailPageTemplate>
+        );
+    }
 
     if (!warehouse) {
         return (
