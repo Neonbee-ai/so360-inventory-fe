@@ -207,6 +207,8 @@ describe('ItemsPage', () => {
       render(<ItemsPage />);
       await waitFor(() => screen.getByTestId('row-q1'));
       fireEvent.click(screen.getByText('Next'));
+      await waitFor(() => screen.getByTestId('row-q51'));
+      fireEvent.click(screen.getByText('Next'));
       await waitFor(() => screen.getByTestId('row-q101'));
       mockGetItems.mockClear();
 
