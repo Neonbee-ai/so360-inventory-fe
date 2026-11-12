@@ -82,4 +82,14 @@ describe('ItemSearchSelector', () => {
       }, { timeout: 2000 });
     });
   });
+
+  describe('Given a search is pending', () => {
+    it('When unmounted before the debounce / Then getItems is never called', async () => {
+      const { unmount } = render(<ItemSearchSelector value="" onSelect={vi.fn()} />);
+      fireEvent.change(screen.getByPlaceholderText('Search item by name or SKU...'), { target: { value: 'Wid' } });
+      unmount();
+      await new Promise(r => setTimeout(r, 400));
+      expect(mockGetItems).not.toHaveBeenCalled();
+    });
+  });
 });

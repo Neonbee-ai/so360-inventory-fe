@@ -14,8 +14,9 @@ import { Item, StockMovement, Unit, ItemCategory, Warehouse } from '../types/inv
 import { TabId, ITEM_CLASSIFICATIONS, ItemClassification } from '../types/itemTypes';
 import {
     DetailPageTemplate, DataTable, Button, Modal, Alert, Badge, EmptyState, Grid, FieldGrid, KpiCard,
-    type DataTableColumn,
+    toast, type DataTableColumn,
 } from '@so360/design-system';
+import { describeItemDeleteResult, describeItemDeleteError } from '../utils/itemDeleteOutcome';
 import { useAuth } from '../hooks/useAuth';
 import TabNavigation from './item-create/components/TabNavigation';
 import FormSection from './item-create/components/FormSection';
@@ -313,11 +314,17 @@ const ItemDetailPage = () => {
         if (!id) return;
         setIsDeleting(true);
         try {
-            await inventoryService.deleteItem(id);
-            recordActivity({ eventType: 'inventory.item.deleted', eventCategory: 'data', description: `Deleted item "${item?.name}"`, resourceType: 'item', resourceId: id }).catch(() => {});
+            const result = await inventoryService.deleteItem(id);
+            const outcome = describeItemDeleteResult(result, item?.name);
+            const archived = outcome.kind === 'archived';
+            recordActivity({ eventType: archived ? 'inventory.item.archived' : 'inventory.item.deleted', eventCategory: 'data', description: `${archived ? 'Archived' : 'Deleted'} item "${item?.name}"`, resourceType: 'item', resourceId: id }).catch(() => {});
+            if (archived) toast.info(outcome.message);
+            else toast.success(outcome.message);
             navigate('/inventory/items');
         } catch (err: any) {
-            setError(err.message || 'Failed to delete item');
+            const outcome = describeItemDeleteError(err);
+            toast.error(outcome.message);
+            setError(outcome.message);
             setIsDeleting(false);
             setShowDeleteConfirm(false);
         }
@@ -1039,8 +1046,8 @@ const ItemDetailPage = () => {
             <Modal
                 open={showDeleteConfirm}
                 onClose={() => !isDeleting && setShowDeleteConfirm(false)}
-                title="Delete Item"
-                description="This action cannot be undone"
+                title="Delete product"
+                description="Deleting cannot be undone"
                 size="sm"
                 footer={
                     <>
@@ -1052,8 +1059,9 @@ const ItemDetailPage = () => {
                 }
             >
                 <p className="text-fg-muted">
-                    Are you sure you want to delete <strong className="text-fg">{item.name}</strong>?
-                    Items with stock movements or balances cannot be deleted.
+                    Delete <strong className="text-fg">{item.name}</strong>? If it has stock history it will be
+                    archived instead (hidden from active lists, audit trail kept). It can't be deleted while stock,
+                    reservations or purchase order lines remain.
                 </p>
             </Modal>
 

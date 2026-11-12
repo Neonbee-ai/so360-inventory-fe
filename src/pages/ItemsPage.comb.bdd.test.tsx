@@ -54,13 +54,16 @@ describe('ItemsPage on the Comb list floorplan', () => {
     expect(mockNavigate).toHaveBeenCalledWith('/inventory/items/i1');
   });
 
-  it('Given the type filter drawer / When a type is chosen / Then non-matching items are hidden', async () => {
-    mockGetItems.mockResolvedValue({ data: [item(), item({ id: 'i2', name: 'Consulting', type: 'service' })] });
+  it('Given the type filter drawer / When a type is chosen / Then the API is queried by type and returns only matches', async () => {
+    mockGetItems.mockImplementation(async (p: any) => ({
+      data: p?.type === 'product' ? [item()] : [item(), item({ id: 'i2', name: 'Consulting', type: 'service' })],
+    }));
     render(<ItemsPage />);
     await waitFor(() => screen.getByTestId('row-i2'));
     fireEvent.click(screen.getByTestId('filters-button'));
     fireEvent.change(screen.getByLabelText('Type'), { target: { value: 'product' } });
-    expect(screen.queryByTestId('row-i2')).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByTestId('row-i2')).not.toBeInTheDocument());
+    expect(mockGetItems).toHaveBeenLastCalledWith(expect.objectContaining({ type: 'product' }));
     expect(screen.getByTestId('row-i1')).toBeInTheDocument();
   });
 

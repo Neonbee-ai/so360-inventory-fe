@@ -80,6 +80,13 @@ describe('inventoryService', () => {
       expect(url).toContain('page=2');
       expect(url).toContain('limit=25');
     });
+
+    it('When called with a type / Then appends the type param so the server filters', async () => {
+      mockFetch.mockReturnValue(jsonOk({ data: [] }));
+      await inventoryService.getItems({ type: 'service' });
+      const [url] = mockFetch.mock.calls[0];
+      expect(url).toContain('type=service');
+    });
   });
 
   describe('Given getItem', () => {
@@ -115,6 +122,14 @@ describe('inventoryService', () => {
       await inventoryService.deleteItem('i1');
       const [, opts] = mockFetch.mock.calls[0];
       expect(opts.method).toBe('DELETE');
+    });
+
+    it('When the backend blocks with 409 / Then the error keeps the status and message', async () => {
+      mockFetch.mockReturnValue(jsonFail(409, 'Cannot delete item referenced by purchase order lines.'));
+      await expect(inventoryService.deleteItem('i1')).rejects.toMatchObject({
+        status: 409,
+        message: 'Cannot delete item referenced by purchase order lines.',
+      });
     });
   });
 

@@ -8,7 +8,10 @@ import { useAuth } from '../hooks/useAuth';
 import { firstError, optional, validateAddress, validateCode, validateName, ValidationResult } from '../utils/validators';
 import { useActivity, useShellBridge } from '@so360/shell-context';
 import {
-    FeatureGate, DetailPageTemplate, DataTable, Button, IconButton, Modal, TextField, Textarea, Checkbox,
+    LOCATION_TYPE_OPTIONS, LocationType, locationTypeLabel, parentError, parentOptions, sortByHierarchy, typeOf,
+} from '../utils/locationHierarchy';
+import {
+    FeatureGate, DetailPageTemplate, DataTable, Button, IconButton, Modal, TextField, Textarea, Checkbox, Select,
     Alert, Badge, EmptyState, DescriptionList, Card,
     type DataTableColumn,
 } from '@so360/design-system';
@@ -42,7 +45,8 @@ const WarehouseDetailPage = () => {
     // Location CRUD state
     const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
     const [editingLocation, setEditingLocation] = useState<any>(null);
-    const [locationForm, setLocationForm] = useState({ name: '', code: '' });
+    const emptyLocationForm = { name: '', code: '', location_type: 'general' as LocationType, parent_location_id: '' };
+    const [locationForm, setLocationForm] = useState(emptyLocationForm);
     const [isSavingLocation, setIsSavingLocation] = useState(false);
     const [showLocationErrors, setShowLocationErrors] = useState(false);
     const [showEditErrors, setShowEditErrors] = useState(false);
@@ -127,10 +131,15 @@ const WarehouseDetailPage = () => {
     const openLocationModal = (loc?: any) => {
         if (loc) {
             setEditingLocation(loc);
-            setLocationForm({ name: loc.name, code: loc.code });
+            setLocationForm({
+                name: loc.name,
+                code: loc.code,
+                location_type: typeOf(loc),
+                parent_location_id: loc.parent_location_id || '',
+            });
         } else {
             setEditingLocation(null);
-            setLocationForm({ name: '', code: '' });
+            setLocationForm(emptyLocationForm);
         }
         setShowLocationErrors(false);
         setIsLocationModalOpen(true);
@@ -145,6 +154,7 @@ const WarehouseDetailPage = () => {
     const locationErrors: Record<string, ValidationResult> = {
         name: validateName(locationForm.name, 'Location Name', 2, 100),
         code: validateCode(locationForm.code, 'Location Code', 2, 20),
+        parent: parentError(locationForm.location_type, locationForm.parent_location_id),
     };
     const locationBlocked = firstError(locationErrors);
 
@@ -160,14 +170,27 @@ const WarehouseDetailPage = () => {
         setIsSavingLocation(true);
         setError(null);
         try {
+            const hierarchyChanged = !editingLocation
+                ? locationForm.location_type !== 'general'
+                : locationForm.location_type !== typeOf(editingLocation)
+                    || (locationForm.parent_location_id || null) !== (editingLocation.parent_location_id || null);
+            // Hierarchy fields only go out when used, so flat locations keep
+            // saving against a database without migration 064.
+            const payload = {
+                name: locationForm.name,
+                code: locationForm.code,
+                ...(hierarchyChanged
+                    ? { location_type: locationForm.location_type, parent_location_id: locationForm.parent_location_id || null }
+                    : {}),
+            };
             if (editingLocation) {
-                await inventoryService.updateLocation(editingLocation.id, locationForm);
+                await inventoryService.updateLocation(editingLocation.id, payload);
             } else {
-                await inventoryService.createLocation(id, locationForm);
+                await inventoryService.createLocation(id, payload);
             }
             setIsLocationModalOpen(false);
             setEditingLocation(null);
-            setLocationForm({ name: '', code: '' });
+            setLocationForm(emptyLocationForm);
             setShowLocationErrors(false);
             fetchWarehouse();
         } catch (err: any) {
@@ -243,6 +266,8 @@ const WarehouseDetailPage = () => {
     ];
 
     const closeLocationModal = () => { setIsLocationModalOpen(false); setEditingLocation(null); };
+    const locationParentOptions = (type: LocationType) =>
+        parentOptions(type, warehouse.warehouse_locations ?? [], editingLocation?.id);
 
     return (
         <DetailPageTemplate
@@ -299,12 +324,15 @@ const WarehouseDetailPage = () => {
                 >
                     {warehouse.warehouse_locations?.length > 0 ? (
                         <div className="flex flex-col gap-nb-3">
-                            {warehouse.warehouse_locations.map((loc: any) => (
-                                <div key={loc.id} className="rounded-nb-md border border-line p-nb-3">
+                            {sortByHierarchy<any>(warehouse.warehouse_locations).map(({ loc, depth }) => (
+                                <div key={loc.id} className={`rounded-nb-md border border-line p-nb-3 ${depth === 1 ? 'ml-nb-6' : depth >= 2 ? 'ml-nb-12' : ''}`} data-testid={`location-row-${loc.id}`}>
                                     <div className="flex items-center justify-between gap-nb-2">
                                         <span className="inline-flex items-center gap-nb-2 text-nb-body font-semibold text-fg">
                                             <MapPin size={16} className="text-primary" />
                                             {loc.name}
+                                            {typeOf(loc) !== 'general' && (
+                                                <Badge tone="neutral" size="sm">{locationTypeLabel(typeOf(loc))}</Badge>
+                                            )}
                                         </span>
                                         <div className="flex items-center gap-nb-1">
                                             <span className="font-mono text-nb-caption text-fg-subtle">{loc.code}</span>
@@ -404,6 +432,35 @@ const WarehouseDetailPage = () => {
                             onChange={(e: any) => setLocationForm({ ...locationForm, code: e.target.value.toUpperCase() })} />
                         <FieldErr show={showLocationErrors} message={locationErrors.code} testId="error-location-code" />
                     </div>
+                    <div>
+                        <Select
+                            name="location-type"
+                            label="Location Type"
+                            value={locationForm.location_type}
+                            options={LOCATION_TYPE_OPTIONS}
+                            onChange={(e: any) => {
+                                const type = e.target.value as LocationType;
+                                const stillValid = locationParentOptions(type).some((o) => o.value === locationForm.parent_location_id);
+                                setLocationForm({ ...locationForm, location_type: type, parent_location_id: stillValid ? locationForm.parent_location_id : '' });
+                            }}
+                        />
+                    </div>
+                    {locationParentOptions(locationForm.location_type).length > 0 || locationForm.location_type === 'rack' ? (
+                        <div>
+                            <Select
+                                name="location-parent"
+                                label={locationForm.location_type === 'rack' ? 'Parent Zone / Aisle' : 'Parent Zone'}
+                                required={locationForm.location_type === 'rack'}
+                                value={locationForm.parent_location_id}
+                                options={[
+                                    { value: '', label: locationForm.location_type === 'rack' ? 'Select a zone or aisle' : 'None (top level)' },
+                                    ...locationParentOptions(locationForm.location_type),
+                                ]}
+                                onChange={(e: any) => setLocationForm({ ...locationForm, parent_location_id: e.target.value })}
+                            />
+                            <FieldErr show={showLocationErrors} message={locationErrors.parent} testId="error-location-parent" />
+                        </div>
+                    ) : null}
                 </form>
             </Modal>
 
