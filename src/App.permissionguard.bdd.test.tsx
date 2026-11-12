@@ -49,6 +49,7 @@ vi.mock('react-router-dom', () => ({
   Navigate: ({ to }: any) => <div data-testid="navigate-to">{to}</div>,
   useLocation: () => ({ pathname: '/vendors' }),
   useNavigate: () => vi.fn(),
+  useParams: () => ({}),
 }));
 
 vi.mock('@so360/shell-context', () => ({

@@ -54,6 +54,7 @@ export const RefreshCcw = createIcon('RefreshCcw');
 export const Save = createIcon('Save');
 export const ScanLine = createIcon('ScanLine');
 export const Search = createIcon('Search');
+export const SearchX = createIcon('SearchX');
 export const Settings = createIcon('Settings');
 export const Shirt = createIcon('Shirt');
 export const Sliders = createIcon('Sliders');
