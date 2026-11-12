@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { RecordNotFound, NOT_FOUND_ERROR, isNotFoundError } from '../../components/RecordNotFound';
 import { CheckCircle, XCircle, Clock, ShoppingCart } from 'lucide-react';
 import { procurementService } from '../../services/procurementService';
 import { rfqService } from '../../services/rfqService';
@@ -115,7 +116,7 @@ const PRDetailPage = () => {
             const data = await procurementService.getPRDetail(id!);
             setPr(data);
         } catch (err: any) {
-            setError(err?.status === 404 || err?.status === 400 ? 'PR not found' : (err.message || 'Failed to load PR details'));
+            setError(isNotFoundError(err) ? NOT_FOUND_ERROR : (err.message || 'Failed to load PR details'));
         } finally {
             setIsLoading(false);
         }
@@ -241,6 +242,14 @@ const PRDetailPage = () => {
 
     if (isLoading) {
         return <DetailPageTemplate trail={[{ label: 'Purchase Requisitions', onClick: () => navigate('/procurement/pr') }]} title="Purchase Requisition" loading>{null}</DetailPageTemplate>;
+    }
+
+    if (!pr && (error === NOT_FOUND_ERROR || !error)) {
+        return (
+            <DetailPageTemplate trail={[{ label: 'Purchase Requisitions', onClick: () => navigate('/procurement/pr') }]} title="Purchase Requisition">
+                <RecordNotFound listPath="/procurement/pr" listLabel="PRs" />
+            </DetailPageTemplate>
+        );
     }
 
     if (error || !pr) {

@@ -221,7 +221,7 @@ describe('RFQComparisonPage', () => {
         it('When the request fails / Then the error is shown with a way back', async () => {
             mockGetComparison.mockRejectedValue(new Error('RFQ not found'));
             render(<RFQComparisonPage />);
-            await waitFor(() => expect(screen.getByText('RFQ not found')).toBeInTheDocument());
+            await waitFor(() => expect(screen.getByText(/Record not found/i)).toBeInTheDocument());
             expect(screen.getByText('Back to RFQs')).toBeInTheDocument();
         });
     });

@@ -65,7 +65,7 @@ describe('PODetailPage (Comb)', () => {
   it('Given the API answers 404 / When loaded / Then it settles on "PO not found" inside the page shell', async () => {
     mockGetPODetail.mockRejectedValue(Object.assign(new Error('Not Found'), { status: 404 }));
     const { container } = render(<PODetailPage />);
-    expect(await screen.findByText('PO not found')).toBeInTheDocument();
+    expect(await screen.findByText(/Record not found/i)).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Purchase Order' })).toBeInTheDocument();
     expect(container.querySelector('[data-slot="skeleton"]')).not.toBeInTheDocument();
   });
@@ -73,7 +73,7 @@ describe('PODetailPage (Comb)', () => {
   it('Given the API answers 400 for a malformed id / When loaded / Then it shows "PO not found"', async () => {
     mockGetPODetail.mockRejectedValue(Object.assign(new Error('Validation failed'), { status: 400 }));
     render(<PODetailPage />);
-    expect(await screen.findByText('PO not found')).toBeInTheDocument();
+    expect(await screen.findByText(/Record not found/i)).toBeInTheDocument();
   });
 
   it('Given a PO without lines / When loaded / Then the lines table has no rows', async () => {
