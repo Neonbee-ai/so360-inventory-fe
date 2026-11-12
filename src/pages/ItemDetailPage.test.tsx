@@ -270,7 +270,7 @@ describe('ItemDetailPage', () => {
       await waitFor(() => expect(screen.getAllByText('Premium Widget').length).toBeGreaterThan(0));
       fireEvent.click(screen.getByText('Delete'));
       await waitFor(() => {
-        expect(screen.getByText(/Are you sure/i)).toBeInTheDocument();
+        expect(screen.getByText(/archived instead/i)).toBeInTheDocument();
       });
     });
   });
