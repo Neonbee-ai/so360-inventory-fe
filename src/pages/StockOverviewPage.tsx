@@ -88,9 +88,14 @@ const StockOverviewPage = () => {
             const offset = (page - 1) * PAGE_SIZE;
             const res: any = await inventoryService.getStockOverview({ limit: PAGE_SIZE, offset, include_total: true });
             if (Array.isArray(res)) {
-                // BE ignored paging: a longer-than-page response is the full set.
-                if (res.length > PAGE_SIZE) setStockLevels(res);
-                return;
+                // Bare array: a longer-than-page response, or a short first page, is the full set.
+                // Anything else is ambiguous (a full page, or a later page) so re-read the snapshot.
+                if (res.length > PAGE_SIZE || (offset === 0 && res.length < PAGE_SIZE)) {
+                    setStockLevels(res);
+                    return;
+                }
+                inFlightRef.current = false;
+                return await fetchStock(false);
             }
             if (typeof res?.total === 'number' && res.total !== total) {
                 inFlightRef.current = false;
