@@ -84,8 +84,16 @@ class ProcurementService {
     }
 
     // Purchase Orders
-    async getPOs() {
-        return this.request(`/po/${inventoryService.getOrgId()}`);
+    /**
+     * Without `opts` the bare list is returned (unchanged). With `opts` the BE
+     * is asked for a page with `include_total`; an older BE ignores the params
+     * and answers with the bare array.
+     */
+    async getPOs(opts?: { limit: number; offset: number; search?: string }) {
+        if (!opts) return this.request(`/po/${inventoryService.getOrgId()}`);
+        const qs = new URLSearchParams({ include_total: 'true', limit: String(opts.limit), offset: String(opts.offset) });
+        if (opts.search && opts.search.trim()) qs.set('search', opts.search.trim());
+        return this.request(`/po/${inventoryService.getOrgId()}?${qs.toString()}`);
     }
 
     async createPO(dto: any) {
