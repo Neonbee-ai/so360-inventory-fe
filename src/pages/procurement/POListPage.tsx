@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { procurementService } from '../../services/procurementService';
 import { vendorService } from '../../services/vendorService';
@@ -10,7 +10,7 @@ import ItemSearchSelector from '../../components/ItemSearchSelector';
 import {
     QuotaBar, QuotaGate, FeatureGate, toast, getErrorMessage,
     ListPageTemplate, Button, DataTable, SearchInput, EmptyState, Alert, Badge, StatusBadge,
-    Modal, TextField, Select, Textarea, Progress, SectionCard, FieldGrid,
+    Modal, TextField, Select, Textarea, Progress, SectionCard, FieldGrid, Pagination,
 } from '@so360/design-system';
 
 /**
@@ -52,6 +52,12 @@ const POListPage = () => {
     const { recordActivity } = useActivity();
     const [pos, setPos] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(50);
+    const [serverTotal, setServerTotal] = useState(0);
+    // True when the BE answered with the bare list (no paging support): paged and searched here instead.
+    const legacyRef = useRef(false);
     const [loading, setLoading] = useState(true);
     const [fetchError, setFetchError] = useState<PageNotice>(null);
     const [vendorNotice, setVendorNotice] = useState<PageNotice>(null);
@@ -74,6 +80,25 @@ const POListPage = () => {
         if (permissionsLoading) return;
         fetchData();
     }, [permissionsLoading]);
+
+    useEffect(() => {
+        const t = setTimeout(() => {
+            setDebouncedSearch((prev) => {
+                if (prev !== searchTerm) setPage(1);
+                return searchTerm;
+            });
+        }, 300);
+        return () => clearTimeout(t);
+    }, [searchTerm]);
+
+    // Page / search changes re-read only the PO list (and only against a paging BE).
+    const firstPageLoad = useRef(true);
+    useEffect(() => {
+        if (firstPageLoad.current) { firstPageLoad.current = false; return; }
+        if (permissionsLoading || legacyRef.current || !can('purchase_orders.read')) return;
+        setLoading(true);
+        void loadPOs();
+    }, [page, pageSize, debouncedSearch]);
 
     // Detect navigation state from PRDetailPage conversion
     useEffect(() => {
@@ -153,8 +178,20 @@ const POListPage = () => {
         // PRs loaded independently so a failure doesn't block the PO list
         loadPRs();
 
+        await loadPOs();
+    };
+
+    const loadPOs = async () => {
         try {
-            setPos(unwrap(await procurementService.getPOs()));
+            const res: any = await procurementService.getPOs({
+                limit: pageSize,
+                offset: (page - 1) * pageSize,
+                search: debouncedSearch,
+            });
+            const serverPaged = !Array.isArray(res) && Array.isArray(res?.data) && typeof res?.total === 'number';
+            legacyRef.current = !serverPaged;
+            setPos(unwrap(res));
+            setServerTotal(serverPaged ? res.total : 0);
         } catch (reason: any) {
             setPos([]);
             if (isForbidden(reason)) {
@@ -323,14 +360,20 @@ const POListPage = () => {
     const PR_DONE = ['approved', 'partially_converted', 'converted_to_po'];
     // Client-side search over what the row shows (PO number, vendor, status) plus
     // the free-text fields a buyer types on create, so a just-created PO is findable.
-    const filteredPos = useMemo(() => {
+    // Server paging: rows are the requested page, already filtered by the BE search.
+    const matchedPos = useMemo(() => {
+        if (!legacyRef.current && serverTotal > 0) return pos;
         const q = searchTerm.trim().toLowerCase();
         if (!q) return pos;
         return pos.filter((po: any) =>
             [po.po_number, po.vendor?.name, po.status, po.terms, po.shipping_address]
                 .some((v) => typeof v === 'string' && v.toLowerCase().includes(q)),
         );
-    }, [pos, searchTerm]);
+    }, [pos, searchTerm, serverTotal]);
+    const serverMode = !legacyRef.current && serverTotal > 0;
+    const matchCount = serverMode ? serverTotal : matchedPos.length;
+    const totalPages = Math.max(1, Math.ceil(matchCount / pageSize));
+    const filteredPos = serverMode ? matchedPos : matchedPos.slice((page - 1) * pageSize, page * pageSize);
 
     const pendingPrs = allPrs.filter(pr => !PR_DONE.includes(pr.status) && pr.status !== 'rejected' && pr.status !== 'closed');
     const prLabel = (pr: any) => `PR-${pr.id.slice(0, 8).toUpperCase()} — ${pr.pr_lines?.length || 0} items — ${pr.status.replace(/_/g, ' ')}`;
@@ -360,7 +403,7 @@ const POListPage = () => {
             <ListPageTemplate trail={[]}
                 title="Purchase Orders"
                 description="Official commercial documents issued to sellers."
-                count={pos.length}
+                count={matchCount}
                 primaryAction={
                     <div className="flex flex-wrap items-center gap-nb-2">
                         {approvedPrs.length > 0 && (
@@ -397,6 +440,16 @@ const POListPage = () => {
                         data-testid="po-search"
                     />
                 }
+                pagination={matchCount > 0 ? (
+                    <Pagination
+                        currentPage={page}
+                        totalPages={totalPages}
+                        totalItems={matchCount}
+                        pageSize={pageSize}
+                        onPageChange={setPage}
+                        onPageSizeChange={(n: number) => { setPageSize(n); setPage(1); }}
+                    />
+                ) : undefined}
                 loading={loading && pos.length === 0}
                 isEmpty={!loading && !fetchError && !showPrMenu && filteredPos.length === 0}
                 empty={<>{renderNotice(vendorNotice)}<EmptyState title={searchTerm.trim() ? 'No purchase orders match your search.' : 'No purchase orders found.'} /></>}

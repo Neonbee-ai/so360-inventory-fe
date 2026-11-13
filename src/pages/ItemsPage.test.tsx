@@ -193,6 +193,35 @@ describe('ItemsPage', () => {
     });
   });
 
+  describe('Given 3 pages of items and the user is on page 3', () => {
+    const rows = (from: number) => Array.from({ length: 50 }, (_, i) => makeItem({ id: `q${from + i}`, name: `Item ${from + i}`, sku: `Q${from + i}` }));
+
+    beforeEach(() => {
+      mockGetItems.mockImplementation(async (p: any) => {
+        const page = p?.page ?? 1;
+        return { data: rows((page - 1) * 50 + 1), pagination: { page, limit: 50, total: 150, totalPages: 3 } };
+      });
+    });
+
+    it('When a search is typed / Then exactly one request is made and it asks for page 1 (no stale page-3 request)', async () => {
+      render(<ItemsPage />);
+      await waitFor(() => screen.getByTestId('row-q1'));
+      fireEvent.click(screen.getByText('Next'));
+      await waitFor(() => screen.getByTestId('row-q51'));
+      fireEvent.click(screen.getByText('Next'));
+      await waitFor(() => screen.getByTestId('row-q101'));
+      mockGetItems.mockClear();
+
+      fireEvent.change(screen.getByPlaceholderText('Search SKU or Item Name...'), { target: { value: 'x' } });
+      await waitFor(() => expect(mockGetItems).toHaveBeenCalled());
+      // Let any extra effect-driven fetch settle before counting.
+      await new Promise((r) => setTimeout(r, 50));
+
+      expect(mockGetItems).toHaveBeenCalledTimes(1);
+      expect(mockGetItems).toHaveBeenCalledWith(expect.objectContaining({ search: 'x', page: 1 }));
+    });
+  });
+
   describe('Given effectiveFlagsLoaded is false (matrix still resolving)', () => {
     it('When page renders / Then Register Item button is not shown', async () => {
       mockUseShellBridge.mockReturnValue({

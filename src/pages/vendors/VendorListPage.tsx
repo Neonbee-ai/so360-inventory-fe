@@ -1,11 +1,11 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { vendorService } from '../../services/vendorService';
 import { useAuth } from '../../hooks/useAuth';
 import { useShellBridge, useQuota, useSandboxLimit, useBusinessSettings } from '@so360/shell-context';
 import {
     Alert, Button, Checkbox, ConfirmDialog, DataTable, EmptyState, FeatureGate, ListPageTemplate,
-    Modal, QuotaBar, QuotaGate, SearchInput, Select, StatusBadge, Textarea, TextField, FieldGrid,
+    Modal, Pagination, QuotaBar, QuotaGate, SearchInput, Select, StatusBadge, Textarea, TextField, FieldGrid,
 } from '@so360/design-system';
 import type { DataTableColumn } from '@so360/design-system';
 import { VendorBankAccountFields } from '../../components/vendors/VendorBankAccountFields';
@@ -66,6 +66,12 @@ const VendorListPage = () => {
     const [vendors, setVendors] = useState<Vendor[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(50);
+    const [serverTotal, setServerTotal] = useState(0);
+    // True when the BE answered with the bare array (no paging support): the full list is held and paged here.
+    const legacyRef = useRef(false);
     const [error, setError] = useState<string | null>(null);
     const [nameError, setNameError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -97,8 +103,20 @@ const VendorListPage = () => {
     const [isDeleting, setIsDeleting] = useState(false);
 
     useEffect(() => {
+        const t = setTimeout(() => {
+            setDebouncedSearch((prev) => {
+                if (prev !== searchTerm) setPage(1);
+                return searchTerm;
+            });
+        }, 300);
+        return () => clearTimeout(t);
+    }, [searchTerm]);
+
+    useEffect(() => {
+        // Legacy BE: the full list is already loaded; search and paging run client-side.
+        if (legacyRef.current) return;
         fetchData();
-    }, []);
+    }, [page, pageSize, debouncedSearch]);
 
     // `ensure`: a just-created vendor. The list endpoint is cached per BE
     // instance (pm2 cluster), so an immediate refetch can miss the new row;
@@ -107,9 +125,16 @@ const VendorListPage = () => {
         setLoading(true);
         setError(null);
         try {
-            const data = await vendorService.getVendors();
-            const list = Array.isArray(data) ? data : [];
-            setVendors(ensure?.id && !list.some((v: any) => v.id === ensure.id) ? [ensure, ...list] : list);
+            const res = await vendorService.getVendorsPage({
+                limit: pageSize,
+                offset: (page - 1) * pageSize,
+                search: debouncedSearch,
+            });
+            legacyRef.current = res.legacy;
+            const list = res.data;
+            const addEnsure = ensure?.id && !list.some((v: any) => v.id === ensure.id) && (res.legacy || (page === 1 && !debouncedSearch));
+            setVendors(addEnsure ? [ensure, ...list] : list);
+            setServerTotal(res.total + (addEnsure && !res.legacy ? 1 : 0));
         } catch (error: any) {
             setError(error.message || 'Failed to fetch vendors');
         } finally {
@@ -192,10 +217,16 @@ const VendorListPage = () => {
         }
     };
 
-    const filteredVendors = vendors.filter(vendor =>
-        vendor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        vendor.email?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    // Server paging: rows are already the requested page, filtered by the BE search.
+    const matched = legacyRef.current
+        ? vendors.filter(vendor =>
+            vendor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            vendor.email?.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+        : vendors;
+    const matchCount = legacyRef.current ? matched.length : serverTotal;
+    const totalPages = Math.max(1, Math.ceil(matchCount / pageSize));
+    const filteredVendors = legacyRef.current ? matched.slice((page - 1) * pageSize, page * pageSize) : matched;
     const visibleVendors = isSandboxMode ? filteredVendors.slice(0, sandboxEntryLimit) : filteredVendors;
     const canDeleteVendor = can('suppliers.create') && canCreateVendor;
 
@@ -232,14 +263,14 @@ const VendorListPage = () => {
             <ListPageTemplate trail={[]}
                 title="Vendors & Subcontractors"
                 description="Manage supply chain partners and commercial contracts."
-                count={loading ? undefined : filteredVendors.length}
+                count={loading ? undefined : matchCount}
                 primaryAction={
                     can('suppliers.create') ? (
                         <FeatureGate state={createVendorState} loading={(shell?.effectiveFlagsLoaded === false)} onUpgradeClick={() => navigate('/org/billing')}>
                             <QuotaGate
                                 quotaKey="max_vendors"
                                 moduleCode="inventory"
-                                used={vendors.length}
+                                used={legacyRef.current ? vendors.length : serverTotal}
                                 limit={quotaData?.limit ?? 0}
                                 isUnlimited={quotaData?.is_unlimited}
                                 disableOnExceeded
@@ -257,6 +288,16 @@ const VendorListPage = () => {
                     />
                 }
                 loading={loading}
+                pagination={matchCount > 0 ? (
+                    <Pagination
+                        currentPage={page}
+                        totalPages={totalPages}
+                        totalItems={matchCount}
+                        pageSize={pageSize}
+                        onPageChange={setPage}
+                        onPageSizeChange={(n: number) => { setPageSize(n); setPage(1); }}
+                    />
+                ) : undefined}
                 isEmpty={!loading && !error && visibleVendors.length === 0}
                 empty={
                     <EmptyState
@@ -270,7 +311,7 @@ const VendorListPage = () => {
                 {(quotaData || vendors.length > 0) && (
                     <QuotaBar
                         label="Vendors"
-                        used={vendors.length}
+                        used={legacyRef.current ? vendors.length : serverTotal}
                         limit={quotaData?.limit ?? 0}
                         isUnlimited={quotaData?.is_unlimited}
                         className="mb-4"

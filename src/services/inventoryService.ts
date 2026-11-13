@@ -392,8 +392,14 @@ class InventoryService {
     }
 
     // Stock Overview
-    async getStockOverview() {
-        return this.request(`/stock-overview/${this.orgId}`);
+    // Optional paging: backends that ignore these params return the full array.
+    async getStockOverview(params?: { limit?: number; offset?: number; include_total?: boolean }): Promise<any> {
+        const qs = new URLSearchParams();
+        if (params?.limit !== undefined) qs.set('limit', String(params.limit));
+        if (params?.offset !== undefined) qs.set('offset', String(params.offset));
+        if (params?.include_total) qs.set('include_total', 'true');
+        const q = qs.toString();
+        return this.request(`/stock-overview/${this.orgId}${q ? `?${q}` : ''}`);
     }
 
     // GL Inventory Valuation (from Accounting)

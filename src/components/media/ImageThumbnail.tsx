@@ -29,7 +29,7 @@ const ImageThumbnail: React.FC<ImageThumbnailProps> = ({ url, isLoading, error, 
                     <span className="text-nb-overline text-danger text-center leading-tight">Failed</span>
                 </div>
             ) : (
-                <img
+                <img loading="lazy"
                     src={url}
                     alt="Uploaded"
                     className="w-full h-full object-contain"
