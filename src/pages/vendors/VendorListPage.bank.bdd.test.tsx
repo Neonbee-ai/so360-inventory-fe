@@ -8,6 +8,13 @@ const mockCreateBank = vi.fn();
 vi.mock('../../services/vendorService', () => ({
   vendorService: {
     getVendors: (...a: any[]) => mockGetVendors(...a),
+    // Paged read (perf): adapt the getVendors fixture the way the real service treats an old BE's bare array.
+    getVendorsPage: async () => {
+      const res = await mockGetVendors();
+      if (Array.isArray(res)) return { data: res, total: res.length, legacy: true };
+      const data = Array.isArray(res?.data) ? res.data : [];
+      return { data, total: typeof res?.total === 'number' ? res.total : data.length, legacy: false };
+    },
     createVendor: (...a: any[]) => mockCreateVendor(...a),
     deleteVendor: vi.fn(),
     createBankAccount: (...a: any[]) => mockCreateBank(...a),

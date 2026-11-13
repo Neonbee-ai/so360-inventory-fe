@@ -7,6 +7,7 @@ import VendorListPage from './VendorListPage';
 const quotaState = { data: null as any };
 const vendorMocks = {
   getVendors: vi.fn<[], Promise<any>>(),
+  getVendorsPage: vi.fn<[any], Promise<any>>(),
   createVendor: vi.fn<[any], Promise<any>>(),
   deleteVendor: vi.fn<[string], Promise<any>>(),
 };
@@ -15,6 +16,14 @@ const vendorMocks = {
 vi.mock('../../services/vendorService', () => ({
   vendorService: {
     getVendors: () => vendorMocks.getVendors(),
+    // Server paging when a test arms getVendorsPage; otherwise behaves like an old BE (bare array).
+    getVendorsPage: async (opts: any) => {
+      const paged = vendorMocks.getVendorsPage(opts);
+      if (paged) return paged;
+      const r = await vendorMocks.getVendors();
+      const arr = Array.isArray(r) ? r : [];
+      return { data: arr, total: arr.length, legacy: true };
+    },
     createVendor: (dto: any) => vendorMocks.createVendor(dto),
     deleteVendor: (id: string) => vendorMocks.deleteVendor(id),
   },
@@ -288,6 +297,36 @@ describe('VendorListPage — vendor count display', () => {
       });
 
       expect(vendorMocks.getVendors).toHaveBeenCalledTimes(1);
+    });
+  });
+});
+
+describe('VendorListPage — server paging', () => {
+  describe('Given the BE returns { data, total } for page 1', () => {
+    it('When the page loads / Then it asks for limit 50 offset 0 and shows the server total in QuotaBar', async () => {
+      quotaState.data = null;
+      vendorMocks.getVendorsPage.mockResolvedValue({ data: makeVendors(50), total: 120, legacy: false });
+
+      renderPage();
+
+      await waitFor(() => {
+        expect(screen.getByTestId('quota-bar').getAttribute('data-used')).toBe('120');
+      });
+      expect(vendorMocks.getVendorsPage).toHaveBeenCalledWith({ limit: 50, offset: 0, search: '' });
+    });
+  });
+
+  describe('Given an old BE that returns the bare array', () => {
+    it('When 60 vendors load / Then they are paged client-side and the count is 60', async () => {
+      quotaState.data = null;
+      vendorMocks.getVendors.mockResolvedValue(makeVendors(60));
+
+      renderPage();
+
+      await waitFor(() => {
+        expect(screen.getByTestId('quota-bar').getAttribute('data-used')).toBe('60');
+      });
+      expect(screen.getAllByText(/^Vendor \d+$/).length).toBe(50);
     });
   });
 });

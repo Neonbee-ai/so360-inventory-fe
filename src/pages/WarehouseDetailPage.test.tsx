@@ -86,7 +86,7 @@ describe('WarehouseDetailPage', () => {
       mockGetWarehouse.mockRejectedValue(new Error('Warehouse not found'));
       render(<WarehouseDetailPage />);
       await waitFor(() => {
-        expect(screen.getByText('Warehouse not found')).toBeInTheDocument();
+        expect(screen.getByText(/Record not found/i)).toBeInTheDocument();
       });
     });
   });

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { RecordNotFound, NOT_FOUND_ERROR, isNotFoundError } from '../components/RecordNotFound';
 import {
     Package, Info, AlertCircle,
     ArrowDownLeft, ArrowUpRight, ArrowRightLeft,
@@ -166,10 +167,10 @@ const ItemDetailPage = () => {
                     .then((sh) => setSalesHistory(sh))
                     .catch(() => setSalesHistory(null));
             } else {
-                setError('Item not found');
+                setError(NOT_FOUND_ERROR);
             }
-        } catch {
-            setError('Failed to load item details');
+        } catch (err) {
+            setError(isNotFoundError(err) ? NOT_FOUND_ERROR : 'Failed to load item details');
         } finally {
             setIsLoading(false);
         }
@@ -392,6 +393,11 @@ const ItemDetailPage = () => {
 
     // ── Loading / Error States ────────────────────────
     if (isLoading) return <DetailPageTemplate trail={[{ label: 'Items', to: '/inventory/items' }]} title="Item" loading>{null}</DetailPageTemplate>;
+    if (!item && (error === NOT_FOUND_ERROR || !error)) return (
+        <DetailPageTemplate trail={[{ label: 'Items', to: '/inventory/items' }]} title="Item">
+            <RecordNotFound listPath="/inventory/items" listLabel="Items" />
+        </DetailPageTemplate>
+    );
     if (error && !item) return (
         <EmptyState
             icon={AlertCircle}
@@ -512,7 +518,7 @@ const ItemDetailPage = () => {
                                         className="aspect-[4/3] rounded-xl overflow-hidden border border-line-strong cursor-pointer group"
                                         onClick={() => setPreviewImage(item.image_urls![0])}
                                     >
-                                        <img
+                                        <img loading="lazy"
                                             src={item.image_urls![0]}
                                             alt={item.name}
                                             className="w-full h-full object-cover"
@@ -526,7 +532,7 @@ const ItemDetailPage = () => {
                                                     className="w-16 h-16 rounded-lg overflow-hidden border border-line-strong cursor-pointer hover:border-primary transition-colors"
                                                     onClick={() => setPreviewImage(url)}
                                                 >
-                                                    <img src={url} alt="" className="w-full h-full object-cover" />
+                                                    <img loading="lazy" src={url} alt="" className="w-full h-full object-cover" />
                                                 </div>
                                             ))}
                                             {item.image_urls!.length > 5 && (
@@ -792,7 +798,7 @@ const ItemDetailPage = () => {
                                                                 className="aspect-square rounded-lg overflow-hidden border border-line-strong cursor-pointer hover:border-primary transition-colors group"
                                                                 onClick={() => setPreviewImage(url)}
                                                             >
-                                                                <img src={url} alt={`${item.name} ${i + 1}`} className="w-full h-full object-cover" />
+                                                                <img loading="lazy" src={url} alt={`${item.name} ${i + 1}`} className="w-full h-full object-cover" />
                                                             </div>
                                                         ))}
                                                     </Grid>
