@@ -243,6 +243,11 @@ class InventoryService {
         return this.request(`/items/detail/${id}`);
     }
 
+    /** Product 360 — stock, purchase history and sales history, composed by the API. */
+    async getItem360<T = any>(id: string): Promise<T> {
+        return this.request(`/products/${id}/360`);
+    }
+
     async createItem(dto: any) {
         return this.request('/items', {
             method: 'POST',

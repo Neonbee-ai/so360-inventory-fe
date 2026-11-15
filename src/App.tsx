@@ -6,6 +6,7 @@ import { Routes, Route, Navigate, useLocation, useNavigate, useParams } from 're
 const ItemsPage = lazy(() => import('./pages/ItemsPage'));
 const ItemCreatePage = lazy(() => import('./pages/item-create/ItemCreatePage'));
 const ItemDetailPage = lazy(() => import('./pages/ItemDetailPage'));
+const Product360Page = lazy(() => import('./pages/Product360Page'));
 const StockLocationsPage = lazy(() => import('./pages/StockLocationsPage'));
 const WarehouseDetailPage = lazy(() => import('./pages/WarehouseDetailPage'));
 const StockOverviewPage = lazy(() => import('./pages/StockOverviewPage'));
@@ -199,6 +200,7 @@ const App = () => {
                 <Route path="items/bulk-import" element={<PermissionGuard permission="items.import"><FeatureGate flagKey="action:inventory:bulk_import"><BulkImportPage /></FeatureGate></PermissionGuard>} />
                 <Route path="items/new" element={<PermissionGuard permission="items.create"><ItemCreatePage /></PermissionGuard>} />
                 <Route path="items/:id" element={<PermissionGuard permission="items.read"><ItemDetailPage /></PermissionGuard>} />
+                <Route path="items/:id/360" element={<PermissionGuard permission="items.read"><Product360Page /></PermissionGuard>} />
                 <Route path="locations" element={<PermissionGuard permission="warehouses.read"><FeatureGate flagKey="submodule:inventory:warehouses"><StockLocationsPage /></FeatureGate></PermissionGuard>} />
                 <Route path="warehouses/:id" element={<PermissionGuard permission="warehouses.read"><WarehouseDetailPage /></PermissionGuard>} />
                 <Route path="overview" element={<PermissionGuard permission="stock.view"><StockOverviewPage /></PermissionGuard>} />
