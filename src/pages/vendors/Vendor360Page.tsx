@@ -1,0 +1,142 @@
+import React, { useEffect, useMemo, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { Button, Card, EmptyState } from '@so360/design-system';
+import { useShellBridge } from '@so360/shell-context';
+import { vendorService } from '../../services/vendorService';
+
+/**
+ * Vendor 360 — purchase orders, goods receipts and payables on one screen.
+ *
+ * Same contract as Customer 360: the API composes by id from the module that
+ * owns each fact (purchase orders and receipts in inventory, bills in
+ * accounting); every panel carries its deep link and the permission the UI must
+ * check; a panel the API marks unavailable renders a neutral state.
+ *
+ * The payables panel is the one to watch: it needs vendor_bills.vendor_id
+ * (accounting migration 041). Until that runs it reports "unavailable" rather
+ * than matching on the vendor's name and showing wrong money.
+ */
+type Panel = { available?: boolean; reason?: string; [k: string]: any };
+type Payload = { profile: { id: string; name?: string }; panels: Record<string, Panel> };
+
+const money = (n: number) => new Intl.NumberFormat('en-IN', { maximumFractionDigits: 0 }).format(n || 0);
+
+export default function Vendor360Page() {
+  const { id = '' } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const shell = useShellBridge();
+  const [data, setData] = useState<Payload | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const can = useMemo(
+    () => (perms?: string[]) => {
+      if (!perms?.length) return true;
+      if (!shell) return false;
+      return perms.some((p) => shell.hasPermission?.(p) ?? false);
+    },
+    [shell],
+  );
+
+  useEffect(() => {
+    if (!id) return;
+    let alive = true;
+    vendorService
+      .getVendor360<Payload>(id)
+      .then((res) => { if (alive) setData(res); })
+      .catch(() => { if (alive) setError('Could not load this vendor 360.'); });
+    return () => { alive = false; };
+  }, [id]);
+
+  if (error) return <div className="p-6 text-fg-muted">{error}</div>;
+  if (!data) return null;
+
+  const p = data.panels ?? {};
+  const rows = (list: any[] | undefined) => list ?? [];
+
+  return (
+    <div className="mx-auto flex max-w-6xl flex-col gap-nb-3 p-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-semibold text-fg">{data.profile?.name || 'Vendor 360'}</h1>
+        <Button variant="ghost" onClick={() => navigate(`/inventory/vendors/${id}`)}>Back to vendor</Button>
+      </div>
+
+      <Card title="Procurement summary">
+        <div className="grid grid-cols-2 gap-nb-3 md:grid-cols-4">
+          <div>
+            <p className="text-xs text-fg-subtle">Purchase orders</p>
+            <p className="text-lg font-semibold text-fg">{p.purchase_orders?.count ?? '—'}</p>
+          </div>
+          <div>
+            <p className="text-xs text-fg-subtle">PO value</p>
+            <p className="text-lg font-semibold text-fg">{money(p.purchase_orders?.total_value)}</p>
+          </div>
+          <div>
+            <p className="text-xs text-fg-subtle">Goods receipts</p>
+            <p className="text-lg font-semibold text-fg">{p.goods_receipts?.count ?? '—'}</p>
+          </div>
+          <div>
+            <p className="text-xs text-fg-subtle">Outstanding payables</p>
+            <p className="text-lg font-semibold text-fg">
+              {p.payables?.available === false ? '—' : money(p.payables?.outstanding)}
+            </p>
+          </div>
+        </div>
+      </Card>
+
+      {can(p.purchase_orders?.permissions) && p.purchase_orders?.available !== false && (
+        <Card title="Purchase orders">
+          {rows(p.purchase_orders?.recent).length === 0 ? (
+            <EmptyState title="No purchase orders" description="Orders raised to this vendor will appear here." />
+          ) : (
+            <ul className="flex flex-col gap-nb-2">
+              {rows(p.purchase_orders?.recent).map((o: any) => (
+                <li key={o.id} className="flex items-center justify-between text-sm">
+                  <span className="text-fg">{o.po_number || 'PO'}</span>
+                  <span className="text-fg-muted">{o.status} · {money(o.total_amount)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+          <Button variant="ghost" onClick={() => navigate(p.purchase_orders.deep_link)}>All purchase orders</Button>
+        </Card>
+      )}
+
+      {can(p.goods_receipts?.permissions) && p.goods_receipts?.available !== false && (
+        <Card title="Goods receipts">
+          {rows(p.goods_receipts?.recent).length === 0 ? (
+            <EmptyState title="No goods receipts" description="Receipts recorded against this vendor's orders will appear here." />
+          ) : (
+            <ul className="flex flex-col gap-nb-2">
+              {rows(p.goods_receipts?.recent).map((r: any) => (
+                <li key={r.id} className="flex items-center justify-between text-sm">
+                  <span className="text-fg">{r.receipt_number || 'Receipt'}</span>
+                  <span className="text-fg-muted">{r.status}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+      )}
+
+      <Card title="Payables">
+        {p.payables?.available === false ? (
+          <EmptyState
+            title="Payables unavailable"
+            description="Vendor bills are not linked to this vendor by id yet, so this panel stays empty rather than guessing by name."
+          />
+        ) : rows(p.payables?.recent).length === 0 ? (
+          <EmptyState title="Nothing outstanding" description="Bills for this vendor will appear here." />
+        ) : (
+          <ul className="flex flex-col gap-nb-2">
+            {rows(p.payables?.recent).map((b: any) => (
+              <li key={b.id} className="flex items-center justify-between text-sm">
+                <span className="text-fg">{b.bill_number || 'Bill'}</span>
+                <span className="text-fg-muted">{b.status} · {money(b.total_amount)}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
+    </div>
+  );
+}

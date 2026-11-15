@@ -1,4 +1,5 @@
 import React, { Suspense, lazy } from 'react';
+import Vendor360Page from './pages/vendors/Vendor360Page';
 import { Routes, Route, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom';
 
 // Lazy load pages for performance
@@ -254,6 +255,7 @@ const App = () => {
                 <Route path="procurement/sales-demand" element={<PermissionGuard permission="procurement_analytics.read"><FeatureGate flagKey="submodule:inventory:procurement"><SalesDemandPage /></FeatureGate></PermissionGuard>} />
                 <Route path="vendors" element={<PermissionGuard permission="suppliers.read"><VendorListPage /></PermissionGuard>} />
                 <Route path="vendors/:id" element={<PermissionGuard permission="suppliers.read"><VendorDetailPage /></PermissionGuard>} />
+                <Route path="vendors/:id/360" element={<PermissionGuard permission="suppliers.read"><Vendor360Page /></PermissionGuard>} />
                 <Route path="vendors/contracts" element={<PermissionGuard permission="suppliers.read"><ContractsPage /></PermissionGuard>} />
 
                 {/* Legacy Redirects */}
