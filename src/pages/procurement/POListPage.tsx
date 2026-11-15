@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { procurementService } from '../../services/procurementService';
 import { vendorService } from '../../services/vendorService';
 import { useBusinessSettings, useActivity, useShellBridge, useQuota } from '@so360/shell-context';
@@ -51,6 +51,17 @@ const POListPage = () => {
     const formatters = useInventoryFormatters();
     const { recordActivity } = useActivity();
     const [pos, setPos] = useState<any[]>([]);
+    // A 360 sends the user here with ?vendor=<id> (or ?item=<id> from Product
+    // 360): honour it as a real filter, and show it as a chip they can clear —
+    // landing on an unfiltered list made the 360's link useless.
+    const [searchParams, setSearchParams] = useSearchParams();
+    const vendorFilter = searchParams.get('vendor') || '';
+    const itemFilter = searchParams.get('item') || '';
+    const clearParam = (key: string) => {
+        const next = new URLSearchParams(searchParams);
+        next.delete(key);
+        setSearchParams(next, { replace: true });
+    };
     const [searchTerm, setSearchTerm] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
     const [page, setPage] = useState(1);
@@ -362,14 +373,22 @@ const POListPage = () => {
     // the free-text fields a buyer types on create, so a just-created PO is findable.
     // Server paging: rows are the requested page, already filtered by the BE search.
     const matchedPos = useMemo(() => {
-        if (!legacyRef.current && serverTotal > 0) return pos;
+        const scoped = pos.filter((po: any) => {
+            if (vendorFilter && po.vendor_id !== vendorFilter && po.vendor?.id !== vendorFilter) return false;
+            if (itemFilter) {
+                const lines = po.po_lines ?? [];
+                if (!lines.some((l: any) => l.item_id === itemFilter)) return false;
+            }
+            return true;
+        });
+        if (!legacyRef.current && serverTotal > 0) return scoped;
         const q = searchTerm.trim().toLowerCase();
-        if (!q) return pos;
-        return pos.filter((po: any) =>
+        if (!q) return scoped;
+        return scoped.filter((po: any) =>
             [po.po_number, po.vendor?.name, po.status, po.terms, po.shipping_address]
                 .some((v) => typeof v === 'string' && v.toLowerCase().includes(q)),
         );
-    }, [pos, searchTerm, serverTotal]);
+    }, [pos, searchTerm, serverTotal, vendorFilter, itemFilter]);
     const serverMode = !legacyRef.current && serverTotal > 0;
     const matchCount = serverMode ? serverTotal : matchedPos.length;
     const totalPages = Math.max(1, Math.ceil(matchCount / pageSize));
@@ -452,6 +471,32 @@ const POListPage = () => {
                 ) : undefined}
                 loading={loading && pos.length === 0}
                 isEmpty={!loading && !fetchError && !showPrMenu && filteredPos.length === 0}
+                filters={
+                    (vendorFilter || itemFilter) ? (
+                        <div className="flex flex-wrap items-center gap-2">
+                            {vendorFilter && (
+                                <>
+                                    <Badge tone="neutral">
+                                        Vendor: {vendors.find((v: any) => v.id === vendorFilter)?.name
+                                            ?? vendors.find((v: any) => v.id === vendorFilter)?.business_name
+                                            ?? vendorFilter.slice(0, 8)}
+                                    </Badge>
+                                    <Button variant="ghost" size="sm" onClick={() => clearParam('vendor')}>
+                                        Clear
+                                    </Button>
+                                </>
+                            )}
+                            {itemFilter && (
+                                <>
+                                    <Badge tone="neutral">Item filter applied</Badge>
+                                    <Button variant="ghost" size="sm" onClick={() => clearParam('item')}>
+                                        Clear
+                                    </Button>
+                                </>
+                            )}
+                        </div>
+                    ) : undefined
+                }
                 empty={<>{renderNotice(vendorNotice)}<EmptyState title={searchTerm.trim() ? 'No purchase orders match your search.' : 'No purchase orders found.'} /></>}
             >
                 {renderNotice(fetchError)}
