@@ -99,6 +99,11 @@ class VendorService {
         return this.request(`/detail/${id}`);
     }
 
+    /** Vendor 360 — POs, goods receipts and payables, composed by the API. */
+    async getVendor360<T = any>(id: string): Promise<T> {
+        return this.request(`/${id}/360`);
+    }
+
     async updateVendor(id: string, dto: any) {
         return this.request(`/${id}`, {
             method: 'PATCH',
