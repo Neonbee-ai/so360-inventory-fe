@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
-import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { procurementService } from '../../services/procurementService';
 import { vendorService } from '../../services/vendorService';
 import { useBusinessSettings, useActivity, useShellBridge, useQuota } from '@so360/shell-context';
@@ -54,13 +54,15 @@ const POListPage = () => {
     // A 360 sends the user here with ?vendor=<id> (or ?item=<id> from Product
     // 360): honour it as a real filter, and show it as a chip they can clear —
     // landing on an unfiltered list made the 360's link useless.
-    const [searchParams, setSearchParams] = useSearchParams();
+    // Read from location.search (already consumed here) rather than a new hook,
+    // so the page keeps rendering in tests that mount it without a data router.
+    const searchParams = new URLSearchParams(location.search);
     const vendorFilter = searchParams.get('vendor') || '';
     const itemFilter = searchParams.get('item') || '';
     const clearParam = (key: string) => {
-        const next = new URLSearchParams(searchParams);
+        const next = new URLSearchParams(location.search);
         next.delete(key);
-        setSearchParams(next, { replace: true });
+        navigate(`${location.pathname}${next.toString() ? `?${next}` : ''}`, { replace: true });
     };
     const [searchTerm, setSearchTerm] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
