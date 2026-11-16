@@ -47,8 +47,13 @@ export interface CreateAttributeGroupInput {
     layout?: Record<string, unknown>;
 }
 
-/** `group_key` is deliberately not updatable — a key is a stable identifier. */
-export type UpdateAttributeGroupInput = Omit<CreateAttributeGroupInput, 'group_key'>;
+/**
+ * `group_key` is deliberately not updatable — a key is a stable identifier.
+ * Every field is optional because the endpoint is a PATCH: the editor sends
+ * `{ placements }` to flip one surface switch and `{ sort_order }` to renumber,
+ * never a whole group.
+ */
+export type UpdateAttributeGroupInput = Partial<Omit<CreateAttributeGroupInput, 'group_key'>>;
 
 export interface ProductType {
     id: string;
