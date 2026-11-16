@@ -1,4 +1,5 @@
 import { inventoryService } from './inventoryService';
+import type { AttributeGroup, CreateAttributeGroupInput, UpdateAttributeGroupInput } from '../types/productTypes';
 
 class ProductTypeService {
     private get orgId() {
@@ -58,6 +59,35 @@ class ProductTypeService {
 
     async deleteAttribute(typeId: string, attrId: string) {
         return this.request(`/${this.orgId}/${typeId}/attributes/${attrId}`, {
+            method: 'DELETE',
+        });
+    }
+
+    // ── Attribute groups ────────────────────────────────────────────────
+    // A group is a heading (Dimensions, Material & Finish) with a per-surface
+    // placements map; attributes join one via updateAttribute({ group_id }).
+
+    async getAttributeGroups(typeId: string): Promise<AttributeGroup[]> {
+        return this.request(`/${this.orgId}/${typeId}/attribute-groups`);
+    }
+
+    async createAttributeGroup(typeId: string, data: CreateAttributeGroupInput): Promise<AttributeGroup> {
+        return this.request(`/${this.orgId}/${typeId}/attribute-groups`, {
+            method: 'POST',
+            body: JSON.stringify(data),
+        });
+    }
+
+    /** `placements` is merged server-side, so sending one surface leaves the rest untouched. */
+    async updateAttributeGroup(typeId: string, groupId: string, data: UpdateAttributeGroupInput): Promise<AttributeGroup> {
+        return this.request(`/${this.orgId}/${typeId}/attribute-groups/${groupId}`, {
+            method: 'PATCH',
+            body: JSON.stringify(data),
+        });
+    }
+
+    async deleteAttributeGroup(typeId: string, groupId: string) {
+        return this.request(`/${this.orgId}/${typeId}/attribute-groups/${groupId}`, {
             method: 'DELETE',
         });
     }

@@ -8,6 +8,7 @@ import { Plus, Trash2, ChevronRight, Sliders } from 'lucide-react';
 import { ProductType, ProductTypeAttribute } from '../../types/productTypes';
 import { productTypeService } from '../../services/productTypeService';
 import AttributeEditor from './components/AttributeEditor';
+import AttributeGroupsPanel from './components/AttributeGroupsPanel';
 
 const ProductTypeSettingsPage = () => {
     const [confirm, confirmDialog] = useConfirm();
@@ -236,6 +237,15 @@ const ProductTypeSettingsPage = () => {
                                         <Button variant="secondary" className="w-full" onClick={() => setShowAddAttr(true)}><Plus size={16} /> Add Attribute</Button>
                                     )
                                 )}
+
+                                <div className="mt-nb-2 border-t border-line pt-nb-6">
+                                    <AttributeGroupsPanel
+                                        productTypeId={selectedType.id}
+                                        attributes={selectedType.product_type_attributes || []}
+                                        canManage={canEditSelected}
+                                        onChanged={() => loadTypeDetail(selectedType.id)}
+                                    />
+                                </div>
                             </div>
                         </SettingsCard>
                     ) : (
