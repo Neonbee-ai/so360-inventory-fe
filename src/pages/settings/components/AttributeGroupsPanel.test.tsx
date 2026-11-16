@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent, within } from '@testing-library/react';
 import React from 'react';
 
 // The component talks to the module service; mock the module so no request is made.
@@ -311,7 +311,14 @@ describe('Given the read-only system template', () => {
         svc.getAttributeGroups.mockResolvedValue([makeGroup()]);
         renderPanel({ canManage: false, attributes: [makeAttribute()] });
 
-        await waitFor(() => expect(screen.getByText('Dimensions')).toBeInTheDocument());
+        // 'Dimensions' is legitimately painted twice once an attribute is on the
+        // page: the group heading, and the option in that attribute's group
+        // select. Scope to the group row so the query stays unambiguous.
+        await waitFor(() =>
+            expect(
+                within(screen.getByTestId('attribute-group-dimensions')).getByText('Dimensions'),
+            ).toBeInTheDocument(),
+        );
 
         expect(screen.queryByText('New group')).not.toBeInTheDocument();
         expect(screen.getByLabelText('Show on product card')).toBeDisabled();
