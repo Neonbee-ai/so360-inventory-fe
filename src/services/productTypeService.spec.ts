@@ -130,4 +130,80 @@ describe('productTypeService', () => {
       expect(opts.method).toBe('DELETE');
     });
   });
+
+  // ── Attribute groups (Task 11) ─────────────────────────────────────────────
+
+  describe('Given getAttributeGroups', () => {
+    it('When called / Then fetches the groups of that product type', async () => {
+      mockFetch.mockReturnValue(jsonOk([{ id: 'g1', label: 'Dimensions' }]));
+      const result = await productTypeService.getAttributeGroups('pt1');
+      const [url] = mockFetch.mock.calls[0];
+      expect(url).toContain('/product-types/org-1/pt1/attribute-groups');
+      expect(result[0].label).toBe('Dimensions');
+    });
+
+    it('When the API fails / Then throws the message', async () => {
+      mockFetch.mockReturnValue(jsonFail(400, 'Product type not found'));
+      await expect(productTypeService.getAttributeGroups('pt1')).rejects.toThrow('Product type not found');
+    });
+  });
+
+  describe('Given createAttributeGroup', () => {
+    it('When called / Then posts the label, order and placements', async () => {
+      mockFetch.mockReturnValue(jsonOk({ id: 'g1' }));
+      const data = {
+        label: 'Material & Finish',
+        sort_order: 2,
+        placements: { card: true, pdp_specs: true },
+      };
+      await productTypeService.createAttributeGroup('pt1', data);
+      const [url, opts] = mockFetch.mock.calls[0];
+      expect(url).toContain('/product-types/org-1/pt1/attribute-groups');
+      expect(opts.method).toBe('POST');
+      expect(JSON.parse(opts.body)).toEqual(data);
+    });
+  });
+
+  describe('Given updateAttributeGroup', () => {
+    it('When called / Then patches that group', async () => {
+      mockFetch.mockReturnValue(jsonOk({ id: 'g1', label: 'Measurements' }));
+      await productTypeService.updateAttributeGroup('pt1', 'g1', {
+        label: 'Measurements',
+        placements: { card: false },
+      });
+      const [url, opts] = mockFetch.mock.calls[0];
+      expect(url).toContain('/product-types/org-1/pt1/attribute-groups/g1');
+      expect(opts.method).toBe('PATCH');
+      // Only the changed surface is sent; the backend merges it onto the stored map.
+      expect(JSON.parse(opts.body)).toEqual({ label: 'Measurements', placements: { card: false } });
+    });
+
+    it('When the group belongs to another type / Then the 404 message is surfaced', async () => {
+      mockFetch.mockReturnValue(jsonFail(404, 'Attribute group not found for this product type'));
+      await expect(productTypeService.updateAttributeGroup('pt1', 'g-other', { label: 'x' })).rejects.toThrow(
+        'Attribute group not found for this product type',
+      );
+    });
+  });
+
+  describe('Given deleteAttributeGroup', () => {
+    it('When called / Then sends DELETE for that group', async () => {
+      mockFetch.mockReturnValue(jsonOk({ success: true, attributes_ungrouped: 3 }));
+      const result = await productTypeService.deleteAttributeGroup('pt1', 'g1');
+      const [url, opts] = mockFetch.mock.calls[0];
+      expect(url).toContain('/product-types/org-1/pt1/attribute-groups/g1');
+      expect(opts.method).toBe('DELETE');
+      expect(result.attributes_ungrouped).toBe(3);
+    });
+  });
+
+  describe('Given updateAttribute with a group', () => {
+    it('When an attribute is assigned / Then group_id rides along with sort_order', async () => {
+      mockFetch.mockReturnValue(jsonOk({ id: 'attr1', group_id: 'g1' }));
+      await productTypeService.updateAttribute('pt1', 'attr1', { group_id: 'g1', sort_order: 2 });
+      const [url, opts] = mockFetch.mock.calls[0];
+      expect(url).toContain('/product-types/org-1/pt1/attributes/attr1');
+      expect(JSON.parse(opts.body)).toEqual({ group_id: 'g1', sort_order: 2 });
+    });
+  });
 });
