@@ -78,7 +78,7 @@ vi.mock('../../../hooks/useAuth', () => ({
 }));
 
 vi.mock('@so360/shell-context', () => ({
-  useShellBridge: () => ({ isFeatureEnabled: () => true, currentOrg: { id: 'org-1' } }),
+  useShellBridge: () => ({ isFeatureEnabled: (k: string) => k !== 'submodule:inventory:vendor_master', currentOrg: { id: 'org-1' } }),
   useActivity: () => ({ recordActivity: mockRecordActivity }),
   useBusinessSettings: () => ({ settings: { base_currency: 'USD', document_language: 'en-US', timezone: 'UTC' } }),
   useQuota: () => ({ getQuota: () => null }),
