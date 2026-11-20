@@ -20,6 +20,12 @@ vi.mock('@so360/shell-context', () => ({
     useBusinessSettings: () => ({ settings: { base_currency: 'USD' } }),
 }));
 vi.mock('../../components/vendors/VendorBankAccountsSection', () => ({ VendorBankAccountsSection: () => null }));
+vi.mock('../../components/vendors/VendorDocumentsSection', () => ({
+  VendorDocumentsSection: ({ vendorId }: any) => <div data-testid="vendor-documents-stub" data-vendor={vendorId} />,
+}));
+vi.mock('../../components/vendors/VendorActivitySection', () => ({
+  VendorActivitySection: ({ vendorId }: any) => <div data-testid="vendor-activity-stub" data-vendor={vendorId} />,
+}));
 vi.mock('../../components/vendors/CreateInvoiceModal', () => ({ CreateInvoiceModal: () => null }));
 vi.mock('../../utils/formatters', () => ({
     useInventoryFormatters: () => ({ formatDate: (d: string) => d ?? '', formatCurrency: (v: number) => `$${v}` }),
@@ -91,5 +97,14 @@ describe('Given the Vendor Master flag is off', () => {
         render(<VendorDetailPage />);
         await screen.findAllByText('Acme Corp');
         expect(screen.queryByTestId('vendor-master-card')).not.toBeInTheDocument();
+    });
+});
+
+describe('Given the vendor detail page (slice 2)', () => {
+    it('When it loads / Then the documents card and the activity rail card get the vendor id', async () => {
+        mockGetVendorDetail.mockResolvedValue(vendor());
+        render(<VendorDetailPage />);
+        expect(await screen.findByTestId('vendor-documents-stub')).toHaveAttribute('data-vendor', 'vendor-1');
+        expect(screen.getByTestId('vendor-activity-stub')).toHaveAttribute('data-vendor', 'vendor-1');
     });
 });

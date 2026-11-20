@@ -67,6 +67,12 @@ vi.mock('react-router-dom', () => ({
 vi.mock('../../../components/vendors/VendorBankAccountsSection', () => ({
   VendorBankAccountsSection: () => null,
 }));
+vi.mock('../../../components/vendors/VendorDocumentsSection', () => ({
+  VendorDocumentsSection: ({ vendorId }: any) => <div data-testid="vendor-documents-stub" data-vendor={vendorId} />,
+}));
+vi.mock('../../../components/vendors/VendorActivitySection', () => ({
+  VendorActivitySection: ({ vendorId }: any) => <div data-testid="vendor-activity-stub" data-vendor={vendorId} />,
+}));
 vi.mock('../../../hooks/useAuth', () => ({
   useAuth: () => ({ can: () => true }),
 }));

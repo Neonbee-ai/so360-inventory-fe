@@ -459,3 +459,18 @@ export const MultiSelect = ({ label, name, options = [], value = [], onChange, '
     options.map((o: any) => React.createElement('label', { key: o.value },
       React.createElement('input', { type: 'checkbox', name, value: o.value, checked: value.includes(o.value),
         onChange: (e: any) => onChange?.(e.target.checked ? [...value, o.value] : value.filter((v: string) => v !== o.value)) }), o.label)));
+
+// Mirrors the real FilePickerTrigger: the trigger plus a hidden file input
+// (`name` doubles as the automation id), firing onFiles with picked files.
+export const FilePickerTrigger = ({ accept, name = 'file', onFiles, children, 'data-testid': testId }: any) => {
+  const ref = React.useRef<HTMLInputElement | null>(null);
+  const open = () => ref.current?.click();
+  const trigger = typeof children === 'function'
+    ? children(open)
+    : React.cloneElement(children, { onClick: (e: any) => { children.props?.onClick?.(e); open(); } });
+  return React.createElement(React.Fragment, null, trigger,
+    React.createElement('input', {
+      ref, type: 'file', accept, name, hidden: true, 'data-testid': testId,
+      onChange: (e: any) => { const files = Array.from(e.target.files ?? []); if (files.length) onFiles(files); },
+    }));
+};

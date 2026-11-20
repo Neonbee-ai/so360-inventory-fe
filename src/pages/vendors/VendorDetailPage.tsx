@@ -11,6 +11,8 @@ import { TableSkeleton } from '../../components/common/Skeleton';
 import { useAuth } from '../../hooks/useAuth';
 import { CreateInvoiceModal } from '../../components/vendors/CreateInvoiceModal';
 import { VendorBankAccountsSection } from '../../components/vendors/VendorBankAccountsSection';
+import { VendorDocumentsSection } from '../../components/vendors/VendorDocumentsSection';
+import { VendorActivitySection } from '../../components/vendors/VendorActivitySection';
 import { useActivity, useShellBridge } from '@so360/shell-context';
 import { isVendorMasterEnabled, missingLabels } from '../../utils/vendorMaster';
 import { useInventoryFormatters } from '../../utils/formatters';
@@ -297,6 +299,8 @@ const VendorDetailPage = () => {
                         {canManage && <p className="mt-1 text-nb-overline text-fg-subtle">Click to rate</p>}
                         <p className="mt-2 text-sm text-fg-muted">Payment Terms: {profile?.payment_terms || 'Not set'}</p>
                     </Card>
+                    {/* Recent activity closes the rail (Comb RecordPage order); flag-gated inside. */}
+                    {id && <VendorActivitySection vendorId={id} />}
                     </div>
                 )}
                 overflowActions={canManage ? [
@@ -306,6 +310,7 @@ const VendorDetailPage = () => {
             >
                 <div className="flex flex-col gap-nb-4">
                         {id && <VendorBankAccountsSection vendorId={id} />}
+                        {id && <VendorDocumentsSection vendorId={id} />}
 
                         <Card title="Purchase orders">
                             <DataTable
