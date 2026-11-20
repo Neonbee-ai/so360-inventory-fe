@@ -41,7 +41,10 @@ class VendorService {
         const response = await fetch(`${this.baseUrl}${endpoint}`, {
             ...options,
             headers: {
-                'Content-Type': 'application/json',
+                // Multipart bodies set their own boundary header.
+                ...(typeof FormData !== 'undefined' && options.body instanceof FormData
+                    ? {}
+                    : { 'Content-Type': 'application/json' }),
                 'Authorization': `Bearer ${(inventoryService as any).accessToken}`,
                 'X-Tenant-Id': tenantId || '',
                 'X-Org-Id': orgId || '',
@@ -53,8 +56,9 @@ class VendorService {
 
         if (!response.ok) {
             let message: string;
+            let body: any;
             try {
-                const body = await response.json();
+                body = await response.json();
                 message = body.message || body.error || `Request failed (${response.status})`;
             } catch {
                 message = response.status === 405
@@ -64,7 +68,9 @@ class VendorService {
             // Carry the HTTP status on the Error so callers can tell an expected
             // authorization denial (403) apart from a genuine server/network
             // failure and message the user accordingly.
-            throw Object.assign(new Error(message), { status: response.status });
+            // The parsed body rides along so a form can show structured detail
+            // (e.g. the Vendor Master's `missing` list on a refused activation).
+            throw Object.assign(new Error(message), { status: response.status, body });
         }
 
         return response.json();
@@ -99,6 +105,10 @@ class VendorService {
         return this.request(`/detail/${id}`);
     }
 
+    /** Vendor Master snapshot + onboarding gaps (Pulse 652f492e). No bank numbers. */
+    async getVendorMaster(id: string) {
+        return this.request(`/${id}/master`);
+    }
     /** Vendor 360 — POs, goods receipts and payables, composed by the API. */
     async getVendor360<T = any>(id: string): Promise<T> {
         return this.request(`/${id}/360`);
@@ -140,6 +150,36 @@ class VendorService {
     }
 
     // ── Vendor bank accounts (masked in every response; reveal is audited) ──
+    // ── Compliance documents + activity (Pulse 3fc12200, flag vendor_master) ──
+
+    async listDocuments(vendorId: string) {
+        return this.request(`/${vendorId}/documents`);
+    }
+
+    async uploadDocument(vendorId: string, file: File, meta: Record<string, string | undefined>) {
+        const form = new FormData();
+        form.append('file', file);
+        for (const [k, v] of Object.entries(meta)) {
+            if (v !== undefined && v !== '') form.append(k, v);
+        }
+        return this.request(`/${vendorId}/documents`, { method: 'POST', body: form });
+    }
+
+    async verifyDocument(vendorId: string, docId: string, status: 'verified' | 'rejected', reason?: string) {
+        return this.request(`/${vendorId}/documents/${docId}/verify`, {
+            method: 'POST',
+            body: JSON.stringify(reason ? { status, reason } : { status }),
+        });
+    }
+
+    async archiveDocument(vendorId: string, docId: string) {
+        return this.request(`/${vendorId}/documents/${docId}`, { method: 'DELETE' });
+    }
+
+    async getActivity(vendorId: string, limit = 50) {
+        return this.request(`/${vendorId}/activity?limit=${limit}`);
+    }
+
     async listBankAccounts(vendorId: string, activeOnly = false) {
         return this.request(`/${vendorId}/bank-accounts${activeOnly ? '?active=true' : ''}`);
     }

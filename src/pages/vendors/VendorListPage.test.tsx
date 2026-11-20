@@ -71,7 +71,8 @@ beforeEach(() => {
   mockCreateVendor.mockResolvedValue({ id: 'vendor-new' });
   mockDeleteVendor.mockResolvedValue({});
   mockUseShellBridgeV.mockReturnValue({
-    isFeatureEnabled: () => true,
+    // Legacy quick-create modal: the Vendor Master flag stays off in this suite.
+    isFeatureEnabled: (k: string) => k !== 'submodule:inventory:vendor_master',
     currentOrg: { id: 'org-1', name: 'Test Org' },
     permissionsLoaded: true, hasPermission: () => true, hasAnyPermission: () => true, effectiveFlagsLoaded: true,
     permissionsLoaded: true, hasPermission: () => true, hasAnyPermission: () => true, getFeatureState: () => 'enabled',

@@ -101,6 +101,14 @@ describe('VendorListPage (Comb)', () => {
     await waitFor(() => expect(mockCreateVendor).toHaveBeenCalledWith(expect.objectContaining({ name: 'New Vendor' })));
   });
 
+  it('Given the Vendor Master flag is on / When Add Vendor is clicked / Then it opens the full vendor form page instead of the modal (Pulse 3fc12200)', async () => {
+    mockShell.mockReturnValue(shellState({ isFeatureEnabled: (k: string) => k === 'submodule:inventory:vendor_master' }));
+    render(<VendorListPage />);
+    fireEvent.click(await screen.findByText('Add Vendor'));
+    expect(mockNavigate).toHaveBeenCalledWith('/vendors/new');
+    expect(screen.queryByRole('dialog', { name: 'Add New Vendor' })).not.toBeInTheDocument();
+  });
+
   it('Given a vendor / When Delete Vendor is confirmed / Then deleteVendor is called', async () => {
     mockGetVendors.mockResolvedValue([vendor()]);
     render(<VendorListPage />);
