@@ -53,8 +53,9 @@ class VendorService {
 
         if (!response.ok) {
             let message: string;
+            let body: any;
             try {
-                const body = await response.json();
+                body = await response.json();
                 message = body.message || body.error || `Request failed (${response.status})`;
             } catch {
                 message = response.status === 405
@@ -64,7 +65,9 @@ class VendorService {
             // Carry the HTTP status on the Error so callers can tell an expected
             // authorization denial (403) apart from a genuine server/network
             // failure and message the user accordingly.
-            throw Object.assign(new Error(message), { status: response.status });
+            // The parsed body rides along so a form can show structured detail
+            // (e.g. the Vendor Master's `missing` list on a refused activation).
+            throw Object.assign(new Error(message), { status: response.status, body });
         }
 
         return response.json();
@@ -99,6 +102,10 @@ class VendorService {
         return this.request(`/detail/${id}`);
     }
 
+    /** Vendor Master snapshot + onboarding gaps (Pulse 652f492e). No bank numbers. */
+    async getVendorMaster(id: string) {
+        return this.request(`/${id}/master`);
+    }
     /** Vendor 360 — POs, goods receipts and payables, composed by the API. */
     async getVendor360<T = any>(id: string): Promise<T> {
         return this.request(`/${id}/360`);

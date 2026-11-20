@@ -453,3 +453,9 @@ export const SectionCard = Card;
 export const ChoiceCardGrid = passthrough('choice-card-grid');
 export const SelectableCard = ({ children, selected, onClick, onSelect, 'data-testid': testId }: any) =>
   h('button', { type: 'button', 'aria-pressed': !!selected, 'data-testid': testId, onClick: onClick ?? onSelect }, children);
+
+export const MultiSelect = ({ label, name, options = [], value = [], onChange, 'data-testid': testId }: any) =>
+  React.createElement('div', { role: 'group', 'aria-label': label, 'data-testid': testId ?? `multi-${name}` },
+    options.map((o: any) => React.createElement('label', { key: o.value },
+      React.createElement('input', { type: 'checkbox', name, value: o.value, checked: value.includes(o.value),
+        onChange: (e: any) => onChange?.(e.target.checked ? [...value, o.value] : value.filter((v: string) => v !== o.value)) }), o.label)));

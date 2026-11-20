@@ -22,6 +22,7 @@ const GRNDetailPage = lazy(() => import('./pages/procurement/GRNDetailPage'));
 const GRNEntryPage = lazy(() => import('./pages/procurement/GRNEntryPage'));
 const VendorListPage = lazy(() => import('./pages/vendors/VendorListPage'));
 const VendorDetailPage = lazy(() => import('./pages/vendors/VendorDetailPage'));
+const VendorFormPage = lazy(() => import('./pages/vendors/VendorFormPage'));
 const ContractsPage = lazy(() => import('./pages/vendors/ContractsPage'));
 const OpeningBalancePage = lazy(() => import('./pages/procurement/OpeningBalancePage'));
 const RFQListPage = lazy(() => import('./pages/procurement/RFQListPage'));
@@ -235,6 +236,9 @@ const App = () => {
 
                 {/* ── Vendor routes (mounted at /vendors/*) ── */}
                 <Route path="contracts" element={<PermissionGuard permission="suppliers.read"><ContractsPage /></PermissionGuard>} />
+                {/* Vendor Master form (Pulse 3fc12200) — declared before ":id" so "new" is not read as an id. */}
+                <Route path="new" element={<PermissionGuard permission="suppliers.create"><FeatureGate flagKey="submodule:inventory:vendor_master"><VendorFormPage /></FeatureGate></PermissionGuard>} />
+                <Route path=":id/edit" element={<PermissionGuard permission="suppliers.update"><FeatureGate flagKey="submodule:inventory:vendor_master"><VendorFormPage /></FeatureGate></PermissionGuard>} />
                 <Route path=":id" element={<PermissionGuard permission="suppliers.read"><VendorDetailPage /></PermissionGuard>} />
 
                 {/* ── Backward-compat: old /inventory/procurement/... and /inventory/vendors/... ── */}

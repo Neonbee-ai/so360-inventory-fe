@@ -11,7 +11,8 @@ import { TableSkeleton } from '../../components/common/Skeleton';
 import { useAuth } from '../../hooks/useAuth';
 import { CreateInvoiceModal } from '../../components/vendors/CreateInvoiceModal';
 import { VendorBankAccountsSection } from '../../components/vendors/VendorBankAccountsSection';
-import { useActivity } from '@so360/shell-context';
+import { useActivity, useShellBridge } from '@so360/shell-context';
+import { isVendorMasterEnabled, missingLabels } from '../../utils/vendorMaster';
 import { useInventoryFormatters } from '../../utils/formatters';
 
 interface VendorDetail {
@@ -50,6 +51,8 @@ const VendorDetailPage = () => {
     const navigate = useNavigate();
     const { can } = useAuth();
     const { recordActivity } = useActivity();
+    const shell = useShellBridge();
+    const vendorMasterOn = isVendorMasterEnabled(shell);
     const formatters = useInventoryFormatters();
     const [vendor, setVendor] = useState<VendorDetail | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -221,6 +224,42 @@ const VendorDetailPage = () => {
                 ) : undefined}
                 sidePanel={(
                     <div className="flex flex-col gap-nb-4">
+                    {vendorMasterOn && (() => {
+                        // Vendor Master summary (Pulse 3fc12200): identity, tax ids and
+                        // onboarding gaps, with the full form one click away.
+                        const v: any = vendor;
+                        const p: any = profile ?? {};
+                        const onboarding = v.onboarding ?? {};
+                        const missing: string[] = onboarding.missing ?? [];
+                        return (
+                            <Card
+                                title="Vendor profile"
+                                data-testid="vendor-master-card"
+                                actions={can('suppliers.update') ? (
+                                    <Button variant="ghost" size="sm" onClick={() => navigate(`/vendors/${vendor.id}/edit`)}>
+                                        {missing.length ? 'Complete profile' : 'Edit profile'}
+                                    </Button>
+                                ) : undefined}
+                            >
+                                {missing.length > 0 && (
+                                    <Alert variant="warning" title={onboarding.status === 'draft' ? 'Onboarding incomplete' : 'Profile incomplete'}>
+                                        {`Missing: ${missingLabels(missing).join(', ')}.`}
+                                    </Alert>
+                                )}
+                                <DescriptionList
+                                    items={[
+                                        { label: 'Vendor code', value: p.vendor_code || 'Not assigned' },
+                                        { label: 'Status', value: onboarding.status === 'draft' ? 'Draft' : 'Active' },
+                                        { label: 'Legal name', value: v.legal_entity_name || 'Not provided' },
+                                        { label: 'GSTIN', value: v.gst_number || 'Not provided' },
+                                        { label: 'PAN', value: v.pan_number || 'Not provided' },
+                                        { label: 'Credit period', value: p.credit_days != null ? `${p.credit_days} days` : 'Not set' },
+                                        { label: 'TDS section', value: p.tds_applicable ? (p.tds_section || 'Not set') : 'Not applicable' },
+                                    ]}
+                                />
+                            </Card>
+                        );
+                    })()}
                     <Card title="Contact">
                         <DescriptionList
                             items={[
