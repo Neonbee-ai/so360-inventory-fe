@@ -13,6 +13,7 @@ import {
     VENDOR_BANK_PERMS, emptyBankForm, isVendorBankEnabled, toBankPayload, validateBankForm,
     type BankFormErrors, type BankFormState,
 } from '../../utils/vendorBank';
+import { isVendorMasterEnabled } from '../../utils/vendorMaster';
 
 /** Optional bank step in the create-vendor form; mounted only when ticked. Defaults currency from org settings. */
 const NewVendorBankStep: React.FC<{ value: BankFormState; onChange: (v: BankFormState) => void; errors: BankFormErrors }> = ({ value, onChange, errors }) => {
@@ -78,6 +79,8 @@ const VendorListPage = () => {
 
     // Create form state
     const [showCreateModal, setShowCreateModal] = useState(false);
+    // Vendor Master (submodule:inventory:vendor_master): the full onboarding form replaces the quick modal.
+    const vendorMasterOn = isVendorMasterEnabled(shell);
     const [isCreating, setIsCreating] = useState(false);
     const [newVendor, setNewVendor] = useState({
         name: '',
@@ -275,7 +278,7 @@ const VendorListPage = () => {
                                 isUnlimited={quotaData?.is_unlimited}
                                 disableOnExceeded
                             >
-                                <Button onClick={() => setShowCreateModal(true)}>Add Vendor</Button>
+                                <Button onClick={() => (vendorMasterOn ? navigate('/vendors/new') : setShowCreateModal(true))}>Add Vendor</Button>
                             </QuotaGate>
                         </FeatureGate>
                     ) : undefined

@@ -67,12 +67,18 @@ vi.mock('react-router-dom', () => ({
 vi.mock('../../../components/vendors/VendorBankAccountsSection', () => ({
   VendorBankAccountsSection: () => null,
 }));
+vi.mock('../../../components/vendors/VendorDocumentsSection', () => ({
+  VendorDocumentsSection: ({ vendorId }: any) => <div data-testid="vendor-documents-stub" data-vendor={vendorId} />,
+}));
+vi.mock('../../../components/vendors/VendorActivitySection', () => ({
+  VendorActivitySection: ({ vendorId }: any) => <div data-testid="vendor-activity-stub" data-vendor={vendorId} />,
+}));
 vi.mock('../../../hooks/useAuth', () => ({
   useAuth: () => ({ can: () => true }),
 }));
 
 vi.mock('@so360/shell-context', () => ({
-  useShellBridge: () => ({ isFeatureEnabled: () => true, currentOrg: { id: 'org-1' } }),
+  useShellBridge: () => ({ isFeatureEnabled: (k: string) => k !== 'submodule:inventory:vendor_master', currentOrg: { id: 'org-1' } }),
   useActivity: () => ({ recordActivity: mockRecordActivity }),
   useBusinessSettings: () => ({ settings: { base_currency: 'USD', document_language: 'en-US', timezone: 'UTC' } }),
   useQuota: () => ({ getQuota: () => null }),

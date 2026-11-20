@@ -24,6 +24,7 @@ vi.mock('./pages/procurement/GRNListPage', () => ({ default: () => <div>GRNList<
 vi.mock('./pages/procurement/GRNDetailPage', () => ({ default: () => <div>GRNDetail</div> }));
 vi.mock('./pages/procurement/GRNEntryPage', () => ({ default: () => <div>GRNEntry</div> }));
 vi.mock('./pages/vendors/VendorListPage', () => ({ default: () => <div data-testid="vendor-list-page">VendorList</div> }));
+vi.mock('./pages/vendors/VendorFormPage', () => ({ default: () => <div>VendorForm</div> }));
 vi.mock('./pages/vendors/VendorDetailPage', () => ({ default: () => <div>VendorDetail</div> }));
 vi.mock('./pages/vendors/ContractsPage', () => ({ default: () => <div>Contracts</div> }));
 vi.mock('./pages/procurement/OpeningBalancePage', () => ({ default: () => <div>OpeningBalance</div> }));
