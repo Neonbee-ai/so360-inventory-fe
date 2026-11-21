@@ -74,4 +74,15 @@ describe('PricingTab', () => {
       expect(updateField).toHaveBeenCalledWith('price', '129.99');
     });
   });
+
+  describe('Given an invalid HSN / SAC code', () => {
+    it('When the tab is told of the error / Then it shows beside the field', () => {
+      render(<PricingTab {...makeProps({ hsn_code: '85', hsnError: 'HSN / SAC must be 4, 6 or 8 digits.' })} />);
+      expect(screen.getByText('HSN / SAC must be 4, 6 or 8 digits.')).toBeInTheDocument();
+    });
+    it('When there is no error / Then no message is shown', () => {
+      render(<PricingTab {...makeProps({ hsn_code: '8517' })} />);
+      expect(screen.queryByText(/must be 4, 6 or 8/)).not.toBeInTheDocument();
+    });
+  });
 });
