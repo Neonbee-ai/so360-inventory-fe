@@ -34,7 +34,7 @@ vi.mock('../../utils/formatters', () => ({
 import VendorDetailPage from './VendorDetailPage';
 
 const vendor = (o: any = {}) => ({
-    id: 'vendor-1', name: 'Acme Corp', email: 'a@x.com', phone: '1', gst_number: '32ABCDE1234F1Z5',
+    id: 'vendor-1', name: 'Acme Corp', email: 'a@x.com', phone: '1', gst_number: '32ABCDE1234F1Z9',
     vendor_profiles: [{ classification: 'supplier', vendor_code: 'VEN-00004', credit_days: 30, tds_applicable: true, tds_section: '194C' }],
     purchase_orders: [], vendor_invoices: [],
     onboarding: { status: 'active', missing: [] },
@@ -53,7 +53,7 @@ describe('Given the Vendor Master flag is on', () => {
         render(<VendorDetailPage />);
         expect(await screen.findByTestId('vendor-master-card')).toBeInTheDocument();
         expect(screen.getByText('VEN-00004')).toBeInTheDocument();
-        expect(screen.getByText('32ABCDE1234F1Z5')).toBeInTheDocument();
+        expect(screen.getByText('32ABCDE1234F1Z9')).toBeInTheDocument();
         expect(screen.getByText('30 days')).toBeInTheDocument();
         expect(screen.getByText('194C')).toBeInTheDocument();
         fireEvent.click(screen.getByText('Edit profile'));

@@ -16,6 +16,7 @@ import { VendorActivitySection } from '../../components/vendors/VendorActivitySe
 import { useActivity, useShellBridge } from '@so360/shell-context';
 import { isVendorMasterEnabled, missingLabels } from '../../utils/vendorMaster';
 import { useInventoryFormatters } from '../../utils/formatters';
+import { accountingLabel, accountingNotice, accountingStateOf } from '../../utils/vendorInvoiceAccounting';
 
 interface VendorDetail {
     id: string;
@@ -85,6 +86,7 @@ const VendorDetailPage = () => {
 
     // Invoice modal state
     const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
+    const [invoiceNotice, setInvoiceNotice] = useState<ReturnType<typeof accountingNotice> | null>(null);
 
     const fetchVendor = async () => {
         if (!id) return;
@@ -328,6 +330,11 @@ const VendorDetailPage = () => {
                         </Card>
 
                         <Card title="Vendor invoices">
+                            {invoiceNotice && (
+                                <Alert variant={invoiceNotice.variant} title="Accounting" data-testid="vendor-invoice-accounting-notice">
+                                    {invoiceNotice.message}
+                                </Alert>
+                            )}
                             <DataTable
                                 data-testid="vendor-invoices-table"
                                 rowKey={(inv: any) => inv.id}
@@ -338,6 +345,7 @@ const VendorDetailPage = () => {
                                     { key: 'status', header: 'Status', render: (inv: any) => <StatusBadge status={inv.status} /> },
                                     { key: 'due_date', header: 'Due Date', render: (inv: any) => (inv.due_date ? formatters.formatDate(inv.due_date) : '--') },
                                     { key: 'total_amount', header: 'Amount', align: 'right', render: (inv: any) => formatters.formatCurrency(inv.total_amount ?? 0) },
+                                    { key: 'accounting', header: 'Accounting', render: (inv: any) => <StatusBadge status={accountingLabel(accountingStateOf(inv))} /> },
                                     {
                                         key: 'attachment_url', header: 'Attachment', align: 'center',
                                         render: (inv: any) => inv.attachment_url ? (
@@ -357,7 +365,7 @@ const VendorDetailPage = () => {
                 onClose={() => setIsInvoiceModalOpen(false)}
                 vendorId={id!}
                 vendorPOs={vendor.purchase_orders || []}
-                onSuccess={() => { setIsInvoiceModalOpen(false); fetchVendor(); }}
+                onSuccess={(result) => { setIsInvoiceModalOpen(false); setInvoiceNotice(accountingNotice(accountingStateOf(result))); fetchVendor(); }}
             />
 
             <Modal
