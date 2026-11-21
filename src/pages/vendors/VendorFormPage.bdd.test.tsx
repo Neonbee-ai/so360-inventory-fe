@@ -188,3 +188,50 @@ describe('Given an existing vendor', () => {
         expect(screen.getByText('Save as draft')).toBeInTheDocument();
     });
 });
+
+describe('Given an Indian GST-registered vendor (Pulse 086d33b1)', () => {
+    const indianRegistered = () => {
+        render(<VendorFormPage />);
+        type('name', 'Velnir');
+        type('registration_country', 'IN');
+        type('gst_treatment', 'registered_business');
+    };
+
+    it('When a valid GSTIN and its own PAN are pasted with spaces and lower case / Then the save sends the normalised pair', async () => {
+        indianRegistered();
+        type('gst_number', '27 aapfu 0939f 1zv');
+        type('pan_number', 'aapfu 0939f');
+        expect(field('gst_number')!.value).toBe('27AAPFU0939F1ZV');
+        fireEvent.click(screen.getByText('Save as draft'));
+        await waitFor(() => expect(mockCreateVendor).toHaveBeenCalled());
+        expect(mockCreateVendor.mock.calls[0][0]).toMatchObject({ gst_number: '27AAPFU0939F1ZV', pan_number: 'AAPFU0939F' });
+    });
+
+    it('When the PAN does not match the GSTIN / Then the PAN field names the embedded PAN and nothing is sent', async () => {
+        indianRegistered();
+        type('gst_number', '27AAPFU0939F1ZV');
+        type('pan_number', 'ABCDE1234F');
+        fireEvent.click(screen.getByText('Save & activate'));
+        expect((await screen.findAllByText(/does not match the PAN embedded in this GSTIN \(AAPFU0939F\)/)).length).toBeGreaterThan(0);
+        expect(mockCreateVendor).not.toHaveBeenCalled();
+    });
+
+    it('When a GSTIN is still being typed / Then no format error is shown until it is complete or saved', async () => {
+        indianRegistered();
+        type('gst_number', '27AAPFU');
+        expect(screen.queryByText('Enter a valid 15-character GSTIN.')).toBeNull();
+        fireEvent.click(screen.getByText('Save as draft'));
+        expect((await screen.findAllByText('Enter a valid 15-character GSTIN.')).length).toBeGreaterThan(0);
+        expect(mockCreateVendor).not.toHaveBeenCalled();
+    });
+
+    it('When the server rejects one field / Then the message is attached to that field', async () => {
+        mockCreateVendor.mockRejectedValue(Object.assign(new Error('Enter a valid 10-character PAN.'), {
+            body: { field: 'pan_number', code: 'pan_format', missing: [] },
+        }));
+        indianRegistered();
+        type('pan_number', 'AAPFU0939F');
+        fireEvent.click(screen.getByText('Save as draft'));
+        expect((await screen.findAllByText('Enter a valid 10-character PAN.')).length).toBe(2);
+    });
+});
