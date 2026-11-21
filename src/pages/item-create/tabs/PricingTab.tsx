@@ -16,6 +16,7 @@ interface PricingTabProps {
     tax_class: string;
     tax_code_id: string;
     hsn_code: string;
+    hsnError?: string;
     updateField: (field: string, value: any) => void;
     currencySymbol?: string;
     taxCodes?: TaxCodeOption[];
@@ -24,7 +25,7 @@ interface PricingTabProps {
 }
 
 const PricingTab: React.FC<PricingTabProps> = ({
-    price, cost, tax_class, tax_code_id, hsn_code, updateField, currencySymbol = '$', taxCodes = [], isTaxCodesLoading = false, taxCodesError = null
+    price, cost, tax_class, tax_code_id, hsn_code, hsnError, updateField, currencySymbol = '$', taxCodes = [], isTaxCodesLoading = false, taxCodesError = null
 }) => {
     const hasTaxCodes = taxCodes.length > 0;
     const taxOptions = isTaxCodesLoading
@@ -104,6 +105,7 @@ const PricingTab: React.FC<PricingTabProps> = ({
                         value={hsn_code}
                         onChange={e => updateField('hsn_code', e.target.value)}
                         placeholder="e.g. 8471"
+                        error={hsnError}
                     />
                 </FieldGrid>
             </FormSection>
