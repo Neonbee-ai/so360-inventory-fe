@@ -100,9 +100,9 @@ describe('Given the Comb ProductTypeSettingsPage', () => {
     render(<ProductTypeSettingsPage />);
     await waitFor(() => expect(screen.getByText('New')).toBeInTheDocument());
     fireEvent.click(screen.getByText('New'));
-    expect(screen.getByPlaceholderText('Name *')).toBeInTheDocument();
+    expect(screen.getByLabelText(/^Name/)).toBeInTheDocument();
     fireEvent.click(screen.getByText('Cancel'));
-    expect(screen.queryByPlaceholderText('Name *')).toBeNull();
+    expect(screen.queryByLabelText(/^Name/)).toBeNull();
   });
 
   it('Given a name is typed / When the form is open / Then Create is disabled until name and code exist', async () => {
@@ -110,7 +110,7 @@ describe('Given the Comb ProductTypeSettingsPage', () => {
     await waitFor(() => expect(screen.getByText('New')).toBeInTheDocument());
     fireEvent.click(screen.getByText('New'));
     expect(screen.getByText('Create').closest('button')).toBeDisabled();
-    fireEvent.change(screen.getByPlaceholderText('Name *'), { target: { value: 'Clothing' } });
+    fireEvent.change(screen.getByLabelText(/^Name/), { target: { value: 'Clothing' } });
     expect(screen.getByDisplayValue('clothing')).toBeInTheDocument();
     expect(screen.getByText('Create').closest('button')).not.toBeDisabled();
   });
