@@ -25,3 +25,23 @@ jobs:
         VITE_SO360_INVENTORY_API=https://api.neonbee.app/inventory
         VITE_ENVIRONMENT=cloud
     secrets: inherit
+
+  # ── Opt-in AWS rollout (Stage 3.1) ──────────────────────────────────────
+  # Skipped unless repo/org variable NB_AWS_DEPLOY == 'true' (unset = today's
+  # deploy only). Runs on main after the prod deploy and ships the same build
+  # (artifact nb-release-inventory-fe from neonbee-deploy-prod) to the AWS ASG.
+  deploy-aws:
+    needs: [deploy]
+    if: ${{ github.ref == 'refs/heads/main' && vars.NB_AWS_DEPLOY == 'true' }}
+    permissions:
+      id-token: write
+      contents: read
+    uses: Neonbee-ai/neonbee-devops/.github/workflows/neonbee-deploy-s3-release.yml@main
+    with:
+      service_name: inventory-fe
+      artifact_name: nb-release-inventory-fe
+      # Static bundle: artifact = dist contents -> <release>/dist (legacy layout).
+      dist_path: dist
+      asg_name: ${{ vars.NB_AWS_ASG }}
+      target_group_arn: ${{ vars.NB_AWS_TARGET_GROUP_ARN || '' }}
+      runs_on: ${{ vars.NB_AWS_RUNS_ON || '["self-hosted","runner-vm"]' }}
