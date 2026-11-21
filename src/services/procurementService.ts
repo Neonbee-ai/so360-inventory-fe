@@ -176,6 +176,9 @@ class ProcurementService {
         total_amount: number;
         po_id?: string;
         attachment_url?: string;
+        tax_code_id?: string;
+        tax_rate?: number;
+        no_tax?: boolean;
     }) {
         return this.request('/vendor-invoice', {
             method: 'POST',

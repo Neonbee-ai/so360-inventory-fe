@@ -63,7 +63,7 @@ describe('formToPayload', () => {
     const indian = () => ({
         ...emptyVendorMasterForm('INR'),
         name: ' Cacooon ', legal_entity_name: 'Cacooon Collections LLP', legal_type: 'llp', llpin: 'aab-1234',
-        registration_country: 'in', gst_treatment: 'registered_business', gst_number: '32ABCDE1234F1Z5', pan_number: 'ABCDE1234F',
+        registration_country: 'in', gst_treatment: 'registered_business', gst_number: '32ABCDE1234F1Z9', pan_number: 'ABCDE1234F',
         vat_number: 'should-not-send', registered_address: ADDR,
         primary_contact: { name: 'Asha', designation: '', email: 'asha@c.in', phone: '+91 1', alt_phone: '' },
         accounts_contact: { name: '', designation: '', email: 'ignored@c.in', phone: '', alt_phone: '' },
@@ -75,7 +75,7 @@ describe('formToPayload', () => {
         const p = formToPayload(indian(), 'active');
         expect(p).toMatchObject({
             name: 'Cacooon', legal_entity_name: 'Cacooon Collections LLP', email: 'asha@c.in', phone: '+91 1',
-            gst_treatment: 'registered_business', gst_number: '32ABCDE1234F1Z5', pan_number: 'ABCDE1234F', vat_number: null,
+            gst_treatment: 'registered_business', gst_number: '32ABCDE1234F1Z9', pan_number: 'ABCDE1234F', vat_number: null,
             billing_address: { line1: '12 MG Road', city: 'Kochi', state: 'Kerala', postal_code: '682001', country: 'IN' },
             shipping_address: { line1: '12 MG Road', city: 'Kochi', state: 'Kerala', postal_code: '682001', country: 'IN' },
         });

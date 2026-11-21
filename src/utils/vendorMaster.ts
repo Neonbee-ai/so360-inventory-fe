@@ -1,3 +1,4 @@
+import { normalizeTaxId } from './taxIdentifiers';
 /**
  * Vendor Master form helpers (Pulse 3fc12200 + 652f492e).
  *
@@ -314,8 +315,8 @@ export function formToPayload(f: VendorMasterForm, status: 'draft' | 'active') {
         phone: t(f.primary_contact.phone),
         website: t(f.website),
         gst_treatment: v.india ? t(f.gst_treatment) : null,
-        gst_number: v.gstin ? t(f.gst_number) : null,
-        pan_number: v.india ? t(f.pan_number) : null,
+        gst_number: v.gstin ? normalizeTaxId(f.gst_number) : null,
+        pan_number: v.india ? normalizeTaxId(f.pan_number) : null,
         vat_number: v.vat ? t(f.vat_number) : null,
         billing_address: v.billingAddress ? addressPayload(f.billing_address) : registered,
         shipping_address: v.shippingAddress ? addressPayload(f.shipping_address) : registered,

@@ -25,7 +25,7 @@ vi.mock('../../../utils/formatters', () => ({ useInventoryFormatters: () => ({ f
 import { VendorDocumentsSection } from '../VendorDocumentsSection';
 
 const doc = (o: any = {}) => ({
-    id: 'd1', document_type: 'gst_certificate', document_number: '32ABCDE1234F1Z5', file_name: 'gst.pdf',
+    id: 'd1', document_type: 'gst_certificate', document_number: '32ABCDE1234F1Z9', file_name: 'gst.pdf',
     expiry_date: '2026-12-01', expiry_state: 'expiring_soon', days_to_expiry: 11,
     verification_status: 'pending', rejection_reason: null, ...o,
 });
@@ -68,7 +68,7 @@ describe('Given documents are listed', () => {
     it('When loaded / Then type, number, expiry and review state show', async () => {
         render(<VendorDocumentsSection vendorId="v1" />);
         expect(await screen.findByText('GST certificate')).toBeInTheDocument();
-        expect(screen.getByText('32ABCDE1234F1Z5')).toBeInTheDocument();
+        expect(screen.getByText('32ABCDE1234F1Z9')).toBeInTheDocument();
         expect(screen.getByText('D:2026-12-01')).toBeInTheDocument();
         expect(screen.getByTestId('doc-expiry-d1')).toHaveTextContent('Expires in 11 days');
         expect(screen.getByTestId('doc-review-d1')).toHaveTextContent('Pending review');

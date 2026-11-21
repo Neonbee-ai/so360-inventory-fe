@@ -16,7 +16,7 @@ import ShippingTab from './tabs/ShippingTab';
 import AttributesTab from './tabs/AttributesTab';
 import { useInventoryCurrencySymbol } from '../../utils/formatters';
 import { useActivity } from '@so360/shell-context';
-import { optional, validateBarcode, validateName, validateSku } from '../../utils/validators';
+import { optional, validateBarcode, validateHsnSac, validateName, validateSku } from '../../utils/validators';
 import { generateSkuFromName } from '../../utils/skuGenerator';
 
 export interface FormData {
@@ -336,6 +336,7 @@ const ItemCreatePage = () => {
         type: form.type ? null : 'Please select a classification.',
         category_id: form.category_id ? null : 'Please select a category.',
         barcode: validateBarcode(form.barcode),
+        hsn_code: validateHsnSac(form.hsn_code),
         brand: optional(form.brand, (v) => validateName(v, 'Brand', 2, 100)),
         // Blocks save while any category attribute's numeric value is out of
         // its admin-configured min_value/max_value bound (Pulse 3aafa377 —
@@ -344,13 +345,13 @@ const ItemCreatePage = () => {
             (found, def) => found || getAttributeRangeError(def, form.metadata?.[def.attribute_key]),
             null,
         ),
-    }), [form.name, form.sku, form.unit_id, form.type, form.category_id, form.barcode, form.brand, attributeDefs, form.metadata]);
+    }), [form.name, form.sku, form.unit_id, form.type, form.category_id, form.barcode, form.hsn_code, form.brand, attributeDefs, form.metadata]);
 
     /** Which tab each required field lives on, so the form can jump there. */
     const FIELD_TABS: Record<string, TabId> = {
         name: 'basic', sku: 'basic', unit_id: 'basic', type: 'basic',
         barcode: 'basic', brand: 'basic', category_id: 'category',
-        category_attributes: 'category',
+        category_attributes: 'category', hsn_code: 'pricing',
     };
 
     const validate = (): boolean => {
@@ -497,6 +498,7 @@ const ItemCreatePage = () => {
                         tax_class={form.tax_class}
                         tax_code_id={form.tax_code_id}
                         hsn_code={form.hsn_code}
+                        hsnError={showErrors ? fieldErrors.hsn_code || undefined : undefined}
                         updateField={updateField}
                         currencySymbol={currencySymbol}
                         taxCodes={taxCodes}
