@@ -157,6 +157,19 @@ export function validateBarcode(value: string): ValidationResult {
     return null;
 }
 
+/**
+ * HSN (goods) / SAC (services) — optional; digits, 4/6/8 long. Tariff dots and
+ * spaces ("7318.15") are tolerated. Mirrors the server rule isHsnSacCode.
+ */
+export function validateHsnSac(value: string): ValidationResult {
+    const v = (value || '').trim();
+    if (!v) return null; // optional
+    const digits = v.replace(/[.\s]/g, '');
+    if (!/^\d+$/.test(digits)) return 'HSN / SAC must contain digits only.';
+    if (![4, 6, 8].includes(digits.length)) return 'HSN / SAC must be 4, 6 or 8 digits.';
+    return null;
+}
+
 /** SKU — a code, 2–40 chars. */
 export function validateSku(value: string): ValidationResult {
     return validateCode(value, 'SKU', 2, 40);

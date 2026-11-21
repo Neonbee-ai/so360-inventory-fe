@@ -6,6 +6,7 @@ import {
 } from '@so360/design-system';
 import { useBusinessSettings } from '@so360/shell-context';
 import { vendorService } from '../../services/vendorService';
+import { normalizeTaxId, taxIdIssues } from '../../utils/taxIdentifiers';
 import {
     GST_TREATMENT_OPTIONS, LEGAL_TYPE_OPTIONS, MSME_CATEGORY_OPTIONS, SUPPLY_TYPE_OPTIONS,
     emptyVendorMasterForm, formToPayload, missingLabels, vendorToForm, visibleFields,
@@ -46,7 +47,7 @@ const ADDRESS_FIELDS: Array<{ key: keyof AddressForm; label: string; span?: 'ful
     { key: 'country', label: 'Country' },
 ];
 
-type SaveError = { message: string; missing: string[] };
+type SaveError = { message: string; missing: string[]; field?: string };
 
 const VendorFormPage = () => {
     const { id } = useParams<{ id: string }>();
@@ -84,6 +85,20 @@ const VendorFormPage = () => {
     }, [id, isEdit]);
 
     const show = useMemo(() => visibleFields(form), [form]);
+    // Pulse 086d33b1: the same GSTIN/PAN rules the server applies, so a
+    // mismatch is named on the field before the save round-trip.
+    const [taxChecked, setTaxChecked] = useState(false);
+    const gstValue = show.gstin ? normalizeTaxId(form.gst_number) : null;
+    const panValue = show.india ? normalizeTaxId(form.pan_number) : null;
+    const taxIssues = useMemo(() => taxIdIssues(gstValue, panValue), [gstValue, panValue]);
+    const fieldError = (field: 'gst_number' | 'pan_number', fullLength: number): string | undefined => {
+        const issue = taxIssues.find((i) => i.field === field);
+        const value = field === 'gst_number' ? gstValue : panValue;
+        if (issue && (taxChecked || issue.code !== `${field === 'gst_number' ? 'gstin' : 'pan'}_format` || (value?.length ?? 0) >= fullLength)) {
+            return issue.message;
+        }
+        return error?.field === field ? error.message : undefined;
+    };
     const set = <K extends keyof VendorMasterForm>(key: K, value: VendorMasterForm[K]) =>
         setForm((prev) => ({ ...prev, [key]: value }));
     const setAddress = (which: 'registered_address' | 'billing_address' | 'shipping_address', key: keyof AddressForm, value: string) =>
@@ -101,6 +116,11 @@ const VendorFormPage = () => {
             setError({ message: 'Vendor name is required.', missing: [] });
             return;
         }
+        if (taxIssues.length > 0) {
+            setTaxChecked(true);
+            setError({ message: taxIssues[0].message, missing: [], field: taxIssues[0].field });
+            return;
+        }
         setSaving(status);
         setError(null);
         try {
@@ -116,6 +136,7 @@ const VendorFormPage = () => {
             setError({
                 message: e?.message || 'Could not save the vendor.',
                 missing: Array.isArray(e?.body?.missing) ? e.body.missing : [],
+                field: typeof e?.body?.field === 'string' ? e.body.field : undefined,
             });
         } finally {
             setSaving(null);
@@ -253,11 +274,11 @@ const VendorFormPage = () => {
                                 </FieldGridItem>
                                 {show.gstin && (
                                     <FieldGridItem>
-                                        <TextField name="gst_number" label="GSTIN" required maxLength={15} value={form.gst_number} onChange={(e) => set('gst_number', e.target.value.toUpperCase())} />
+                                        <TextField name="gst_number" label="GSTIN" required value={form.gst_number} error={fieldError('gst_number', 15)} onChange={(e) => set('gst_number', normalizeTaxId(e.target.value) ?? '')} />
                                     </FieldGridItem>
                                 )}
                                 <FieldGridItem>
-                                    <TextField name="pan_number" label="PAN" required maxLength={10} value={form.pan_number} onChange={(e) => set('pan_number', e.target.value.toUpperCase())} />
+                                    <TextField name="pan_number" label="PAN" required value={form.pan_number} error={fieldError('pan_number', 10)} onChange={(e) => set('pan_number', normalizeTaxId(e.target.value) ?? '')} />
                                 </FieldGridItem>
                             </>
                         )}
