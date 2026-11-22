@@ -36,6 +36,7 @@ vi.mock('react-router-dom', () => ({
 vi.mock('../../utils/formatters', () => ({ useInventoryCurrencySymbol: () => '$' }));
 vi.mock('@so360/shell-context', () => ({
     useActivity: () => ({ recordActivity: vi.fn().mockResolvedValue(undefined) }),
+    useShellBridge: () => ({ isFeatureEnabled: () => false }),
 }));
 
 // Stubs expose only the fields these specs drive, and echo back the errors the
