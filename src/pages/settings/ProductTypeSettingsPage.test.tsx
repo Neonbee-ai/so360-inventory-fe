@@ -137,17 +137,17 @@ describe('ProductTypeSettingsPage', () => {
       render(<ProductTypeSettingsPage />);
       await waitFor(() => expect(screen.getByText('Product Types')).toBeInTheDocument());
       fireEvent.click(screen.getByText('New'));
-      expect(screen.getByPlaceholderText('Name *')).toBeInTheDocument();
+      expect(screen.getByLabelText(/^Name/)).toBeInTheDocument();
     });
 
     it('When Cancel in form clicked / Then hides create form', async () => {
       render(<ProductTypeSettingsPage />);
       await waitFor(() => expect(screen.getByText('Product Types')).toBeInTheDocument());
       fireEvent.click(screen.getByText('New'));
-      expect(screen.getByPlaceholderText('Name *')).toBeInTheDocument();
+      expect(screen.getByLabelText(/^Name/)).toBeInTheDocument();
       fireEvent.click(screen.getByText('Cancel'));
       await waitFor(() => {
-        expect(screen.queryByPlaceholderText('Name *')).not.toBeInTheDocument();
+        expect(screen.queryByLabelText(/^Name/)).not.toBeInTheDocument();
       });
     });
 
@@ -155,7 +155,7 @@ describe('ProductTypeSettingsPage', () => {
       render(<ProductTypeSettingsPage />);
       await waitFor(() => expect(screen.getByText('Product Types')).toBeInTheDocument());
       fireEvent.click(screen.getByText('New'));
-      fireEvent.change(screen.getByPlaceholderText('Name *'), { target: { value: 'Clothing' } });
+      fireEvent.change(screen.getByLabelText(/^Name/), { target: { value: 'Clothing' } });
       fireEvent.click(screen.getByText('Create'));
       await waitFor(() => {
         expect(mockCreate).toHaveBeenCalled();

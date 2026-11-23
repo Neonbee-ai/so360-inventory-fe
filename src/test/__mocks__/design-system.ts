@@ -28,7 +28,7 @@ export const Select = ({ value, onChange, options = [], placeholder, label, hint
     options.map((o: any) => React.createElement('option', { key: String(o.value), value: o.value, disabled: o.disabled }, o.label)));
   return label || error ? React.createElement('div', null, label ? React.createElement('label', { htmlFor: el?.props?.id ?? `f-${name}` }, label) : null, el, error ? React.createElement('p', { role: 'alert' }, error) : null) : el;
 };
-export const Modal = ({ open, onClose, title, description, footer, children, dismissible = true, 'data-testid': testId }: any) => {
+export const Modal = ({ open, onClose, title, description, footer, children, dismissible = true, formId, submitLabel = 'Save', cancelLabel = 'Cancel', submitLoading = false, submitDisabled = false, 'data-testid': testId }: any) => {
   React.useEffect(() => {
     if (!open || !dismissible) return;
     const h = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose?.(); };
@@ -43,7 +43,11 @@ export const Modal = ({ open, onClose, title, description, footer, children, dis
         description ? React.createElement('div', null, description) : null,
         React.createElement('button', { type: 'button', 'aria-label': 'Close', disabled: !dismissible, onClick: dismissible ? onClose : undefined }, 'x'),
         React.createElement('div', null, children),
-        footer ? React.createElement('div', null, footer) : null))
+        footer ? React.createElement('div', null, footer)
+          : formId ? React.createElement('div', null,
+            React.createElement('button', { type: 'button', disabled: submitLoading || !dismissible, onClick: onClose }, cancelLabel),
+            React.createElement('button', { type: 'submit', form: formId, disabled: submitDisabled || submitLoading }, submitLabel))
+          : null))
     : null;
 };
 export const Drawer = ({ isOpen, onClose, title, subtitle, footer, toolbar, children, name, 'data-testid': testId }: any) => {
