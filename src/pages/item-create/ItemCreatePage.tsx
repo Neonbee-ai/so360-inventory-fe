@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Save } from 'lucide-react';
-import { Alert, Button, FormPageTemplate, Spinner } from '@so360/design-system';
+import { Alert, Button, FormPageTemplate, Spinner, toast } from '@so360/design-system';
 import { inventoryService } from '../../services/inventoryService';
 import { Unit, ItemCategory, Warehouse, ItemAttributeDefinition } from '../../types/inventory';
 import { TabId, ItemClassification } from '../../types/itemTypes';
@@ -15,7 +15,8 @@ import StockTrackingTab from './tabs/StockTrackingTab';
 import ShippingTab from './tabs/ShippingTab';
 import AttributesTab from './tabs/AttributesTab';
 import { useInventoryCurrencySymbol } from '../../utils/formatters';
-import { useActivity } from '@so360/shell-context';
+import { useActivity, useShellBridge } from '@so360/shell-context';
+import { isHsnSacMasterEnabled, hsnValidationWarning } from '../../utils/hsnSac';
 import { optional, validateBarcode, validateHsnSac, validateName, validateSku } from '../../utils/validators';
 import { generateSkuFromName } from '../../utils/skuGenerator';
 
@@ -46,6 +47,7 @@ export interface FormData {
     dimensions_unit: string;
     tax_class: string;
     hsn_code: string;
+    hsn_sac_kind: string;
     product_type_id: string;
     custom_attributes: Record<string, any>;
     metadata: Record<string, any>;
@@ -83,6 +85,7 @@ export const createFreshItemForm = (): FormData => ({
     dimensions_unit: 'cm',
     tax_class: '',
     hsn_code: '',
+    hsn_sac_kind: '',
     product_type_id: '',
     custom_attributes: {},
     metadata: {},
@@ -99,6 +102,7 @@ const ItemCreatePage = () => {
     const location = useLocation();
     const currencySymbol = useInventoryCurrencySymbol();
     const { recordActivity } = useActivity();
+    const hsnSacMaster = isHsnSacMasterEnabled(useShellBridge());
     const [form, setForm] = useState<FormData>(createFreshItemForm);
     const [activeTab, setActiveTab] = useState<TabId>('basic');
     const [categories, setCategories] = useState<ItemCategory[]>([]);
@@ -419,6 +423,7 @@ const ItemCreatePage = () => {
             if (form.weight) dto.weight = parseFloat(form.weight);
             if (form.weight) dto.weight_unit = form.weight_unit;
             if (form.hsn_code.trim()) dto.hsn_code = form.hsn_code.trim();
+            if (hsnSacMaster && form.hsn_sac_kind) dto.hsn_sac_kind = form.hsn_sac_kind;
             if (form.product_type_id) dto.product_type_id = form.product_type_id;
             if (Object.keys(form.custom_attributes).length > 0) dto.custom_attributes = form.custom_attributes;
             if (Object.keys(form.metadata).length > 0) dto.metadata = form.metadata;
@@ -444,6 +449,8 @@ const ItemCreatePage = () => {
 
             const created = await inventoryService.createItem(dto);
             recordActivity({ eventType: 'inventory.item.created', eventCategory: 'data', description: `Created item "${dto.name}"`, resourceType: 'item', resourceId: created.id }).catch(() => {});
+            const hsnWarn = hsnValidationWarning(created);
+            if (hsnWarn) toast.warning(hsnWarn);
             navigate(`/inventory/items/${created.id}`);
         } catch (err: any) {
             setError(err.message || 'Failed to create item');
@@ -499,6 +506,9 @@ const ItemCreatePage = () => {
                         tax_code_id={form.tax_code_id}
                         hsn_code={form.hsn_code}
                         hsnError={showErrors ? fieldErrors.hsn_code || undefined : undefined}
+                        hsnSacMaster={hsnSacMaster}
+                        hsn_sac_kind={form.hsn_sac_kind}
+                        itemType={form.type}
                         updateField={updateField}
                         currencySymbol={currencySymbol}
                         taxCodes={taxCodes}

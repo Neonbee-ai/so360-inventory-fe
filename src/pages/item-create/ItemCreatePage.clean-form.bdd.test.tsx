@@ -31,6 +31,7 @@ vi.mock('../../utils/formatters', () => ({
 
 vi.mock('@so360/shell-context', () => ({
   useActivity: () => ({ recordActivity: vi.fn() }),
+  useShellBridge: () => ({ isFeatureEnabled: () => false }),
 }));
 
 describe('ItemCreatePage — Clean Product Form Lifecycle (BDD)', () => {

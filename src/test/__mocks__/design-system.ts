@@ -426,7 +426,19 @@ export const FileUpload = ({ label, name, accept, multiple, onChange, onReject, 
         if (ok.length !== all.length) onReject?.(all.filter(f => !ok.includes(f)).map(file => ({ file, reason: 'type', message: `${file.name}: file type not allowed` })));
         if (ok.length) onChange?.(ok);
       } })));
-export const Combobox = ({ label, name, options = [], value, onChange, placeholder, error, disabled, 'data-testid': testId, 'aria-label': ariaLabel }: any) =>
+/** Async variant (loadOptions): a text box that searches and lists results as buttons; real DS Combobox behaves the same for the specs. */
+const AsyncCombobox = ({ label, name, value, onChange, loadOptions, placeholder, error, clearable }: any) => {
+  const [q, setQ] = React.useState('');
+  const [res, setRes] = React.useState<any[]>([]);
+  const [open, setOpen] = React.useState(false);
+  const search = (t: string) => { setQ(t); setOpen(true); loadOptions(t).then(setRes); };
+  return fieldWrap(name, label, error, h('div', null,
+    h('input', { id: `f-${name}`, name, 'aria-label': label ? undefined : placeholder, placeholder, value: open ? q : (value ?? ''), onFocus: () => { setOpen(true); loadOptions('').then(setRes); }, onChange: (e: any) => search(e.target.value) }),
+    open ? h('ul', null, res.map((o: any) => h('li', { key: o.value }, h('button', { type: 'button', onClick: () => { onChange?.(o.value, o); setOpen(false); setQ(''); } }, `${o.label} - ${o.description ?? ''}`)))) : null,
+    clearable && value ? h('button', { type: 'button', 'aria-label': 'Clear', onClick: () => onChange?.(null, null) }, 'x') : null));
+};
+export const Combobox = (props: any) => props.loadOptions ? h(AsyncCombobox, props) : SyncCombobox(props);
+const SyncCombobox = ({ label, name, options = [], value, onChange, placeholder, error, disabled, 'data-testid': testId, 'aria-label': ariaLabel }: any) =>
   fieldWrap(name, label, error, h('select', { id: label ? `f-${name}` : undefined, name, disabled, 'aria-label': ariaLabel ?? (label ? undefined : placeholder), 'data-testid': testId, value: value ?? '',
     onChange: (e: any) => onChange?.(e.target.value || null) }, h('option', { value: '' }, placeholder ?? ''), options.map((o: any) => h('option', { key: String(o.value), value: o.value, disabled: o.disabled }, o.label))));
 export const Chip = ({ children, selected, onSelectedChange, onClick, onRemove, removeLabel = 'Remove', disabled, 'data-testid': testId }: any) =>
