@@ -248,6 +248,16 @@ class InventoryService {
         return this.request(`/products/${id}/360`);
     }
 
+    /** HSN/SAC master search (proxied to Accounting). `unavailable: true` = fall back to free text. */
+    async searchHsnSac(params: { q?: string; kind?: string; page?: number; page_size?: number } = {}) {
+        const qs = new URLSearchParams();
+        Object.entries(params).forEach(([k, v]) => {
+            if (v !== undefined && v !== null && v !== '') qs.set(k, String(v));
+        });
+        const query = qs.toString();
+        return this.request(`/hsn-sac${query ? `?${query}` : ''}`);
+    }
+
     async createItem(dto: any) {
         return this.request('/items', {
             method: 'POST',

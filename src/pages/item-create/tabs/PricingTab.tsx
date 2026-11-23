@@ -1,6 +1,8 @@
 import React from 'react';
 import { Select, TextField, FieldGrid } from '@so360/design-system';
 import FormSection from '../components/FormSection';
+import HsnSacPicker from '../../../components/HsnSacPicker';
+import { HSN_KIND_OPTIONS } from '../../../utils/hsnSac';
 
 export interface TaxCodeOption {
     id: string;
@@ -17,6 +19,10 @@ interface PricingTabProps {
     tax_code_id: string;
     hsn_code: string;
     hsnError?: string;
+    /** Flag submodule:accounting:hsn_sac_master: goods/service select + searchable picker; off = free text. */
+    hsnSacMaster?: boolean;
+    hsn_sac_kind?: string;
+    itemType?: string;
     updateField: (field: string, value: any) => void;
     currencySymbol?: string;
     taxCodes?: TaxCodeOption[];
@@ -25,7 +31,7 @@ interface PricingTabProps {
 }
 
 const PricingTab: React.FC<PricingTabProps> = ({
-    price, cost, tax_class, tax_code_id, hsn_code, hsnError, updateField, currencySymbol = '$', taxCodes = [], isTaxCodesLoading = false, taxCodesError = null
+    price, cost, tax_class, tax_code_id, hsn_code, hsnError, hsnSacMaster = false, hsn_sac_kind = '', itemType = '', updateField, currencySymbol = '$', taxCodes = [], isTaxCodesLoading = false, taxCodesError = null
 }) => {
     const hasTaxCodes = taxCodes.length > 0;
     const taxOptions = isTaxCodesLoading
@@ -99,14 +105,36 @@ const PricingTab: React.FC<PricingTabProps> = ({
                             <p className="text-nb-caption text-warning mt-nb-1">Rate: {selectedTax.rate}% applied to purchase orders</p>
                         )}
                     </div>
-                    <TextField
-                        label="HSN / SAC Code"
-                        name="hsn_code"
-                        value={hsn_code}
-                        onChange={e => updateField('hsn_code', e.target.value)}
-                        placeholder="e.g. 8471"
-                        error={hsnError}
-                    />
+                    {hsnSacMaster ? (
+                        <>
+                            <Select
+                                label="Goods or service"
+                                name="hsn_sac_kind"
+                                value={hsn_sac_kind}
+                                onChange={(e: any) => updateField('hsn_sac_kind', e.target.value)}
+                                options={HSN_KIND_OPTIONS}
+                            />
+                            <HsnSacPicker
+                                value={hsn_code}
+                                kind={hsn_sac_kind}
+                                itemType={itemType}
+                                error={hsnError}
+                                onChange={(code, row) => {
+                                    updateField('hsn_code', code);
+                                    if (row && row.kind !== hsn_sac_kind) updateField('hsn_sac_kind', row.kind);
+                                }}
+                            />
+                        </>
+                    ) : (
+                        <TextField
+                            label="HSN / SAC Code"
+                            name="hsn_code"
+                            value={hsn_code}
+                            onChange={e => updateField('hsn_code', e.target.value)}
+                            placeholder="e.g. 8471"
+                            error={hsnError}
+                        />
+                    )}
                 </FieldGrid>
             </FormSection>
         </div>
