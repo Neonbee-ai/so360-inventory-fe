@@ -22,7 +22,7 @@ vi.mock('react-router-dom', () => ({
   useLocation: () => ({ pathname: '/inventory/items/new', search: '', hash: '' }),
 }));
 vi.mock('../../utils/formatters', () => ({ useInventoryCurrencySymbol: () => '$' }));
-vi.mock('@so360/shell-context', () => ({ useActivity: () => ({ recordActivity: vi.fn() }) }));
+vi.mock('@so360/shell-context', () => ({ useActivity: () => ({ recordActivity: vi.fn() }), useShellBridge: () => ({ isFeatureEnabled: () => false }) }));
 
 describe('ItemCreatePage - setup data loads in parallel (BDD)', () => {
   beforeEach(() => { started.length = 0; });

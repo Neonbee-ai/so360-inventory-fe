@@ -35,6 +35,7 @@ vi.mock('../../utils/formatters', () => ({
 
 vi.mock('@so360/shell-context', () => ({
   useActivity: () => ({ recordActivity: vi.fn() }),
+  useShellBridge: () => ({ isFeatureEnabled: () => false }),
 }));
 
 describe('ItemCreatePage — SKU Auto-Generation & Manual Override (P0)', () => {

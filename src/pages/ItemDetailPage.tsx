@@ -31,7 +31,8 @@ import AttributesTab from './item-create/tabs/AttributesTab';
 import LifecycleStatusPanel from '../components/lifecycle/LifecycleStatusPanel';
 import { useInventoryFormatters, useInventoryCurrencySymbol } from '../utils/formatters';
 import { parseUtcDate } from '../utils/datetime';
-import { useActivity } from '@so360/shell-context';
+import { useActivity, useShellBridge } from '@so360/shell-context';
+import { isHsnSacMasterEnabled, hsnValidationWarning, hsnKindLabel } from '../utils/hsnSac';
 
 // ── Types ─────────────────────────────────────────────
 type ViewTabId = TabId | 'ledger' | 'sales';
@@ -69,6 +70,7 @@ interface EditFormData {
     dimensions_unit: string;
     tax_class: string;
     hsn_code: string;
+    hsn_sac_kind: string;
     product_type_id: string;
     custom_attributes: Record<string, any>;
     cost_center_id: string;
@@ -99,6 +101,7 @@ const ItemDetailPage = () => {
     const formatters = useInventoryFormatters();
     const currencySymbol = useInventoryCurrencySymbol();
     const { recordActivity } = useActivity();
+    const hsnSacMaster = isHsnSacMasterEnabled(useShellBridge());
     const [item, setItem] = useState<Item | null>(null);
     const [ledger, setLedger] = useState<StockMovement[]>([]);
     const [salesHistory, setSalesHistory] = useState<ItemSalesHistory | null>(null);
@@ -271,6 +274,7 @@ const ItemDetailPage = () => {
             if (editForm.reorder_level) dto.reorder_level = parseInt(editForm.reorder_level); else dto.reorder_level = null;
             if (editForm.weight) { dto.weight = parseFloat(editForm.weight); dto.weight_unit = editForm.weight_unit; } else { dto.weight = null; dto.weight_unit = null; }
             if (editForm.hsn_code.trim()) dto.hsn_code = editForm.hsn_code.trim(); else dto.hsn_code = null;
+            if (hsnSacMaster) dto.hsn_sac_kind = editForm.hsn_sac_kind || null;
             if (editForm.product_type_id) dto.product_type_id = editForm.product_type_id; else dto.product_type_id = null;
             if (Object.keys(editForm.custom_attributes).length > 0) dto.custom_attributes = editForm.custom_attributes; else dto.custom_attributes = null;
             if (editForm.cost_center_id) dto.cost_center_id = editForm.cost_center_id; else dto.cost_center_id = null;
@@ -297,7 +301,9 @@ const ItemDetailPage = () => {
                 dto.dimensions = null;
             }
 
-            await inventoryService.updateItem(id, dto);
+            const saved = await inventoryService.updateItem(id, dto);
+            const hsnWarn = hsnValidationWarning(saved);
+            if (hsnWarn) toast.warning(hsnWarn);
             recordActivity({ eventType: 'inventory.item.updated', eventCategory: 'data', description: `Updated item "${dto.name}"`, resourceType: 'item', resourceId: id }).catch(() => {});
             setViewTab(editTab);
             setIsEditing(false);
@@ -348,7 +354,7 @@ const ItemDetailPage = () => {
             case 'media':
                 return <MediaTab image_urls={editForm.image_urls} image_meta={editForm.image_meta} updateField={updateField} />;
             case 'pricing':
-                return <PricingTab price={editForm.price} cost={editForm.cost} tax_class={editForm.tax_class} tax_code_id={editForm.tax_code_id} hsn_code={editForm.hsn_code} updateField={updateField} currencySymbol={currencySymbol} taxCodes={taxCodes} isTaxCodesLoading={isTaxCodesLoading} taxCodesError={taxCodesError} />;
+                return <PricingTab price={editForm.price} cost={editForm.cost} tax_class={editForm.tax_class} tax_code_id={editForm.tax_code_id} hsn_code={editForm.hsn_code} hsnSacMaster={hsnSacMaster} hsn_sac_kind={editForm.hsn_sac_kind} itemType={editForm.type} updateField={updateField} currencySymbol={currencySymbol} taxCodes={taxCodes} isTaxCodesLoading={isTaxCodesLoading} taxCodesError={taxCodesError} />;
             case 'category':
                 return (
                     <CategoryTab
@@ -834,6 +840,7 @@ const ItemDetailPage = () => {
                                                 <FieldGrid columns={2}>
                                                     <ReadOnlyField label="Tax Code" value={taxDisplayValue} />
                                                     <ReadOnlyField label="HSN / SAC Code" value={item.hsn_code} />
+                                                    {hsnSacMaster && <ReadOnlyField label="Goods or service" value={hsnKindLabel(item.hsn_sac_kind) || 'Auto (from product type)'} />}
                                                 </FieldGrid>
                                                 {isTaxCodesLoading && (
                                                     <p className="text-xs text-fg-subtle mt-2">Loading tax code labels from Core settings...</p>
@@ -1101,6 +1108,7 @@ function initEditForm(item: Item): EditFormData {
         dimensions_unit: item.dimensions?.unit || 'cm',
         tax_class: item.tax_class || '',
         hsn_code: item.hsn_code || '',
+        hsn_sac_kind: item.hsn_sac_kind || '',
         product_type_id: item.product_type_id || '',
         custom_attributes: item.custom_attributes || {},
         cost_center_id: item.cost_center_id || '',
