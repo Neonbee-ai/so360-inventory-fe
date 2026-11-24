@@ -3,13 +3,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { RecordNotFound, NOT_FOUND_ERROR, isNotFoundError } from '../../components/RecordNotFound';
 import { Send, Scale } from 'lucide-react';
 import { rfqService } from '../../services/rfqService';
-import { vendorService } from '../../services/vendorService';
 import { useInventoryFormatters } from '../../utils/formatters';
 import {
     toast, getErrorMessage, useConfirm, DetailPageTemplate, Button, Badge, StatusBadge, SectionCard, DescriptionList,
     DataTable, EmptyState, Modal, TextField, Select, FieldGrid, Grid,
 } from '@so360/design-system';
 import { RFQ_STATUS_TONES } from './RFQListPage';
+import RFQInviteVendorsModal, { type InviteResult } from './RFQInviteVendorsModal';
 
 const VENDOR_STATUS_TONES: Record<string, 'neutral' | 'success' | 'danger' | 'warning'> = {
     invited: 'neutral', quoted: 'success', declined: 'danger', no_response: 'warning',
@@ -51,8 +51,8 @@ const RFQDetailPage = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [busy, setBusy] = useState<string | null>(null);
-    const [vendors, setVendors] = useState<any[]>([]);
     const [showQuoteForm, setShowQuoteForm] = useState(false);
+    const [showInvite, setShowInvite] = useState(false);
     const [quoteVendor, setQuoteVendor] = useState('');
     const [quoteHeader, setQuoteHeader] = useState({
         quotation_number: '', quotation_date: '', valid_until: '',
@@ -76,11 +76,6 @@ const RFQDetailPage = () => {
             setIsLoading(false);
         }
     };
-
-    useEffect(() => {
-        if (!showQuoteForm || vendors.length) return;
-        vendorService.getVendors().then((v: any) => setVendors(Array.isArray(v) ? v : [])).catch(() => setVendors([]));
-    }, [showQuoteForm]);
 
     const openQuoteForm = () => {
         // Pre-fill one quotation line per RFQ line so the buyer only types prices.
@@ -120,6 +115,29 @@ const RFQDetailPage = () => {
             await fetchRFQ();
         } catch (err) {
             toast.error(getErrorMessage(err, 'Failed to send RFQ'));
+        } finally {
+            setBusy(null);
+        }
+    };
+
+    /** Invite additional vendors; the API reports a per-vendor outcome. */
+    const handleInvite = async (vendorIds: string[]) => {
+        setBusy('invite');
+        try {
+            const res = await rfqService.sendRFQ(id!, { vendor_ids: vendorIds });
+            const results: InviteResult[] = res?.invitation_results || [];
+            const invited = results.filter(r => r.status === 'invited').length;
+            const skipped = results.filter(r => r.status !== 'invited');
+            if (skipped.length === 0) {
+                toast.success(`RFQ sent to ${invited || vendorIds.length} new vendor${(invited || vendorIds.length) === 1 ? '' : 's'}`);
+            } else {
+                toast.warning(`${invited} invited, ${skipped.length} skipped: ${skipped.map(r => r.reason).filter(Boolean).join('; ')}`);
+            }
+            setShowInvite(false);
+            await fetchRFQ();
+        } catch (err) {
+            // Keep the selector open with the selection intact so the user can retry.
+            toast.error(getErrorMessage(err, 'Failed to invite vendors'));
         } finally {
             setBusy(null);
         }
@@ -257,7 +275,7 @@ const RFQDetailPage = () => {
     ].filter(Boolean) as React.ReactElement[];
 
     const primaryAction = ['draft', 'sent'].includes(rfq.status) ? (
-        <Button onClick={handleSend} disabled={busy === 'send'}>
+        <Button onClick={rfq.status === 'draft' ? handleSend : () => setShowInvite(true)} disabled={busy === 'send' || busy === 'invite'}>
             <Send size={16} /> {rfq.status === 'draft' ? 'Send to Vendors' : 'Send to New Vendors'}
         </Button>
     ) : undefined;
@@ -300,6 +318,7 @@ const RFQDetailPage = () => {
                                         <div className="min-w-0">
                                             <div className="text-sm text-fg truncate">{v.vendor_name || v.vendor_id.slice(0, 8)}</div>
                                             {v.contact_email && <div className="text-xs text-fg-subtle truncate">{v.contact_email}</div>}
+                                            {v.invited_at && <div className="text-xs text-fg-subtle">Invited {formatters.formatDate(v.invited_at)}{v.email_sent ? '' : ' · not emailed'}</div>}
                                         </div>
                                         <Badge tone={VENDOR_STATUS_TONES[v.status] || 'neutral'}>{v.status.replace(/_/g, ' ')}</Badge>
                                     </div>
@@ -353,6 +372,14 @@ const RFQDetailPage = () => {
                     </SectionCard>
                 </Grid.Item>
             </Grid>
+
+            <RFQInviteVendorsModal
+                open={showInvite}
+                onClose={() => setShowInvite(false)}
+                invitedVendorIds={rfqVendors.map((v: any) => v.vendor_id)}
+                onInvite={handleInvite}
+                busy={busy === 'invite'}
+            />
 
             <Modal
                 open={showQuoteForm}
