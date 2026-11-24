@@ -34,13 +34,12 @@ export function dimensionRole(...names: Array<string | null | undefined>): Dimen
     return null;
 }
 
-/** Non-dimension items keep their place; dimensions gather at the first one in canonical order. */
+/** Dimensions come first in canonical order, then the non-dimension items in their given order. */
 export function orderWithDimensions<T>(items: T[], roleOf: (item: T) => DimensionRole | null): T[] {
-    const firstIdx = items.findIndex(i => roleOf(i) !== null);
-    if (firstIdx < 0) return items;
+    if (!items.some(i => roleOf(i) !== null)) return items;
     const dims = items.filter(i => roleOf(i) !== null).sort((a, b) => ROLE_RANK[roleOf(a)!] - ROLE_RANK[roleOf(b)!]);
     const rest = items.filter(i => roleOf(i) === null);
-    return [...rest.slice(0, firstIdx), ...dims, ...rest.slice(firstIdx)];
+    return [...dims, ...rest];
 }
 
 interface OrderableAttribute { field_name: string; label?: string | null; sort_order?: number | null }
