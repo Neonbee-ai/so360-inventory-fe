@@ -41,6 +41,8 @@ const ProcurementExceptionsPage = lazy(() => import('./pages/procurement/Procure
 const DemandCoveragePage = lazy(() => import('./pages/procurement/DemandCoveragePage'));
 const ConsolidationWizardPage = lazy(() => import('./pages/procurement/ConsolidationWizardPage'));
 const RFQFromDemandWizardPage = lazy(() => import('./pages/procurement/RFQFromDemandWizardPage'));
+const RFQAwardWizardPage = lazy(() => import('./pages/procurement/RFQAwardWizardPage'));
+const EvaluationSettingsPage = lazy(() => import('./pages/procurement/EvaluationSettingsPage'));
 const CoverageSettingsPage = lazy(() => import('./pages/procurement/CoverageSettingsPage'));
 const CategoriesPage = lazy(() => import('./pages/CategoriesPage'));
 const BulkImportPage = lazy(() => import('./pages/bulk-import/BulkImportPage'));
@@ -220,6 +222,7 @@ const App = () => {
                 <Route path="transfers" element={<Navigate to="../movements?type=transfer" replace />} />
                 <Route path="settings" element={<PermissionGuard permission={['items.update', 'warehouses.update']}><SettingsPage /></PermissionGuard>} />
                 <Route path="settings/coverage" element={<PermissionGuard permission="items.update"><FeatureGate flagKey="submodule:inventory:demand_coverage"><CoverageSettingsPage /></FeatureGate></PermissionGuard>} />
+                <Route path="settings/evaluation" element={<PermissionGuard permission="items.update"><FeatureGate flagKey="submodule:inventory:sourcing_evaluation"><EvaluationSettingsPage /></FeatureGate></PermissionGuard>} />
                 <Route path="settings/product-types" element={<PermissionGuard permission={['items.update', 'warehouses.update']}><FeatureGate flagKey="submodule:inventory:product_types"><ProductTypeSettingsPage /></FeatureGate></PermissionGuard>} />
                 <Route path="categories" element={<PermissionGuard permission="categories.read"><CategoriesPage /></PermissionGuard>} />
 
@@ -235,6 +238,7 @@ const App = () => {
                 <Route path="rfq" element={<PermissionGuard permission="purchase_orders.read"><FeatureGate flagKey="submodule:inventory:rfq"><RFQListPage /></FeatureGate></PermissionGuard>} />
                 <Route path="rfq/:id" element={<PermissionGuard permission="purchase_orders.read"><FeatureGate flagKey="submodule:inventory:rfq"><RFQDetailPage /></FeatureGate></PermissionGuard>} />
                 <Route path="rfq/:id/compare" element={<PermissionGuard permission="purchase_orders.read"><FeatureGate flagKey="submodule:inventory:rfq"><RFQComparisonPage /></FeatureGate></PermissionGuard>} />
+                <Route path="rfq/:id/award" element={<PermissionGuard permission="purchase_orders.create"><FeatureGate flagKey="submodule:inventory:sourcing_evaluation"><RFQAwardWizardPage /></FeatureGate></PermissionGuard>} />
                 <Route path="quality" element={<PermissionGuard permission="goods_receipts.read"><FeatureGate flagKey="submodule:inventory:quality"><QualityInspectionPage /></FeatureGate></PermissionGuard>} />
                 <Route path="returns" element={<PermissionGuard permission="goods_receipts.read"><FeatureGate flagKey="submodule:inventory:returns"><VendorReturnsPage /></FeatureGate></PermissionGuard>} />
                 <Route path="dashboard" element={<PermissionGuard permission="procurement_analytics.read"><FeatureGate flagKey="submodule:inventory:procurement"><ProcurementDashboardPage /></FeatureGate></PermissionGuard>} />
@@ -267,6 +271,7 @@ const App = () => {
                 <Route path="procurement/rfq" element={<PermissionGuard permission="purchase_orders.read"><FeatureGate flagKey="submodule:inventory:rfq"><RFQListPage /></FeatureGate></PermissionGuard>} />
                 <Route path="procurement/rfq/:id" element={<PermissionGuard permission="purchase_orders.read"><FeatureGate flagKey="submodule:inventory:rfq"><RFQDetailPage /></FeatureGate></PermissionGuard>} />
                 <Route path="procurement/rfq/:id/compare" element={<PermissionGuard permission="purchase_orders.read"><FeatureGate flagKey="submodule:inventory:rfq"><RFQComparisonPage /></FeatureGate></PermissionGuard>} />
+                <Route path="procurement/rfq/:id/award" element={<PermissionGuard permission="purchase_orders.create"><FeatureGate flagKey="submodule:inventory:sourcing_evaluation"><RFQAwardWizardPage /></FeatureGate></PermissionGuard>} />
                 <Route path="procurement/quality" element={<PermissionGuard permission="goods_receipts.read"><FeatureGate flagKey="submodule:inventory:quality"><QualityInspectionPage /></FeatureGate></PermissionGuard>} />
                 <Route path="procurement/returns" element={<PermissionGuard permission="goods_receipts.read"><FeatureGate flagKey="submodule:inventory:returns"><VendorReturnsPage /></FeatureGate></PermissionGuard>} />
                 <Route path="procurement/dashboard" element={<PermissionGuard permission="procurement_analytics.read"><FeatureGate flagKey="submodule:inventory:procurement"><ProcurementDashboardPage /></FeatureGate></PermissionGuard>} />

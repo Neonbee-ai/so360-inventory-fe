@@ -46,8 +46,9 @@ class RfqService {
         this.baseUrl = `${String(resolved).replace(/\/$/, '')}/v1/procurement/rfq`;
     }
 
-    private async request(endpoint: string, options: RequestInit = {}) {
-        const response = await fetch(`${this.baseUrl}${endpoint}`, {
+    private async request(endpoint: string, options: RequestInit = {}, root = false) {
+        const base = root ? this.baseUrl.replace(/\/rfq$/, '') : this.baseUrl;
+        const response = await fetch(`${base}${endpoint}`, {
             ...options,
             headers: {
                 'Content-Type': 'application/json',
@@ -103,11 +104,61 @@ class RfqService {
         return this.request(`/${rfqId}/decline`, { method: 'PATCH', body: JSON.stringify(dto) });
     }
 
-    async getComparison(rfqId: string) {
-        return this.request(`/${rfqId}/comparison`);
+    async getComparison(rfqId: string, evaluationId?: string) {
+        return this.request(`/${rfqId}/comparison${evaluationId ? `?evaluation_id=${evaluationId}` : ''}`);
     }
 
-    /** Awarding creates the purchase order and returns { rfq, po }. */
+    // ── Quote evaluation and award (Procurement Flow 04) ──
+    async listEvaluations(rfqId: string) {
+        return this.request(`/${rfqId}/evaluations`);
+    }
+
+    async getEvaluation(rfqId: string, evalId: string) {
+        return this.request(`/${rfqId}/evaluations/${evalId}`);
+    }
+
+    async createEvaluation(rfqId: string, dto: { criteria?: Record<string, any>; fx_date_basis?: 'quotation' | 'evaluation' } = {}) {
+        return this.request(`/${rfqId}/evaluations`, { method: 'POST', body: JSON.stringify(dto) });
+    }
+
+    async updateEvaluation(rfqId: string, evalId: string, criteria: Record<string, any>) {
+        return this.request(`/${rfqId}/evaluations/${evalId}`, { method: 'PATCH', body: JSON.stringify({ criteria }) });
+    }
+
+    async addEvaluationEntry(rfqId: string, evalId: string, dto: Record<string, any>) {
+        return this.request(`/${rfqId}/evaluations/${evalId}/entries`, { method: 'POST', body: JSON.stringify(dto) });
+    }
+
+    async lockEvaluation(rfqId: string, evalId: string) {
+        return this.request(`/${rfqId}/evaluations/${evalId}/lock`, { method: 'POST' });
+    }
+
+    async listAwards(rfqId: string) {
+        return this.request(`/${rfqId}/awards`);
+    }
+
+    async createAward(rfqId: string, dto: { evaluation_id: string; lines: Array<{ rfq_line_id: string; quotation_id: string; qty: number }>; rationale?: string; waiver_reason?: string }) {
+        return this.request(`/${rfqId}/awards`, { method: 'POST', body: JSON.stringify(dto) });
+    }
+
+    async getAward(awardId: string) {
+        return this.requestRoot(`/awards/${awardId}`);
+    }
+
+    async getSourcingPolicy() {
+        return this.requestRoot(`/sourcing-policy/${inventoryService.getOrgId()}`);
+    }
+
+    async saveSourcingPolicy(policy: Record<string, any>) {
+        return this.requestRoot(`/sourcing-policy/${inventoryService.getOrgId()}`, { method: 'PUT', body: JSON.stringify(policy) });
+    }
+
+    /** Same as request() but relative to /v1/procurement instead of /v1/procurement/rfq. */
+    private requestRoot(endpoint: string, options: RequestInit = {}) {
+        return this.request(endpoint, options, true);
+    }
+
+    /** Awarding creates the purchase order and returns { rfq, po } - or, with sourcing_evaluation on, { rfq, award } and no PO. */
     async awardRFQ(rfqId: string, dto: { quotation_id: string; justification?: string; po_number?: string }) {
         return this.request(`/${rfqId}/award`, { method: 'PATCH', body: JSON.stringify(dto) });
     }

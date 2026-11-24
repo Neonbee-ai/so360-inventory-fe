@@ -172,6 +172,12 @@ const SettingsPage = () => {
                     </SettingsCard>
                 )}
 
+                {can('items.update') && (
+                    <SettingsCard title="Quote evaluation" description="Scoring weights, landed-cost policy, exchange-rate date and award approval threshold">
+                        <Button variant="secondary" size="sm" onClick={() => navigate('/inventory/settings/evaluation')}>Open evaluation settings</Button>
+                    </SettingsCard>
+                )}
+
                 <SettingsCard title="Units of Measure (UoM)" description="Define standard units for stocks and services (e.g., Pcs, KG, Hrs)">
                     <div className="flex flex-wrap gap-nb-2 items-center">
                         {settings?.uoms.map((uom: UomItem) => (
