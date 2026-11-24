@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { qualityService } from '../../services/qualityService';
 import { procurementService } from '../../services/procurementService';
 import { useInventoryFormatters } from '../../utils/formatters';
+import QcDispositionModal, { QC_ATTRIBUTION_OPTIONS, QC_DISPOSITION_OPTIONS, QC_SEVERITY_OPTIONS } from './QcDispositionModal';
 import {
     toast, getErrorMessage, Alert, Badge, Button, DataTable, DescriptionList, EmptyState, FieldGrid, FieldGridItem,
     Grid, GridItem, KpiCard, ListPageTemplate, Modal, Select, Textarea, TextField,
@@ -49,6 +50,7 @@ const QualityInspectionPage = () => {
     const [showOpenForm, setShowOpenForm] = useState(false);
     const [grns, setGrns] = useState<any[]>([]);
     const [grnId, setGrnId] = useState('');
+    const [verifying, setVerifying] = useState<any>(null);
 
     useEffect(() => { fetchData(); }, [statusFilter]);
 
@@ -102,6 +104,9 @@ const QualityInspectionPage = () => {
             rejected_quantity: '0',
             defect_code: '',
             rejection_reason: '',
+            attribution: 'unknown',
+            defect_severity: '',
+            disposition: '',
         })));
     };
 
@@ -131,6 +136,9 @@ const QualityInspectionPage = () => {
                     rejected_quantity: parseFloat(l.rejected_quantity) || 0,
                     defect_code: l.defect_code || undefined,
                     rejection_reason: l.rejection_reason || undefined,
+                    ...((parseFloat(l.rejected_quantity) || 0) > 0
+                        ? { attribution: l.attribution || undefined, defect_severity: l.defect_severity || undefined, disposition: l.disposition || undefined }
+                        : {}),
                 })),
             });
             const summary = res?.summary;
@@ -186,7 +194,14 @@ const QualityInspectionPage = () => {
             render: (i) => (i.status === 'pending' ? (
                 <Button variant="ghost" size="sm" onClick={() => startInspecting(i)}>Record Result →</Button>
             ) : (
-                <Button variant="ghost" size="sm" onClick={() => navigate(`/procurement/grn/${i.grn_id}`)}>View Receipt</Button>
+                <div className="flex gap-nb-2">
+                    <Button variant="ghost" size="sm" onClick={() => navigate(`/procurement/grn/${i.grn_id}`)}>View Receipt</Button>
+                    {i.status === 'completed' && (i.quality_inspection_lines || []).some((l: any) => Number(l.rejected_quantity) > 0) && (
+                        <Button variant="ghost" size="sm" onClick={() => setVerifying(i)}>
+                            {i.ncr_number ? `${i.ncr_number} · Defects` : 'Defects'}
+                        </Button>
+                    )}
+                </div>
             )),
         },
     ];
@@ -311,6 +326,35 @@ const QualityInspectionPage = () => {
                                             />
                                         </FieldGridItem>
                                         <FieldGridItem>
+                                            <Select
+                                                label="Caused by"
+                                                name={`attribution_${idx}`}
+                                                value={l.attribution}
+                                                options={QC_ATTRIBUTION_OPTIONS}
+                                                onValueChange={(v: string) => updateResult(idx, 'attribution', v)}
+                                            />
+                                        </FieldGridItem>
+                                        <FieldGridItem>
+                                            <Select
+                                                label="Severity"
+                                                name={`severity_${idx}`}
+                                                placeholder="Select severity"
+                                                value={l.defect_severity}
+                                                options={QC_SEVERITY_OPTIONS}
+                                                onValueChange={(v: string) => updateResult(idx, 'defect_severity', v)}
+                                            />
+                                        </FieldGridItem>
+                                        <FieldGridItem>
+                                            <Select
+                                                label="Disposition"
+                                                name={`disposition_${idx}`}
+                                                placeholder="Decide later"
+                                                value={l.disposition}
+                                                options={QC_DISPOSITION_OPTIONS}
+                                                onValueChange={(v: string) => updateResult(idx, 'disposition', v)}
+                                            />
+                                        </FieldGridItem>
+                                        <FieldGridItem>
                                             <TextField
                                                 label="Rejection reason"
                                                 name={`reason_${idx}`}
@@ -343,6 +387,7 @@ const QualityInspectionPage = () => {
                     />
                 </form>
             </Modal>
+            <QcDispositionModal inspection={verifying} onClose={() => setVerifying(null)} onSaved={() => { setVerifying(null); fetchData(); }} />
         </>
     );
 };

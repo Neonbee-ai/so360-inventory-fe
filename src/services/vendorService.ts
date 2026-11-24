@@ -143,6 +143,31 @@ class VendorService {
     async resolveIntegrationException(id: string, dto: { status: 'resolved' | 'ignored'; resolution_note?: string; vendor_id?: string }) {
         return this.request(`/integration-exceptions/${id}`, { method: 'PATCH', body: JSON.stringify(dto) });
     }
+    // ── Supplier quality & corrective actions (Pulse aa067321) ──
+    async getQualityHistory<T = any>(vendorId: string): Promise<T> {
+        return this.request(`/${vendorId}/quality-history`);
+    }
+    async listCorrectiveActions<T = any>(params: { vendor_id?: string; status?: string } = {}): Promise<T> {
+        const qs = new URLSearchParams();
+        Object.entries(params).forEach(([k, v]) => { if (v) qs.set(k, String(v)); });
+        const q = qs.toString();
+        return this.request(`/corrective-actions${q ? `?${q}` : ''}`);
+    }
+    async getCorrectiveAction<T = any>(id: string): Promise<T> {
+        return this.request(`/corrective-actions/${id}`);
+    }
+    async transitionCorrectiveAction(id: string, dto: Record<string, any>) {
+        return this.request(`/corrective-actions/${id}/transition`, { method: 'POST', body: JSON.stringify(dto) });
+    }
+    async closeCorrectiveAction(id: string, dto: Record<string, any>) {
+        return this.request(`/corrective-actions/${id}/close`, { method: 'POST', body: JSON.stringify(dto) });
+    }
+    async addCorrectiveActionEvidence(id: string, dto: { title: string; file_url?: string; document_id?: string; note?: string }) {
+        return this.request(`/corrective-actions/${id}/evidence`, { method: 'POST', body: JSON.stringify(dto) });
+    }
+    async decideRestrictionDraft(restrictionId: string, dto: { decision: 'approve' | 'reject'; note?: string }) {
+        return this.request(`/restrictions/${restrictionId}/draft-decision`, { method: 'POST', body: JSON.stringify(dto) });
+    }
     // ── Vendor evidence & compliance (Pulse f777120a) ──
     async getEvidence<T = any>(vendorId: string): Promise<T> {
         return this.request(`/${vendorId}/evidence`);

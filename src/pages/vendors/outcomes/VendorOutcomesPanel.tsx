@@ -56,7 +56,7 @@ export default function VendorOutcomesPanel({ vendorId }: { vendorId: string }) 
     {
       key: 'owner',
       header: 'Counts against vendor',
-      render: (r) => (r.source_type === 'supplier_return_line' ? (r.attributable_to === 'vendor' ? 'Yes' : 'No') : '—'),
+      render: (r) => (r.source_type === 'supplier_return_line' || r.source_type === 'qc_line' ? (r.attributable_to === 'vendor' ? 'Yes' : 'No') : '—'),
     },
   ];
 

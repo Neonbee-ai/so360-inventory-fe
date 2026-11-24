@@ -5,6 +5,8 @@ import VendorLifecyclePanel from './lifecycle/VendorLifecyclePanel';
 import VendorQualificationsPanel from './lifecycle/VendorQualificationsPanel';
 import VendorRiskPanel from './lifecycle/VendorRiskPanel';
 import VendorEvidencePanel from './evidence/VendorEvidencePanel';
+import VendorQualityPanel from './quality/VendorQualityPanel';
+import VendorCorrectiveActionsPanel from './quality/VendorCorrectiveActionsPanel';
 import VendorOutcomesPanel from './outcomes/VendorOutcomesPanel';
 import VendorEligibilityPanel from './eligibility/VendorEligibilityPanel';
 import { useShellBridge } from '@so360/shell-context';
@@ -38,6 +40,10 @@ export default function Vendor360Page() {
   // Vendor 16: the evidence tab rides the Vendor Master flag (the documents feature it extends).
   const evidenceOn = ((shell as any)?.getFeatureState?.('submodule:inventory:vendor_master') ?? 'enabled') === 'enabled';
   const outcomesOn = ((shell as any)?.getFeatureState?.('submodule:inventory:vendor_outcome_facts') ?? 'enabled') === 'enabled';
+
+  // Vendor 11: supplier quality + corrective actions (fail-open while flags resolve).
+  const qualityOn = ((shell as any)?.getFeatureState?.('submodule:inventory:supplier_quality') ?? 'enabled') === 'enabled';
+  const vcaOn = ((shell as any)?.getFeatureState?.('submodule:inventory:vendor_corrective_actions') ?? 'enabled') === 'enabled';
 
   const can = useMemo(
     () => (perms?: string[]) => {
@@ -82,6 +88,8 @@ export default function Vendor360Page() {
           { id: 'eligibility', label: 'Eligibility' },
           ...(evidenceOn ? [{ id: 'documents', label: 'Documents & Compliance' }] : []),
           ...(outcomesOn ? [{ id: 'outcomes', label: 'Receipts & Returns' }] : []),
+          ...(qualityOn ? [{ id: 'quality', label: 'Quality' }] : []),
+          ...(vcaOn ? [{ id: 'corrective', label: 'Corrective actions' }] : []),
         ]}
       >
         {(active) => {
@@ -93,6 +101,12 @@ export default function Vendor360Page() {
           }
           if (active === 'outcomes' && outcomesOn) {
             return <VendorOutcomesPanel vendorId={id} />;
+          }
+          if (active === 'quality' && qualityOn) {
+            return <VendorQualityPanel vendorId={id} />;
+          }
+          if (active === 'corrective' && vcaOn) {
+            return <VendorCorrectiveActionsPanel vendorId={id} />;
           }
           if (active === 'eligibility') {
             return <VendorEligibilityPanel vendorId={id} />;
