@@ -1,6 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Button, Card, EmptyState } from '@so360/design-system';
+import { Button, Card, EmptyState, Tabs } from '@so360/design-system';
+import VendorLifecyclePanel from './lifecycle/VendorLifecyclePanel';
+import VendorQualificationsPanel from './lifecycle/VendorQualificationsPanel';
+import VendorRiskPanel from './lifecycle/VendorRiskPanel';
+import VendorEligibilityPanel from './eligibility/VendorEligibilityPanel';
 import { useShellBridge } from '@so360/shell-context';
 import { vendorService } from '../../services/vendorService';
 
@@ -27,6 +31,7 @@ export default function Vendor360Page() {
   const shell = useShellBridge();
   const [data, setData] = useState<Payload | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [tab, setTab] = useState('overview');
 
   const can = useMemo(
     () => (perms?: string[]) => {
@@ -60,6 +65,30 @@ export default function Vendor360Page() {
         <Button variant="ghost" onClick={() => navigate(`/inventory/vendors/${id}`)}>Back to vendor</Button>
       </div>
 
+      <Tabs
+        name="vendor-360-tabs"
+        value={tab}
+        onChange={setTab}
+        items={[
+          { id: 'overview', label: 'Overview' },
+          { id: 'qualifications', label: 'Categories & Capabilities' },
+          { id: 'risk', label: 'Risk & Due Diligence' },
+          { id: 'eligibility', label: 'Eligibility' },
+        ]}
+      >
+        {(active) => {
+          if (active === 'qualifications') {
+            return <VendorQualificationsPanel vendorId={id} canEdit={can(['suppliers.update'])} />;
+          }
+          if (active === 'eligibility') {
+            return <VendorEligibilityPanel vendorId={id} />;
+          }
+          if (active === 'risk') {
+            return <VendorRiskPanel vendorId={id} canRestrict={can(['vendors.restrict'])} />;
+          }
+          return (
+            <div className="flex flex-col gap-nb-3">
+              <VendorLifecyclePanel vendorId={id} canManage={can(['vendors.lifecycle.manage'])} />
       <Card title="Procurement summary">
         <div className="grid grid-cols-2 gap-nb-3 md:grid-cols-4">
           <div>
@@ -137,6 +166,10 @@ export default function Vendor360Page() {
           </ul>
         )}
       </Card>
+            </div>
+          );
+        }}
+      </Tabs>
     </div>
   );
 }

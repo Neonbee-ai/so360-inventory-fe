@@ -114,6 +114,70 @@ class VendorService {
         return this.request(`/${id}/360`);
     }
 
+    // ── Lifecycle, qualifications, restrictions (Pulse 97d03c26) ──
+    async getLifecycle<T = any>(id: string): Promise<T> {
+        return this.request(`/${id}/lifecycle`);
+    }
+    async transitionVendor(id: string, dto: { to_state: string; reason_code: string; reason_text?: string }) {
+        return this.request(`/${id}/lifecycle/transition`, { method: 'POST', body: JSON.stringify(dto) });
+    }
+    async getReviewQueue<T = any>(params: { state?: string; risk?: string; limit?: number; offset?: number } = {}): Promise<T> {
+        const qs = new URLSearchParams();
+        Object.entries(params).forEach(([k, v]) => { if (v !== undefined && v !== '') qs.set(k, String(v)); });
+        const q = qs.toString();
+        return this.request(`/lifecycle/review-queue${q ? `?${q}` : ''}`);
+    }
+    async getQualifications<T = any[]>(id: string): Promise<T> {
+        return this.request(`/${id}/qualifications`);
+    }
+    async createQualification(id: string, dto: Record<string, unknown>) {
+        return this.request(`/${id}/qualifications`, { method: 'POST', body: JSON.stringify(dto) });
+    }
+    async updateQualification(qid: string, dto: Record<string, unknown>) {
+        return this.request(`/qualifications/${qid}`, { method: 'PATCH', body: JSON.stringify(dto) });
+    }
+    async submitQualification(qid: string) {
+        return this.request(`/qualifications/${qid}/submit`, { method: 'POST' });
+    }
+    async decideQualification(qid: string, dto: { decision: string; comment?: string; valid_to?: string; conditions?: unknown[] }) {
+        return this.request(`/qualifications/${qid}/decision`, { method: 'POST', body: JSON.stringify(dto) });
+    }
+    async updateQualificationCondition(cid: string, dto: { status: string; evidence_refs?: string[] }) {
+        return this.request(`/qualification-conditions/${cid}`, { method: 'PATCH', body: JSON.stringify(dto) });
+    }
+    async getRestrictions<T = any[]>(id: string): Promise<T> {
+        return this.request(`/${id}/restrictions`);
+    }
+    async applyRestriction(id: string, dto: Record<string, unknown>) {
+        return this.request(`/${id}/restrictions`, { method: 'POST', body: JSON.stringify(dto) });
+    }
+    async liftRestriction(rid: string, reason: string) {
+        return this.request(`/restrictions/${rid}/lift`, { method: 'POST', body: JSON.stringify({ reason }) });
+    }
+    async getCommitmentReviews<T = any[]>(id: string): Promise<T> {
+        return this.request(`/${id}/commitment-reviews`);
+    }
+    async decideCommitmentReview(crid: string, dto: { status: string; note?: string }) {
+        return this.request(`/commitment-reviews/${crid}`, { method: 'PATCH', body: JSON.stringify(dto) });
+    }
+
+    // ── Eligibility, policy, integration health (Pulse 66b329c3) ──
+    async checkEligibility<T = any>(dto: Record<string, unknown>): Promise<T> {
+        return this.request('/eligibility/check', { method: 'POST', body: JSON.stringify(dto) });
+    }
+    async getEligibilityPolicy<T = any>(): Promise<T> {
+        return this.request('/eligibility-policy');
+    }
+    async saveEligibilityPolicy<T = any>(dto: Record<string, unknown>): Promise<T> {
+        return this.request('/eligibility-policy', { method: 'PUT', body: JSON.stringify(dto) });
+    }
+    async getIntegrationHealth<T = any>(): Promise<T> {
+        return this.request('/integration-health');
+    }
+    async replayIntegration(dto: { consumer: string; status?: 'dead' | 'failed'; event_ids?: string[] }) {
+        return this.request('/integration-health/replay', { method: 'POST', body: JSON.stringify(dto) });
+    }
+
     async updateVendor(id: string, dto: any) {
         return this.request(`/${id}`, {
             method: 'PATCH',
