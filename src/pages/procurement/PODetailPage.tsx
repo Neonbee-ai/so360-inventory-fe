@@ -13,6 +13,8 @@ import ProcurementTrace from '../../components/ProcurementTrace';
 import { FileText, ListChecks, Split, ShieldCheck, History, Truck } from 'lucide-react';
 import { poApprovalService, PO_APPROVAL_FLAG, PO_AMEND_FLAG } from '../../services/poApprovalService';
 import { LINE_ACK_FLAG } from '../../services/poScheduleService';
+import { CLOSEOUT_FLAG } from '../../services/matchService';
+import POCloseoutPanel from './POCloseoutPanel';
 import POAcknowledgementPanel from './POAcknowledgementPanel';
 import POApprovalPanel from './POApprovalPanel';
 import POVersionsPanel from './POVersionsPanel';
@@ -71,6 +73,7 @@ const PO_TABS = [
     { id: 'approvals', label: 'Approvals', icon: <ShieldCheck size={14} /> },
     { id: 'versions', label: 'Versions', icon: <History size={14} /> },
 ];
+const CLOSEOUT_TAB = { id: 'closeout', label: 'Closeout', icon: <ListChecks size={14} /> };
 const ACK_TAB = { id: 'ack', label: 'Schedules & Acknowledgement', icon: <Truck size={14} /> };
 
 const STATUS_TONES: Record<string, Tone> = {
@@ -95,8 +98,9 @@ const PODetailPage = () => {
     const approvalOn = flagOn(PO_APPROVAL_FLAG);
     const amendOn = flagOn(PO_AMEND_FLAG);
     const ackOn = flagOn(LINE_ACK_FLAG);
-    const tabsOn = approvalOn || ackOn;
-    const poTabs = [PO_TABS[0], ...(approvalOn ? PO_TABS.slice(1) : []), ...(ackOn ? [ACK_TAB] : [])];
+    const closeoutOn = flagOn(CLOSEOUT_FLAG);
+    const tabsOn = approvalOn || ackOn || closeoutOn;
+    const poTabs = [PO_TABS[0], ...(approvalOn ? PO_TABS.slice(1) : []), ...(ackOn ? [ACK_TAB] : []), ...(closeoutOn ? [CLOSEOUT_TAB] : [])];
     const [showAckForm, setShowAckForm] = useState(false);
     const [ackSaving, setAckSaving] = useState(false);
     const [ackForm, setAckForm] = useState({
@@ -256,7 +260,7 @@ const PODetailPage = () => {
 
     const closeLabel = (key: string) => (statusAction === key ? 'Working...' : null);
     const closeBtn = (variant: 'primary' | 'secondary') => (
-        <Button key="close" variant={variant} onClick={() => handleStatusChange('closed')} disabled={busy}>
+        <Button key="close" variant={variant} onClick={() => (closeoutOn ? setTab('closeout') : handleStatusChange('closed'))} disabled={busy}>
             {closeLabel('closed') ?? 'Close PO'}
         </Button>
     );
@@ -495,6 +499,7 @@ const PODetailPage = () => {
                         onChanged={fetchPO}
                     />
                 )}
+                {closeoutOn && tab === 'closeout' && <POCloseoutPanel poId={po.id} status={po.status} onChanged={fetchPO} />}
                 {ackOn && tab === 'ack' && <POAcknowledgementPanel poId={po.id} poVersion={(po as any).version ?? 1} status={po.status} lines={po.po_lines || []} onChanged={fetchPO} />}
                 {(!tabsOn || tab === 'overview') && (
                 <div className="space-y-6">
