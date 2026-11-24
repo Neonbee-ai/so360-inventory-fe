@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, Badge } from '@so360/design-system';
+import { Button, Badge, Card, Timeline, type TimelineItem, type TimelineTone } from '@so360/design-system';
 import { procurementService } from '../services/procurementService';
 import { useInventoryFormatters } from '../utils/formatters';
 
@@ -46,50 +46,58 @@ const ProcurementTrace: React.FC<{ type: TraceDocType; id: string }> = ({ type, 
 
     if (error || !trace) return null;
 
-    const chain = trace.chain || [];
+    const chain: any[] = trace.chain || [];
     if (chain.length <= 1) return null;
 
+    const toneFor = (status?: string): TimelineTone => {
+        const v = String(status || '').toLowerCase();
+        if (['passed', 'received', 'posted', 'paid', 'closed', 'completed', 'approved'].includes(v)) return 'success';
+        if (['pending', 'in_progress', 'partial', 'draft', 'sent'].includes(v)) return 'warning';
+        if (['failed', 'rejected', 'cancelled'].includes(v)) return 'danger';
+        return 'neutral';
+    };
+
+    // One row per document: reference and type on the title line, status /
+    // amount / date underneath — a Timeline entry cannot collide the way the
+    // old two-column button cards did.
+    const items: TimelineItem[] = chain.map((node: any) => {
+        const meta = TYPE_META[node.type] || TYPE_META.po;
+        const isFocus = node.type === trace.focus?.type && node.id === trace.focus?.id;
+        return {
+            id: `${node.type}-${node.id}`,
+            icon: <span aria-hidden>{meta.icon}</span>,
+            tone: isFocus ? 'primary' : toneFor(node.status),
+            title: (
+                <span className="flex flex-wrap items-center gap-x-nb-2 gap-y-nb-1 break-words">
+                    <span className="text-nb-overline font-bold text-fg-subtle">{meta.label}</span>
+                    {isFocus ? (
+                        <span className="font-medium text-fg">{node.label}</span>
+                    ) : (
+                        <Button variant="ghost" size="sm" onClick={() => navigate(node.route)}>{node.label}</Button>
+                    )}
+                    {isFocus && <Badge tone="primary" size="sm">You are here</Badge>}
+                </span>
+            ),
+            body: (
+                <span className="flex flex-col gap-nb-1 break-words">
+                    {node.title && <span>{node.title}</span>}
+                    <span className="flex flex-wrap items-center gap-x-nb-3 gap-y-nb-1">
+                        {node.status && <Badge tone={toneFor(node.status)} size="sm">{String(node.status).replace(/_/g, ' ')}</Badge>}
+                        {node.amount != null && <span className="font-medium text-fg">{formatters.formatCurrency(node.amount)}</span>}
+                    </span>
+                </span>
+            ),
+            time: node.date ? formatters.formatDate(node.date) : undefined,
+            dateTime: node.date || undefined,
+        };
+    });
+
     return (
-        <div className="bg-surface/50 border border-line rounded-2xl p-6">
-            <h3 className="text-sm font-bold text-fg-muted mb-4">Document Trail</h3>
-            <div className="space-y-2">
-                {chain.map((node: any) => {
-                    const meta = TYPE_META[node.type] || TYPE_META.po;
-                    const isFocus = node.type === trace.focus?.type && node.id === trace.focus?.id;
-                    return (
-                        <Button
-                            key={`${node.type}-${node.id}`}
-                            variant="ghost"
-                            onClick={() => !isFocus && navigate(node.route)}
-                            disabled={isFocus}
-                            aria-current={isFocus ? 'step' : undefined}
-                            className={`w-full !justify-start gap-nb-3 !text-left ${meta.className}`}
-                        >
-                            <span className="text-lg">{meta.icon}</span>
-                            <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2">
-                                    <span className="text-nb-overline font-bold text-fg-subtle">{meta.label}</span>
-                                    {isFocus && (
-                                        <span className="text-nb-overline font-bold text-fg-muted">You are here</span>
-                                    )}
-                                </div>
-                                <div className="text-sm text-fg truncate">{node.label}</div>
-                                {node.title && <div className="text-nb-overline text-fg-subtle truncate">{node.title}</div>}
-                            </div>
-                            <div className="text-right shrink-0">
-                                {node.amount != null && (
-                                    <div className="text-sm font-bold text-fg">{formatters.formatCurrency(node.amount)}</div>
-                                )}
-                                <div className="text-nb-overline text-fg-subtle">{node.status}</div>
-                                {node.date && <div className="text-nb-overline text-fg-subtle">{formatters.formatDate(node.date)}</div>}
-                            </div>
-                        </Button>
-                    );
-                })}
-            </div>
+        <Card title="Document Trail">
+            <Timeline items={items} name="document-trail" />
 
             {(trace.links?.sales_order_ref || trace.links?.manufacturing_order_id || trace.links?.project_id) && (
-                <div className="mt-4 pt-4 border-t border-line flex flex-wrap gap-2">
+                <div className="mt-nb-4 flex flex-wrap gap-nb-2 border-t border-line pt-nb-4">
                     {trace.links.sales_order_ref && (
                         <Badge tone="success" size="sm">SO {trace.links.sales_order_ref}</Badge>
                     )}
@@ -101,7 +109,7 @@ const ProcurementTrace: React.FC<{ type: TraceDocType; id: string }> = ({ type, 
                     )}
                 </div>
             )}
-        </div>
+        </Card>
     );
 };
 
