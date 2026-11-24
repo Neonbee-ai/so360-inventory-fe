@@ -143,6 +143,54 @@ class VendorService {
     async resolveIntegrationException(id: string, dto: { status: 'resolved' | 'ignored'; resolution_note?: string; vendor_id?: string }) {
         return this.request(`/integration-exceptions/${id}`, { method: 'PATCH', body: JSON.stringify(dto) });
     }
+    // ── Vendor evidence & compliance (Pulse f777120a) ──
+    async getEvidence<T = any>(vendorId: string): Promise<T> {
+        return this.request(`/${vendorId}/evidence`);
+    }
+    async replaceDocument(docId: string, file: File, meta: Record<string, string | undefined>) {
+        const form = new FormData();
+        form.append('file', file);
+        for (const [k, v] of Object.entries(meta)) if (v !== undefined && v !== '') form.append(k, v);
+        return this.request(`/documents/${docId}/replace`, { method: 'POST', body: form });
+    }
+    async retryDocumentUpload(docId: string, file: File) {
+        const form = new FormData();
+        form.append('file', file);
+        return this.request(`/documents/${docId}/retry-upload`, { method: 'POST', body: form });
+    }
+    async reviewDocument(docId: string, dto: { decision: string; note?: string; method?: string }) {
+        return this.request(`/documents/${docId}/review`, { method: 'POST', body: JSON.stringify(dto) });
+    }
+    async getDocumentDownload<T = { url: string }>(docId: string): Promise<T> {
+        return this.request(`/documents/${docId}/download`);
+    }
+    async listEvidenceTemplates<T = any>(status?: string): Promise<T> {
+        return this.request(`/evidence-templates${status ? `?status=${status}` : ''}`);
+    }
+    async createEvidenceTemplate(dto: Record<string, unknown>) {
+        return this.request('/evidence-templates', { method: 'POST', body: JSON.stringify(dto) });
+    }
+    async updateEvidenceTemplate(id: string, dto: Record<string, unknown>) {
+        return this.request(`/evidence-templates/${id}`, { method: 'PATCH', body: JSON.stringify(dto) });
+    }
+    async evidenceTemplateAction(id: string, action: 'activate' | 'new-version' | 'retire') {
+        return this.request(`/evidence-templates/${id}/${action}`, { method: 'POST' });
+    }
+    async listComplianceNotifications<T = any>(status?: string): Promise<T> {
+        return this.request(`/compliance/notifications${status ? `?status=${status}` : ''}`);
+    }
+    async retryComplianceNotification(id: string) {
+        return this.request(`/compliance/notifications/${id}/retry`, { method: 'POST' });
+    }
+    async listRenewalTasks<T = any>(params: { status?: string; assignee?: string } = {}): Promise<T> {
+        const qs = new URLSearchParams();
+        Object.entries(params).forEach(([k, v]) => { if (v) qs.set(k, String(v)); });
+        const q = qs.toString();
+        return this.request(`/renewal-tasks${q ? `?${q}` : ''}`);
+    }
+    async updateRenewalTask(id: string, dto: { status?: string; assignee_user_id?: string | null }) {
+        return this.request(`/renewal-tasks/${id}`, { method: 'PATCH', body: JSON.stringify(dto) });
+    }
     async getQualifications<T = any[]>(id: string): Promise<T> {
         return this.request(`/${id}/qualifications`);
     }

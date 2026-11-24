@@ -4,6 +4,7 @@ import { Button, Card, EmptyState, Tabs } from '@so360/design-system';
 import VendorLifecyclePanel from './lifecycle/VendorLifecyclePanel';
 import VendorQualificationsPanel from './lifecycle/VendorQualificationsPanel';
 import VendorRiskPanel from './lifecycle/VendorRiskPanel';
+import VendorEvidencePanel from './evidence/VendorEvidencePanel';
 import VendorOutcomesPanel from './outcomes/VendorOutcomesPanel';
 import VendorEligibilityPanel from './eligibility/VendorEligibilityPanel';
 import { useShellBridge } from '@so360/shell-context';
@@ -34,6 +35,8 @@ export default function Vendor360Page() {
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState('overview');
   // Vendor 10: receipts/returns tab only when the plan has the outcome facts (fail-open while flags resolve).
+  // Vendor 16: the evidence tab rides the Vendor Master flag (the documents feature it extends).
+  const evidenceOn = ((shell as any)?.getFeatureState?.('submodule:inventory:vendor_master') ?? 'enabled') === 'enabled';
   const outcomesOn = ((shell as any)?.getFeatureState?.('submodule:inventory:vendor_outcome_facts') ?? 'enabled') === 'enabled';
 
   const can = useMemo(
@@ -77,12 +80,16 @@ export default function Vendor360Page() {
           { id: 'qualifications', label: 'Categories & Capabilities' },
           { id: 'risk', label: 'Risk & Due Diligence' },
           { id: 'eligibility', label: 'Eligibility' },
+          ...(evidenceOn ? [{ id: 'documents', label: 'Documents & Compliance' }] : []),
           ...(outcomesOn ? [{ id: 'outcomes', label: 'Receipts & Returns' }] : []),
         ]}
       >
         {(active) => {
           if (active === 'qualifications') {
             return <VendorQualificationsPanel vendorId={id} canEdit={can(['suppliers.update'])} />;
+          }
+          if (active === 'documents' && evidenceOn) {
+            return <VendorEvidencePanel vendorId={id} canUpdate={can(['suppliers.update'])} canReview={can(['vendors.compliance.review'])} />;
           }
           if (active === 'outcomes' && outcomesOn) {
             return <VendorOutcomesPanel vendorId={id} />;

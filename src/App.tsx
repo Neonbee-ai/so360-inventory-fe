@@ -25,6 +25,7 @@ const VendorDetailPage = lazy(() => import('./pages/vendors/VendorDetailPage'));
 const VendorFormPage = lazy(() => import('./pages/vendors/VendorFormPage'));
 const ContractsPage = lazy(() => import('./pages/vendors/ContractsPage'));
 const ReviewQueuePage = lazy(() => import('./pages/vendors/ReviewQueuePage'));
+const ComplianceQueuePage = lazy(() => import('./pages/vendors/evidence/ComplianceQueuePage'));
 const VendorIntegrationExceptionsPage = lazy(() => import('./pages/vendors/outcomes/VendorIntegrationExceptionsPage'));
 const VendorConfigurationPage = lazy(() => import('./pages/vendors/VendorConfigurationPage'));
 const OpeningBalancePage = lazy(() => import('./pages/procurement/OpeningBalancePage'));
@@ -241,6 +242,7 @@ const App = () => {
                 <Route path="contracts" element={<PermissionGuard permission="suppliers.read"><ContractsPage /></PermissionGuard>} />
                 {/* Vendor Master form (Pulse 3fc12200) — declared before ":id" so "new" is not read as an id. */}
                 <Route path="configuration" element={<PermissionGuard permission="suppliers.read"><FeatureGate flagKey="submodule:inventory:vendor_integration_health"><VendorConfigurationPage /></FeatureGate></PermissionGuard>} />
+                <Route path="compliance-queue" element={<PermissionGuard permission="suppliers.read"><FeatureGate flagKey="submodule:inventory:vendor_compliance_automation"><ComplianceQueuePage /></FeatureGate></PermissionGuard>} />
                 <Route path="integration-exceptions" element={<PermissionGuard permission="suppliers.read"><FeatureGate flagKey="submodule:inventory:vendor_outcome_facts"><VendorIntegrationExceptionsPage /></FeatureGate></PermissionGuard>} />
                 <Route path="review-queue" element={<PermissionGuard permission="suppliers.read"><FeatureGate flagKey="submodule:inventory:vendor_lifecycle"><ReviewQueuePage /></FeatureGate></PermissionGuard>} />
                 <Route path="new" element={<PermissionGuard permission="suppliers.create"><FeatureGate flagKey="submodule:inventory:vendor_master"><VendorFormPage /></FeatureGate></PermissionGuard>} />
@@ -267,6 +269,7 @@ const App = () => {
                 <Route path="procurement/sales-demand" element={<PermissionGuard permission="procurement_analytics.read"><FeatureGate flagKey="submodule:inventory:procurement"><SalesDemandPage /></FeatureGate></PermissionGuard>} />
                 <Route path="vendors" element={<PermissionGuard permission="suppliers.read"><VendorListPage /></PermissionGuard>} />
                 <Route path="vendors/configuration" element={<PermissionGuard permission="suppliers.read"><FeatureGate flagKey="submodule:inventory:vendor_integration_health"><VendorConfigurationPage /></FeatureGate></PermissionGuard>} />
+                <Route path="vendors/compliance-queue" element={<PermissionGuard permission="suppliers.read"><FeatureGate flagKey="submodule:inventory:vendor_compliance_automation"><ComplianceQueuePage /></FeatureGate></PermissionGuard>} />
                 <Route path="vendors/integration-exceptions" element={<PermissionGuard permission="suppliers.read"><FeatureGate flagKey="submodule:inventory:vendor_outcome_facts"><VendorIntegrationExceptionsPage /></FeatureGate></PermissionGuard>} />
                 <Route path="vendors/review-queue" element={<PermissionGuard permission="suppliers.read"><FeatureGate flagKey="submodule:inventory:vendor_lifecycle"><ReviewQueuePage /></FeatureGate></PermissionGuard>} />
                 <Route path="vendors/:id" element={<PermissionGuard permission="suppliers.read"><VendorDetailPage /></PermissionGuard>} />
