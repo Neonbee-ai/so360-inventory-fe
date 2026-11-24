@@ -5,6 +5,7 @@ import { ProductType, ProductTypeAttribute } from '../../../types/productTypes';
 import { productTypeService } from '../../../services/productTypeService';
 import DynamicAttributeField from '../../../components/attributes/DynamicAttributeField';
 import FormSection from '../components/FormSection';
+import { orderAttributesForDisplay } from '../../../utils/dimensionOrder';
 
 interface AttributesTabProps {
     product_type_id: string;
@@ -77,7 +78,8 @@ const AttributesTab: React.FC<AttributesTabProps> = ({ product_type_id, custom_a
                 description={`Fill in the type-specific fields for ${productType.name.toLowerCase()}`}
             >
                 <FieldGrid columns={2}>
-                    {productType.product_type_attributes.map((attr: ProductTypeAttribute) => (
+                    {/* sort_order, with dimensions always Length, Breadth, Width (Pulse f2493088) */}
+                    {orderAttributesForDisplay(productType.product_type_attributes).map((attr: ProductTypeAttribute) => (
                         <DynamicAttributeField
                             key={attr.id}
                             attribute={attr}
