@@ -27,6 +27,8 @@ const ContractsPage = lazy(() => import('./pages/vendors/ContractsPage'));
 const ReviewQueuePage = lazy(() => import('./pages/vendors/ReviewQueuePage'));
 const ComplianceQueuePage = lazy(() => import('./pages/vendors/evidence/ComplianceQueuePage'));
 const VendorIntegrationExceptionsPage = lazy(() => import('./pages/vendors/outcomes/VendorIntegrationExceptionsPage'));
+const ProfileChangeRequestsPage = lazy(() => import('./pages/vendors/portal/ProfileChangeRequestsPage'));
+const ProfileChangeRequestDetailPage = lazy(() => import('./pages/vendors/portal/ProfileChangeRequestDetailPage'));
 const PayeeChangeApprovalsPage = lazy(() => import('./pages/vendors/finance/PayeeChangeApprovalsPage'));
 const PayeeChangeDetailPage = lazy(() => import('./pages/vendors/finance/PayeeChangeDetailPage'));
 const CorrectiveActionsListPage = lazy(() => import('./pages/vendors/quality/CorrectiveActionsListPage'));
@@ -307,6 +309,8 @@ const App = () => {
                 <Route path="vendors/governance" element={<PermissionGuard permission="suppliers.read"><FeatureGate flagKey="submodule:inventory:vendor_governance_analytics"><VendorGovernancePage /></FeatureGate></PermissionGuard>} />
                 <Route path="vendors/scorecards" element={<PermissionGuard permission="suppliers.read"><FeatureGate flagKey="submodule:inventory:vendor_scorecards"><ScorecardDefinitionsPage /></FeatureGate></PermissionGuard>} />
                 <Route path="vendors/integration-exceptions" element={<PermissionGuard permission="suppliers.read"><FeatureGate flagKey="submodule:inventory:vendor_outcome_facts"><VendorIntegrationExceptionsPage /></FeatureGate></PermissionGuard>} />
+                <Route path="vendors/change-requests" element={<PermissionGuard permission="vendors.portal.manage"><FeatureGate flagKey="submodule:inventory:vendor_portal"><ProfileChangeRequestsPage /></FeatureGate></PermissionGuard>} />
+                <Route path="vendors/change-requests/:id" element={<PermissionGuard permission="vendors.portal.manage"><FeatureGate flagKey="submodule:inventory:vendor_portal"><ProfileChangeRequestDetailPage /></FeatureGate></PermissionGuard>} />
                 <Route path="vendors/finance-approvals" element={<PermissionGuard permission="vendor_finance.approve"><FeatureGate flagKey="action:inventory:vendor_payee_change_control"><PayeeChangeApprovalsPage /></FeatureGate></PermissionGuard>} />
                 <Route path="vendors/finance-approvals/:id" element={<PermissionGuard permission="suppliers.read"><FeatureGate flagKey="action:inventory:vendor_payee_change_control"><PayeeChangeDetailPage /></FeatureGate></PermissionGuard>} />
                 <Route path="finance-approvals" element={<PermissionGuard permission="vendor_finance.approve"><FeatureGate flagKey="action:inventory:vendor_payee_change_control"><PayeeChangeApprovalsPage /></FeatureGate></PermissionGuard>} />

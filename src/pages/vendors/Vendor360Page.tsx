@@ -12,6 +12,8 @@ import VendorFinancePanel from './finance/VendorFinancePanel';
 import VendorProcurementPanel from './VendorProcurementPanel';
 import VendorPerformancePanel from './performance/VendorPerformancePanel';
 import VendorEligibilityPanel from './eligibility/VendorEligibilityPanel';
+import VendorPortalPanel from './portal/VendorPortalPanel';
+import { PORTAL_FLAG, PORTAL_INVITE_FLAG, PORTAL_PERMISSION } from '../../utils/vendorPortal';
 import { useShellBridge } from '@so360/shell-context';
 import { vendorService } from '../../services/vendorService';
 
@@ -56,6 +58,10 @@ export default function Vendor360Page() {
 
   // Vendor 18: Performance tab (scorecards flag; fail-open while flags resolve).
   const scorecardsOn = ((shell as any)?.getFeatureState?.('submodule:inventory:vendor_scorecards') ?? 'enabled') === 'enabled';
+
+  // Vendor 17: Portal & contacts tab (scale-tier flag; fail-open while flags resolve; needs vendors.portal.manage).
+  const portalOn = ((shell as any)?.getFeatureState?.(PORTAL_FLAG) ?? 'enabled') === 'enabled';
+  const portalInviteOn = ((shell as any)?.getFeatureState?.(PORTAL_INVITE_FLAG) ?? 'enabled') === 'enabled';
 
   const can = useMemo(
     () => (perms?: string[]) => {
@@ -105,9 +111,13 @@ export default function Vendor360Page() {
           ...(scorecardsOn ? [{ id: 'performance', label: 'Performance' }] : []),
           ...(procurementOn ? [{ id: 'procurement', label: 'RFQs & POs' }] : []),
           ...(financeOn ? [{ id: 'finance', label: 'Finance' }] : []),
+          ...(portalOn && can([PORTAL_PERMISSION]) ? [{ id: 'portal', label: 'Portal & Contacts' }] : []),
         ]}
       >
         {(active) => {
+          if (active === 'portal' && portalOn) {
+            return <VendorPortalPanel vendorId={id} canManage={can([PORTAL_PERMISSION])} canInvite={portalInviteOn && can([PORTAL_PERMISSION])} />;
+          }
           if (active === 'qualifications') {
             return <VendorQualificationsPanel vendorId={id} canEdit={can(['suppliers.update'])} />;
           }
