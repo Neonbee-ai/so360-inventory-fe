@@ -5,7 +5,7 @@ import { poApprovalService } from '../../services/poApprovalService';
 
 type Rules = {
     sod?: boolean; approval_required?: 'always' | 'threshold'; budget_source?: 'none' | 'projects' | 'accounting';
-    budget_on_insufficient?: 'block' | 'exception'; date_tolerance_days?: number; price_tolerance_pct?: number;
+    budget_on_insufficient?: 'block' | 'exception'; date_tolerance_days?: number; ack_sla_hours?: number; price_tolerance_pct?: number;
     rules?: Array<{ id: string; name?: string; when?: Record<string, any>; step: { role?: string; approvers?: string[] } }>;
 };
 
@@ -103,6 +103,7 @@ const ApprovalPoliciesPage = () => {
                     <div className="flex flex-col gap-nb-3">
                         <Checkbox name="sod" label="The requester and the buyer cannot approve their own PO" checked={rules.sod !== false} onChange={() => patch({ sod: rules.sod === false })} />
                         <NumberInput name="date-tol" label="Delivery date shift allowed without re-approval (days)" min={0} value={rules.date_tolerance_days ?? 0} onChange={(v: any) => patch({ date_tolerance_days: v ?? 0 })} />
+                        <NumberInput name="ack-sla" label="Supplier acknowledgement due (hours after issue)" min={1} value={rules.ack_sla_hours ?? 48} onChange={(v: any) => patch({ ack_sla_hours: v ?? 48 })} />
                         <NumberInput name="price-tol" label="Unit price change allowed without re-approval (%)" min={0} value={rules.price_tolerance_pct ?? 0} onChange={(v: any) => patch({ price_tolerance_pct: v ?? 0 })} />
                     </div>
                 </SettingsCard>

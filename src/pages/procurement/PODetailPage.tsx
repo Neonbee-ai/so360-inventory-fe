@@ -10,8 +10,10 @@ import {
 } from '@so360/design-system';
 import { poToDocumentData } from '../../utils/poToDocumentData';
 import ProcurementTrace from '../../components/ProcurementTrace';
-import { FileText, ListChecks, Split, ShieldCheck, History } from 'lucide-react';
+import { FileText, ListChecks, Split, ShieldCheck, History, Truck } from 'lucide-react';
 import { poApprovalService, PO_APPROVAL_FLAG, PO_AMEND_FLAG } from '../../services/poApprovalService';
+import { LINE_ACK_FLAG } from '../../services/poScheduleService';
+import POAcknowledgementPanel from './POAcknowledgementPanel';
 import POApprovalPanel from './POApprovalPanel';
 import POVersionsPanel from './POVersionsPanel';
 import { POSchedulesPanel, POAllocationsPanel } from './POScheduleAllocationPanels';
@@ -69,6 +71,7 @@ const PO_TABS = [
     { id: 'approvals', label: 'Approvals', icon: <ShieldCheck size={14} /> },
     { id: 'versions', label: 'Versions', icon: <History size={14} /> },
 ];
+const ACK_TAB = { id: 'ack', label: 'Schedules & Acknowledgement', icon: <Truck size={14} /> };
 
 const STATUS_TONES: Record<string, Tone> = {
     pending_approval: 'warning', approved: 'info',
@@ -91,6 +94,9 @@ const PODetailPage = () => {
     const flagOn = (flag: string) => { try { return shell?.isFeatureEnabled?.(flag) === true; } catch { return false; } };
     const approvalOn = flagOn(PO_APPROVAL_FLAG);
     const amendOn = flagOn(PO_AMEND_FLAG);
+    const ackOn = flagOn(LINE_ACK_FLAG);
+    const tabsOn = approvalOn || ackOn;
+    const poTabs = [PO_TABS[0], ...(approvalOn ? PO_TABS.slice(1) : []), ...(ackOn ? [ACK_TAB] : [])];
     const [showAckForm, setShowAckForm] = useState(false);
     const [ackSaving, setAckSaving] = useState(false);
     const [ackForm, setAckForm] = useState({
@@ -469,7 +475,7 @@ const PODetailPage = () => {
                 secondaryActions={secondaryActions}
                 overflowActions={overflowActions}
                 sidePanel={sidePanel}
-                {...(approvalOn ? { tabs: PO_TABS, activeTab: tab, onTabChange: (t: string) => setTab(t), maxVisible: PO_TABS.length } : {})}
+                {...(tabsOn ? { tabs: poTabs, activeTab: tab, onTabChange: (t: string) => setTab(t), maxVisible: poTabs.length } : {})}
             >
                 {approvalOn && tab === 'schedules' && (
                     <div className="space-y-6">
@@ -489,7 +495,8 @@ const PODetailPage = () => {
                         onChanged={fetchPO}
                     />
                 )}
-                {(!approvalOn || tab === 'overview') && (
+                {ackOn && tab === 'ack' && <POAcknowledgementPanel poId={po.id} poVersion={(po as any).version ?? 1} status={po.status} lines={po.po_lines || []} onChanged={fetchPO} />}
+                {(!tabsOn || tab === 'overview') && (
                 <div className="space-y-6">
                     <SectionCard title="Overview">
                         <DescriptionList items={overviewItems} />

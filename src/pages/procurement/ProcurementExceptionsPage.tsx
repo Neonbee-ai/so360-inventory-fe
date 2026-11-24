@@ -20,6 +20,9 @@ const KIND_LABELS: Record<string, string> = {
     coverage_variance: 'Coverage variance',
     vendor_eligibility_changed: 'Vendor eligibility changed',
     quote_non_comparable: 'Quotes not comparable',
+    po_line_rejected: 'Supplier rejected a PO line',
+    po_partial_acceptance: 'Supplier accepted part of a PO line',
+    po_supplier_proposal: 'Supplier proposed a change',
 };
 const STATUS_TONES: Record<string, 'neutral' | 'success' | 'warning' | 'danger' | 'primary' | 'info'> = {
     open: 'warning', assigned: 'info', resolved: 'success', dismissed: 'neutral',
