@@ -116,6 +116,62 @@ class RfqService {
         return this.request(`/${rfqId}/cancel`, { method: 'PATCH', body: JSON.stringify({ reason }) });
     }
 
+    /** Vendors eligible (or conditional) to invite — straight from the shared eligibility service. */
+    async getEligibleVendors(rfqId: string, q: { q?: string; limit?: number } = {}) {
+        const qs = new URLSearchParams();
+        if (q.q) qs.append('q', q.q);
+        if (q.limit) qs.append('limit', String(q.limit));
+        return this.request(`/${rfqId}/eligible-vendors${qs.toString() ? `?${qs}` : ''}`);
+    }
+
+    async createFromDemand(dto: {
+        demand_group_ids: string[]; sourcing_route: string; response_due_date: string;
+        route_justification?: string; estimated_value?: number; title?: string; vendor_ids?: string[];
+    }) {
+        return this.request('/from-demand', { method: 'POST', body: JSON.stringify(dto) });
+    }
+
+    async acknowledgeVendor(rfqId: string, vendorId: string) {
+        return this.request(`/${rfqId}/vendors/${vendorId}/acknowledge`, { method: 'PATCH' });
+    }
+
+    async resendToVendor(rfqId: string, vendorId: string) {
+        return this.request(`/${rfqId}/vendors/${vendorId}/resend`, { method: 'PATCH' });
+    }
+
+    async sendReminders(rfqId: string, dto: { vendor_ids?: string[]; message?: string } = {}) {
+        return this.request(`/${rfqId}/reminders`, { method: 'POST', body: JSON.stringify(dto) });
+    }
+
+    async requestVendorException(rfqId: string, vendorId: string, reason: string) {
+        return this.request(`/${rfqId}/vendors/${vendorId}/exception`, { method: 'POST', body: JSON.stringify({ reason }) });
+    }
+
+    async getClarifications(rfqId: string) {
+        return this.request(`/${rfqId}/clarifications`);
+    }
+
+    async askClarification(rfqId: string, dto: { question: string; vendor_id?: string }) {
+        return this.request(`/${rfqId}/clarifications`, { method: 'POST', body: JSON.stringify(dto) });
+    }
+
+    async answerClarification(rfqId: string, cid: string, dto: { answer: string; visibility: 'private' | 'shared_anonymised' }) {
+        return this.request(`/${rfqId}/clarifications/${cid}/answer`, { method: 'PATCH', body: JSON.stringify(dto) });
+    }
+
+    async getDemandGroups() {
+        const orgId = inventoryService.getOrgId();
+        const res = await fetch(`${this.baseUrl.replace(/\/rfq$/, '')}/consolidation/${orgId}/groups?status=open`, {
+            headers: {
+                'Authorization': `Bearer ${(inventoryService as any).accessToken}`,
+                'X-Tenant-Id': (inventoryService as any).tenantId || '',
+                'X-Org-Id': orgId || '',
+            },
+        });
+        if (!res.ok) throw new Error('Failed to load demand groups');
+        return res.json();
+    }
+
     async deleteRFQ(rfqId: string) {
         return this.request(`/${rfqId}`, { method: 'DELETE' });
     }

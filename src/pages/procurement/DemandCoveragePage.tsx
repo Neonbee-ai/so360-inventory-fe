@@ -170,7 +170,7 @@ const DemandCoveragePage = () => {
             description="What stock and confirmed supply already cover, and what is left to buy."
             count={rows.length > 0 ? `${rows.length} line(s) - ${summary.net_purchase_required ?? 0} need purchase - ${staleCount} stale` : undefined}
             primaryAction={<Button onClick={() => navigate('/procurement/coverage/consolidate')}>Consolidate demand</Button>}
-            headerSecondaryActions={[<Button key="recalc" variant="secondary" onClick={recalc} disabled={recalculating || rows.length === 0}>{recalculating ? 'Recalculating...' : 'Recalculate'}</Button>]}
+            headerSecondaryActions={[<Button key="create-rfq" variant="secondary" onClick={() => navigate('/procurement/coverage/create-rfq')}>Create RFQ</Button>, <Button key="recalc" variant="secondary" onClick={recalc} disabled={recalculating || rows.length === 0}>{recalculating ? 'Recalculating...' : 'Recalculate'}</Button>]}
             filters={(
                 <Select
                     name="coverage-status"

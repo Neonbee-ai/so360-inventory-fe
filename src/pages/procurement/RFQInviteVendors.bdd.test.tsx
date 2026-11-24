@@ -4,11 +4,10 @@ import React from 'react';
 
 const mockGetRFQ = vi.fn();
 const mockSend = vi.fn();
-const mockGetVendors = vi.fn();
+const mockGetEligible = vi.fn();
 vi.mock('../../services/rfqService', () => ({
-  rfqService: { getRFQ: (...a: any[]) => mockGetRFQ(...a), sendRFQ: (...a: any[]) => mockSend(...a), cancelRFQ: vi.fn(), recordQuotation: vi.fn() },
+  rfqService: { getRFQ: (...a: any[]) => mockGetRFQ(...a), sendRFQ: (...a: any[]) => mockSend(...a), getEligibleVendors: (...a: any[]) => mockGetEligible(...a), getClarifications: vi.fn().mockResolvedValue([]), cancelRFQ: vi.fn(), recordQuotation: vi.fn() },
 }));
-vi.mock('../../services/vendorService', () => ({ vendorService: { getVendors: (...a: any[]) => mockGetVendors(...a) } }));
 vi.mock('react-router-dom', () => ({ useNavigate: () => vi.fn(), useParams: () => ({ id: 'rfq-1' }) }));
 vi.mock('../../utils/formatters', () => ({
   useInventoryFormatters: () => ({ formatDate: (d: string) => d ?? '', formatCurrency: (v: number) => `$${v}` }),
@@ -21,12 +20,9 @@ const rfq = {
   rfq_vendors: [{ id: 'rv1', vendor_id: 'v1', vendor_name: 'Acme', status: 'invited' }],
   vendor_quotations: [],
 };
-const vendors = [
-  { id: 'v1', name: 'Acme', email: 'a@x.com' },
-  { id: 'v2', name: 'Beta Trading', email: 'b@x.com' },
-  { id: 'v3', name: 'Gamma Co', email: null },
-  { id: 'v4', name: 'Draft Vendor', email: 'd@x.com', vendor_profiles: [{ onboarding_status: 'draft' }] },
-];
+// Shape returned by GET /rfq/:id/eligible-vendors (shared eligibility service; blocked vendors are never returned).
+const eligible = (vendor_id: string, name: string, decision = 'eligible') => ({ vendor_id, name, vendor_code: name.slice(0, 3).toUpperCase(), decision, explanation: 'ok', conditions: [] });
+const vendors = [eligible('v1', 'Acme'), eligible('v2', 'Beta Trading'), eligible('v3', 'Gamma Co', 'conditional')];
 
 const openSelector = async () => {
   render(<RFQDetailPage />);
@@ -37,7 +33,7 @@ const openSelector = async () => {
 beforeEach(() => {
   vi.clearAllMocks();
   mockGetRFQ.mockResolvedValue(rfq);
-  mockGetVendors.mockResolvedValue(vendors);
+  mockGetEligible.mockResolvedValue({ items: vendors, next_cursor: null });
 });
 
 describe('Send to New Vendors (Pulse d282c347)', () => {
@@ -47,11 +43,12 @@ describe('Send to New Vendors (Pulse d282c347)', () => {
     expect(mockSend).not.toHaveBeenCalled();
   });
 
-  it('Given vendors already invited or still onboarding / When listed / Then they are not selectable', async () => {
+  it('Given a vendor already invited / When listed / Then it is not selectable and conditional ones are marked', async () => {
     await openSelector();
     await screen.findByText('Beta Trading');
     expect(screen.queryByLabelText('Acme')).toBeNull();
-    expect(screen.queryByText('Draft Vendor')).toBeNull();
+    expect(await screen.findByText(/Conditional/)).toBeTruthy();
+    expect(mockGetEligible).toHaveBeenCalledWith('rfq-1', expect.anything());
   });
 
   it('Given a search term / When typed / Then only matching vendors remain', async () => {
@@ -81,14 +78,14 @@ describe('Send to New Vendors (Pulse d282c347)', () => {
   });
 
   it('Given the vendor list fails to load / When opened / Then an error with Retry shows', async () => {
-    mockGetVendors.mockRejectedValue(new Error('network down'));
+    mockGetEligible.mockRejectedValue(new Error('network down'));
     await openSelector();
     expect(await screen.findByText('network down')).toBeTruthy();
     expect(screen.getByText('Retry')).toBeTruthy();
   });
 
   it('Given every vendor is already invited / When opened / Then an empty state explains it', async () => {
-    mockGetVendors.mockResolvedValue([vendors[0]]);
+    mockGetEligible.mockResolvedValue({ items: [vendors[0]], next_cursor: null });
     await openSelector();
     expect(await screen.findByText(/No eligible vendors left/)).toBeTruthy();
   });

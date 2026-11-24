@@ -40,6 +40,7 @@ const SalesDemandPage = lazy(() => import('./pages/procurement/SalesDemandPage')
 const ProcurementExceptionsPage = lazy(() => import('./pages/procurement/ProcurementExceptionsPage'));
 const DemandCoveragePage = lazy(() => import('./pages/procurement/DemandCoveragePage'));
 const ConsolidationWizardPage = lazy(() => import('./pages/procurement/ConsolidationWizardPage'));
+const RFQFromDemandWizardPage = lazy(() => import('./pages/procurement/RFQFromDemandWizardPage'));
 const CoverageSettingsPage = lazy(() => import('./pages/procurement/CoverageSettingsPage'));
 const CategoriesPage = lazy(() => import('./pages/CategoriesPage'));
 const BulkImportPage = lazy(() => import('./pages/bulk-import/BulkImportPage'));
@@ -242,6 +243,7 @@ const App = () => {
                 <Route path="sales-demand" element={<PermissionGuard permission="procurement_analytics.read"><FeatureGate flagKey="submodule:inventory:procurement"><SalesDemandPage /></FeatureGate></PermissionGuard>} />
                 <Route path="exceptions" element={<PermissionGuard permission="purchase_orders.read"><FeatureGate flagKey="submodule:inventory:demand_intake"><ProcurementExceptionsPage /></FeatureGate></PermissionGuard>} />
                 <Route path="coverage" element={<PermissionGuard permission="purchase_orders.read"><FeatureGate flagKey="submodule:inventory:demand_coverage"><DemandCoveragePage /></FeatureGate></PermissionGuard>} />
+                <Route path="coverage/create-rfq" element={<PermissionGuard permission="purchase_orders.create"><FeatureGate flagKey="submodule:inventory:sourcing"><RFQFromDemandWizardPage /></FeatureGate></PermissionGuard>} />
                 <Route path="coverage/consolidate" element={<PermissionGuard permission="purchase_orders.update"><FeatureGate flagKey="submodule:inventory:demand_coverage"><ConsolidationWizardPage /></FeatureGate></PermissionGuard>} />
 
                 {/* ── Vendor routes (mounted at /vendors/*) ── */}
@@ -273,6 +275,7 @@ const App = () => {
                 <Route path="procurement/sales-demand" element={<PermissionGuard permission="procurement_analytics.read"><FeatureGate flagKey="submodule:inventory:procurement"><SalesDemandPage /></FeatureGate></PermissionGuard>} />
                 <Route path="procurement/exceptions" element={<PermissionGuard permission="purchase_orders.read"><FeatureGate flagKey="submodule:inventory:demand_intake"><ProcurementExceptionsPage /></FeatureGate></PermissionGuard>} />
                 <Route path="procurement/coverage" element={<PermissionGuard permission="purchase_orders.read"><FeatureGate flagKey="submodule:inventory:demand_coverage"><DemandCoveragePage /></FeatureGate></PermissionGuard>} />
+                <Route path="procurement/coverage/create-rfq" element={<PermissionGuard permission="purchase_orders.create"><FeatureGate flagKey="submodule:inventory:sourcing"><RFQFromDemandWizardPage /></FeatureGate></PermissionGuard>} />
                 <Route path="procurement/coverage/consolidate" element={<PermissionGuard permission="purchase_orders.update"><FeatureGate flagKey="submodule:inventory:demand_coverage"><ConsolidationWizardPage /></FeatureGate></PermissionGuard>} />
                 <Route path="vendors" element={<PermissionGuard permission="suppliers.read"><VendorListPage /></PermissionGuard>} />
                 <Route path="vendors/configuration" element={<PermissionGuard permission="suppliers.read"><FeatureGate flagKey="submodule:inventory:vendor_integration_health"><VendorConfigurationPage /></FeatureGate></PermissionGuard>} />
