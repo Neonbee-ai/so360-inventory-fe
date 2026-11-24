@@ -11,6 +11,9 @@ import {
     toBankPayload, validateBankForm, type BankFormErrors, type BankFormState, type VendorBankAccount,
 } from '../../utils/vendorBank';
 import { VendorBankAccountFields } from './VendorBankAccountFields';
+import { PayeeChangeReasonFields, emptyPayeeReason, type PayeeReasonState } from './PayeeChangeReasonFields';
+import { VendorPayeeChangesCard } from './VendorPayeeChangesCard';
+import { buildPayeeRequest, isPayeeControlEnabled, validateReason, type PayeeKind } from '../../utils/payeeChange';
 
 const REVEAL_TTL_MS = 30_000;
 
@@ -33,6 +36,8 @@ export const VendorBankAccountsSection: React.FC<{ vendorId: string }> = ({ vend
     const { settings } = useBusinessSettings();
     const formatters = useInventoryFormatters();
     const enabled = isVendorBankEnabled(shell);
+    // Pulse 5d23afa0: with payee change control on, every change is a Finance-decided request.
+    const controlled = isPayeeControlEnabled(shell);
     const canRead = can(VENDOR_BANK_PERMS.READ);
     const canManage = can(VENDOR_BANK_PERMS.MANAGE);
     const canVerify = can(VENDOR_BANK_PERMS.VERIFY);
@@ -50,6 +55,10 @@ export const VendorBankAccountsSection: React.FC<{ vendorId: string }> = ({ vend
     const [pending, setPending] = useState<Pending>(null);
     const [revealed, setRevealed] = useState<{ id: string; account_number: string | null; iban: string | null } | null>(null);
     const revealTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const [reasonState, setReasonState] = useState<PayeeReasonState>(emptyPayeeReason());
+    const [reasonError, setReasonError] = useState<string | null>(null);
+    const [requestsKey, setRequestsKey] = useState(0);
+    const [reasonFor, setReasonFor] = useState<{ kind: PayeeKind; account: VendorBankAccount } | null>(null);
 
     const load = useCallback(async () => {
         setLoading(true);
@@ -80,12 +89,16 @@ export const VendorBankAccountsSection: React.FC<{ vendorId: string }> = ({ vend
         setForm(f);
         setFormErrors({});
         setDrawerError(null);
+        setReasonState(emptyPayeeReason());
+        setReasonError(null);
         setDrawer({ mode: 'create' });
     };
     const openEdit = (account: VendorBankAccount) => {
         setForm(formFromAccount(account));
         setFormErrors({});
         setDrawerError(null);
+        setReasonState(emptyPayeeReason());
+        setReasonError(null);
         setDrawer({ mode: 'edit', account });
     };
 
@@ -94,10 +107,18 @@ export const VendorBankAccountsSection: React.FC<{ vendorId: string }> = ({ vend
         const errs = validateBankForm(form, drawer.mode);
         setFormErrors(errs);
         setDrawerError(null);
-        if (Object.keys(errs).length) return;
+        const rErr = controlled ? validateReason(reasonState.reason) : null;
+        setReasonError(rErr);
+        if (Object.keys(errs).length || rErr) return;
         setSaving(true);
         try {
-            if (drawer.mode === 'create') {
+            if (controlled) {
+                const kind: PayeeKind = drawer.mode === 'create' ? 'bank_add' : 'bank_change';
+                const changes = toBankPayload(form, drawer.mode) as Record<string, unknown>;
+                await vendorService.submitPayeeChange(vendorId, buildPayeeRequest(kind, drawer.account?.id ?? null, changes, reasonState.reason, reasonState.effectiveDate));
+                setNotice('Change request sent to Finance. The bank account changes only after Finance approves it.');
+                setRequestsKey((k) => k + 1);
+            } else if (drawer.mode === 'create') {
                 await vendorService.createBankAccount(vendorId, toBankPayload(form, 'create'));
                 setNotice('Bank account added.');
             } else {
@@ -111,6 +132,30 @@ export const VendorBankAccountsSection: React.FC<{ vendorId: string }> = ({ vend
         } finally {
             setSaving(false);
         }
+    };
+
+    const sendReasonRequest = async () => {
+        if (!reasonFor) return;
+        const rErr = validateReason(reasonState.reason);
+        setReasonError(rErr);
+        if (rErr) return;
+        setSaving(true);
+        try {
+            await vendorService.submitPayeeChange(vendorId, buildPayeeRequest(reasonFor.kind, reasonFor.account.id, {}, reasonState.reason, reasonState.effectiveDate));
+            setNotice('Change request sent to Finance.');
+            setRequestsKey((k) => k + 1);
+            setReasonFor(null);
+        } catch (e) {
+            setReasonError(errMsg(e, 'Could not send the request.'));
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const openReason = (kind: PayeeKind, account: VendorBankAccount) => {
+        setReasonState(emptyPayeeReason());
+        setReasonError(null);
+        setReasonFor({ kind, account });
     };
 
     const runAction = async (account: VendorBankAccount, action: 'deactivate' | 'set-primary' | 'verify', ok: string) => {
@@ -140,7 +185,8 @@ export const VendorBankAccountsSection: React.FC<{ vendorId: string }> = ({ vend
         const p = pending;
         setPending(null);
         if (!p) return;
-        if (p.kind === 'deactivate') await runAction(p.account, 'deactivate', 'Bank account deactivated.');
+        if (p.kind === 'deactivate' && controlled) openReason('bank_deactivate', p.account);
+        else if (p.kind === 'deactivate') await runAction(p.account, 'deactivate', 'Bank account deactivated.');
         else if (p.kind === 'verify') await runAction(p.account, 'verify', 'Bank account marked as verified.');
         else await reveal(p.account);
     };
@@ -204,20 +250,20 @@ export const VendorBankAccountsSection: React.FC<{ vendorId: string }> = ({ vend
                         <Button size="sm" variant="secondary" data-testid={`bank-reveal-${a.id}`}
                             onClick={() => setPending({ kind: 'reveal', account: a })}>Reveal</Button>
                     )}
-                    {a.is_active && canVerify && a.verification_status !== 'verified' && (
+                    {a.is_active && canVerify && !controlled && a.verification_status !== 'verified' && (
                         <Button size="sm" variant="secondary" data-testid={`bank-verify-${a.id}`}
                             onClick={() => setPending({ kind: 'verify', account: a })}>Verify</Button>
                     )}
                     {a.is_active && canManage && !a.is_primary && (
                         <Button size="sm" variant="secondary" data-testid={`bank-primary-${a.id}`}
-                            onClick={() => runAction(a, 'set-primary', 'Primary account updated.')}>Make primary</Button>
+                            onClick={() => (controlled ? openReason('set_primary', a) : runAction(a, 'set-primary', 'Primary account updated.'))}>Make primary</Button>
                     )}
                     {a.is_active && canManage && (
                         <>
                             <Button size="sm" variant="secondary" data-testid={`bank-edit-${a.id}`}
-                                onClick={() => openEdit(a)}>Edit</Button>
+                                onClick={() => openEdit(a)}>{controlled ? 'Request change' : 'Edit'}</Button>
                             <Button size="sm" variant="danger" data-testid={`bank-deactivate-${a.id}`}
-                                onClick={() => setPending({ kind: 'deactivate', account: a })}>Deactivate</Button>
+                                onClick={() => (controlled ? openReason('bank_deactivate', a) : setPending({ kind: 'deactivate', account: a }))}>{controlled ? 'Request deactivation' : 'Deactivate'}</Button>
                         </>
                     )}
                 </div>
@@ -244,10 +290,11 @@ export const VendorBankAccountsSection: React.FC<{ vendorId: string }> = ({ vend
     }[pending.kind];
 
     return (
+        <div className="flex flex-col gap-nb-3">
         <Card
             title="Bank details"
             data-testid="vendor-bank-section"
-            actions={canManage ? <Button size="sm" onClick={openCreate} data-testid="bank-add">Add bank account</Button> : undefined}
+            actions={canManage ? <Button size="sm" onClick={openCreate} data-testid="bank-add">{controlled ? 'Request new bank account' : 'Add bank account'}</Button> : undefined}
         >
             <div className="flex flex-col gap-nb-3">
                 {error && <Alert variant="error" onDismiss={() => setError(null)}>{error}</Alert>}
@@ -274,13 +321,13 @@ export const VendorBankAccountsSection: React.FC<{ vendorId: string }> = ({ vend
             <Drawer
                 isOpen={!!drawer}
                 onClose={() => setDrawer(null)}
-                title={drawer?.mode === 'edit' ? 'Edit bank account' : 'Add bank account'}
-                subtitle={drawer?.mode === 'edit' ? 'Changing the number, IFSC, SWIFT or IBAN resets verification.' : undefined}
+                title={controlled ? (drawer?.mode === 'edit' ? 'Request a bank account change' : 'Request a new bank account') : (drawer?.mode === 'edit' ? 'Edit bank account' : 'Add bank account')}
+                subtitle={controlled ? 'Finance verifies and approves this before it takes effect. The current account stays in use until then.' : (drawer?.mode === 'edit' ? 'Changing the number, IFSC, SWIFT or IBAN resets verification.' : undefined)}
                 size="md"
                 footer={
                     <div className="flex justify-end gap-nb-2">
                         <Button variant="secondary" onClick={() => setDrawer(null)} disabled={saving}>Cancel</Button>
-                        <Button onClick={save} disabled={saving} data-testid="bank-save">{saving ? 'Saving…' : 'Save'}</Button>
+                        <Button onClick={save} disabled={saving} data-testid="bank-save">{saving ? (controlled ? 'Sending…' : 'Saving…') : (controlled ? 'Send for approval' : 'Save')}</Button>
                     </div>
                 }
             >
@@ -289,6 +336,25 @@ export const VendorBankAccountsSection: React.FC<{ vendorId: string }> = ({ vend
                     <VendorBankAccountFields value={form} onChange={setForm} errors={formErrors}
                         mode={drawer.mode} maskedNumber={drawer.account?.account_number_masked} />
                 )}
+                {drawer && controlled && (
+                    <div className="mt-nb-4"><PayeeChangeReasonFields value={reasonState} onChange={setReasonState} error={reasonError} /></div>
+                )}
+            </Drawer>
+
+            <Drawer
+                isOpen={!!reasonFor}
+                onClose={() => setReasonFor(null)}
+                title={reasonFor?.kind === 'bank_deactivate' ? 'Request to deactivate this bank account' : 'Request to make this account primary'}
+                subtitle="Finance approves this before it takes effect."
+                size="md"
+                footer={
+                    <div className="flex justify-end gap-nb-2">
+                        <Button variant="secondary" onClick={() => setReasonFor(null)} disabled={saving}>Cancel</Button>
+                        <Button onClick={sendReasonRequest} disabled={saving} data-testid="payee-reason-send">{saving ? 'Sending…' : 'Send for approval'}</Button>
+                    </div>
+                }
+            >
+                <PayeeChangeReasonFields value={reasonState} onChange={setReasonState} error={reasonError} />
             </Drawer>
 
             <ConfirmDialog
@@ -301,6 +367,8 @@ export const VendorBankAccountsSection: React.FC<{ vendorId: string }> = ({ vend
                 onCancel={() => setPending(null)}
             />
         </Card>
+        {controlled && <VendorPayeeChangesCard vendorId={vendorId} refreshKey={requestsKey} onChanged={load} />}
+        </div>
     );
 };
 

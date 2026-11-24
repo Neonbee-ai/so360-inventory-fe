@@ -362,6 +362,47 @@ class VendorService {
             body: JSON.stringify(body),
         });
     }
+
+    // Pulse 5d23afa0: Finance-controlled payee / bank change requests and the Vendor 360 Finance card.
+    async submitPayeeChange(vendorId: string, body: Record<string, unknown>) {
+        return this.request(`/${vendorId}/payee-change-requests`, { method: 'POST', body: JSON.stringify(body) });
+    }
+
+    async listVendorPayeeChanges(vendorId: string, status?: string) {
+        return this.request(`/${vendorId}/payee-change-requests${status ? `?status=${encodeURIComponent(status)}` : ''}`);
+    }
+
+    async listPayeeChangeQueue(params: { status?: string; vendor_id?: string } = {}) {
+        const q = new URLSearchParams();
+        if (params.status) q.set('status', params.status);
+        if (params.vendor_id) q.set('vendor_id', params.vendor_id);
+        const qs = q.toString();
+        return this.request(`/finance/payee-change-requests${qs ? `?${qs}` : ''}`);
+    }
+
+    async getPayeeChange(requestId: string) {
+        return this.request(`/payee-change-requests/${requestId}`);
+    }
+
+    async verifyPayeeChange(requestId: string, body: { method: string; note?: string }) {
+        return this.request(`/payee-change-requests/${requestId}/verify`, { method: 'POST', body: JSON.stringify(body) });
+    }
+
+    async decidePayeeChange(requestId: string, body: { decision: 'approve' | 'reject'; note?: string }) {
+        return this.request(`/payee-change-requests/${requestId}/decision`, { method: 'POST', body: JSON.stringify(body) });
+    }
+
+    async cancelPayeeChange(requestId: string) {
+        return this.request(`/payee-change-requests/${requestId}/cancel`, { method: 'POST', body: JSON.stringify({}) });
+    }
+
+    async getFinanceSummary(vendorId: string) {
+        return this.request(`/${vendorId}/finance-summary`);
+    }
+
+    async setupFinanceAccount(vendorId: string) {
+        return this.request(`/${vendorId}/finance-account`, { method: 'POST', body: JSON.stringify({}) });
+    }
 }
 
 export const vendorService = new VendorService();
