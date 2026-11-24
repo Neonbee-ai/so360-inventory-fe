@@ -4,6 +4,7 @@ import { Button, Card, EmptyState, Tabs } from '@so360/design-system';
 import VendorLifecyclePanel from './lifecycle/VendorLifecyclePanel';
 import VendorQualificationsPanel from './lifecycle/VendorQualificationsPanel';
 import VendorRiskPanel from './lifecycle/VendorRiskPanel';
+import VendorOutcomesPanel from './outcomes/VendorOutcomesPanel';
 import VendorEligibilityPanel from './eligibility/VendorEligibilityPanel';
 import { useShellBridge } from '@so360/shell-context';
 import { vendorService } from '../../services/vendorService';
@@ -32,6 +33,8 @@ export default function Vendor360Page() {
   const [data, setData] = useState<Payload | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState('overview');
+  // Vendor 10: receipts/returns tab only when the plan has the outcome facts (fail-open while flags resolve).
+  const outcomesOn = ((shell as any)?.getFeatureState?.('submodule:inventory:vendor_outcome_facts') ?? 'enabled') === 'enabled';
 
   const can = useMemo(
     () => (perms?: string[]) => {
@@ -74,11 +77,15 @@ export default function Vendor360Page() {
           { id: 'qualifications', label: 'Categories & Capabilities' },
           { id: 'risk', label: 'Risk & Due Diligence' },
           { id: 'eligibility', label: 'Eligibility' },
+          ...(outcomesOn ? [{ id: 'outcomes', label: 'Receipts & Returns' }] : []),
         ]}
       >
         {(active) => {
           if (active === 'qualifications') {
             return <VendorQualificationsPanel vendorId={id} canEdit={can(['suppliers.update'])} />;
+          }
+          if (active === 'outcomes' && outcomesOn) {
+            return <VendorOutcomesPanel vendorId={id} />;
           }
           if (active === 'eligibility') {
             return <VendorEligibilityPanel vendorId={id} />;

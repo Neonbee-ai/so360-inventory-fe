@@ -127,6 +127,22 @@ class VendorService {
         const q = qs.toString();
         return this.request(`/lifecycle/review-queue${q ? `?${q}` : ''}`);
     }
+    // Vendor 10 (Pulse 91b5ff86): outcome facts and receipt/return integration exceptions.
+    async getOutcomes<T = any>(id: string, params: { source_type?: string; from?: string; to?: string; limit?: number } = {}): Promise<T> {
+        const qs = new URLSearchParams();
+        Object.entries(params).forEach(([k, v]) => { if (v !== undefined && v !== '') qs.set(k, String(v)); });
+        const q = qs.toString();
+        return this.request(`/${id}/outcomes${q ? `?${q}` : ''}`);
+    }
+    async getIntegrationExceptions<T = any>(params: { status?: string; vendor_id?: string; source_module?: string } = {}): Promise<T> {
+        const qs = new URLSearchParams();
+        Object.entries(params).forEach(([k, v]) => { if (v !== undefined && v !== '') qs.set(k, String(v)); });
+        const q = qs.toString();
+        return this.request(`/integration-exceptions${q ? `?${q}` : ''}`);
+    }
+    async resolveIntegrationException(id: string, dto: { status: 'resolved' | 'ignored'; resolution_note?: string; vendor_id?: string }) {
+        return this.request(`/integration-exceptions/${id}`, { method: 'PATCH', body: JSON.stringify(dto) });
+    }
     async getQualifications<T = any[]>(id: string): Promise<T> {
         return this.request(`/${id}/qualifications`);
     }
