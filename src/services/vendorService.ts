@@ -161,6 +161,23 @@ class VendorService {
         return this.request(`/commitment-reviews/${crid}`, { method: 'PATCH', body: JSON.stringify(dto) });
     }
 
+    // ── Eligibility, policy, integration health (Pulse 66b329c3) ──
+    async checkEligibility<T = any>(dto: Record<string, unknown>): Promise<T> {
+        return this.request('/eligibility/check', { method: 'POST', body: JSON.stringify(dto) });
+    }
+    async getEligibilityPolicy<T = any>(): Promise<T> {
+        return this.request('/eligibility-policy');
+    }
+    async saveEligibilityPolicy<T = any>(dto: Record<string, unknown>): Promise<T> {
+        return this.request('/eligibility-policy', { method: 'PUT', body: JSON.stringify(dto) });
+    }
+    async getIntegrationHealth<T = any>(): Promise<T> {
+        return this.request('/integration-health');
+    }
+    async replayIntegration(dto: { consumer: string; status?: 'dead' | 'failed'; event_ids?: string[] }) {
+        return this.request('/integration-health/replay', { method: 'POST', body: JSON.stringify(dto) });
+    }
+
     async updateVendor(id: string, dto: any) {
         return this.request(`/${id}`, {
             method: 'PATCH',

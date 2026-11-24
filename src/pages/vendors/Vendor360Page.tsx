@@ -4,6 +4,7 @@ import { Button, Card, EmptyState, Tabs } from '@so360/design-system';
 import VendorLifecyclePanel from './lifecycle/VendorLifecyclePanel';
 import VendorQualificationsPanel from './lifecycle/VendorQualificationsPanel';
 import VendorRiskPanel from './lifecycle/VendorRiskPanel';
+import VendorEligibilityPanel from './eligibility/VendorEligibilityPanel';
 import { useShellBridge } from '@so360/shell-context';
 import { vendorService } from '../../services/vendorService';
 
@@ -72,11 +73,15 @@ export default function Vendor360Page() {
           { id: 'overview', label: 'Overview' },
           { id: 'qualifications', label: 'Categories & Capabilities' },
           { id: 'risk', label: 'Risk & Due Diligence' },
+          { id: 'eligibility', label: 'Eligibility' },
         ]}
       >
         {(active) => {
           if (active === 'qualifications') {
             return <VendorQualificationsPanel vendorId={id} canEdit={can(['suppliers.update'])} />;
+          }
+          if (active === 'eligibility') {
+            return <VendorEligibilityPanel vendorId={id} />;
           }
           if (active === 'risk') {
             return <VendorRiskPanel vendorId={id} canRestrict={can(['vendors.restrict'])} />;
