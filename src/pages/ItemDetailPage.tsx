@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { dimensionRole, orderAttributesForDisplay, orderWithDimensions } from '../utils/dimensionOrder';
 import { useParams, useNavigate } from 'react-router-dom';
 import { RecordNotFound, NOT_FOUND_ERROR, isNotFoundError } from '../components/RecordNotFound';
 import {
@@ -929,8 +930,7 @@ const ItemDetailPage = () => {
                                             ) : item.product_types?.product_type_attributes && item.product_types.product_type_attributes.length > 0 ? (
                                                 <FormSection title={`${item.product_types.name} Attributes`}>
                                                     <FieldGrid columns={2}>
-                                                        {item.product_types.product_type_attributes
-                                                            .sort((a, b) => a.sort_order - b.sort_order)
+                                                        {orderAttributesForDisplay(item.product_types.product_type_attributes)
                                                             .map(attr => {
                                                                 const val = item.custom_attributes?.[attr.field_name];
                                                                 let display: string | null = null;
@@ -946,7 +946,7 @@ const ItemDetailPage = () => {
                                             ) : item.custom_attributes && Object.keys(item.custom_attributes).length > 0 ? (
                                                 <FormSection title={item.product_types?.name ? `${item.product_types.name} Attributes` : 'Custom Attributes'}>
                                                     <FieldGrid columns={2}>
-                                                        {Object.entries(item.custom_attributes).map(([key, val]) => (
+                                                        {orderWithDimensions(Object.entries(item.custom_attributes), ([key]) => dimensionRole(key)).map(([key, val]) => (
                                                             <ReadOnlyField key={key} label={key} value={val != null ? String(val) : null} />
                                                         ))}
                                                     </FieldGrid>
