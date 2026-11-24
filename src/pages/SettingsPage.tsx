@@ -166,6 +166,12 @@ const SettingsPage = () => {
                 {error && <Alert variant="error">{error}</Alert>}
                 {success && <Alert variant="success">Settings updated successfully</Alert>}
 
+                {can('items.update') && (
+                    <SettingsCard title="Demand coverage" description="Where stock is netted against demand, default lead time and the consolidation window">
+                        <Button variant="secondary" size="sm" onClick={() => navigate('/inventory/settings/coverage')}>Open coverage settings</Button>
+                    </SettingsCard>
+                )}
+
                 <SettingsCard title="Units of Measure (UoM)" description="Define standard units for stocks and services (e.g., Pcs, KG, Hrs)">
                     <div className="flex flex-wrap gap-nb-2 items-center">
                         {settings?.uoms.map((uom: UomItem) => (

@@ -192,6 +192,41 @@ class ProcurementService {
         return this.request(`/exceptions/${id}/resolve`, { method: 'PATCH', body: JSON.stringify({ resolution }) });
     }
 
+    // Demand coverage + consolidation (Procurement Flow 02)
+    async getCoverage(filters: { pr_id?: string; status?: string; stale?: boolean } = {}) {
+        const qs = new URLSearchParams();
+        if (filters.pr_id) qs.append('pr_id', filters.pr_id);
+        if (filters.status) qs.append('status', filters.status);
+        if (filters.stale !== undefined) qs.append('stale', String(filters.stale));
+        const suffix = qs.toString() ? `?${qs.toString()}` : '';
+        return this.request(`/coverage/${inventoryService.getOrgId()}${suffix}`);
+    }
+
+    async recalculateCoverage(prLineIds: string[]) {
+        return this.request('/coverage/recalculate', { method: 'POST', body: JSON.stringify({ pr_line_ids: prLineIds }) });
+    }
+
+    async decideCoverage(prLineId: string, dto: { decision: string; split?: Record<string, number>; reason?: string }) {
+        return this.request(`/coverage/${prLineId}/decision`, { method: 'POST', body: JSON.stringify(dto) });
+    }
+
+    async getCoverageSettings() {
+        return this.request(`/coverage-settings/${inventoryService.getOrgId()}`);
+    }
+
+    async updateCoverageSettings(dto: Record<string, any>) {
+        return this.request(`/coverage-settings/${inventoryService.getOrgId()}`, { method: 'PATCH', body: JSON.stringify(dto) });
+    }
+
+    async getConsolidationCandidates() {
+        return this.request(`/consolidation/${inventoryService.getOrgId()}/candidates`);
+    }
+
+    async createConsolidationGroup(dto: { pr_line_ids: string[]; allocations?: Array<{ pr_line_id: string; qty: number }>; override_reason?: string }) {
+        const path = dto.override_reason ? '/consolidation/groups/override' : '/consolidation/groups';
+        return this.request(path, { method: 'POST', body: JSON.stringify(dto) });
+    }
+
     /** The paper trail around any procurement document. */
     async getDocumentTrace(type: 'pr' | 'rfq' | 'po' | 'grn' | 'inspection' | 'invoice' | 'return', id: string) {
         return this.request(`/trace/${inventoryService.getOrgId()}/${type}/${id}`);

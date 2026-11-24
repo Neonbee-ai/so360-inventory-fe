@@ -83,6 +83,7 @@ interface PR {
 
 const RFQ_FLAG = 'submodule:inventory:rfq';
 const RETURN_FLAG = 'action:inventory:procurement:return_pr';
+const COVERAGE_FLAG = 'submodule:inventory:demand_coverage';
 
 /** Route of the originating record, per source module (link shown only when the viewer has that module). */
 const SOURCE_ROUTES: Record<string, { label: string; flag: string; path: (id: string) => string }> = {
@@ -109,6 +110,7 @@ const PRDetailPage = () => {
     const [isCreatingRfq, setIsCreatingRfq] = useState(false);
     const [linkedRfqs, setLinkedRfqs] = useState<LinkedRFQ[]>([]);
     const shell = useShellBridge() as any;
+    const [coverage, setCoverage] = useState<any[] | null>(null);
     const [returnDialog, setReturnDialog] = useState<{ reason: string } | null>(null);
     const flagOn = (flag: string) => { try { return shell?.isFeatureEnabled?.(flag) === true; } catch { return false; } };
     const rfqEnabled = (() => { try { return shell?.isFeatureEnabled?.(RFQ_FLAG) === true; } catch { return false; } })();
@@ -124,6 +126,12 @@ const PRDetailPage = () => {
     };
 
     useEffect(() => { fetchLinkedRfqs(); }, [id, rfqEnabled]);
+
+    const coverageEnabled = (() => { try { return shell?.isFeatureEnabled?.(COVERAGE_FLAG) === true; } catch { return false; } })();
+    useEffect(() => {
+        if (!id || !coverageEnabled) return;
+        procurementService.getCoverage({ pr_id: id }).then((d: any) => setCoverage(d?.rows ?? [])).catch(() => setCoverage(null));
+    }, [id, coverageEnabled]);
 
     useEffect(() => {
         if (id) fetchPR();
@@ -417,6 +425,22 @@ const PRDetailPage = () => {
                 </Grid.Item>
 
                 <Grid.Item span={8} className="space-y-6">
+                    {coverageEnabled && coverage && coverage.length > 0 && (
+                        <SectionCard title="Coverage" actions={<Button variant="ghost" size="sm" onClick={() => navigate('/procurement/coverage')}>Open workbench</Button>}>
+                            <DataTable
+                                data-testid="pr-coverage-table"
+                                rows={coverage}
+                                rowKey={(c: any) => c.pr_line_id}
+                                columns={[
+                                    { key: 'line', header: 'Line', render: (c: any) => c.line?.description || c.line?.item_id || c.pr_line_id.slice(0, 8) },
+                                    { key: 'gross', header: 'Gross', align: 'right', render: (c: any) => c.gross_qty },
+                                    { key: 'covered', header: 'Covered', align: 'right', render: (c: any) => Number(c.available_qty) + Number(c.inbound_confirmed_qty) },
+                                    { key: 'net', header: 'To buy', align: 'right', render: (c: any) => c.net_purchase_qty },
+                                    { key: 'status', header: 'Status', render: (c: any) => <span className="inline-flex gap-2">{String(c.status).replace(/_/g, ' ')}{c.stale && <Badge tone="warning">Stale</Badge>}</span> },
+                                ]}
+                            />
+                        </SectionCard>
+                    )}
                     <SectionCard title="Requested Items">
                         <DataTable
                             data-testid="pr-lines-table"
