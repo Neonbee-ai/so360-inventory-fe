@@ -16,6 +16,8 @@ import { LINE_ACK_FLAG } from '../../services/poScheduleService';
 import { CLOSEOUT_FLAG } from '../../services/matchService';
 import POCloseoutPanel from './POCloseoutPanel';
 import POAcknowledgementPanel from './POAcknowledgementPanel';
+import POVendorLinkPanel from './POVendorLinkPanel';
+import { VENDOR_COLLAB_FLAG } from '../../services/vendorCollabService';
 import POApprovalPanel from './POApprovalPanel';
 import POVersionsPanel from './POVersionsPanel';
 import { POSchedulesPanel, POAllocationsPanel } from './POScheduleAllocationPanels';
@@ -483,7 +485,8 @@ const PODetailPage = () => {
             >
                 {approvalOn && tab === 'schedules' && (
                     <div className="space-y-6">
-                        <SectionCard title="Order Lines">
+                        {flagOn(VENDOR_COLLAB_FLAG) && <POVendorLinkPanel poId={po.id} status={po.status} />}
+                    <SectionCard title="Order Lines">
                             <DataTable data-testid="po-lines-table" columns={columns} rows={po.po_lines || []} rowKey={(line: POLine) => line.id} />
                         </SectionCard>
                         <POSchedulesPanel poId={po.id} status={po.status} lines={po.po_lines || []} />

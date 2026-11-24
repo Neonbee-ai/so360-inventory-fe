@@ -10,6 +10,8 @@ import {
     toast, getErrorMessage, ListPageTemplate, Button, DataTable, KpiCard, EmptyState, Alert, StatusBadge,
     Modal, TextField, Select, FieldGrid, Grid,
 } from '@so360/design-system';
+import { useEligibleVendors } from '../../hooks/useEligibleVendors';
+import IneligibleVendorsList from '../../components/procurement/IneligibleVendorsList';
 
 interface RFQ {
     id: string;
@@ -71,6 +73,12 @@ const RFQListPage = () => {
     const [vendors, setVendors] = useState<any[]>([]);
     const [approvedPRs, setApprovedPRs] = useState<any[]>([]);
     const [saving, setSaving] = useState(false);
+    // Vendor 08: invite only vendors eligible for what is being asked (first line's item, need-by date).
+    const eligible = useEligibleVendors(
+        { action: 'rfq.invite', item_id: lines.find((l) => l.item_id)?.item_id || undefined, required_date: form.required_date || undefined },
+        showForm,
+    );
+    const invitable = eligible.unavailable ? vendors.map((v) => ({ vendor_id: v.id, vendor_name: v.name, decision: 'eligible' as const, reason_codes: [] })) : eligible.pickable;
 
     useEffect(() => { fetchData(); }, [statusFilter]);
 
@@ -283,20 +291,21 @@ const RFQListPage = () => {
                     <div className="space-y-nb-1">
                         <div className="text-nb-label font-medium text-fg-muted">Invite Vendors</div>
                         <div className="flex flex-wrap gap-nb-2 max-h-40 overflow-y-auto">
-                            {vendors.length === 0 && <span className="text-nb-body text-fg-subtle">No vendors found.</span>}
-                            {vendors.map(v => (
+                            {invitable.length === 0 && <span className="text-nb-body text-fg-subtle">{eligible.loading ? 'Checking eligibility...' : 'No eligible vendors found.'}</span>}
+                            {invitable.map(v => (
                                 <Button
-                                    key={v.id}
+                                    key={v.vendor_id}
                                     type="button"
                                     size="sm"
-                                    variant={vendorIds.includes(v.id) ? 'tonal' : 'secondary'}
-                                    aria-pressed={vendorIds.includes(v.id)}
-                                    onClick={() => toggleVendor(v.id)}
+                                    variant={vendorIds.includes(v.vendor_id) ? 'tonal' : 'secondary'}
+                                    aria-pressed={vendorIds.includes(v.vendor_id)}
+                                    onClick={() => toggleVendor(v.vendor_id)}
                                 >
-                                    {v.name}
+                                    {v.vendor_name}{v.decision === 'conditional' ? ' (conditions apply)' : ''}
                                 </Button>
                             ))}
                         </div>
+                        <IneligibleVendorsList blocked={eligible.blocked} />
                     </div>
 
                     <div className="space-y-nb-3">

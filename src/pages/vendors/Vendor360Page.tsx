@@ -8,6 +8,9 @@ import VendorEvidencePanel from './evidence/VendorEvidencePanel';
 import VendorQualityPanel from './quality/VendorQualityPanel';
 import VendorCorrectiveActionsPanel from './quality/VendorCorrectiveActionsPanel';
 import VendorOutcomesPanel from './outcomes/VendorOutcomesPanel';
+import VendorFinancePanel from './finance/VendorFinancePanel';
+import VendorProcurementPanel from './VendorProcurementPanel';
+import VendorPerformancePanel from './performance/VendorPerformancePanel';
 import VendorEligibilityPanel from './eligibility/VendorEligibilityPanel';
 import { useShellBridge } from '@so360/shell-context';
 import { vendorService } from '../../services/vendorService';
@@ -44,6 +47,15 @@ export default function Vendor360Page() {
   // Vendor 11: supplier quality + corrective actions (fail-open while flags resolve).
   const qualityOn = ((shell as any)?.getFeatureState?.('submodule:inventory:supplier_quality') ?? 'enabled') === 'enabled';
   const vcaOn = ((shell as any)?.getFeatureState?.('submodule:inventory:vendor_corrective_actions') ?? 'enabled') === 'enabled';
+
+  // Vendor 15: Finance tab (account state, sync, bills linked to Accounting). Growth tier flag; fail-open while flags resolve.
+  const financeOn = ((shell as any)?.getFeatureState?.('submodule:inventory:vendor_finance_summary') ?? 'enabled') === 'enabled';
+
+  // Vendor 08: RFQ & PO references tab (reads Procurement; same flag as the Vendor Master it extends).
+  const procurementOn = evidenceOn;
+
+  // Vendor 18: Performance tab (scorecards flag; fail-open while flags resolve).
+  const scorecardsOn = ((shell as any)?.getFeatureState?.('submodule:inventory:vendor_scorecards') ?? 'enabled') === 'enabled';
 
   const can = useMemo(
     () => (perms?: string[]) => {
@@ -90,6 +102,9 @@ export default function Vendor360Page() {
           ...(outcomesOn ? [{ id: 'outcomes', label: 'Receipts & Returns' }] : []),
           ...(qualityOn ? [{ id: 'quality', label: 'Quality' }] : []),
           ...(vcaOn ? [{ id: 'corrective', label: 'Corrective actions' }] : []),
+          ...(scorecardsOn ? [{ id: 'performance', label: 'Performance' }] : []),
+          ...(procurementOn ? [{ id: 'procurement', label: 'RFQs & POs' }] : []),
+          ...(financeOn ? [{ id: 'finance', label: 'Finance' }] : []),
         ]}
       >
         {(active) => {
@@ -100,13 +115,22 @@ export default function Vendor360Page() {
             return <VendorEvidencePanel vendorId={id} canUpdate={can(['suppliers.update'])} canReview={can(['vendors.compliance.review'])} />;
           }
           if (active === 'outcomes' && outcomesOn) {
-            return <VendorOutcomesPanel vendorId={id} />;
+            return <VendorOutcomesPanel vendorId={id} canDispute={((shell as any)?.getFeatureState?.('action:inventory:vendor_fact_dispute') ?? 'disabled') === 'enabled' && can(['suppliers.update'])} />;
           }
           if (active === 'quality' && qualityOn) {
             return <VendorQualityPanel vendorId={id} />;
           }
           if (active === 'corrective' && vcaOn) {
             return <VendorCorrectiveActionsPanel vendorId={id} />;
+          }
+          if (active === 'performance' && scorecardsOn) {
+            return <VendorPerformancePanel vendorId={id} />;
+          }
+          if (active === 'procurement' && procurementOn) {
+            return <VendorProcurementPanel vendorId={id} />;
+          }
+          if (active === 'finance' && financeOn) {
+            return <VendorFinancePanel vendorId={id} canSetup={can(['vendor_finance.approve', 'vendor_finance.verify'])} />;
           }
           if (active === 'eligibility') {
             return <VendorEligibilityPanel vendorId={id} />;

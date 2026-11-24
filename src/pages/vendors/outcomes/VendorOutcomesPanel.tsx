@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Alert, Card, DataTable, EmptyState, StatusBadge } from '@so360/design-system';
+import { Alert, Button, Card, DataTable, EmptyState, Modal, StatusBadge, TextField, toast, getErrorMessage } from '@so360/design-system';
 import type { DataTableColumn } from '@so360/design-system';
 import { vendorService } from '../../../services/vendorService';
+import { vendorScorecardService } from '../../../services/vendorScorecardService';
 import { pct, SOURCE_LABELS } from './outcomeLabels';
 
 interface Fact {
@@ -24,7 +25,9 @@ interface Summary { on_time_rate: number | null; fill_rate: number | null; rejec
 const q = (n: number | null) => (n === null || n === undefined ? '—' : String(Number(n)));
 
 /** Receipts and supplier returns attributed to this vendor (Pulse 91b5ff86). Inventory stays the owner of stock. */
-export default function VendorOutcomesPanel({ vendorId }: { vendorId: string }) {
+export default function VendorOutcomesPanel({ vendorId, canDispute = false }: { vendorId: string; canDispute?: boolean }) {
+  const [disputing, setDisputing] = useState<Fact | null>(null);
+  const [reason, setReason] = useState('');
   const [rows, setRows] = useState<Fact[]>([]);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -58,7 +61,23 @@ export default function VendorOutcomesPanel({ vendorId }: { vendorId: string }) 
       header: 'Counts against vendor',
       render: (r) => (r.source_type === 'supplier_return_line' || r.source_type === 'qc_line' ? (r.attributable_to === 'vendor' ? 'Yes' : 'No') : '—'),
     },
+    ...(canDispute ? [{
+      key: 'dispute',
+      header: '',
+      render: (r: Fact) => (r.attributable_to === 'vendor' ? <Button size="sm" variant="ghost" onClick={() => { setReason(''); setDisputing(r); }}>Dispute</Button> : null),
+    } as DataTableColumn<Fact>] : []),
   ];
+
+  const submitDispute = async () => {
+    if (!disputing) return;
+    try {
+      await vendorScorecardService.disputeFact(disputing.id, { reason });
+      toast.success('Dispute sent for review');
+      setDisputing(null);
+    } catch (e) {
+      toast.error(getErrorMessage(e, 'Could not send the dispute'));
+    }
+  };
 
   return (
     <div className="flex flex-col gap-nb-3">
@@ -78,6 +97,9 @@ export default function VendorOutcomesPanel({ vendorId }: { vendorId: string }) 
           <DataTable data-testid="vendor-outcomes-table" columns={columns} rows={rows} rowKey={(r) => r.id} />
         )}
       </Card>
+      <Modal open={!!disputing} onClose={() => setDisputing(null)} title="Dispute this record" footer={<Button onClick={submitDispute} disabled={!reason.trim()}>Send for review</Button>}>
+        <TextField id="dispute-reason" name="dispute-reason" label="Why is this not the vendor's fault?" value={reason} onChange={(e: any) => setReason(e.target.value)} />
+      </Modal>
     </div>
   );
 }
