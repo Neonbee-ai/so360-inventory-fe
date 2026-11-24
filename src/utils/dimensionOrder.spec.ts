@@ -28,9 +28,9 @@ describe('Given orderWithDimensions', () => {
         const items = ['a', 'b'];
         expect(orderWithDimensions(items, () => null)).toBe(items);
     });
-    it('When dimensions are scattered / Then they gather at the first one in L, B, W, H order', () => {
+    it('When dimensions are scattered / Then they come first in L, B, W, H order, before Colour / Material', () => {
         expect(orderWithDimensions(['Colour', 'Height', 'Width', 'Material', 'Length', 'Breadth'], (n) => dimensionRole(n)))
-            .toEqual(['Colour', 'Length', 'Breadth', 'Width', 'Height', 'Material']);
+            .toEqual(['Length', 'Breadth', 'Width', 'Height', 'Colour', 'Material']);
     });
 });
 
