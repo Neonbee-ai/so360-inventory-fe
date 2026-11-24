@@ -162,6 +162,36 @@ class ProcurementService {
         });
     }
 
+    // PR submit / return for clarification
+    async submitPR(id: string) {
+        return this.request(`/pr/${id}/submit`, { method: 'PATCH' });
+    }
+
+    async returnPR(id: string, reason: string) {
+        return this.request(`/pr/${id}/return`, { method: 'PATCH', body: JSON.stringify({ reason }) });
+    }
+
+    // Shared procurement exception queue (demand intake, coverage variance, ...)
+    async getExceptions(filters: { kind?: string; status?: string } = {}) {
+        const qs = new URLSearchParams();
+        if (filters.kind) qs.append('kind', filters.kind);
+        if (filters.status) qs.append('status', filters.status);
+        const suffix = qs.toString() ? `?${qs.toString()}` : '';
+        return this.request(`/exceptions/${inventoryService.getOrgId()}${suffix}`);
+    }
+
+    async assignException(id: string, personId: string) {
+        return this.request(`/exceptions/${id}/assign`, { method: 'PATCH', body: JSON.stringify({ person_id: personId }) });
+    }
+
+    async retryException(id: string) {
+        return this.request(`/exceptions/${id}/retry`, { method: 'POST' });
+    }
+
+    async resolveException(id: string, resolution: string) {
+        return this.request(`/exceptions/${id}/resolve`, { method: 'PATCH', body: JSON.stringify({ resolution }) });
+    }
+
     /** The paper trail around any procurement document. */
     async getDocumentTrace(type: 'pr' | 'rfq' | 'po' | 'grn' | 'inspection' | 'invoice' | 'return', id: string) {
         return this.request(`/trace/${inventoryService.getOrgId()}/${type}/${id}`);

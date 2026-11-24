@@ -35,6 +35,7 @@ const ProcurementReportsPage = lazy(() => import('./pages/procurement/Procuremen
 const VendorPerformancePage = lazy(() => import('./pages/procurement/VendorPerformancePage'));
 const SerialRegisterPage = lazy(() => import('./pages/SerialRegisterPage'));
 const SalesDemandPage = lazy(() => import('./pages/procurement/SalesDemandPage'));
+const ProcurementExceptionsPage = lazy(() => import('./pages/procurement/ProcurementExceptionsPage'));
 const CategoriesPage = lazy(() => import('./pages/CategoriesPage'));
 const BulkImportPage = lazy(() => import('./pages/bulk-import/BulkImportPage'));
 
@@ -233,6 +234,7 @@ const App = () => {
                 <Route path="reports" element={<PermissionGuard permission="procurement_analytics.read"><FeatureGate flagKey="submodule:inventory:procurement"><ProcurementReportsPage /></FeatureGate></PermissionGuard>} />
                 <Route path="vendor-performance" element={<PermissionGuard permission="procurement_analytics.read"><FeatureGate flagKey="submodule:inventory:procurement"><VendorPerformancePage /></FeatureGate></PermissionGuard>} />
                 <Route path="sales-demand" element={<PermissionGuard permission="procurement_analytics.read"><FeatureGate flagKey="submodule:inventory:procurement"><SalesDemandPage /></FeatureGate></PermissionGuard>} />
+                <Route path="exceptions" element={<PermissionGuard permission="purchase_orders.read"><FeatureGate flagKey="submodule:inventory:demand_intake"><ProcurementExceptionsPage /></FeatureGate></PermissionGuard>} />
 
                 {/* ── Vendor routes (mounted at /vendors/*) ── */}
                 <Route path="contracts" element={<PermissionGuard permission="suppliers.read"><ContractsPage /></PermissionGuard>} />
@@ -259,6 +261,7 @@ const App = () => {
                 <Route path="procurement/reports" element={<PermissionGuard permission="procurement_analytics.read"><FeatureGate flagKey="submodule:inventory:procurement"><ProcurementReportsPage /></FeatureGate></PermissionGuard>} />
                 <Route path="procurement/vendor-performance" element={<PermissionGuard permission="procurement_analytics.read"><FeatureGate flagKey="submodule:inventory:procurement"><VendorPerformancePage /></FeatureGate></PermissionGuard>} />
                 <Route path="procurement/sales-demand" element={<PermissionGuard permission="procurement_analytics.read"><FeatureGate flagKey="submodule:inventory:procurement"><SalesDemandPage /></FeatureGate></PermissionGuard>} />
+                <Route path="procurement/exceptions" element={<PermissionGuard permission="purchase_orders.read"><FeatureGate flagKey="submodule:inventory:demand_intake"><ProcurementExceptionsPage /></FeatureGate></PermissionGuard>} />
                 <Route path="vendors" element={<PermissionGuard permission="suppliers.read"><VendorListPage /></PermissionGuard>} />
                 <Route path="vendors/:id" element={<PermissionGuard permission="suppliers.read"><VendorDetailPage /></PermissionGuard>} />
                 <Route path="vendors/:id/360" element={<PermissionGuard permission="suppliers.read"><Vendor360Page /></PermissionGuard>} />
