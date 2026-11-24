@@ -10,10 +10,8 @@ import {
 } from '@so360/design-system';
 import { RFQ_STATUS_TONES } from './RFQListPage';
 import RFQInviteVendorsModal, { type InviteResult } from './RFQInviteVendorsModal';
-
-const VENDOR_STATUS_TONES: Record<string, 'neutral' | 'success' | 'danger' | 'warning'> = {
-    invited: 'neutral', quoted: 'success', declined: 'danger', no_response: 'warning',
-};
+import RFQInvitationsPanel from './RFQInvitationsPanel';
+import RFQClarificationsPanel from './RFQClarificationsPanel';
 
 /** ICC Incoterms 2020 — the supported trade-term codes. */
 export const INCOTERMS = ['EXW', 'FCA', 'FAS', 'FOB', 'CFR', 'CIF', 'CPT', 'CIP', 'DAP', 'DPU', 'DDP'];
@@ -95,7 +93,7 @@ const RFQDetailPage = () => {
             tax_rate: '',
             lead_time_days: '',
         })));
-        setQuoteVendor(rfq?.rfq_vendors?.find((v: any) => v.status === 'invited')?.vendor_id || '');
+        setQuoteVendor(rfq?.rfq_vendors?.find((v: any) => ['invited', 'acknowledged'].includes(v.status))?.vendor_id || '');
         // RFQ-level commercial context is authoritative: carry it into the quotation instead of making the buyer retype it.
         setQuoteHeader({
             ...EMPTY_QUOTE_HEADER,
@@ -232,6 +230,7 @@ const RFQDetailPage = () => {
 
     const quotations = rfq?.vendor_quotations || [];
     const canAct = !!rfq && !['awarded', 'cancelled'].includes(rfq.status);
+    const routeLabel = rfq?.sourcing_route ? String(rfq.sourcing_route).replace(/_/g, ' ') : null;
     const hdr = (key: keyof typeof quoteHeader) => (e: React.ChangeEvent<HTMLInputElement>) => {
         setQuoteHeader({ ...quoteHeader, [key]: e.target.value });
         if (quoteErrors[key]) setQuoteErrors({ ...quoteErrors, [key]: '' });
@@ -274,14 +273,16 @@ const RFQDetailPage = () => {
         ),
     ].filter(Boolean) as React.ReactElement[];
 
-    const primaryAction = ['draft', 'sent'].includes(rfq.status) ? (
-        <Button onClick={rfq.status === 'draft' ? handleSend : () => setShowInvite(true)} disabled={busy === 'send' || busy === 'invite'}>
-            <Send size={16} /> {rfq.status === 'draft' ? 'Send to Vendors' : 'Send to New Vendors'}
+    const primaryAction = ['draft', 'approved', 'sent'].includes(rfq.status) ? (
+        <Button onClick={rfq.status !== 'sent' ? handleSend : () => setShowInvite(true)} disabled={busy === 'send' || busy === 'invite'}>
+            <Send size={16} /> {rfq.status !== 'sent' ? 'Send to Vendors' : 'Send to New Vendors'}
         </Button>
     ) : undefined;
 
     const details = [
         rfq.title && { label: 'Title', value: rfq.title },
+        routeLabel && { label: 'Sourcing Route', value: `${routeLabel}${rfq.status === 'pending_approval' ? ' (awaiting approval)' : ''}` },
+        rfq.version > 1 && { label: 'RFQ Version', value: `v${rfq.version}` },
         rfq.pr_id && {
             label: 'Source Requisition',
             value: <Button variant="ghost" size="sm" onClick={() => navigate(`/procurement/pr/${rfq.pr_id}`)}>View requisition</Button>,
@@ -308,24 +309,6 @@ const RFQDetailPage = () => {
             <Grid>
                 <Grid.Item span={4} className="space-y-6">
                     <SectionCard title="Overview"><DescriptionList items={details} /></SectionCard>
-                    <SectionCard title="Invited Vendors">
-                        {rfqVendors.length === 0 ? (
-                            <p className="text-xs text-fg-subtle">No vendors invited yet.</p>
-                        ) : (
-                            <div className="space-y-2">
-                                {rfqVendors.map((v: any) => (
-                                    <div key={v.id} className="flex items-center justify-between gap-3">
-                                        <div className="min-w-0">
-                                            <div className="text-sm text-fg truncate">{v.vendor_name || v.vendor_id.slice(0, 8)}</div>
-                                            {v.contact_email && <div className="text-xs text-fg-subtle truncate">{v.contact_email}</div>}
-                                            {v.invited_at && <div className="text-xs text-fg-subtle">Invited {formatters.formatDate(v.invited_at)}{v.email_sent ? '' : ' · not emailed'}</div>}
-                                        </div>
-                                        <Badge tone={VENDOR_STATUS_TONES[v.status] || 'neutral'}>{v.status.replace(/_/g, ' ')}</Badge>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </SectionCard>
                 </Grid.Item>
 
                 <Grid.Item span={8} className="space-y-6">
@@ -345,6 +328,10 @@ const RFQDetailPage = () => {
                             ]}
                         />
                     </SectionCard>
+
+                    <RFQInvitationsPanel rfq={rfq} canAct={canAct} onChanged={fetchRFQ} />
+
+                    <RFQClarificationsPanel rfqId={rfq.id} vendors={rfqVendors} canAct={canAct} />
 
                     <SectionCard title="Quotations Received">
                         {quotations.length === 0 ? (
@@ -375,6 +362,7 @@ const RFQDetailPage = () => {
 
             <RFQInviteVendorsModal
                 open={showInvite}
+                rfqId={rfq.id}
                 onClose={() => setShowInvite(false)}
                 invitedVendorIds={rfqVendors.map((v: any) => v.vendor_id)}
                 onInvite={handleInvite}

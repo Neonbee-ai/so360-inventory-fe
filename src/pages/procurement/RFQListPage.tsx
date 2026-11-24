@@ -27,7 +27,11 @@ interface RFQ {
 export type RFQTone = 'neutral' | 'primary' | 'success' | 'warning' | 'danger' | 'info';
 export const RFQ_STATUS_TONES: Record<string, RFQTone> = {
     draft: 'neutral',
+    pending_approval: 'warning',
+    approved: 'info',
     sent: 'primary',
+    closed_for_responses: 'warning',
+    evaluation: 'info',
     closed: 'warning',
     awarded: 'success',
     cancelled: 'danger',
