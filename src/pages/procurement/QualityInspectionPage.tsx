@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { qualityService } from '../../services/qualityService';
 import { procurementService } from '../../services/procurementService';
 import { useInventoryFormatters } from '../../utils/formatters';
+import QuarantineDispositionModal, { openQuarantine } from './QuarantineDispositionModal';
 import QcDispositionModal, { QC_ATTRIBUTION_OPTIONS, QC_DISPOSITION_OPTIONS, QC_SEVERITY_OPTIONS } from './QcDispositionModal';
 import {
     toast, getErrorMessage, Alert, Badge, Button, DataTable, DescriptionList, EmptyState, FieldGrid, FieldGridItem,
@@ -51,6 +52,7 @@ const QualityInspectionPage = () => {
     const [grns, setGrns] = useState<any[]>([]);
     const [grnId, setGrnId] = useState('');
     const [verifying, setVerifying] = useState<any>(null);
+    const [quarantining, setQuarantining] = useState<any>(null);
 
     useEffect(() => { fetchData(); }, [statusFilter]);
 
@@ -102,6 +104,7 @@ const QualityInspectionPage = () => {
             submitted: Number(l.received_quantity) || 0,
             accepted_quantity: String(Number(l.received_quantity) || 0),
             rejected_quantity: '0',
+            quarantined_quantity: '0',
             defect_code: '',
             rejection_reason: '',
             attribution: 'unknown',
@@ -119,10 +122,10 @@ const QualityInspectionPage = () => {
     const submitResult = async (e: React.FormEvent) => {
         e.preventDefault();
         const over = resultLines.find(
-            l => (parseFloat(l.accepted_quantity) || 0) + (parseFloat(l.rejected_quantity) || 0) > l.submitted,
+            l => (parseFloat(l.accepted_quantity) || 0) + (parseFloat(l.rejected_quantity) || 0) + (parseFloat(l.quarantined_quantity) || 0) > l.submitted,
         );
         if (over) {
-            toast.warning(`Accepted + rejected exceeds the ${over.submitted} units submitted for "${over.description}".`);
+            toast.warning(`Accepted + rejected + quarantined exceeds the ${over.submitted} units submitted for "${over.description}".`);
             return;
         }
 
@@ -134,6 +137,7 @@ const QualityInspectionPage = () => {
                     line_id: l.line_id,
                     accepted_quantity: parseFloat(l.accepted_quantity) || 0,
                     rejected_quantity: parseFloat(l.rejected_quantity) || 0,
+                    ...((parseFloat(l.quarantined_quantity) || 0) > 0 ? { quarantined_quantity: parseFloat(l.quarantined_quantity) } : {}),
                     defect_code: l.defect_code || undefined,
                     rejection_reason: l.rejection_reason || undefined,
                     ...((parseFloat(l.rejected_quantity) || 0) > 0
@@ -143,9 +147,9 @@ const QualityInspectionPage = () => {
             });
             const summary = res?.summary;
             toast.success(
-                summary?.stock_released
+                (summary?.stock_released
                     ? `Inspection ${summary.result} — ${summary.accepted} units released to stock`
-                    : `Inspection ${summary?.result}`,
+                    : `Inspection ${summary?.result}`) + (summary?.quarantined > 0 ? ` · ${summary.quarantined} held in quarantine` : ''),
             );
             setActive(null);
             fetchData();
@@ -160,8 +164,9 @@ const QualityInspectionPage = () => {
         (acc, l) => ({
             accepted: acc.accepted + (parseFloat(l.accepted_quantity) || 0),
             rejected: acc.rejected + (parseFloat(l.rejected_quantity) || 0),
+            quarantined: acc.quarantined + (parseFloat(l.quarantined_quantity) || 0),
         }),
-        { accepted: 0, rejected: 0 },
+        { accepted: 0, rejected: 0, quarantined: 0 },
     );
 
     const columns: DataTableColumn<any>[] = [
@@ -196,6 +201,9 @@ const QualityInspectionPage = () => {
             ) : (
                 <div className="flex gap-nb-2">
                     <Button variant="ghost" size="sm" onClick={() => navigate(`/procurement/grn/${i.grn_id}`)}>View Receipt</Button>
+                    {i.status === 'completed' && (i.quality_inspection_lines || []).some((l: any) => openQuarantine(l) > 0) && (
+                        <Button variant="ghost" size="sm" onClick={() => setQuarantining(i)}>Quarantine</Button>
+                    )}
                     {i.status === 'completed' && (i.quality_inspection_lines || []).some((l: any) => Number(l.rejected_quantity) > 0) && (
                         <Button variant="ghost" size="sm" onClick={() => setVerifying(i)}>
                             {i.ncr_number ? `${i.ncr_number} · Defects` : 'Defects'}
@@ -313,6 +321,17 @@ const QualityInspectionPage = () => {
                                         onChange={e => updateResult(idx, 'rejected_quantity', e.target.value)}
                                     />
                                 </FieldGridItem>
+                                <FieldGridItem>
+                                    <TextField
+                                        type="number"
+                                        min="0"
+                                        label="Quarantined"
+                                        name={`quarantined_${idx}`}
+                                        aria-label={`Quarantined quantity for ${l.description}`}
+                                        value={l.quarantined_quantity}
+                                        onChange={e => updateResult(idx, 'quarantined_quantity', e.target.value)}
+                                    />
+                                </FieldGridItem>
                                 {(parseFloat(l.rejected_quantity) || 0) > 0 && (
                                     <>
                                         <FieldGridItem>
@@ -375,6 +394,7 @@ const QualityInspectionPage = () => {
                         items={[
                             { label: 'Accepted', value: `${totals.accepted} accepted` },
                             { label: 'Rejected', value: `${totals.rejected} rejected` },
+                            ...(totals.quarantined > 0 ? [{ label: 'Quarantined', value: `${totals.quarantined} held until a disposition` }] : []),
                         ]}
                     />
 
@@ -387,6 +407,7 @@ const QualityInspectionPage = () => {
                     />
                 </form>
             </Modal>
+            <QuarantineDispositionModal inspection={quarantining} onClose={() => setQuarantining(null)} onSaved={() => { setQuarantining(null); fetchData(); }} />
             <QcDispositionModal inspection={verifying} onClose={() => setVerifying(null)} onSaved={() => { setVerifying(null); fetchData(); }} />
         </>
     );

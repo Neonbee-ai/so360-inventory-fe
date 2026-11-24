@@ -3,6 +3,9 @@ import { qualityService } from '../../services/qualityService';
 import { procurementService } from '../../services/procurementService';
 import { useInventoryFormatters } from '../../utils/formatters';
 import { validateText } from '../../utils/validateText';
+import { useShellBridge } from '@so360/shell-context';
+import { SUPPLIER_CLAIMS_FLAG } from '../../services/receivingService';
+import SupplierClaimModal, { claimGaps, claimNeedsPhysical } from './SupplierClaimModal';
 import { Alert, Button, Checkbox, DataTable, EmptyState, Grid, GridItem, KpiCard, ListPageTemplate, Modal, Select, StatusBadge, TextField, Textarea, toast, getErrorMessage, type DataTableColumn, FieldGrid } from '@so360/design-system';
 
 const ATTRIBUTIONS = [
@@ -35,8 +38,14 @@ const NEXT_STEP: Record<string, { status: string; label: string } | undefined> =
     dispatched: { status: 'settled', label: 'Settle' },
 };
 
+/** Claims with no physical return (credit, debit, concession, accept-as-is) settle straight from approved. */
+const nextStepFor = (r: any) => (r.status === 'approved' && r.claim_type && !claimNeedsPhysical(r.claim_type) ? { status: 'settled', label: 'Settle' } : NEXT_STEP[r.status]);
+
 const VendorReturnsPage = () => {
     const formatters = useInventoryFormatters();
+    const shell = useShellBridge() as any;
+    const claimsOn = shell?.isFeatureEnabled?.(SUPPLIER_CLAIMS_FLAG) === true;
+    const [claiming, setClaiming] = useState<any>(null);
     const [returns, setReturns] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [fetchError, setFetchError] = useState<string | null>(null);
@@ -160,7 +169,7 @@ const VendorReturnsPage = () => {
     };
 
     const advance = async (ret: any) => {
-        const step = NEXT_STEP[ret.status];
+        const step = nextStepFor(ret);
         if (!step) return;
 
         // Settling a credit-note return needs the vendor's credit note, so
@@ -227,13 +236,32 @@ const VendorReturnsPage = () => {
         {
             key: 'action',
             header: 'Action',
-            render: (r: any) => NEXT_STEP[r.status] ? (
-                <Button variant="ghost" size="sm" onClick={() => advance(r)}>{NEXT_STEP[r.status]!.label} →</Button>
-            ) : (
-                <span className="text-sm text-fg-subtle">—</span>
+            render: (r: any) => (
+                <div className="flex gap-nb-2">
+                    {nextStepFor(r) ? (
+                        <Button variant="ghost" size="sm" onClick={() => advance(r)}>{nextStepFor(r)!.label} →</Button>
+                    ) : (
+                        <span className="text-sm text-fg-subtle">—</span>
+                    )}
+                    {claimsOn && r.claim_type && !['settled', 'cancelled'].includes(r.status) && (
+                        <Button variant="ghost" size="sm" onClick={() => setClaiming(r)}>Claim</Button>
+                    )}
+                </div>
             ),
         },
     ];
+    if (claimsOn) {
+        columns.splice(5, 0, {
+            key: 'claim',
+            header: 'Claim',
+            render: (r: any) => (r.claim_type ? (
+                <>
+                    <div>{String(r.claim_type).replace(/_/g, ' ')}</div>
+                    <div className="text-xs text-fg-subtle">{claimGaps(r).length === 0 ? 'Resolution complete' : `Open: ${claimGaps(r).join(', ')}`}</div>
+                </>
+            ) : '—'),
+        });
+    }
 
     return (
         <>
@@ -384,6 +412,8 @@ const VendorReturnsPage = () => {
                     />
                 </div>
             </Modal>
+
+            <SupplierClaimModal claim={claiming} onClose={() => setClaiming(null)} onSaved={() => { setClaiming(null); fetchData(); }} />
 
             <Modal
                 open={!!settling}
