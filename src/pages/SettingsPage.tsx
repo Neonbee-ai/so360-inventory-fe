@@ -172,6 +172,12 @@ const SettingsPage = () => {
                     </SettingsCard>
                 )}
 
+                {can('purchase_orders.approve') && (
+                    <SettingsCard title="Purchase order approvals" description="Approval rules, separation of duties, budget control, delegations and amendment tolerances">
+                        <Button variant="secondary" size="sm" onClick={() => navigate('/inventory/settings/approvals')}>Open approval settings</Button>
+                    </SettingsCard>
+                )}
+
                 {can('items.update') && (
                     <SettingsCard title="Quote evaluation" description="Scoring weights, landed-cost policy, exchange-rate date and award approval threshold">
                         <Button variant="secondary" size="sm" onClick={() => navigate('/inventory/settings/evaluation')}>Open evaluation settings</Button>

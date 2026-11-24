@@ -43,6 +43,7 @@ const ConsolidationWizardPage = lazy(() => import('./pages/procurement/Consolida
 const RFQFromDemandWizardPage = lazy(() => import('./pages/procurement/RFQFromDemandWizardPage'));
 const RFQAwardWizardPage = lazy(() => import('./pages/procurement/RFQAwardWizardPage'));
 const EvaluationSettingsPage = lazy(() => import('./pages/procurement/EvaluationSettingsPage'));
+const ApprovalPoliciesPage = lazy(() => import('./pages/procurement/ApprovalPoliciesPage'));
 const CoverageSettingsPage = lazy(() => import('./pages/procurement/CoverageSettingsPage'));
 const CategoriesPage = lazy(() => import('./pages/CategoriesPage'));
 const BulkImportPage = lazy(() => import('./pages/bulk-import/BulkImportPage'));
@@ -223,6 +224,7 @@ const App = () => {
                 <Route path="settings" element={<PermissionGuard permission={['items.update', 'warehouses.update']}><SettingsPage /></PermissionGuard>} />
                 <Route path="settings/coverage" element={<PermissionGuard permission="items.update"><FeatureGate flagKey="submodule:inventory:demand_coverage"><CoverageSettingsPage /></FeatureGate></PermissionGuard>} />
                 <Route path="settings/evaluation" element={<PermissionGuard permission="items.update"><FeatureGate flagKey="submodule:inventory:sourcing_evaluation"><EvaluationSettingsPage /></FeatureGate></PermissionGuard>} />
+                <Route path="settings/approvals" element={<PermissionGuard permission="purchase_orders.approve"><FeatureGate flagKey="action:inventory:procurement:po_approval"><ApprovalPoliciesPage /></FeatureGate></PermissionGuard>} />
                 <Route path="settings/product-types" element={<PermissionGuard permission={['items.update', 'warehouses.update']}><FeatureGate flagKey="submodule:inventory:product_types"><ProductTypeSettingsPage /></FeatureGate></PermissionGuard>} />
                 <Route path="categories" element={<PermissionGuard permission="categories.read"><CategoriesPage /></PermissionGuard>} />
 
