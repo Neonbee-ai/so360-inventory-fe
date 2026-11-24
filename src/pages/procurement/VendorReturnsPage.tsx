@@ -5,6 +5,13 @@ import { useInventoryFormatters } from '../../utils/formatters';
 import { validateText } from '../../utils/validateText';
 import { Alert, Button, Checkbox, DataTable, EmptyState, Grid, GridItem, KpiCard, ListPageTemplate, Modal, Select, StatusBadge, TextField, Textarea, toast, getErrorMessage, type DataTableColumn, FieldGrid } from '@so360/design-system';
 
+const ATTRIBUTIONS = [
+    { value: 'vendor', label: 'Vendor (supplier fault)' },
+    { value: 'internal', label: 'Internal (our handling)' },
+    { value: 'transit', label: 'Carrier / transit' },
+    { value: 'unknown', label: 'Not sure yet' },
+];
+
 const REASONS = [
     { value: 'damaged', label: 'Damaged' },
     { value: 'wrong_item', label: 'Wrong item' },
@@ -37,7 +44,7 @@ const VendorReturnsPage = () => {
     const [showForm, setShowForm] = useState(false);
     const [grns, setGrns] = useState<any[]>([]);
     const [selectedGrn, setSelectedGrn] = useState<any>(null);
-    const [form, setForm] = useState({ reason: 'damaged', resolution: 'credit_note', remarks: '' });
+    const [form, setForm] = useState({ reason: 'damaged', resolution: 'credit_note', attribution: 'vendor', remarks: '' });
     const [lines, setLines] = useState<any[]>([]);
     const [saving, setSaving] = useState(false);
     const [errors, setErrors] = useState<{ grn?: string; remarks?: string; lines?: string }>({});
@@ -126,6 +133,8 @@ const VendorReturnsPage = () => {
                 warehouse_id: selectedGrn.warehouse_id,
                 reason: form.reason,
                 resolution: form.resolution,
+                // Vendor 10: only vendor-attributable returns count against the vendor's quality score.
+                attribution: form.attribution,
                 remarks: form.remarks || undefined,
                 items: payloadLines.map(l => ({
                     grn_line_id: l.grn_line_id,
@@ -141,7 +150,7 @@ const VendorReturnsPage = () => {
             setShowForm(false);
             setSelectedGrn(null);
             setLines([]);
-            setForm({ reason: 'damaged', resolution: 'credit_note', remarks: '' });
+            setForm({ reason: 'damaged', resolution: 'credit_note', attribution: 'vendor', remarks: '' });
             fetchData();
         } catch (err) {
             toast.error(getErrorMessage(err, 'Failed to raise the return'));
@@ -313,6 +322,13 @@ const VendorReturnsPage = () => {
                             value={form.resolution}
                             onChange={(e: any) => setForm({ ...form, resolution: e.target.value })}
                             options={RESOLUTIONS}
+                        />
+                        <Select
+                            name="ret-attribution"
+                            label="Who is responsible"
+                            value={form.attribution}
+                            onChange={(e: any) => setForm({ ...form, attribution: e.target.value })}
+                            options={ATTRIBUTIONS}
                         />
                     </FieldGrid>
 

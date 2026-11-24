@@ -7,6 +7,7 @@ import {
 } from '@so360/design-system';
 import { procurementService } from '../../services/procurementService';
 import { useInventoryFormatters } from '../../utils/formatters';
+import { EXCEPTION_LABELS } from '../vendors/outcomes/outcomeLabels';
 import ProcurementTrace from '../../components/ProcurementTrace';
 
 interface GRNLine {
@@ -65,6 +66,8 @@ interface GRN {
     gate_entry_no?: string;
     inspection_status?: string;
     inspection?: GRNInspection | null;
+    /** Vendor 10: open receipt-attribution exceptions for this receipt or its lines. */
+    integration_exceptions?: { id: string; exception_code: string }[];
     stock_impact?: GRNStockImpact;
     stock_on_hold?: boolean;
     stock_posted_at?: string | null;
@@ -300,6 +303,11 @@ const GRNDetailPage = () => {
             status={
                 <>
                     <Badge tone="success">Goods received</Badge>
+                    {(grn.integration_exceptions ?? []).length > 0 && (
+                        <Badge tone="warning" title={(grn.integration_exceptions ?? []).map((e) => EXCEPTION_LABELS[e.exception_code] ?? e.exception_code).join('; ')}>
+                            Vendor attribution needs review
+                        </Badge>
+                    )}
                     {grn.is_partial && <Badge tone="warning">Partial</Badge>}
                     {grn.inspection_status && grn.inspection_status !== 'not_required' && (
                         <Badge tone={INSPECTION_LABELS[grn.inspection_status]?.tone ?? 'neutral'}>
@@ -324,6 +332,13 @@ const GRNDetailPage = () => {
                 </>
             }
         >
+            {(grn.integration_exceptions ?? []).length > 0 && (
+                <Alert variant="warning" title="Vendor attribution needs review">
+                    {(grn.integration_exceptions ?? []).map((e) => EXCEPTION_LABELS[e.exception_code] ?? e.exception_code).join('; ')}.{' '}
+                    <Button variant="ghost" size="sm" onClick={() => navigate('/vendors/integration-exceptions')}>Open the queue</Button>
+                </Alert>
+            )}
+
             {awaitingInspection && (
                 <Alert variant="warning" title="Awaiting quality inspection">
                     {totalQuantityReceived} unit{totalQuantityReceived === 1 ? '' : 's'} physically received; the accepted
