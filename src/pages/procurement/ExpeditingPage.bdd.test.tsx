@@ -19,7 +19,8 @@ describe('ExpeditingPage (Pulse a8c2a582)', () => {
     it('Given overdue schedules, When loaded, Then each row shows its reasons and links to the PO', async () => {
         render(<ExpeditingPage />);
         expect(await screen.findByText('Acknowledgement overdue')).toBeInTheDocument();
-        expect(screen.getByText('At risk')).toBeInTheDocument();
+        // the same label is also a filter <option>; assert the badge, not the option
+        expect(screen.getAllByText('At risk').some((el) => el.tagName !== 'OPTION')).toBe(true);
         fireEvent.click(screen.getByRole('button', { name: '#PO-9' }));
         expect(mockNavigate).toHaveBeenCalledWith('/procurement/po/po-1');
     });

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, Badge, Button, Card, DataTable, EmptyState, FormField, Modal, toast, getErrorMessage } from '@so360/design-system';
+import { Alert, Badge, Button, Card, Checkbox, DataTable, EmptyState, getErrorMessage, Modal, TextField, toast } from '@so360/design-system';
 import type { DataTableColumn } from '@so360/design-system';
 import { vendorPortalAdminService } from '../../../services/vendorPortalAdminService';
 import { PORTAL_ROLE_LABELS, PORTAL_ROLE_OPTIONS, PORTAL_STATUS_LABELS, PORTAL_STATUS_TONE, isValidEmail } from '../../../utils/vendorPortal';
@@ -73,15 +73,12 @@ export default function VendorPortalPanel({ vendorId, canManage, canInvite }: Pr
         footer={<Button disabled={!inviteValid || saving} onClick={() => run(() => vendorPortalAdminService.invite(vendorId, invite), 'Invitation sent', () => { setInviteOpen(false); setInvite({ email: '', full_name: '', roles: ['rfq_responder'] }); })}>Send invitation</Button>}
       >
         <div className="flex flex-col gap-nb-3">
-          <FormField label="Email" name="portal_email" type="email" value={invite.email} onChange={(e: any) => setInvite({ ...invite, email: e.target.value })} />
-          <FormField label="Full name" name="portal_name" value={invite.full_name} onChange={(e: any) => setInvite({ ...invite, full_name: e.target.value })} />
+          <TextField label="Email" name="portal_email" type="email" value={invite.email} onChange={(e: any) => setInvite({ ...invite, email: e.target.value })} />
+          <TextField label="Full name" name="portal_name" value={invite.full_name} onChange={(e: any) => setInvite({ ...invite, full_name: e.target.value })} />
           <fieldset className="flex flex-col gap-nb-1">
             <legend className="text-sm text-fg-muted">Roles (least access wins)</legend>
             {PORTAL_ROLE_OPTIONS.map((o) => (
-              <label key={o.value} className="flex items-center gap-nb-2">
-                <input type="checkbox" checked={invite.roles.includes(o.value)} onChange={() => setInvite({ ...invite, roles: toggle(invite.roles, o.value) })} />
-                {o.label}
-              </label>
+              <Checkbox key={o.value} name={`role-${o.value}`} label={o.label} checked={invite.roles.includes(o.value)} onChange={() => setInvite({ ...invite, roles: toggle(invite.roles, o.value) })} />
             ))}
           </fieldset>
           <p className="text-fg-muted text-sm">The link works once and expires. The contact must sign in with this email and complete two-step verification.</p>
@@ -96,10 +93,7 @@ export default function VendorPortalPanel({ vendorId, canManage, canInvite }: Pr
       >
         <fieldset className="flex flex-col gap-nb-1">
           {PORTAL_ROLE_OPTIONS.map((o) => (
-            <label key={o.value} className="flex items-center gap-nb-2">
-              <input type="checkbox" checked={editRoles.includes(o.value)} onChange={() => setEditRoles(toggle(editRoles, o.value))} />
-              {o.label}
-            </label>
+            <Checkbox key={o.value} name={`role-${o.value}`} label={o.label} checked={editRoles.includes(o.value)} onChange={() => setEditRoles(toggle(editRoles, o.value))} />
           ))}
         </fieldset>
       </Modal>

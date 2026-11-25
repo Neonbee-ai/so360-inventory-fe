@@ -71,7 +71,8 @@ describe('GRNEntryPage receiving (Pulse 4fe6cf16)', () => {
     await openForm();
     fireEvent.click(screen.getByText('Direct to site'));
     fireEvent.change(screen.getByLabelText(/Delivery site/i), { target: { value: 'site-9' } });
-    fireEvent.click(screen.getByText(/Post Goods Receipt/i));
+    // Submit the form directly: the required inputs would stop a click on the button in the browser before this guard runs.
+    fireEvent.submit(document.getElementById('grn-entry-form')!);
     await waitFor(() => expect(toast.warning).toHaveBeenCalledWith(expect.stringContaining('custody')));
     expect(mockCreateGRN).not.toHaveBeenCalled();
   });
@@ -79,7 +80,8 @@ describe('GRNEntryPage receiving (Pulse 4fe6cf16)', () => {
   it('Given a service receipt without evidence, When posted, Then it is blocked', async () => {
     await openForm();
     fireEvent.click(screen.getByText('Service'));
-    fireEvent.click(screen.getByText(/Post Goods Receipt/i));
+    // Submit the form directly: the required inputs would stop a click on the button in the browser before this guard runs.
+    fireEvent.submit(document.getElementById('grn-entry-form')!);
     await waitFor(() => expect(toast.warning).toHaveBeenCalledWith(expect.stringContaining('Service acceptance')));
     expect(mockCreateGRN).not.toHaveBeenCalled();
   });

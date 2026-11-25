@@ -50,7 +50,7 @@ const ConsolidationWizardPage = () => {
     const lineColumns: DataTableColumn<any>[] = [
         {
             key: 'pick', header: '',
-            render: (l: any) => <Checkbox name={`pick-${l.pr_line_id}`} aria-label={`Select ${l.pr_number}`} checked={picked.has(l.pr_line_id)} onChange={() => toggle(l.pr_line_id)} />,
+            render: (l: any) => <Checkbox name={`pick-${l.pr_line_id}`} label={`Select ${l.pr_number}`} hideLabel checked={picked.has(l.pr_line_id)} onChange={() => toggle(l.pr_line_id)} />,
         },
         { key: 'pr', header: 'Requisition', render: (l: any) => <>{l.pr_number || 'PR'}<span className="block text-xs text-fg-subtle">{l.description || l.item_id}</span></> },
         { key: 'origin', header: 'Origin', render: (l: any) => (l.source_module ? `${l.source_module} ${l.source_id ?? ''}` : '-') },

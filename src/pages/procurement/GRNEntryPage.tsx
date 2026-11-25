@@ -303,8 +303,8 @@ const GRNEntryPage = () => {
                                     <FieldGridItem>
                                         <PeopleSelector
                                             name="custodian_person_id"
-                                            orgId={inventoryService.getOrgId()}
-                                            value={siteInfo.custodian_person_id}
+                                            orgId={inventoryService.getOrgId() ?? undefined}
+                                            value={siteInfo.custodian_person_id || undefined}
                                             placeholder="Who took custody"
                                             filters={{ status: 'active' }}
                                             onChange={(id: any) => setSiteInfo({ ...siteInfo, custodian_person_id: (Array.isArray(id) ? id[0] : id) || '' })}

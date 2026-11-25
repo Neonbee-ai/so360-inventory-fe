@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, Button, Card, DataTable, EmptyState, FormField, Modal, Select, StatusBadge } from '@so360/design-system';
+import { Alert, Button, Card, DataTable, EmptyState, Modal, Select, StatusBadge, TextField } from '@so360/design-system';
 import type { DataTableColumn } from '@so360/design-system';
 import { vendorService } from '../../../services/vendorService';
 import { RISK_OPTIONS } from './lifecycleLabels';
@@ -133,18 +133,18 @@ export default function VendorQualificationsPanel({ vendorId, canEdit }: { vendo
         footer={<Button onClick={create} disabled={saving}>Submit for approval</Button>}
       >
         <div className="flex flex-col gap-nb-3">
-          <FormField label="Service code" name="service_code" value={form.service_code} onChange={(e: any) => setForm({ ...form, service_code: e.target.value })} />
-          <FormField label="Trade" name="trade" value={form.trade} onChange={(e: any) => setForm({ ...form, trade: e.target.value })} />
-          <FormField label="Territory (e.g. IN-KL)" name="territory" value={form.territory} onChange={(e: any) => setForm({ ...form, territory: e.target.value })} />
+          <TextField label="Service code" name="service_code" value={form.service_code} onChange={(e: any) => setForm({ ...form, service_code: e.target.value })} />
+          <TextField label="Trade" name="trade" value={form.trade} onChange={(e: any) => setForm({ ...form, trade: e.target.value })} />
+          <TextField label="Territory (e.g. IN-KL)" name="territory" value={form.territory} onChange={(e: any) => setForm({ ...form, territory: e.target.value })} />
           <Select label="Process" name="process" options={PROCESS_OPTIONS} value={form.process} onChange={(e) => setForm({ ...form, process: e.target.value })} />
-          <FormField label="Material grades (comma separated)" name="grades" value={form.grades} onChange={(e: any) => setForm({ ...form, grades: e.target.value })} />
-          <FormField label="Brands (comma separated)" name="brands" value={form.brands} onChange={(e: any) => setForm({ ...form, brands: e.target.value })} />
-          <FormField label="Certifications held (document types, comma separated)" name="certs" value={form.certs} onChange={(e: any) => setForm({ ...form, certs: e.target.value })} />
-          <FormField label="Tightest tolerance held (mm)" name="tolerance" type="number" value={form.tolerance} onChange={(e: any) => setForm({ ...form, tolerance: e.target.value })} />
-          <FormField label="Largest part (mm)" name="maxDim" type="number" value={form.maxDim} onChange={(e: any) => setForm({ ...form, maxDim: e.target.value })} />
-          <FormField label="Usual lead time (days)" name="leadTime" type="number" value={form.leadTime} onChange={(e: any) => setForm({ ...form, leadTime: e.target.value })} />
+          <TextField label="Material grades (comma separated)" name="grades" value={form.grades} onChange={(e: any) => setForm({ ...form, grades: e.target.value })} />
+          <TextField label="Brands (comma separated)" name="brands" value={form.brands} onChange={(e: any) => setForm({ ...form, brands: e.target.value })} />
+          <TextField label="Certifications held (document types, comma separated)" name="certs" value={form.certs} onChange={(e: any) => setForm({ ...form, certs: e.target.value })} />
+          <TextField label="Tightest tolerance held (mm)" name="tolerance" type="number" value={form.tolerance} onChange={(e: any) => setForm({ ...form, tolerance: e.target.value })} />
+          <TextField label="Largest part (mm)" name="maxDim" type="number" value={form.maxDim} onChange={(e: any) => setForm({ ...form, maxDim: e.target.value })} />
+          <TextField label="Usual lead time (days)" name="leadTime" type="number" value={form.leadTime} onChange={(e: any) => setForm({ ...form, leadTime: e.target.value })} />
           <Select label="Risk tier" name="risk_tier" options={RISK_OPTIONS} value={form.risk_tier} onChange={(e) => setForm({ ...form, risk_tier: e.target.value })} />
-          <FormField label="Valid to" name="valid_to" type="date" value={form.valid_to} onChange={(e: any) => setForm({ ...form, valid_to: e.target.value })} />
+          <TextField label="Valid to" name="valid_to" type="date" value={form.valid_to} onChange={(e: any) => setForm({ ...form, valid_to: e.target.value })} />
         </div>
       </Modal>
     </Card>

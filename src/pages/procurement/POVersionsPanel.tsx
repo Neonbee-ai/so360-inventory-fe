@@ -85,7 +85,8 @@ const POVersionsPanel: React.FC<Props> = ({ poId, lines, canAmend, onChanged }) 
             </SectionCard>
 
             {canAmend && (
-                <SectionCard title="Amend this PO" description="Material changes (vendor, quantity, price, tax, dates beyond tolerance, terms) go back to approval. The issued version stays unchanged.">
+                <SectionCard title="Amend this PO">
+                <p className="text-nb-caption text-fg-subtle">Material changes (vendor, quantity, price, tax, dates beyond tolerance, terms) go back to approval. The issued version stays unchanged.</p>
                     <div className="flex flex-col gap-nb-3">
                         {lines.map(l => (
                             <div key={l.id} className="grid grid-cols-1 gap-nb-2 md:grid-cols-3">

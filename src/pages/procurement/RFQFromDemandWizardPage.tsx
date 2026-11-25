@@ -54,7 +54,7 @@ const RFQFromDemandWizardPage = () => {
     });
 
     const columns: DataTableColumn<any>[] = [
-        { key: 'pick', header: '', render: (g: any) => <Checkbox name={`pick-${g.id}`} aria-label={`Select ${g.specification || g.item_id}`} checked={picked.has(g.id)} onChange={() => toggle(g.id)} /> },
+        { key: 'pick', header: '', render: (g: any) => <Checkbox name={`pick-${g.id}`} label={`Select ${g.specification || g.item_id}`} hideLabel checked={picked.has(g.id)} onChange={() => toggle(g.id)} /> },
         { key: 'item', header: 'Item', render: (g: any) => <>{g.specification || g.service_code || g.item_id?.slice(0, 8) || 'Demand'}<span className="block text-xs text-fg-subtle">{g.rationale}</span></> },
         { key: 'qty', header: 'To source', align: 'right', render: (g: any) => `${formatters.formatNumber(qtyOf(g))} ${g.uom || ''}` },
         { key: 'need', header: 'Need by', render: (g: any) => (g.need_by_from ? formatters.formatDate(g.need_by_from) : '-') },

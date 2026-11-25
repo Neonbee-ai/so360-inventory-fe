@@ -322,15 +322,6 @@ const PRDetailPage = () => {
     const firstMeta = gates[0]?.metadata;
     const statusText = pr.status.replace(/_/g, ' ');
 
-    const overview = [
-        { label: 'Requester', value: pr.requester?.full_name || 'System' },
-        { label: 'Required Date', value: pr.required_date ? formatters.formatDate(pr.required_date) : 'Not set' },
-        { label: 'Created', value: formatters.formatDateTime(pr.created_at) },
-        pr.description ? { label: 'Description', value: pr.description } : null,
-        pr.source_module ? { label: 'Origin', value: originLabel(pr.source_module, pr.source_id, pr.source_version, pr.source_change_pending) } : null,
-        { label: 'Estimated Total', value: `${formatters.formatCurrency(totalAmount)} (${pr.pr_lines?.length || 0} line items)` },
-    ].filter(Boolean) as { label: string; value: React.ReactNode }[];
-
     const originLabel = (module?: string | null, sourceId?: string | null, version?: number | null, changePending?: boolean) => {
         const route = module ? SOURCE_ROUTES[module] : undefined;
         const text = `${route?.label || module}${sourceId ? ` ${sourceId}` : ''}${version ? ` v${version}` : ''}`;
@@ -342,6 +333,16 @@ const PRDetailPage = () => {
             </span>
         );
     };
+
+    const overview = [
+        { label: 'Requester', value: pr.requester?.full_name || 'System' },
+        { label: 'Required Date', value: pr.required_date ? formatters.formatDate(pr.required_date) : 'Not set' },
+        { label: 'Created', value: formatters.formatDateTime(pr.created_at) },
+        pr.description ? { label: 'Description', value: pr.description } : null,
+        pr.source_module ? { label: 'Origin', value: originLabel(pr.source_module, pr.source_id, pr.source_version, pr.source_change_pending) } : null,
+        { label: 'Estimated Total', value: `${formatters.formatCurrency(totalAmount)} (${pr.pr_lines?.length || 0} line items)` },
+    ].filter(Boolean) as { label: string; value: React.ReactNode }[];
+
 
     const primaryAction = canConvert ? (
         <Button onClick={handleCreatePO} disabled={isLoadingConversion}>

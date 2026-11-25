@@ -94,7 +94,7 @@ const RFQInviteVendorsModal: React.FC<Props> = ({ open, rfqId, onClose, invitedV
         >
             {loading && <Skeleton className="h-24 w-full" />}
             {!loading && loadError && (
-                <Alert variant="danger" title="Could not load vendors" action={{ label: 'Retry', onClick: load }}>
+                <Alert variant="error" title="Could not load vendors" action={{ label: 'Retry', onClick: load }}>
                     {loadError}
                 </Alert>
             )}

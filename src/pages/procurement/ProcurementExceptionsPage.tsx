@@ -164,7 +164,7 @@ const ProcurementExceptionsPage = () => {
                 title="Assign exception"
                 footer={<Button variant="secondary" onClick={() => setAssigning(null)}>Cancel</Button>}
             >
-                <PeopleSelector orgId={inventoryService.getOrgId()} onChange={assign} placeholder="Search people..." filters={{ status: 'active' }} />
+                <PeopleSelector orgId={inventoryService.getOrgId() ?? undefined} onChange={assign} placeholder="Search people..." filters={{ status: 'active' }} />
             </Modal>
             <Modal
                 open={!!resolving}

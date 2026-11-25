@@ -104,7 +104,8 @@ const POAcknowledgementPanel: React.FC<Props> = ({ poId, poVersion, status, line
 
     return (
         <div className="flex flex-col gap-nb-4">
-            <SectionCard title="Delivery commitments" description={`PO version ${poVersion}. Requested, PO-promised, supplier-confirmed and forecast dates are kept apart.`}>
+            <SectionCard title="Delivery commitments">
+                <p className="text-nb-caption text-fg-subtle">{`PO version ${poVersion}. Requested, PO-promised, supplier-confirmed and forecast dates are kept apart.`}</p>
                 {schedules.length === 0 ? <EmptyState title="No schedules" description="Schedules are created when the PO is submitted." /> : (
                     <DataTable
                         data-testid="po-schedules-table"
@@ -126,7 +127,8 @@ const POAcknowledgementPanel: React.FC<Props> = ({ poId, poVersion, status, line
             </SectionCard>
 
             {proposals.length > 0 && (
-                <SectionCard title="Supplier proposals" description="Nothing is published as confirmed until you accept. Quantity, price or date changes beyond tolerance create a new PO version for approval.">
+                <SectionCard title="Supplier proposals">
+                <p className="text-nb-caption text-fg-subtle">Nothing is published as confirmed until you accept. Quantity, price or date changes beyond tolerance create a new PO version for approval.</p>
                     <div className="flex flex-col gap-nb-3">
                         {proposals.map(s => (
                             <div key={s.id} className="flex flex-wrap items-center gap-nb-2">
@@ -141,7 +143,8 @@ const POAcknowledgementPanel: React.FC<Props> = ({ poId, poVersion, status, line
             )}
 
             {issued && schedules.length > 0 && (
-                <SectionCard title="Record acknowledgement" description="Record what the supplier said for this version, per schedule.">
+                <SectionCard title="Record acknowledgement">
+                <p className="text-nb-caption text-fg-subtle">Record what the supplier said for this version, per schedule.</p>
                     <div className="flex flex-col gap-nb-3">
                         {schedules.map(s => {
                             const v = form[s.id] || {};

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Alert, Button, Card, FormField, Select, StatusBadge } from '@so360/design-system';
+import { Alert, Button, Card, Select, StatusBadge, TextField } from '@so360/design-system';
 import { vendorService } from '../../../services/vendorService';
 
 const MODULES = [
@@ -40,9 +40,9 @@ export default function VendorEligibilityPanel({ vendorId }: { vendorId: string 
       {error && <Alert variant="error">{error}</Alert>}
       <div className="flex flex-col gap-nb-3">
         <Select label="Module" name="module" options={MODULES} value={form.module} onChange={(e) => setForm({ ...form, module: e.target.value })} />
-        <FormField label="Action (e.g. po.create)" name="action" value={form.action} onChange={(e: any) => setForm({ ...form, action: e.target.value })} />
-        <FormField label="Territory" name="territory" value={form.territory} onChange={(e: any) => setForm({ ...form, territory: e.target.value })} />
-        <FormField label="Service code" name="service_code" value={form.service_code} onChange={(e: any) => setForm({ ...form, service_code: e.target.value })} />
+        <TextField label="Action (e.g. po.create)" name="action" value={form.action} onChange={(e: any) => setForm({ ...form, action: e.target.value })} />
+        <TextField label="Territory" name="territory" value={form.territory} onChange={(e: any) => setForm({ ...form, territory: e.target.value })} />
+        <TextField label="Service code" name="service_code" value={form.service_code} onChange={(e: any) => setForm({ ...form, service_code: e.target.value })} />
       </div>
       {result && (
         <div className="mt-nb-3 flex flex-col gap-nb-2" data-testid="eligibility-result">

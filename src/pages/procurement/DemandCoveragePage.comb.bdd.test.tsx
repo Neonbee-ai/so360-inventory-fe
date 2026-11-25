@@ -51,7 +51,8 @@ describe('DemandCoveragePage (Comb)', () => {
         expect(container.querySelector('[data-template="list"]')).not.toBeNull();
         expect(screen.getByRole('heading', { name: 'Demand Coverage' })).toBeInTheDocument();
         expect(screen.getByText('+25 unconfirmed')).toBeInTheDocument();
-        expect(screen.getByText('Partially covered')).toBeInTheDocument();
+        // the same label is also a filter <option>; assert the badge, not the option
+        expect(screen.getAllByText('Partially covered').some((el) => el.tagName !== 'OPTION')).toBe(true);
     });
 
     it('Given a stale line, When rendered, Then a stale chip and a recalculate warning are shown', async () => {

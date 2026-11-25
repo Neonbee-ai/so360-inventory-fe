@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Alert, Button, Card, FormField, Select } from '@so360/design-system';
+import { Alert, Button, Card, Select, TextField } from '@so360/design-system';
 import { vendorService } from '../../../services/vendorService';
 
 const MODES = [
@@ -46,8 +46,8 @@ export default function EligibilityPolicyTab({ canEdit }: { canEdit: boolean }) 
       {message && <Alert variant={message.kind === 'error' ? 'error' : 'success'}>{message.text}</Alert>}
       <div className="flex flex-col gap-nb-3">
         <Select label="Enforcement" name="enforcement_mode" options={MODES} value={mode} disabled={!canEdit} onChange={(e) => setMode(e.target.value)} />
-        <FormField label="Warn about documents expiring within (days)" name="doc_warn_days" type="number" value={warnDays} disabled={!canEdit} onChange={(e: any) => setWarnDays(e.target.value)} />
-        <FormField label="Mandatory document types (comma separated)" name="mandatory_document_types" value={mandatory} disabled={!canEdit} onChange={(e: any) => setMandatory(e.target.value)} />
+        <TextField label="Warn about documents expiring within (days)" name="doc_warn_days" type="number" value={warnDays} disabled={!canEdit} onChange={(e: any) => setWarnDays(e.target.value)} />
+        <TextField label="Mandatory document types (comma separated)" name="mandatory_document_types" value={mandatory} disabled={!canEdit} onChange={(e: any) => setMandatory(e.target.value)} />
       </div>
     </Card>
   );
