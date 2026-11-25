@@ -46,7 +46,7 @@ describe('POVersionsPanel (Pulse 5de6ad46)', () => {
         expect(toast.error).toHaveBeenCalled();
     });
 
-    it('diffVersions returns nothing for the first version and header changes otherwise', () => {
+    it('Given the scenario, When it runs, Then diffVersions returns nothing for the first version and header changes otherwise', () => {
         expect(diffVersions(null, snap(10))).toEqual([]);
         const a = { ...snap(10), header: { payment_terms: 'Net 30' } };
         const b = { ...snap(10), header: { payment_terms: 'Net 45' } };

@@ -76,7 +76,7 @@ describe('VendorLifecyclePanel', () => {
 });
 
 describe('gatesFromError', () => {
-  it('reads gates from a 422 body, otherwise null', () => {
+  it('Given the scenario, When it runs, Then reads gates from a 422 body, otherwise null', () => {
     expect(gatesFromError({ body: { gates: [{ gate: 'a', ok: false, message: 'm' }] } })).toHaveLength(1);
     expect(gatesFromError({ body: {} })).toBeNull();
   });

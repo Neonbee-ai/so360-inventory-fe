@@ -75,7 +75,7 @@ describe('POApprovalPanel (Pulse 5de6ad46)', () => {
         expect(await screen.findByText(/approved by policy/)).toBeInTheDocument();
     });
 
-    it('stepState counts distinct approvals against the required number', () => {
+    it('Given the scenario, When it runs, Then stepState counts distinct approvals against the required number', () => {
         const step = { id: 's', required: 'all', approvers: ['a', 'b'] };
         expect(stepState(step, [{ step_id: 's', decision: 'approve', approver_id: 'a' }])).toBe('pending');
         expect(stepState(step, [{ step_id: 's', decision: 'approve', approver_id: 'a' }, { step_id: 's', decision: 'approve', approver_id: 'b' }])).toBe('approved');

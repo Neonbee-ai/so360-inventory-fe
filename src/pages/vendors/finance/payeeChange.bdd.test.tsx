@@ -62,14 +62,14 @@ describe('reviewState', () => {
 });
 
 describe('helpers', () => {
-  it('diffRows shows only the masked values the API sent', () => {
+  it('Given the scenario, When it runs, Then diffRows shows only the masked values the API sent', () => {
     const rows = diffRows({ account_number_masked: '••••9012' }, { account_number_masked: '••••7777', confirm_account_number: '1234' });
     expect(rows).toEqual([{ key: 'account_number_masked', label: 'Account number', before: '••••9012', after: '••••7777' }]);
   });
-  it('buildPayeeRequest trims the reason and drops an empty date', () => {
+  it('Given the scenario, When it runs, Then buildPayeeRequest trims the reason and drops an empty date', () => {
     expect(buildPayeeRequest('bank_add', null, { bank_name: 'X' }, '  new bank ', '')).toMatchObject({ kind: 'bank_add', reason: 'new bank', effective_date: undefined });
   });
-  it('validateReason needs at least three characters', () => {
+  it('Given the scenario, When it runs, Then validateReason needs at least three characters', () => {
     expect(validateReason(' a ')).not.toBeNull();
     expect(validateReason('abc')).toBeNull();
   });

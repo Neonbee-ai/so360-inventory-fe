@@ -30,7 +30,7 @@ describe('VendorProcurementPanel (Pulse 84fdc5b8)', () => {
     render(<VendorProcurementPanel vendorId="v1" />);
     await waitFor(() => expect(screen.getByText('Could not load the RFQ and PO references.')).toBeTruthy());
   });
-  it('detailText: an uninvited response and a promised date', () => {
+  it('Given the scenario, When it runs, Then detailText: an uninvited response and a promised date', () => {
     expect(detailText({ kind: 'rfq_invitation', detail: {} } as any)).toBe('No response yet');
     expect(detailText({ kind: 'purchase_order', detail: { promised_delivery_date: '2026-12-01' } } as any)).toBe('Promised 2026-12-01');
   });

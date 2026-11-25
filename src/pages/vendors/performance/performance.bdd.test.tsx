@@ -52,7 +52,7 @@ describe('VendorGovernancePage', () => {
     await waitFor(() => expect(screen.getByText('Severe event')).toBeTruthy());
     expect(screen.getByText('Requested')).toBeTruthy();
   });
-  it('widgetItems flattens one level of nesting', () => {
+  it('Given the scenario, When it runs, Then widgetItems flattens one level of nesting', () => {
     expect(widgetItems({ a: 1, b: { c: 2 } })).toEqual([{ label: 'a', value: '1' }, { label: 'b: c', value: '2' }]);
   });
 });
@@ -63,7 +63,7 @@ describe('ScorecardDefinitionsPage', () => {
     render(<ScorecardDefinitionsPage />);
     await waitFor(() => expect(screen.getByText('No scorecard defined')).toBeTruthy());
   });
-  it('weightsTotal sums and the activation rule needs 100', () => {
+  it('Given the scenario, When it runs, Then weightsTotal sums and the activation rule needs 100', () => {
     expect(weightsTotal([{ weight: 40 }, { weight: '60' }])).toBe(100);
     expect(weightsTotal([{ weight: 50 }, { weight: 40 }])).toBe(90);
   });
