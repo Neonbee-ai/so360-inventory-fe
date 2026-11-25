@@ -8,6 +8,10 @@ export interface InspectionResultLine {
     defect_code?: string;
     rejection_reason?: string;
     remarks?: string;
+    /** Vendor 11: who caused the defect, how bad, and what happens to the units. */
+    attribution?: string;
+    defect_severity?: string;
+    disposition?: string;
 }
 
 export interface ReturnLineInput {
@@ -90,6 +94,15 @@ class QualityService {
     /** Recording the result releases the accepted stock. */
     async completeInspection(id: string, dto: { lines: InspectionResultLine[]; remarks?: string }) {
         return this.request(`/quality/${id}/complete`, { method: 'PATCH', body: JSON.stringify(dto) });
+    }
+
+    /** Vendor 11: attribute, grade, disposition and verify a rejected line (bumps the inspection version). */
+    async updateLineDisposition(
+        inspectionId: string,
+        lineId: string,
+        dto: { attribution?: string; defect_severity?: string; disposition?: string; verification_status?: string },
+    ) {
+        return this.request(`/quality/${inspectionId}/lines/${lineId}/disposition`, { method: 'PATCH', body: JSON.stringify(dto) });
     }
 
     async cancelInspection(id: string, reason?: string) {

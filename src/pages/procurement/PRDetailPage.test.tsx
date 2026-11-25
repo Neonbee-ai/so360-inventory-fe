@@ -11,6 +11,7 @@ const mockNavigate = vi.fn();
 vi.mock('../../services/procurementService', () => ({
   procurementService: {
     getPRDetail: (...args: any[]) => mockGetPRDetail(...args),
+    getCoverage: () => Promise.resolve({ rows: [] }),
     approvePR: (...args: any[]) => mockApprovePR(...args),
     getConversionPayload: (...args: any[]) => mockGetConversionPayload(...args),
     closePR: (...args: any[]) => mockClosePR(...args),

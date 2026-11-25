@@ -136,19 +136,19 @@ describe('RFQComparisonPage', () => {
             render(<RFQComparisonPage />);
 
             await waitFor(() => expect(screen.getByText('Expired')).toBeInTheDocument());
-            expect(screen.getByRole('button', { name: /Award/i })).toBeDisabled();
+            expect(screen.getByRole('button', { name: /^Award$/i })).toBeDisabled();
         });
     });
 
     describe('Given the buyer awards a quotation', () => {
         it('When Award is clicked / Then the quotation and justification are submitted and the PO is opened', async () => {
             render(<RFQComparisonPage />);
-            await waitFor(() => screen.getByRole('button', { name: /Award/i }));
+            await waitFor(() => screen.getByRole('button', { name: /^Award$/i }));
 
             fireEvent.change(screen.getByLabelText('Award Justification'), {
                 target: { value: 'Best overall value' },
             });
-            fireEvent.click(screen.getByRole('button', { name: /Award/i }));
+            fireEvent.click(screen.getByRole('button', { name: /^Award$/i }));
 
             await waitFor(() => {
                 expect(mockAwardRFQ).toHaveBeenCalledWith('rfq-1', {
@@ -162,18 +162,18 @@ describe('RFQComparisonPage', () => {
         it('When the award is cancelled at the confirm / Then nothing is submitted', async () => {
             (window.confirm as any).mockReturnValue(false);
             render(<RFQComparisonPage />);
-            await waitFor(() => screen.getByRole('button', { name: /Award/i }));
+            await waitFor(() => screen.getByRole('button', { name: /^Award$/i }));
 
-            fireEvent.click(screen.getByRole('button', { name: /Award/i }));
+            fireEvent.click(screen.getByRole('button', { name: /^Award$/i }));
             expect(mockAwardRFQ).not.toHaveBeenCalled();
         });
 
         it('When the award fails / Then the backend reason is surfaced', async () => {
             mockAwardRFQ.mockRejectedValue(new Error('Quotation expired on 2026-01-01'));
             render(<RFQComparisonPage />);
-            await waitFor(() => screen.getByRole('button', { name: /Award/i }));
+            await waitFor(() => screen.getByRole('button', { name: /^Award$/i }));
 
-            fireEvent.click(screen.getByRole('button', { name: /Award/i }));
+            fireEvent.click(screen.getByRole('button', { name: /^Award$/i }));
             await waitFor(() => {
                 expect(toast.error).toHaveBeenCalledWith('Quotation expired on 2026-01-01');
             });
@@ -189,7 +189,7 @@ describe('RFQComparisonPage', () => {
             render(<RFQComparisonPage />);
 
             await waitFor(() => expect(screen.getByText('Landed Total')).toBeInTheDocument());
-            expect(screen.queryByRole('button', { name: /Award/i })).not.toBeInTheDocument();
+            expect(screen.queryByRole('button', { name: /^Award$/i })).not.toBeInTheDocument();
             expect(screen.queryByLabelText('Award Justification')).not.toBeInTheDocument();
         });
     });

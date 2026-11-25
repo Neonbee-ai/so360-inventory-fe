@@ -7,6 +7,9 @@ import { Plus, X } from 'lucide-react';
 import { useInventoryFormatters } from '../../utils/formatters';
 import { useAuth } from '../../hooks/useAuth';
 import ItemSearchSelector from '../../components/ItemSearchSelector';
+import { useEligibleVendors } from '../../hooks/useEligibleVendors';
+import IneligibleVendorsList from '../../components/procurement/IneligibleVendorsList';
+import { vendorCollabService } from '../../services/vendorCollabService';
 import {
     QuotaBar, QuotaGate, FeatureGate, toast, getErrorMessage,
     ListPageTemplate, Button, DataTable, SearchInput, EmptyState, Alert, Badge, StatusBadge,
@@ -84,6 +87,16 @@ const POListPage = () => {
         terms: '', shipping_address: '', currency: settings?.base_currency || 'USD',
     });
     const [items, setItems] = useState<any[]>([]);
+    // Vendor 08: PO vendors must be eligible to buy this; POs of suspended/restricted vendors wait for a decision.
+    const eligible = useEligibleVendors({ action: 'po.create', item_id: items.find((i: any) => i.item_id)?.item_id || undefined }, showForm);
+    const [reviewOnly, setReviewOnly] = useState(false);
+    const [reviewPoIds, setReviewPoIds] = useState<Set<string>>(new Set());
+    useEffect(() => {
+        if (!reviewOnly) return;
+        vendorCollabService.openCommitmentReviews('purchase_order')
+            .then((rows: any[]) => setReviewPoIds(new Set((Array.isArray(rows) ? rows : []).map((r) => r.source_id))))
+            .catch(() => setReviewPoIds(new Set()));
+    }, [reviewOnly]);
     const [submitting, setSubmitting] = useState(false);
 
     // Wait for the Shell to resolve permissions before firing anything: issuing
@@ -377,6 +390,7 @@ const POListPage = () => {
     const matchedPos = useMemo(() => {
         const scoped = pos.filter((po: any) => {
             if (vendorFilter && po.vendor_id !== vendorFilter && po.vendor?.id !== vendorFilter) return false;
+            if (reviewOnly && !reviewPoIds.has(po.id)) return false;
             if (itemFilter) {
                 const lines = po.po_lines ?? [];
                 if (!lines.some((l: any) => l.item_id === itemFilter)) return false;
@@ -390,7 +404,7 @@ const POListPage = () => {
             [po.po_number, po.vendor?.name, po.status, po.terms, po.shipping_address]
                 .some((v) => typeof v === 'string' && v.toLowerCase().includes(q)),
         );
-    }, [pos, searchTerm, serverTotal, vendorFilter, itemFilter]);
+    }, [pos, searchTerm, serverTotal, vendorFilter, itemFilter, reviewOnly, reviewPoIds]);
     const serverMode = !legacyRef.current && serverTotal > 0;
     const matchCount = serverMode ? serverTotal : matchedPos.length;
     const totalPages = Math.max(1, Math.ceil(matchCount / pageSize));
@@ -474,8 +488,11 @@ const POListPage = () => {
                 loading={loading && pos.length === 0}
                 isEmpty={!loading && !fetchError && !showPrMenu && filteredPos.length === 0}
                 filters={
-                    (vendorFilter || itemFilter) ? (
+                    (
                         <div className="flex flex-wrap items-center gap-2">
+                            <Button variant={reviewOnly ? 'tonal' : 'secondary'} size="sm" aria-pressed={reviewOnly} onClick={() => setReviewOnly(v => !v)}>
+                                Vendor suspended - decision needed
+                            </Button>
                             {vendorFilter && (
                                 <>
                                     <Badge tone="neutral">
@@ -497,7 +514,7 @@ const POListPage = () => {
                                 </>
                             )}
                         </div>
-                    ) : undefined
+                    )
                 }
                 empty={<>{renderNotice(vendorNotice)}<EmptyState title={searchTerm.trim() ? 'No purchase orders match your search.' : 'No purchase orders found.'} /></>}
             >
@@ -594,7 +611,9 @@ const POListPage = () => {
                             required
                             placeholder="Select Vendor"
                             value={formData.vendor_id}
-                            options={vendors.map(v => ({ value: v.id, label: v.name }))}
+                            options={eligible.unavailable
+                                ? vendors.map(v => ({ value: v.id, label: v.name }))
+                                : eligible.pickable.map(v => ({ value: v.vendor_id, label: `${v.vendor_name ?? v.name ?? v.vendor_id.slice(0, 8)}${v.decision === 'conditional' ? ' (conditions apply)' : ''}` }))}
                             onChange={(e: any) => setFormData(prev => ({ ...prev, vendor_id: val(e) }))}
                         />
                         <TextField
@@ -605,6 +624,7 @@ const POListPage = () => {
                             onChange={(e: any) => setFormData(prev => ({ ...prev, po_number: e.target.value }))}
                         />
                     </FieldGrid>
+                    <IneligibleVendorsList blocked={eligible.blocked} />
 
                     <div className="space-y-nb-1">
                         <Select

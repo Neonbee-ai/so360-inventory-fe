@@ -42,6 +42,13 @@ vi.mock('../../services/procurementService', () => ({
   },
 }));
 
+// Vendor 08 eligibility search: report it unavailable so the picker falls back to the plain vendor list.
+vi.mock('../../services/vendorCollabService', () => ({
+  vendorCollabService: {
+    searchEligible: () => Promise.reject(new Error('unavailable')),
+    openCommitmentReviews: () => Promise.resolve([]),
+  },
+}));
 vi.mock('../../services/vendorService', () => ({
   vendorService: { getVendors: (...a: any[]) => h.getVendors(...a) },
 }));
