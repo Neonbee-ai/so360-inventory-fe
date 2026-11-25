@@ -172,3 +172,45 @@ describe('Given the backend rejects the write', () => {
         });
     });
 });
+
+describe('Given a child category that is on but whose parent is off on web', () => {
+    beforeEach(() => {
+        svc.getCategoryChannels.mockResolvedValue(
+            rows().map(r =>
+                r.channel === 'web' ? { ...r, is_visible: false, hidden_by_ancestor: true } : r,
+            ),
+        );
+    });
+
+    describe('When the panel loads', () => {
+        it('Then the web row says it is hidden because the parent is off', async () => {
+            render(<CategoryChannelsPanel categoryId="cat-1" canManage />);
+
+            await waitFor(() => expect(screen.getByText('Hidden because parent is off')).toBeTruthy());
+        });
+
+        it("Then the switch keeps the category's own value (on) and Save stays disabled", async () => {
+            render(<CategoryChannelsPanel categoryId="cat-1" canManage />);
+
+            await waitFor(() => expect(screen.getByLabelText('Web store')).toBeTruthy());
+            expect(screen.getByLabelText('Web store').getAttribute('aria-checked')).toBe('true');
+            expect(
+                (screen.getByText('Save channels').closest('button') as HTMLButtonElement).disabled,
+            ).toBe(true);
+        });
+    });
+});
+
+describe('Given a parent category that is on', () => {
+    describe('When the merchant ticks a channel off', () => {
+        it('Then it warns that subcategories are hidden there too', async () => {
+            render(<CategoryChannelsPanel categoryId="cat-1" canManage />);
+
+            await waitFor(() => expect(screen.getByLabelText('Web store')).toBeTruthy());
+            expect(screen.queryByText(/also hides every subcategory/)).toBeNull();
+            fireEvent.click(screen.getByLabelText('Web store'));
+
+            expect(screen.getByText(/Turning off Web store also hides every subcategory/)).toBeTruthy();
+        });
+    });
+});
