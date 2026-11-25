@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { RecordNotFound, NOT_FOUND_ERROR, isNotFoundError } from '../../components/RecordNotFound';
-import { Trophy, Clock, Star, TrendingDown } from 'lucide-react';
+import { Trophy, Clock, Star, TrendingDown, Scale, ClipboardCheck } from 'lucide-react';
+import RFQEvaluationPanel from './RFQEvaluationPanel';
+import RFQAwardPanel from './RFQAwardPanel';
 import { rfqService } from '../../services/rfqService';
 import { useInventoryFormatters } from '../../utils/formatters';
 import {
@@ -15,6 +17,12 @@ import {
  * weighs — landed total, lead time, terms, warranty, MOQ and the vendor's own
  * performance rating — gets its own row, with the best value in each badged.
  */
+const COMPARISON_TABS: { id: string; label: string; icon: React.ReactNode }[] = [
+    { id: 'comparison', label: 'Comparison', icon: <Scale size={14} /> },
+    { id: 'evaluation', label: 'Evaluation', icon: <ClipboardCheck size={14} /> },
+    { id: 'award', label: 'Award record', icon: <Trophy size={14} /> },
+];
+
 const RFQComparisonPage = () => {
     const [confirm, confirmDialog] = useConfirm();
     const { id } = useParams();
@@ -25,6 +33,7 @@ const RFQComparisonPage = () => {
     const [error, setError] = useState<string | null>(null);
     const [awarding, setAwarding] = useState<string | null>(null);
     const [justification, setJustification] = useState('');
+    const [tab, setTab] = useState<'comparison' | 'evaluation' | 'award'>('comparison');
 
     useEffect(() => { if (id) fetchComparison(); }, [id]);
 
@@ -41,13 +50,21 @@ const RFQComparisonPage = () => {
     };
 
     const handleAward = async (quotationId: string, vendorName: string) => {
-        if (!(await confirm({ title: 'Award RFQ', message: `Award this RFQ to ${vendorName}? A purchase order will be created.`, intent: 'default', confirmLabel: 'Award' }))) return;
+        if (!(await confirm({ title: 'Award RFQ', message: `Award this RFQ to ${vendorName}? A purchase order or award record will be created.`, intent: 'default', confirmLabel: 'Award' }))) return;
         setAwarding(quotationId);
         try {
             const result = await rfqService.awardRFQ(id!, {
                 quotation_id: quotationId,
                 justification: justification || undefined,
             });
+            if (result?.award) {
+                // sourcing_evaluation is on: an award record was created, no PO yet.
+                toast.success(result.award.status === 'pending_approval' ? `Award to ${vendorName} submitted for approval` : `Awarded to ${vendorName} — award recorded`);
+                setAwarding(null);
+                setTab('award');
+                await fetchComparison();
+                return;
+            }
             toast.success(`Awarded to ${vendorName} — PO ${result?.po?.po_number || ''} created`);
             navigate(`/procurement/po/${result.po.id}`);
         } catch (err) {
@@ -176,9 +193,30 @@ const RFQComparisonPage = () => {
             trail={[{ label: 'RFQ', onClick: () => navigate(`/procurement/rfq/${id}`) }]}
             title="Quotation Comparison"
             meta={`${rfq.rfq_number}${rfq.title ? ` — ${rfq.title}` : ''}`}
+            tabs={COMPARISON_TABS}
+            activeTab={tab}
+            onTabChange={(t: string) => setTab(t as typeof tab)}
+            maxVisible={COMPARISON_TABS.length}
         >
             {confirmDialog}
-            <div className="space-y-6">
+            {tab === 'evaluation' && (
+                <RFQEvaluationPanel
+                    rfqId={rfq.id}
+                    quoteLabels={Object.fromEntries(quotations.map((q: any) => [q.quotation_id, q.vendor_name || q.vendor_id.slice(0, 8)]))}
+                    canAct={!isAwarded}
+                    onLocked={fetchComparison}
+                />
+            )}
+            {tab === 'award' && (
+                <RFQAwardPanel
+                    rfqId={rfq.id}
+                    rfqStatus={rfq.status}
+                    canAct={!isAwarded}
+                    quoteLabels={Object.fromEntries(quotations.map((q: any) => [q.quotation_id, q.vendor_name || q.vendor_id.slice(0, 8)]))}
+                    vendorLabels={Object.fromEntries(quotations.map((q: any) => [q.vendor_id, q.vendor_name || q.vendor_id.slice(0, 8)]))}
+                />
+            )}
+            {tab === 'comparison' && <div className="space-y-6">
                 <Grid columns="auto" gap="md">
                     <GridItem span={3}><KpiCard label="Vendors Invited" value={summary.invited_count} /></GridItem>
                     <GridItem span={3}><KpiCard label="Quotes Received" value={summary.quotation_count} /></GridItem>
@@ -205,7 +243,7 @@ const RFQComparisonPage = () => {
                         />
                     </SectionCard>
                 )}
-            </div>
+            </div>}
         </DetailPageTemplate>
     );
 };

@@ -10,6 +10,17 @@ import {
 } from '@so360/design-system';
 import { poToDocumentData } from '../../utils/poToDocumentData';
 import ProcurementTrace from '../../components/ProcurementTrace';
+import { FileText, ListChecks, Split, ShieldCheck, History, Truck } from 'lucide-react';
+import { poApprovalService, PO_APPROVAL_FLAG, PO_AMEND_FLAG } from '../../services/poApprovalService';
+import { LINE_ACK_FLAG } from '../../services/poScheduleService';
+import { CLOSEOUT_FLAG } from '../../services/matchService';
+import POCloseoutPanel from './POCloseoutPanel';
+import POAcknowledgementPanel from './POAcknowledgementPanel';
+import POVendorLinkPanel from './POVendorLinkPanel';
+import { VENDOR_COLLAB_FLAG } from '../../services/vendorCollabService';
+import POApprovalPanel from './POApprovalPanel';
+import POVersionsPanel from './POVersionsPanel';
+import { POSchedulesPanel, POAllocationsPanel } from './POScheduleAllocationPanels';
 
 interface POLine {
     id: string;
@@ -57,7 +68,18 @@ const ACK_OPTIONS = [
     { value: 'rejected', label: 'Rejected', tone: 'danger' as Tone },
 ] as const;
 
+const PO_TABS = [
+    { id: 'overview', label: 'Overview', icon: <FileText size={14} /> },
+    { id: 'schedules', label: 'Lines & Schedules', icon: <ListChecks size={14} /> },
+    { id: 'allocations', label: 'Allocations', icon: <Split size={14} /> },
+    { id: 'approvals', label: 'Approvals', icon: <ShieldCheck size={14} /> },
+    { id: 'versions', label: 'Versions', icon: <History size={14} /> },
+];
+const CLOSEOUT_TAB = { id: 'closeout', label: 'Closeout', icon: <ListChecks size={14} /> };
+const ACK_TAB = { id: 'ack', label: 'Schedules & Acknowledgement', icon: <Truck size={14} /> };
+
 const STATUS_TONES: Record<string, Tone> = {
+    pending_approval: 'warning', approved: 'info',
     sent: 'primary', acknowledged: 'info', received: 'success', partially_received: 'warning', cancelled: 'danger',
 };
 
@@ -73,6 +95,14 @@ const PODetailPage = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [statusAction, setStatusAction] = useState<string | null>(null);
+    const [tab, setTab] = useState('overview');
+    const flagOn = (flag: string) => { try { return shell?.isFeatureEnabled?.(flag) === true; } catch { return false; } };
+    const approvalOn = flagOn(PO_APPROVAL_FLAG);
+    const amendOn = flagOn(PO_AMEND_FLAG);
+    const ackOn = flagOn(LINE_ACK_FLAG);
+    const closeoutOn = flagOn(CLOSEOUT_FLAG);
+    const tabsOn = approvalOn || ackOn || closeoutOn;
+    const poTabs = [PO_TABS[0], ...(approvalOn ? PO_TABS.slice(1) : []), ...(ackOn ? [ACK_TAB] : []), ...(closeoutOn ? [CLOSEOUT_TAB] : [])];
     const [showAckForm, setShowAckForm] = useState(false);
     const [ackSaving, setAckSaving] = useState(false);
     const [ackForm, setAckForm] = useState({
@@ -152,6 +182,26 @@ const PODetailPage = () => {
         }
     };
 
+    const handleApprovalAction = async (action: 'submit' | 'issue') => {
+        if (!po) return;
+        setStatusAction(action);
+        try {
+            if (action === 'submit') {
+                const r = await poApprovalService.submit(po.id);
+                toast.success(r?.status === 'approved' ? 'No approval rule applied; PO approved' : 'Submitted for approval');
+                if (r?.status === 'pending_approval') setTab('approvals');
+            } else {
+                await poApprovalService.issue(po.id);
+                toast.success('PO issued to the supplier');
+            }
+            await fetchPO();
+        } catch (err: any) {
+            toast.error(getErrorMessage(err, action === 'submit' ? 'Could not submit the PO' : 'Could not issue the PO'));
+        } finally {
+            setStatusAction(null);
+        }
+    };
+
     const handleAcknowledge = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!po) return;
@@ -212,14 +262,20 @@ const PODetailPage = () => {
 
     const closeLabel = (key: string) => (statusAction === key ? 'Working...' : null);
     const closeBtn = (variant: 'primary' | 'secondary') => (
-        <Button key="close" variant={variant} onClick={() => handleStatusChange('closed')} disabled={busy}>
+        <Button key="close" variant={variant} onClick={() => (closeoutOn ? setTab('closeout') : handleStatusChange('closed'))} disabled={busy}>
             {closeLabel('closed') ?? 'Close PO'}
         </Button>
     );
 
     let primaryAction: React.ReactNode = null;
     const secondaryActions: React.ReactNode[] = [];
-    if (po.status === 'draft') {
+    if (approvalOn && po.status === 'draft') {
+        primaryAction = <Button onClick={() => handleApprovalAction('submit')} disabled={busy}>{closeLabel('submit') ?? 'Submit for approval'}</Button>;
+    } else if (approvalOn && po.status === 'pending_approval') {
+        primaryAction = <Button onClick={() => setTab('approvals')}>Review approval</Button>;
+    } else if (approvalOn && po.status === 'approved') {
+        primaryAction = <Button onClick={() => handleApprovalAction('issue')} disabled={busy}>{closeLabel('issue') ?? 'Issue PO'}</Button>;
+    } else if (po.status === 'draft') {
         primaryAction = (
             <Button onClick={() => handleStatusChange('sent')} disabled={busy}>{closeLabel('sent') ?? 'Send PO'}</Button>
         );
@@ -228,7 +284,7 @@ const PODetailPage = () => {
     } else if (po.status === 'received') {
         primaryAction = closeBtn('primary');
     }
-    const overflowActions = (po.status === 'draft' || po.status === 'sent')
+    const overflowActions = (po.status === 'draft' || po.status === 'sent' || (approvalOn && ['pending_approval', 'approved'].includes(po.status)))
         ? [{
             label: closeLabel('cancelled') ?? 'Cancel PO',
             danger: true,
@@ -238,6 +294,9 @@ const PODetailPage = () => {
         : undefined;
     if ((po.status === 'sent' && receiveProgress === 100) || po.status === 'partially_received') {
         secondaryActions.push(closeBtn('secondary'));
+    }
+    if (approvalOn && amendOn && ['approved', 'sent', 'acknowledged', 'partially_received'].includes(po.status)) {
+        secondaryActions.push(<Button key="amend" variant="secondary" onClick={() => setTab('versions')}>Amend PO</Button>);
     }
     secondaryActions.push(<Button key="print" variant="secondary" onClick={handlePrint}>Print PO</Button>);
 
@@ -422,7 +481,30 @@ const PODetailPage = () => {
                 secondaryActions={secondaryActions}
                 overflowActions={overflowActions}
                 sidePanel={sidePanel}
+                {...(tabsOn ? { tabs: poTabs, activeTab: tab, onTabChange: (t: string) => setTab(t), maxVisible: poTabs.length } : {})}
             >
+                {approvalOn && tab === 'schedules' && (
+                    <div className="space-y-6">
+                        {flagOn(VENDOR_COLLAB_FLAG) && <POVendorLinkPanel poId={po.id} status={po.status} />}
+                    <SectionCard title="Order Lines">
+                            <DataTable data-testid="po-lines-table" columns={columns} rows={po.po_lines || []} rowKey={(line: POLine) => line.id} />
+                        </SectionCard>
+                        <POSchedulesPanel poId={po.id} status={po.status} lines={po.po_lines || []} />
+                    </div>
+                )}
+                {approvalOn && tab === 'allocations' && <POAllocationsPanel poId={po.id} status={po.status} lines={po.po_lines || []} />}
+                {approvalOn && tab === 'approvals' && <POApprovalPanel poId={po.id} status={po.status} onChanged={fetchPO} />}
+                {approvalOn && tab === 'versions' && (
+                    <POVersionsPanel
+                        poId={po.id}
+                        lines={po.po_lines || []}
+                        canAmend={amendOn && ['approved', 'sent', 'acknowledged', 'partially_received'].includes(po.status)}
+                        onChanged={fetchPO}
+                    />
+                )}
+                {closeoutOn && tab === 'closeout' && <POCloseoutPanel poId={po.id} status={po.status} onChanged={fetchPO} />}
+                {ackOn && tab === 'ack' && <POAcknowledgementPanel poId={po.id} poVersion={(po as any).version ?? 1} status={po.status} lines={po.po_lines || []} onChanged={fetchPO} />}
+                {(!tabsOn || tab === 'overview') && (
                 <div className="space-y-6">
                     <SectionCard title="Overview">
                         <DescriptionList items={overviewItems} />
@@ -443,6 +525,7 @@ const PODetailPage = () => {
                         ]} />
                     </SectionCard>
                 </div>
+                )}
             </DetailPageTemplate>
         </>
     );

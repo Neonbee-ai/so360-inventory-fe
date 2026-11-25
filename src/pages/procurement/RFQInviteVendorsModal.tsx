@@ -1,15 +1,18 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, Badge, Button, Checkbox, EmptyState, Modal, SearchInput, Skeleton } from '@so360/design-system';
-import { vendorService } from '../../services/vendorService';
+import { rfqService } from '../../services/rfqService';
 
 export interface InviteResult {
     vendor_id: string;
     status: 'invited' | 'already_invited' | 'ineligible';
     reason?: string;
+    reason_codes?: string[];
 }
 
 interface Props {
     open: boolean;
+    /** The RFQ the vendors are chosen for; eligibility is evaluated against its lines. */
+    rfqId: string;
     onClose: () => void;
     /** Vendors already attached to the RFQ — never selectable again. */
     invitedVendorIds: string[];
@@ -18,15 +21,12 @@ interface Props {
     busy?: boolean;
 }
 
-/** Vendor Master onboarding 'draft' is not transactable (same rule as purchase orders). */
-const isEligible = (v: any) => (v.vendor_profiles?.[0]?.onboarding_status ?? 'active') !== 'draft';
-
 /**
- * "Send to New Vendors": pick vendors from the Vendor Master who have not yet
- * been invited, review the selection, then send. Eligibility is only a UI
- * convenience here — the API re-checks every vendor on submit.
+ * "Send to New Vendors": pick vendors the shared eligibility service allows
+ * for this RFQ (eligible or conditional) who have not yet been invited,
+ * review the selection, then send. The API re-checks every vendor on submit.
  */
-const RFQInviteVendorsModal: React.FC<Props> = ({ open, onClose, invitedVendorIds, onInvite, busy }) => {
+const RFQInviteVendorsModal: React.FC<Props> = ({ open, rfqId, onClose, invitedVendorIds, onInvite, busy }) => {
     const [vendors, setVendors] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [loadError, setLoadError] = useState<string | null>(null);
@@ -37,8 +37,8 @@ const RFQInviteVendorsModal: React.FC<Props> = ({ open, onClose, invitedVendorId
     const load = () => {
         setLoading(true);
         setLoadError(null);
-        vendorService.getVendors()
-            .then((v: any) => setVendors(Array.isArray(v) ? v : (v?.data ?? [])))
+        rfqService.getEligibleVendors(rfqId, { limit: 100 })
+            .then((v: any) => setVendors((Array.isArray(v) ? v : (v?.items ?? [])).map((i: any) => ({ ...i, id: i.vendor_id }))))
             .catch((e: any) => setLoadError(e?.message || 'Could not load vendors'))
             .finally(() => setLoading(false));
     };
@@ -55,8 +55,8 @@ const RFQInviteVendorsModal: React.FC<Props> = ({ open, onClose, invitedVendorId
         const invited = new Set(invitedVendorIds);
         const q = search.trim().toLowerCase();
         return vendors
-            .filter(v => !invited.has(v.id) && isEligible(v))
-            .filter(v => !q || [v.name, v.email, v.vendor_profiles?.[0]?.classification]
+            .filter(v => !invited.has(v.id))
+            .filter(v => !q || [v.name, v.vendor_code]
                 .some((f: string | undefined) => f?.toLowerCase().includes(q)));
     }, [vendors, invitedVendorIds, search]);
 
@@ -107,7 +107,7 @@ const RFQInviteVendorsModal: React.FC<Props> = ({ open, onClose, invitedVendorId
                         {chosen.map(v => (
                             <li key={v.id} className="flex flex-wrap items-center justify-between gap-nb-2 rounded-lg border border-line p-nb-3">
                                 <span className="min-w-0 break-words text-fg">{v.name}</span>
-                                <span className="text-nb-caption text-fg-subtle">{v.email || 'No email - invitation recorded, nothing emailed'}</span>
+                                <span className="text-nb-caption text-fg-subtle">{v.decision === 'conditional' ? `Conditional: ${(v.conditions || []).map((c: any) => c.message).join('; ') || 'review conditions'}` : v.explanation}</span>
                             </li>
                         ))}
                     </ul>
@@ -117,7 +117,7 @@ const RFQInviteVendorsModal: React.FC<Props> = ({ open, onClose, invitedVendorId
                 <div className="space-y-nb-3">
                     <SearchInput
                         name="invite-vendor-search"
-                        placeholder="Search vendors by name, email or classification"
+                        placeholder="Search vendors by name or code"
                         value={search}
                         onChange={(e: any) => setSearch(e?.target ? e.target.value : e)}
                     />
@@ -127,8 +127,8 @@ const RFQInviteVendorsModal: React.FC<Props> = ({ open, onClose, invitedVendorId
                     </div>
                     {available.length === 0 ? (
                         <EmptyState
-                            title={vendors.length === 0 ? 'No vendors in the Vendor Master' : search ? 'No vendors match your search' : 'No eligible vendors left to invite'}
-                            description="Vendors already on this RFQ and vendors still in onboarding are not listed."
+                            title={vendors.length === 0 ? 'No eligible vendors found for this RFQ' : search ? 'No vendors match your search' : 'No eligible vendors left to invite'}
+                            description="Only vendors the eligibility service allows for this RFQ are listed; vendors already on the RFQ are hidden."
                         />
                     ) : (
                         <ul className="max-h-80 space-y-nb-2 overflow-y-auto">
@@ -137,7 +137,7 @@ const RFQInviteVendorsModal: React.FC<Props> = ({ open, onClose, invitedVendorId
                                     <Checkbox
                                         name={`invite-${v.id}`}
                                         label={v.name}
-                                        description={`${v.email || 'No email on file'} · ${v.vendor_profiles?.[0]?.classification || 'supplier'}`}
+                                        description={v.decision === 'conditional' ? `Conditional - ${(v.conditions || []).map((c: any) => c.message).join('; ') || 'review conditions'}` : (v.vendor_code || 'Eligible')}
                                         checked={selected.includes(v.id)}
                                         onChange={() => toggle(v.id)}
                                     />
