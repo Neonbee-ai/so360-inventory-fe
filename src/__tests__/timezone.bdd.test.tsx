@@ -43,6 +43,7 @@ vi.mock('../services/procurementService', () => ({
   procurementService: {
     getPRs: vi.fn(),
     getPRDetail: vi.fn(),
+    getCoverage: () => Promise.resolve({ rows: [] }),
     getGRNDetail: vi.fn(),
     approvePR: vi.fn(),
     createPR: vi.fn(),

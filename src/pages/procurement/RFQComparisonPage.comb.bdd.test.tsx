@@ -58,7 +58,7 @@ describe('RFQComparisonPage (Comb)', () => {
   it('Given a quotation, When Award is clicked, Then awardRFQ is called and the PO opens', async () => {
     mockAward.mockResolvedValue({ po: { id: 'po-1', po_number: 'PO-1' } });
     render(<RFQComparisonPage />);
-    fireEvent.click(await screen.findByRole('button', { name: /Award/ }));
+    fireEvent.click(await screen.findByRole('button', { name: /^Award$/ }));
     await waitFor(() => expect(mockAward).toHaveBeenCalledWith('rfq-1', { quotation_id: 'q-1', justification: undefined }));
     expect(mockNavigate).toHaveBeenCalledWith('/procurement/po/po-1');
   });
@@ -67,13 +67,23 @@ describe('RFQComparisonPage (Comb)', () => {
     mockGetComparison.mockResolvedValue(data({ rfq: { id: 'rfq-1', rfq_number: 'RFQ-1', status: 'awarded' } }));
     render(<RFQComparisonPage />);
     await screen.findByText('Landed Total');
-    expect(screen.queryByRole('button', { name: /Award/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: /^Award$/ })).toBeNull();
     expect(screen.queryByLabelText('Award Justification')).toBeNull();
   });
 
   it('Given an expired quotation, When it loads, Then Award is disabled', async () => {
     mockGetComparison.mockResolvedValue(data({ quotations: [quote({ is_expired: true })] }));
     render(<RFQComparisonPage />);
-    expect((await screen.findByRole('button', { name: /Award/ }) as HTMLButtonElement).disabled).toBe(true);
+    expect((await screen.findByRole('button', { name: /^Award$/ }) as HTMLButtonElement).disabled).toBe(true);
+  });
+});
+
+describe('RFQComparisonPage with sourcing_evaluation on (Pulse 84845b42)', () => {
+  it('Given the legacy award returns an award record, When Award is clicked, Then no PO is opened and the Award record tab shows', async () => {
+    mockAward.mockResolvedValue({ rfq: {}, award: { id: 'aw-1', status: 'approved' } });
+    render(<RFQComparisonPage />);
+    fireEvent.click(await screen.findByRole('button', { name: /^Award$/ }));
+    await waitFor(() => expect(mockAward).toHaveBeenCalled());
+    expect(mockNavigate).not.toHaveBeenCalledWith(expect.stringContaining('/procurement/po/'));
   });
 });

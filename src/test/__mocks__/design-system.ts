@@ -161,7 +161,7 @@ const slot = (name: string, node: any) => (node ? React.createElement('div', { '
 export const ListPageTemplate = (p: any) =>
   React.createElement('div', { 'data-template': 'list' },
     React.createElement('header', { 'data-slot': 'header' },
-      React.createElement(Trail, p), React.createElement('h1', null, p.title), p.count != null ? React.createElement('span', { 'data-slot': 'count' }, p.count) : null,
+      React.createElement(Trail, p), React.createElement('h1', null, p.title), p.description ? React.createElement('p', { 'data-slot': 'description' }, p.description) : null, p.count != null ? React.createElement('span', { 'data-slot': 'count' }, p.count) : null,
       slot('primary', p.primaryAction), slot('secondary', p.headerSecondaryActions), slot('overflow', Array.isArray(p.overflowActions) ? p.overflowActions.map((a: any) => React.createElement('button', { key: a.label, onClick: a.onSelect }, a.label)) : p.overflowActions)),
     slot('kpis', p.kpis),
     React.createElement('div', { 'data-slot': 'toolbar' }, p.views ? React.createElement('div', { 'data-slot': 'views' }, p.views) : null, p.search, p.filterConfig ? React.createElement(ListFilters, p.filterConfig) : null, p.filters, p.toolbar, p.toolbarEnd),
@@ -246,7 +246,7 @@ export const KpiCard = ({ label, value, hint, onClick, 'data-testid': testId }: 
 export const KpiGrid = ({ children }: any) => React.createElement('div', null, children);
 export const CountUp = ({ value }: any) => React.createElement(React.Fragment, null, String(value));
 export const useCountUp = (target: number) => target;
-export const StatusBadge = ({ status, 'data-testid': testId }: any) => React.createElement('span', { 'data-testid': testId }, status);
+export const StatusBadge = ({ status, label, 'data-testid': testId }: any) => React.createElement('span', { 'data-testid': testId }, label ?? status);
 export const Alert = ({ title, children, variant, action, 'data-testid': testId }: any) =>
     React.createElement('div', { role: 'alert', 'data-variant': variant, 'data-testid': testId }, title ? React.createElement('p', null, title) : null, children,
         action ? React.createElement('button', { type: 'button', onClick: action.onClick }, action.label) : null);
@@ -279,8 +279,10 @@ export const DatePicker = ({ label, hint: _h, error, size: _sz, name, onChange, 
 export const DateInput = DatePicker;
 export const TimePicker = ({ label, hint: _h, error, size: _sz, name, onChange, format: _f, step: _st, minTime: _mi, maxTime: _ma, ...rest }: any) =>
   fieldWrap(name, label, error, React.createElement('input', { id: rest.id ?? (label ? `f-${name}` : undefined), name, type: 'time', onChange: (e: any) => onChange?.(e.target.value), ...rest }));
-export const Checkbox = ({ label, description: _d, indeterminate: _i, name, ...rest }: any) =>
-  React.createElement('label', null, React.createElement('input', { type: 'checkbox', name, ...rest }), label);
+export const Checkbox = ({ label, description, indeterminate: _i, hideLabel: _h, name, ...rest }: any) =>
+  React.createElement(React.Fragment, null,
+    React.createElement('label', null, React.createElement('input', { type: 'checkbox', name, ...rest }), label),
+    description ? React.createElement('span', { 'data-slot': 'description' }, description) : null);
 export const Switch = ({ label, name, checked, onCheckedChange, disabled, 'data-testid': testId, ...rest }: any) =>
   React.createElement('button', { type: 'button', role: 'switch', name, 'aria-checked': !!checked, 'aria-label': label, disabled, 'data-testid': testId, onClick: () => onCheckedChange?.(!checked), ...rest });
 export const RadioGroup = ({ name, label, options = [], value, onChange, disabled, 'data-testid': testId }: any) =>
@@ -490,3 +492,40 @@ export const FilePickerTrigger = ({ accept, name = 'file', onFiles, children, 'd
       onChange: (e: any) => { const files = Array.from(e.target.files ?? []); if (files.length) onFiles(files); },
     }));
 };
+
+// ---- Wizard / Timeline / PeopleSelector (mirror the real DS behaviour the pages rely on) ----
+export const WizardPageTemplate = ({ title, description, steps = [], onFinish, onCancel, cancelLabel = 'Cancel', backLabel = 'Back', nextLabel = 'Next', finishLabel = 'Finish', finishing = false, current, initialStep = 0, onStepChange }: any) => {
+  const [inner, setInner] = React.useState(initialStep);
+  const [error, setError] = React.useState<string | null>(null);
+  const last = Math.max(steps.length - 1, 0);
+  const index = Math.min(Math.max(current ?? inner, 0), last);
+  const step = steps[index];
+  const go = (i: number) => { setError(null); if (current === undefined) setInner(i); onStepChange?.(i); };
+  const passes = () => {
+    const r = step?.validate ? step.validate() : true;
+    if (r === true) { setError(null); return true; }
+    setError(typeof r === 'string' ? r : null);
+    return false;
+  };
+  return React.createElement('section', { 'data-testid': 'wizard-page-template' },
+    React.createElement('h1', null, title),
+    description ? React.createElement('p', null, description) : null,
+    step ? React.createElement('section', { 'aria-label': step.label, 'data-step-id': step.id },
+      step.content,
+      error ? React.createElement('p', { role: 'alert', 'data-testid': 'wizard-error' }, error) : null) : null,
+    React.createElement('footer', null,
+      index > 0 ? React.createElement('button', { onClick: () => go(index - 1) }, backLabel) : null,
+      onCancel ? React.createElement('button', { onClick: onCancel }, cancelLabel) : null,
+      index === last
+        ? React.createElement('button', { disabled: finishing, onClick: () => { if (passes()) onFinish?.(); } }, finishLabel)
+        : React.createElement('button', { onClick: () => { if (passes()) go(index + 1); } }, nextLabel)));
+};
+export const Timeline = ({ items = [], name }: any) =>
+  React.createElement('ol', { 'data-comb-id': name },
+    items.map((i: any) => React.createElement('li', { key: i.id },
+      i.actor ? React.createElement('span', null, i.actor) : null, ' ',
+      React.createElement('span', null, i.title),
+      i.body ? React.createElement('p', null, i.body) : null,
+      i.time ? React.createElement('time', { dateTime: i.dateTime }, i.time) : null)));
+export const PeopleSelector = ({ name, value, onChange, placeholder, disabled }: any) =>
+  React.createElement('input', { 'data-comb-id': name, name, placeholder, disabled, value: Array.isArray(value) ? value.join(',') : (value ?? ''), onChange: (e: any) => onChange?.(e.target.value || null) });

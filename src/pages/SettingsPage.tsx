@@ -166,6 +166,24 @@ const SettingsPage = () => {
                 {error && <Alert variant="error">{error}</Alert>}
                 {success && <Alert variant="success">Settings updated successfully</Alert>}
 
+                {can('items.update') && (
+                    <SettingsCard title="Demand coverage" description="Where stock is netted against demand, default lead time and the consolidation window">
+                        <Button variant="secondary" size="sm" onClick={() => navigate('/inventory/settings/coverage')}>Open coverage settings</Button>
+                    </SettingsCard>
+                )}
+
+                {can('purchase_orders.approve') && (
+                    <SettingsCard title="Purchase order approvals" description="Approval rules, separation of duties, budget control, delegations and amendment tolerances">
+                        <Button variant="secondary" size="sm" onClick={() => navigate('/inventory/settings/approvals')}>Open approval settings</Button>
+                    </SettingsCard>
+                )}
+
+                {can('items.update') && (
+                    <SettingsCard title="Quote evaluation" description="Scoring weights, landed-cost policy, exchange-rate date and award approval threshold">
+                        <Button variant="secondary" size="sm" onClick={() => navigate('/inventory/settings/evaluation')}>Open evaluation settings</Button>
+                    </SettingsCard>
+                )}
+
                 <SettingsCard title="Units of Measure (UoM)" description="Define standard units for stocks and services (e.g., Pcs, KG, Hrs)">
                     <div className="flex flex-wrap gap-nb-2 items-center">
                         {settings?.uoms.map((uom: UomItem) => (

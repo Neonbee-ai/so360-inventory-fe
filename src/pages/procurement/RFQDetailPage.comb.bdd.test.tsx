@@ -89,7 +89,10 @@ describe('RFQDetailPage (Comb)', () => {
     render(<RFQDetailPage />);
     fireEvent.click(await screen.findByText('Record Quotation'));
     expect(await screen.findByRole('dialog')).toBeTruthy();
-    fireEvent.change(screen.getByLabelText('Vendor'), { target: { value: 'v1' } });
+    fireEvent.change(screen.getByLabelText(/Vendor \(invited\)/), { target: { value: 'v1' } });
+    fireEvent.change(screen.getByLabelText(/Payment Terms/), { target: { value: 'Net 30 days' } });
+    fireEvent.change(screen.getByLabelText(/Delivery Terms/), { target: { value: 'Delivered to site' } });
+    fireEvent.change(screen.getByLabelText(/Incoterms/), { target: { value: 'DAP' } });
     fireEvent.change(screen.getByLabelText('Unit price for Cement bag'), { target: { value: '5' } });
     fireEvent.submit(document.querySelector('form') as HTMLFormElement);
     await waitFor(() => expect(mockRecord).toHaveBeenCalled());

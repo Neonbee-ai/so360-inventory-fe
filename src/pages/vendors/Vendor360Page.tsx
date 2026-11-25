@@ -1,6 +1,19 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Button, Card, EmptyState } from '@so360/design-system';
+import { Button, Card, EmptyState, Tabs } from '@so360/design-system';
+import VendorLifecyclePanel from './lifecycle/VendorLifecyclePanel';
+import VendorQualificationsPanel from './lifecycle/VendorQualificationsPanel';
+import VendorRiskPanel from './lifecycle/VendorRiskPanel';
+import VendorEvidencePanel from './evidence/VendorEvidencePanel';
+import VendorQualityPanel from './quality/VendorQualityPanel';
+import VendorCorrectiveActionsPanel from './quality/VendorCorrectiveActionsPanel';
+import VendorOutcomesPanel from './outcomes/VendorOutcomesPanel';
+import VendorFinancePanel from './finance/VendorFinancePanel';
+import VendorProcurementPanel from './VendorProcurementPanel';
+import VendorPerformancePanel from './performance/VendorPerformancePanel';
+import VendorEligibilityPanel from './eligibility/VendorEligibilityPanel';
+import VendorPortalPanel from './portal/VendorPortalPanel';
+import { PORTAL_FLAG, PORTAL_INVITE_FLAG, PORTAL_PERMISSION } from '../../utils/vendorPortal';
 import { useShellBridge } from '@so360/shell-context';
 import { vendorService } from '../../services/vendorService';
 
@@ -27,6 +40,28 @@ export default function Vendor360Page() {
   const shell = useShellBridge();
   const [data, setData] = useState<Payload | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [tab, setTab] = useState('overview');
+  // Vendor 10: receipts/returns tab only when the plan has the outcome facts (fail-open while flags resolve).
+  // Vendor 16: the evidence tab rides the Vendor Master flag (the documents feature it extends).
+  const evidenceOn = ((shell as any)?.getFeatureState?.('submodule:inventory:vendor_master') ?? 'enabled') === 'enabled';
+  const outcomesOn = ((shell as any)?.getFeatureState?.('submodule:inventory:vendor_outcome_facts') ?? 'enabled') === 'enabled';
+
+  // Vendor 11: supplier quality + corrective actions (fail-open while flags resolve).
+  const qualityOn = ((shell as any)?.getFeatureState?.('submodule:inventory:supplier_quality') ?? 'enabled') === 'enabled';
+  const vcaOn = ((shell as any)?.getFeatureState?.('submodule:inventory:vendor_corrective_actions') ?? 'enabled') === 'enabled';
+
+  // Vendor 15: Finance tab (account state, sync, bills linked to Accounting). Growth tier flag; fail-open while flags resolve.
+  const financeOn = ((shell as any)?.getFeatureState?.('submodule:inventory:vendor_finance_summary') ?? 'enabled') === 'enabled';
+
+  // Vendor 08: RFQ & PO references tab (reads Procurement; same flag as the Vendor Master it extends).
+  const procurementOn = evidenceOn;
+
+  // Vendor 18: Performance tab (scorecards flag; fail-open while flags resolve).
+  const scorecardsOn = ((shell as any)?.getFeatureState?.('submodule:inventory:vendor_scorecards') ?? 'enabled') === 'enabled';
+
+  // Vendor 17: Portal & contacts tab (scale-tier flag; fail-open while flags resolve; needs vendors.portal.manage).
+  const portalOn = ((shell as any)?.getFeatureState?.(PORTAL_FLAG) ?? 'enabled') === 'enabled';
+  const portalInviteOn = ((shell as any)?.getFeatureState?.(PORTAL_INVITE_FLAG) ?? 'enabled') === 'enabled';
 
   const can = useMemo(
     () => (perms?: string[]) => {
@@ -60,6 +95,62 @@ export default function Vendor360Page() {
         <Button variant="ghost" onClick={() => navigate(`/inventory/vendors/${id}`)}>Back to vendor</Button>
       </div>
 
+      <Tabs
+        name="vendor-360-tabs"
+        value={tab}
+        onChange={setTab}
+        items={[
+          { id: 'overview', label: 'Overview' },
+          { id: 'qualifications', label: 'Categories & Capabilities' },
+          { id: 'risk', label: 'Risk & Due Diligence' },
+          { id: 'eligibility', label: 'Eligibility' },
+          ...(evidenceOn ? [{ id: 'documents', label: 'Documents & Compliance' }] : []),
+          ...(outcomesOn ? [{ id: 'outcomes', label: 'Receipts & Returns' }] : []),
+          ...(qualityOn ? [{ id: 'quality', label: 'Quality' }] : []),
+          ...(vcaOn ? [{ id: 'corrective', label: 'Corrective actions' }] : []),
+          ...(scorecardsOn ? [{ id: 'performance', label: 'Performance' }] : []),
+          ...(procurementOn ? [{ id: 'procurement', label: 'RFQs & POs' }] : []),
+          ...(financeOn ? [{ id: 'finance', label: 'Finance' }] : []),
+          ...(portalOn && can([PORTAL_PERMISSION]) ? [{ id: 'portal', label: 'Portal & Contacts' }] : []),
+        ]}
+      >
+        {(active) => {
+          if (active === 'portal' && portalOn) {
+            return <VendorPortalPanel vendorId={id} canManage={can([PORTAL_PERMISSION])} canInvite={portalInviteOn && can([PORTAL_PERMISSION])} />;
+          }
+          if (active === 'qualifications') {
+            return <VendorQualificationsPanel vendorId={id} canEdit={can(['suppliers.update'])} />;
+          }
+          if (active === 'documents' && evidenceOn) {
+            return <VendorEvidencePanel vendorId={id} canUpdate={can(['suppliers.update'])} canReview={can(['vendors.compliance.review'])} />;
+          }
+          if (active === 'outcomes' && outcomesOn) {
+            return <VendorOutcomesPanel vendorId={id} canDispute={((shell as any)?.getFeatureState?.('action:inventory:vendor_fact_dispute') ?? 'disabled') === 'enabled' && can(['suppliers.update'])} />;
+          }
+          if (active === 'quality' && qualityOn) {
+            return <VendorQualityPanel vendorId={id} />;
+          }
+          if (active === 'corrective' && vcaOn) {
+            return <VendorCorrectiveActionsPanel vendorId={id} />;
+          }
+          if (active === 'performance' && scorecardsOn) {
+            return <VendorPerformancePanel vendorId={id} />;
+          }
+          if (active === 'procurement' && procurementOn) {
+            return <VendorProcurementPanel vendorId={id} />;
+          }
+          if (active === 'finance' && financeOn) {
+            return <VendorFinancePanel vendorId={id} canSetup={can(['vendor_finance.approve', 'vendor_finance.verify'])} />;
+          }
+          if (active === 'eligibility') {
+            return <VendorEligibilityPanel vendorId={id} />;
+          }
+          if (active === 'risk') {
+            return <VendorRiskPanel vendorId={id} canRestrict={can(['vendors.restrict'])} />;
+          }
+          return (
+            <div className="flex flex-col gap-nb-3">
+              <VendorLifecyclePanel vendorId={id} canManage={can(['vendors.lifecycle.manage'])} />
       <Card title="Procurement summary">
         <div className="grid grid-cols-2 gap-nb-3 md:grid-cols-4">
           <div>
@@ -137,6 +228,10 @@ export default function Vendor360Page() {
           </ul>
         )}
       </Card>
+            </div>
+          );
+        }}
+      </Tabs>
     </div>
   );
 }
