@@ -518,10 +518,9 @@ const POListPage = () => {
                         </div>
                     )
                 }
-                empty={<>{renderNotice(vendorNotice)}<EmptyState title={searchTerm.trim() ? 'No purchase orders match your search.' : 'No purchase orders found.'} /></>}
+                notice={renderNotice(fetchError ?? vendorNotice) || undefined}
+                empty={<EmptyState title={searchTerm.trim() ? 'No purchase orders match your search.' : 'No purchase orders found.'} />}
             >
-                {renderNotice(fetchError)}
-                {renderNotice(vendorNotice)}
                 {showPrMenu && approvedPrs.length > 0 && (
                     <SectionCard title="Approved Requisitions">
                         <ul className="space-y-nb-2">

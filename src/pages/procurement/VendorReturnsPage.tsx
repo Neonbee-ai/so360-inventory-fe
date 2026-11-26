@@ -288,11 +288,8 @@ const VendorReturnsPage = () => {
                 }}
                 loading={loading}
                 loadingColumns={columns.length}
-                isEmpty={!loading && !fetchError && returns.length === 0}
-                empty={<EmptyState title="No vendor returns raised." />}
-            >
-                <div className="flex flex-col gap-nb-4">
-                    {fetchError && <Alert variant="error">{fetchError}</Alert>}
+                kpisCollapsible
+                kpis={(
                     <Grid columns="auto" data-testid="vendor-returns-kpis">
                         {[
                             { label: 'Open Returns', value: returns.filter(r => ['draft', 'approved', 'dispatched'].includes(r.status)).length },
@@ -305,6 +302,12 @@ const VendorReturnsPage = () => {
                             </GridItem>
                         ))}
                     </Grid>
+                )}
+                isEmpty={!loading && !fetchError && returns.length === 0}
+                empty={<EmptyState title="No vendor returns raised." />}
+            >
+                <div className="flex flex-col gap-nb-4">
+                    {fetchError && <Alert variant="error">{fetchError}</Alert>}
                     <DataTable
                         data-testid="vendor-returns-table"
                         columns={columns}
