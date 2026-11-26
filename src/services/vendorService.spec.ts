@@ -141,6 +141,23 @@ describe('vendorService', () => {
     });
   });
 
+  describe('Given restoreVendor / getArchivedVendors (Pulse 7e59196e)', () => {
+    it('When restoreVendor is called / Then it POSTs to /:id/restore', async () => {
+      mockFetch.mockReturnValue(jsonOk({ success: true }));
+      await vendorService.restoreVendor('v1');
+      const [url, opts] = mockFetch.mock.calls[0];
+      expect(url).toContain('/v1/vendors/v1/restore');
+      expect(opts.method).toBe('POST');
+    });
+
+    it('When getArchivedVendors is called / Then it GETs the archived list for the org', async () => {
+      mockFetch.mockReturnValue(jsonOk([{ id: 'v9' }]));
+      const rows = await vendorService.getArchivedVendors();
+      expect(mockFetch.mock.calls[0][0]).toContain('/archived');
+      expect(rows).toEqual([{ id: 'v9' }]);
+    });
+  });
+
   describe('Given getContracts', () => {
     it('When called / Then fetches contracts for org', async () => {
       mockFetch.mockReturnValue(jsonOk([{ id: 'c1' }]));

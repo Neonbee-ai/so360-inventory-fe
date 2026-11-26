@@ -419,7 +419,7 @@ const VendorDetailPage = () => {
             <ConfirmDialog
                 open={showDeleteConfirm}
                 title="Delete Vendor"
-                message={`Are you sure you want to delete ${vendor.name}? Vendors with purchase orders or invoices cannot be deleted.`}
+                message={`Are you sure you want to delete ${vendor.name}? A vendor with purchase orders, invoices or bills is removed from active use and its history is kept; an administrator can restore it.`}
                 intent="danger"
                 confirmLabel={isDeleting ? 'Deleting...' : 'Delete'}
                 onConfirm={handleDeleteVendor}
