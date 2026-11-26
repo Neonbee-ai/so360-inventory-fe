@@ -62,8 +62,10 @@ const SupplierPerformancePage = () => {
         <ListPageTemplate
             trail={[]}
             title="Supplier Performance"
+            kpisCollapsible
             description={data ? `Formula ${data.formula_version} - last ${data.period_days} days. Buyer-caused delays are not held against the supplier.` : 'Delivery, quality, acknowledgement, price and claims by supplier.'}
             loading={loading && !data}
+            loadingColumns={columns.length}
             isEmpty={!loading && !error && rows.length === 0}
             empty={<EmptyState title="No supplier activity in this period." />}
             kpis={data ? (

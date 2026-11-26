@@ -11,7 +11,7 @@ import { useEligibleVendors } from '../../hooks/useEligibleVendors';
 import IneligibleVendorsList from '../../components/procurement/IneligibleVendorsList';
 import { vendorCollabService } from '../../services/vendorCollabService';
 import {
-    QuotaBar, QuotaGate, FeatureGate, toast, getErrorMessage,
+    QuotaGate, FeatureGate, toast, getErrorMessage,
     ListPageTemplate, Button, DataTable, SearchInput, EmptyState, Alert, Badge, StatusBadge,
     Modal, TextField, Select, Textarea, Progress, SectionCard, FieldGrid, Pagination,
 } from '@so360/design-system';
@@ -439,6 +439,7 @@ const POListPage = () => {
                 title="Purchase Orders"
                 description="Official commercial documents issued to sellers."
                 count={matchCount}
+                quota={quotaData ? { label: 'Purchase Orders', used: quotaData.current_usage, limit: quotaData.limit, isUnlimited: quotaData.is_unlimited } : undefined}
                 primaryAction={
                     <div className="flex flex-wrap items-center gap-nb-2">
                         {approvedPrs.length > 0 && (
@@ -486,6 +487,7 @@ const POListPage = () => {
                     />
                 ) : undefined}
                 loading={loading && pos.length === 0}
+                loadingColumns={6}
                 isEmpty={!loading && !fetchError && !showPrMenu && filteredPos.length === 0}
                 filters={
                     (
@@ -520,14 +522,6 @@ const POListPage = () => {
             >
                 {renderNotice(fetchError)}
                 {renderNotice(vendorNotice)}
-                {quotaData && (
-                    <QuotaBar
-                        label="Purchase Orders"
-                        used={quotaData.current_usage}
-                        limit={quotaData.limit}
-                        isUnlimited={quotaData.is_unlimited}
-                    />
-                )}
                 {showPrMenu && approvedPrs.length > 0 && (
                     <SectionCard title="Approved Requisitions">
                         <ul className="space-y-nb-2">

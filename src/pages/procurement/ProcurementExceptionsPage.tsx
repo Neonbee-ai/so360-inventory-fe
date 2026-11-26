@@ -131,6 +131,7 @@ const ProcurementExceptionsPage = () => {
             description="Demand that was rejected or changed after approval, and other issues a buyer must review."
             count={rows.length > 0 ? `${rows.length} exception(s)` : undefined}
             loading={loading && rows.length === 0}
+            loadingColumns={columns.length}
             isEmpty={!loading && !error && rows.length === 0}
             empty={<EmptyState title={status === 'open' ? 'No open exceptions.' : 'No exceptions match this filter.'} />}
             filters={(

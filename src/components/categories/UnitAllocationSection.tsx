@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Loader2 } from 'lucide-react';
-import { Alert, Button } from '@so360/design-system';
+import { Alert, Button, Skeleton } from '@so360/design-system';
 import { inventoryService } from '../../services/inventoryService';
 import type { ItemCategory, UnitAllocation } from '../../types/inventory';
 import { inheritedAllocation } from '../../utils/unitAllocation';
@@ -54,8 +53,8 @@ export const UnitAllocationSection: React.FC<UnitAllocationSectionProps> = ({ it
 
     if (loading) {
         return (
-            <div className="flex items-center gap-2 text-fg-subtle" data-testid="unit-allocation-loading">
-                <Loader2 size={12} className="animate-spin" /> Loading agents…
+            <div role="status" aria-busy="true" aria-label="Loading agents" data-testid="unit-allocation-loading">
+                <Skeleton.Table count={3} columns={3} />
             </div>
         );
     }

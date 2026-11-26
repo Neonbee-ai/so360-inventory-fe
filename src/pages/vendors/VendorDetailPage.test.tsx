@@ -98,8 +98,8 @@ describe('VendorDetailPage', () => {
   describe('Given loading state', () => {
     it('When data is loading / Then shows skeleton', () => {
       mockGetVendorDetail.mockReturnValue(new Promise(() => {}));
-      render(<VendorDetailPage />);
-      expect(screen.getByTestId('skeleton')).toBeInTheDocument();
+      const { container } = render(<VendorDetailPage />);
+      expect(container.querySelector('[data-slot="skeleton"]')).toBeInTheDocument();
     });
   });
 

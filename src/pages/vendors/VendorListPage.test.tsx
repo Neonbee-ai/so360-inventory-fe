@@ -91,7 +91,7 @@ describe('VendorListPage', () => {
     it('When user has permission / Then shows Add Vendor button', async () => {
       render(<VendorListPage />);
       await waitFor(() => {
-        expect(screen.getByText('Add Vendor')).toBeInTheDocument();
+        expect(screen.getByText('New Vendor')).toBeInTheDocument();
       });
     });
 
@@ -168,8 +168,8 @@ describe('VendorListPage', () => {
   describe('Given create vendor flow', () => {
     it('When Add Vendor clicked / Then opens create modal', async () => {
       render(<VendorListPage />);
-      await waitFor(() => screen.getByText('Add Vendor'));
-      fireEvent.click(screen.getByText('Add Vendor'));
+      await waitFor(() => screen.getByText('New Vendor'));
+      fireEvent.click(screen.getByText('New Vendor'));
       await waitFor(() => {
         expect(screen.getByRole('dialog')).toBeInTheDocument();
       });
@@ -177,8 +177,8 @@ describe('VendorListPage', () => {
 
     it('When form submitted / Then calls createVendor', async () => {
       render(<VendorListPage />);
-      await waitFor(() => screen.getByText('Add Vendor'));
-      fireEvent.click(screen.getByText('Add Vendor'));
+      await waitFor(() => screen.getByText('New Vendor'));
+      fireEvent.click(screen.getByText('New Vendor'));
       await waitFor(() => screen.getByRole('dialog'));
       fireEvent.change(screen.getByPlaceholderText('Company name'), { target: { value: 'New Vendor' } });
       fireEvent.click(screen.getByText('Add Vendor', { selector: 'button[type="submit"]' }));
@@ -192,8 +192,8 @@ describe('VendorListPage', () => {
     it('When a vendor is created and the refetch omits it / Then it is still listed and searchable', async () => {
       mockCreateVendor.mockResolvedValue({ id: 'vendor-new', name: 'Fresh Vendor Co' });
       render(<VendorListPage />);
-      await waitFor(() => screen.getByText('Add Vendor'));
-      fireEvent.click(screen.getByText('Add Vendor'));
+      await waitFor(() => screen.getByText('New Vendor'));
+      fireEvent.click(screen.getByText('New Vendor'));
       await waitFor(() => screen.getByRole('dialog'));
       fireEvent.change(screen.getByPlaceholderText('Company name'), { target: { value: 'Fresh Vendor Co' } });
       fireEvent.click(screen.getByText('Add Vendor', { selector: 'button[type="submit"]' }));
@@ -261,7 +261,7 @@ describe('VendorListPage', () => {
       });
       render(<VendorListPage />);
       await waitFor(() => expect(screen.getByText('Vendors & Subcontractors')).toBeInTheDocument());
-      expect(screen.queryByText('Add Vendor')).not.toBeInTheDocument();
+      expect(screen.queryByText('New Vendor')).not.toBeInTheDocument();
     });
 
     it('When effectiveFlagsLoaded becomes true with enabled flag / Then Add Vendor button appears', async () => {
@@ -272,7 +272,7 @@ describe('VendorListPage', () => {
         permissionsLoaded: true, hasPermission: () => true, hasAnyPermission: () => true, getFeatureState: () => 'enabled',
       });
       render(<VendorListPage />);
-      await waitFor(() => expect(screen.getByText('Add Vendor')).toBeInTheDocument());
+      await waitFor(() => expect(screen.getByText('New Vendor')).toBeInTheDocument());
     });
   });
 
@@ -281,13 +281,13 @@ describe('VendorListPage', () => {
       mockCanVendorList.mockImplementation((action: string) => action !== 'suppliers.create');
       render(<VendorListPage />);
       await waitFor(() => expect(screen.getByText('Vendors & Subcontractors')).toBeInTheDocument());
-      expect(screen.queryByText('Add Vendor')).not.toBeInTheDocument();
+      expect(screen.queryByText('New Vendor')).not.toBeInTheDocument();
     });
 
     it('When can("suppliers.create") is granted / Then Add Vendor button is shown', async () => {
       mockCanVendorList.mockImplementation((action: string) => action === 'suppliers.create');
       render(<VendorListPage />);
-      await waitFor(() => expect(screen.getByText('Add Vendor')).toBeInTheDocument());
+      await waitFor(() => expect(screen.getByText('New Vendor')).toBeInTheDocument());
     });
   });
 });

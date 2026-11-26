@@ -5,7 +5,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useShellBridge, useQuota, useSandboxLimit, useBusinessSettings } from '@so360/shell-context';
 import {
     Alert, Button, Checkbox, ConfirmDialog, DataTable, EmptyState, FeatureGate, ListPageTemplate,
-    Modal, Pagination, QuotaBar, QuotaGate, SearchInput, Select, StatusBadge, Textarea, TextField, FieldGrid,
+    Modal, Pagination, QuotaGate, SearchInput, Select, StatusBadge, Textarea, TextField, FieldGrid,
 } from '@so360/design-system';
 import type { DataTableColumn } from '@so360/design-system';
 import { VendorBankAccountFields } from '../../components/vendors/VendorBankAccountFields';
@@ -261,12 +261,12 @@ const VendorListPage = () => {
 
     return (
         <>
-            {/* Outside the template: the empty state replaces its children. */}
-            {bankWarning && <Alert variant="warning" onDismiss={() => setBankWarning(null)}>{bankWarning}</Alert>}
             <ListPageTemplate trail={[]}
+                notice={bankWarning ? <Alert variant="warning" onDismiss={() => setBankWarning(null)}>{bankWarning}</Alert> : undefined}
                 title="Vendors & Subcontractors"
                 description="Manage supply chain partners and commercial contracts."
                 count={loading ? undefined : matchCount}
+                quota={quotaData || vendors.length > 0 ? { label: 'Vendors', used: legacyRef.current ? vendors.length : serverTotal, limit: quotaData?.limit ?? 0, isUnlimited: quotaData?.is_unlimited } : undefined}
                 primaryAction={
                     can('suppliers.create') ? (
                         <FeatureGate state={createVendorState} loading={(shell?.effectiveFlagsLoaded === false)} onUpgradeClick={() => navigate('/org/billing')}>
@@ -278,7 +278,7 @@ const VendorListPage = () => {
                                 isUnlimited={quotaData?.is_unlimited}
                                 disableOnExceeded
                             >
-                                <Button onClick={() => (vendorMasterOn ? navigate('/vendors/new') : setShowCreateModal(true))}>Add Vendor</Button>
+                                <Button onClick={() => (vendorMasterOn ? navigate('/vendors/new') : setShowCreateModal(true))}>New Vendor</Button>
                             </QuotaGate>
                         </FeatureGate>
                     ) : undefined
@@ -291,6 +291,7 @@ const VendorListPage = () => {
                     />
                 }
                 loading={loading}
+                loadingColumns={columns.length}
                 pagination={matchCount > 0 ? (
                     <Pagination
                         currentPage={page}
@@ -310,16 +311,6 @@ const VendorListPage = () => {
                 }
             >
                 {loading && <span className="sr-only" role="status">Loading vendor ecosystem...</span>}
-
-                {(quotaData || vendors.length > 0) && (
-                    <QuotaBar
-                        label="Vendors"
-                        used={legacyRef.current ? vendors.length : serverTotal}
-                        limit={quotaData?.limit ?? 0}
-                        isUnlimited={quotaData?.is_unlimited}
-                        className="mb-4"
-                    />
-                )}
 
                 {error && <Alert variant="error" onDismiss={() => setError(null)}>{error}</Alert>}
                 {successMessage && <Alert variant="success">{successMessage}</Alert>}

@@ -269,7 +269,7 @@ const VendorReturnsPage = () => {
                 title="Vendor Returns"
                 description="Send back damaged, wrong, excess or expired goods and track the credit."
                 count={returns.length > 0 ? `${returns.length} return(s)` : undefined}
-                primaryAction={<Button onClick={() => { setErrors({}); setShowForm(true); }}>+ New Return</Button>}
+                primaryAction={<Button onClick={() => { setErrors({}); setShowForm(true); }}>New Return</Button>}
                 filterConfig={{
                     fields: [{
                         key: 'status',
@@ -287,6 +287,7 @@ const VendorReturnsPage = () => {
                     onClear: () => setStatusFilter(''),
                 }}
                 loading={loading}
+                loadingColumns={columns.length}
                 isEmpty={!loading && !fetchError && returns.length === 0}
                 empty={<EmptyState title="No vendor returns raised." />}
             >

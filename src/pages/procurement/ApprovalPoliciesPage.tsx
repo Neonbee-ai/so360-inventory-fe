@@ -15,6 +15,7 @@ const DEFAULTS: Rules = { sod: true, approval_required: 'threshold', budget_sour
 const ApprovalPoliciesPage = () => {
     const navigate = useNavigate();
     const [policy, setPolicy] = useState<any | null>(null);
+    const [loaded, setLoaded] = useState(false);
     const [rules, setRules] = useState<Rules>(DEFAULTS);
     const [delegations, setDelegations] = useState<any[]>([]);
     const [error, setError] = useState<string | null>(null);
@@ -29,7 +30,7 @@ const ApprovalPoliciesPage = () => {
             setPolicy(live);
             setRules({ ...DEFAULTS, ...(live?.rules ?? {}) });
             setDelegations(await poApprovalService.listDelegations());
-        }).catch((e: any) => setError(getErrorMessage(e, 'Failed to load approval settings')));
+        }).catch((e: any) => setError(getErrorMessage(e, 'Failed to load approval settings'))).finally(() => setLoaded(true));
     }, []);
 
     const patch = (next: Partial<Rules>) => setRules(r => ({ ...r, ...next }));
@@ -67,6 +68,7 @@ const ApprovalPoliciesPage = () => {
 
     return (
         <SettingsPageTemplate
+            loading={!loaded}
             trail={[{ label: 'Inventory Settings', onClick: () => navigate('/inventory/settings') }]}
             title="Purchase order approvals"
             description="Who approves a purchase order, budget control and what counts as a material change."

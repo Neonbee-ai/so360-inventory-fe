@@ -4,7 +4,7 @@ import { useShellBridge } from '@so360/shell-context';
 import { procurementService } from '../../services/procurementService';
 import { useInventoryFormatters } from '../../utils/formatters';
 import {
-    Alert, Badge, Checkbox, DataTable, EmptyState, SectionCard, Skeleton, TextField, WizardPageTemplate,
+    Alert, Badge, Checkbox, DataTable, EmptyState, SectionCard, TextField, WizardPageTemplate,
     toast, getErrorMessage, type DataTableColumn,
 } from '@so360/design-system';
 
@@ -73,10 +73,11 @@ const ConsolidationWizardPage = () => {
         }
     };
 
-    const body = (content: React.ReactNode) => (groups === null && !error ? <Skeleton /> : content);
+    const body = (content: React.ReactNode) => content;
 
     return (
         <WizardPageTemplate
+            loading={groups === null && !error}
             trail={[{ label: 'Demand Coverage', onClick: () => navigate('/procurement/coverage') }]}
             title="Consolidate demand"
             description="Combine compatible requisition lines into one buying group without losing where each unit came from."

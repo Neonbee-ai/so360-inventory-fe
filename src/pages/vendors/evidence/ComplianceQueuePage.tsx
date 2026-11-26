@@ -54,6 +54,7 @@ export default function ComplianceQueuePage({ canEdit = true }: { canEdit?: bool
       description="Renewals to chase and notices that could not be delivered."
       count={loading ? undefined : rows}
       loading={loading}
+      loadingColumns={(view === 'renewals' ? taskCols : noteCols).length}
       isEmpty={!loading && !error && rows === 0}
       empty={<EmptyState title="Nothing to do" description={view === 'renewals' ? 'No renewals are open.' : 'Every notice went out.'} />}
       filterConfig={{

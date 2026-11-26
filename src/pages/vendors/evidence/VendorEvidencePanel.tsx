@@ -98,7 +98,7 @@ export default function VendorEvidencePanel({ vendorId, canUpdate, canReview }: 
         {!loading && chains.length === 0 ? (
           <EmptyState title="No documents yet" description="Certificates, licences and insurance for this vendor appear here, with every version kept." />
         ) : (
-          <DataTable data-testid="vendor-evidence-table" columns={columns} rows={chains} rowKey={(c) => c.evidence_id} onRowClick={open} />
+          <DataTable data-testid="vendor-evidence-table" loading={loading} columns={columns} rows={chains} rowKey={(c) => c.evidence_id} onRowClick={open} />
         )}
       </Card>
 

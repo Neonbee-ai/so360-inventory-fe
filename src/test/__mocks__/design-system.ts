@@ -187,8 +187,9 @@ export const DetailPageTemplate = (p: any) =>
 export const FormPageTemplate = (p: any) =>
   React.createElement('div', { 'data-template': 'form' },
     React.createElement('header', { 'data-slot': 'header' }, React.createElement(Trail, p), React.createElement('h1', null, p.title), p.description ? React.createElement('p', null, p.description) : null),
-    (p.sections ?? []).map((sec: any) => React.createElement('section', { key: sec.id, 'data-slot': 'section' }, React.createElement('h2', null, sec.title), sec.content)),
-    p.children,
+    p.loading ? React.createElement('div', { 'data-slot': 'loading', role: 'status', 'aria-busy': 'true' }) : [
+      (p.sections ?? []).map((sec: any) => React.createElement('section', { key: sec.id, 'data-slot': 'section' }, React.createElement('h2', null, sec.title), sec.content)),
+      p.children],
     React.createElement('footer', { 'data-slot': 'footer' }, p.destructiveAction,
       p.onCancel ? React.createElement('button', { type: 'button', onClick: p.onCancel }, p.cancelLabel ?? 'Cancel') : null, p.secondaryAction, p.primaryAction));
 export const EmptyState = ({ title, description, action }: any) =>
@@ -202,21 +203,27 @@ export const Tabs = ({ items = [], value, onChange, end }: any) =>
     items.map((t: any) =>
       React.createElement('button', { key: t.id, role: 'tab', 'aria-selected': t.id === value, onClick: () => onChange?.(t.id) }, t.icon, t.label)),
     end ? React.createElement('div', { 'data-slot': 'tabs-end' }, end) : null);
-export const Skeleton = () => React.createElement('div', { 'data-testid': 'skeleton' });
+const SkeletonBase = () => React.createElement('div', { 'data-testid': 'skeleton' });
+const preset = (name: string) => (props: any = {}) => React.createElement('div', { 'data-testid': props['data-testid'] ?? `skeleton-${name}` });
+export const Skeleton = Object.assign(SkeletonBase, {
+  Table: preset('table'), Cards: preset('cards'), Form: preset('form'), Fields: preset('fields'), Detail: preset('detail'),
+  Kpis: preset('kpis'), Settings: preset('settings'), List: preset('list'), Dashboard: preset('dashboard'),
+  Canvas: preset('canvas'), Header: preset('header'), Toolbar: preset('toolbar'), Page: preset('page'),
+});
 export const DashboardPageTemplate = (p: any) =>
   React.createElement('div', { 'data-template': 'dashboard' },
     React.createElement('header', { 'data-slot': 'header' },
       React.createElement(Trail, p), React.createElement('h1', null, p.title), p.description ? React.createElement('p', null, p.description) : null,
       slot('meta', p.meta), slot('secondary-actions', p.secondaryActions), slot('primary-action', p.primaryAction)),
     slot('filters', p.filters), slot('toolbar-end', p.toolbarEnd),
-    slot('kpis', p.kpis), slot('primary', p.primary), slot('secondary', p.secondary), slot('bottom', p.bottom), p.children);
+    p.loading ? React.createElement('div', { 'data-slot': 'loading', role: 'status', 'aria-busy': 'true' }) : [slot('kpis', p.kpis), slot('primary', p.primary), slot('secondary', p.secondary), slot('bottom', p.bottom), p.children]);
 export const SettingsPageTemplate = (p: any) =>
   React.createElement('div', { 'data-template': 'settings' },
     React.createElement('header', { 'data-slot': 'header' }, React.createElement(Trail, p), React.createElement('h1', null, p.title),
       p.description ? React.createElement('p', null, p.description) : null, slot('primary-action', p.primaryAction)),
     React.createElement('nav', { 'data-slot': 'sections', role: 'tablist' }, (p.sections ?? []).map((s: any) =>
       React.createElement('button', { key: s.id, role: 'tab', 'aria-selected': s.id === p.activeSection, onClick: () => p.onSectionChange?.(s.id) }, s.label))),
-    React.createElement('main', { 'data-slot': 'main' }, p.children));
+    p.loading ? React.createElement('div', { 'data-slot': 'loading', role: 'status', 'aria-busy': 'true' }) : React.createElement('main', { 'data-slot': 'main' }, p.children));
 export const SettingsCard = (p: any) =>
   React.createElement('section', null, p.title ? React.createElement('h2', null, p.title) : null, p.actions ? React.createElement('div', { 'data-slot': 'card-actions' }, p.actions) : null, p.children);
 const slugifyId = (v: string) => v.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
@@ -494,7 +501,7 @@ export const FilePickerTrigger = ({ accept, name = 'file', onFiles, children, 'd
 };
 
 // ---- Wizard / Timeline / PeopleSelector (mirror the real DS behaviour the pages rely on) ----
-export const WizardPageTemplate = ({ title, description, steps = [], onFinish, onCancel, cancelLabel = 'Cancel', backLabel = 'Back', nextLabel = 'Next', finishLabel = 'Finish', finishing = false, current, initialStep = 0, onStepChange }: any) => {
+export const WizardPageTemplate = ({ loading = false, title, description, steps = [], onFinish, onCancel, cancelLabel = 'Cancel', backLabel = 'Back', nextLabel = 'Next', finishLabel = 'Finish', finishing = false, current, initialStep = 0, onStepChange }: any) => {
   const [inner, setInner] = React.useState(initialStep);
   const [error, setError] = React.useState<string | null>(null);
   const last = Math.max(steps.length - 1, 0);
@@ -511,7 +518,7 @@ export const WizardPageTemplate = ({ title, description, steps = [], onFinish, o
     React.createElement('h1', null, title),
     description ? React.createElement('p', null, description) : null,
     step ? React.createElement('section', { 'aria-label': step.label, 'data-step-id': step.id },
-      step.content,
+      loading ? React.createElement('div', { 'data-slot': 'loading', role: 'status', 'aria-busy': 'true' }) : step.content,
       error ? React.createElement('p', { role: 'alert', 'data-testid': 'wizard-error' }, error) : null) : null,
     React.createElement('footer', null,
       index > 0 ? React.createElement('button', { onClick: () => go(index - 1) }, backLabel) : null,

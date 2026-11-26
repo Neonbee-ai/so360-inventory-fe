@@ -70,6 +70,7 @@ const MatchWorkbenchPage = () => {
             description="Supplier invoices matched against the approved PO and accepted receipts. Finance owns the invoice, payables and payment."
             count={rows.length > 0 ? `${rows.length} invoice(s)` : undefined}
             loading={loading && rows.length === 0}
+            loadingColumns={columns.length}
             isEmpty={!loading && !error && rows.length === 0}
             empty={<EmptyState title="No invoices to match." description="Invoices captured against a purchase order appear here." />}
             filters={<Select name="match-queue" label="Queue" value={queue} options={QUEUES} onChange={(e: any) => setQueue(e?.target ? e.target.value : e)} />}

@@ -44,7 +44,7 @@ export default function VendorGovernancePage() {
   ];
 
   return (
-    <DashboardPageTemplate trail={[]} title="Vendor governance" description="Onboarding, coverage, evidence, delivery, quality, corrective actions and risk across vendors.">
+    <DashboardPageTemplate loading={WIDGETS.some((w) => !(w in data))} trail={[]} title="Vendor governance" description="Onboarding, coverage, evidence, delivery, quality, corrective actions and risk across vendors.">
       {error && <Alert variant="error">{error}</Alert>}
       <Grid columns={3}>
         {WIDGETS.map((w) => {

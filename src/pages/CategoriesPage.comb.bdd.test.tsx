@@ -60,10 +60,11 @@ beforeEach(() => {
 });
 
 describe('CategoriesPage (Comb)', () => {
-  it('Given a pending load, When rendered, Then the loading text shows', () => {
+  it('Given a pending load, When rendered, Then the list template shows its loading skeleton', () => {
     mockGetSettings.mockReturnValue(new Promise(() => {}));
-    render(<CategoriesPage />);
-    expect(screen.getByText('Loading categories...')).toBeInTheDocument();
+    const { container } = render(<CategoriesPage />);
+    expect(container.querySelector('[data-slot="loading"]')).toBeInTheDocument();
+    expect(screen.queryByText('Loading categories...')).not.toBeInTheDocument();
   });
 
   it('Given loaded categories, When rendered, Then the title and New Category action show', async () => {

@@ -89,7 +89,7 @@ export default function EvidenceTemplatesTab({ canEdit }: { canEdit: boolean }) 
       {!loading && rows.length === 0 ? (
         <EmptyState title="No templates yet" description="Templates say which documents a vendor must hold, and when to warn before they expire." />
       ) : (
-        <DataTable data-testid="evidence-templates-table" columns={columns} rows={rows} rowKey={(t) => t.id} />
+        <DataTable data-testid="evidence-templates-table" loading={loading} columns={columns} rows={rows} rowKey={(t) => t.id} />
       )}
       <Drawer name="evidence-template" isOpen={!!form} onClose={() => setForm(null)} title={editing ? 'Edit template' : 'New template'}
         footer={<><Button variant="ghost" onClick={() => setForm(null)} disabled={busy}>Cancel</Button><Button onClick={save} disabled={busy}>Save draft</Button></>}>

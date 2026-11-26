@@ -52,6 +52,7 @@ export default function ReviewQueuePage() {
       description="Vendors waiting for screening, qualification, approval or renewal."
       count={loading ? undefined : rows.length}
       loading={loading}
+      loadingColumns={columns.length}
       isEmpty={!loading && !error && rows.length === 0}
       empty={<EmptyState title="Nothing waiting" description="No vendor needs a lifecycle action right now." />}
       filterConfig={{

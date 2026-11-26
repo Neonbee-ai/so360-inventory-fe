@@ -55,7 +55,7 @@ describe('VendorReturnsPage (Comb)', () => {
         await waitFor(() => expect(screen.getByText('VRN-1')).toBeInTheDocument());
         expect(container.querySelector('[data-template="list"]')).not.toBeNull();
         expect(screen.getByRole('heading', { name: 'Vendor Returns' })).toBeInTheDocument();
-        expect(screen.getByText('+ New Return')).toBeInTheDocument();
+        expect(screen.getByText('New Return')).toBeInTheDocument();
     });
 
     it('Given the request is pending, When rendered, Then the loading skeleton is shown', () => {
@@ -79,8 +79,8 @@ describe('VendorReturnsPage (Comb)', () => {
 
     it('Given the form is open, When rendered, Then the footer carries Cancel then Raise Return', async () => {
         render(<VendorReturnsPage />);
-        await waitFor(() => screen.getByText('+ New Return'));
-        fireEvent.click(screen.getByText('+ New Return'));
+        await waitFor(() => screen.getByText('New Return'));
+        fireEvent.click(screen.getByText('New Return'));
         const dialog = await screen.findByRole('dialog', { name: 'New Vendor Return' });
         expect(dialog).toBeInTheDocument();
         expect(screen.getByText('Cancel')).toBeInTheDocument();

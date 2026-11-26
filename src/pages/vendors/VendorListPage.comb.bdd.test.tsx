@@ -61,7 +61,7 @@ describe('VendorListPage (Comb)', () => {
     const { container } = render(<VendorListPage />);
     expect(await screen.findByRole('heading', { level: 1, name: 'Vendors & Subcontractors' })).toBeInTheDocument();
     expect(container.querySelector('[data-template="list"]')).toBeInTheDocument();
-    expect(container.querySelector('[data-slot="primary"]')).toHaveTextContent('Add Vendor');
+    expect(container.querySelector('[data-slot="primary"]')).toHaveTextContent('New Vendor');
   });
 
   it('Given a pending request / When loading / Then loading status is announced', () => {
@@ -93,7 +93,7 @@ describe('VendorListPage (Comb)', () => {
 
   it('Given the create drawer / When the form is submitted / Then createVendor is called with the entered name', async () => {
     render(<VendorListPage />);
-    fireEvent.click(await screen.findByText('Add Vendor'));
+    fireEvent.click(await screen.findByText('New Vendor'));
     const dialog = await screen.findByRole('dialog', { name: 'Add New Vendor' });
     expect(dialog).toHaveTextContent('Cancel');
     fireEvent.change(screen.getByPlaceholderText('Company name'), { target: { value: 'New Vendor' } });
@@ -104,7 +104,7 @@ describe('VendorListPage (Comb)', () => {
   it('Given the Vendor Master flag is on / When Add Vendor is clicked / Then it opens the full vendor form page instead of the modal (Pulse 3fc12200)', async () => {
     mockShell.mockReturnValue(shellState({ isFeatureEnabled: (k: string) => k === 'submodule:inventory:vendor_master' }));
     render(<VendorListPage />);
-    fireEvent.click(await screen.findByText('Add Vendor'));
+    fireEvent.click(await screen.findByText('New Vendor'));
     expect(mockNavigate).toHaveBeenCalledWith('/vendors/new');
     expect(screen.queryByRole('dialog', { name: 'Add New Vendor' })).not.toBeInTheDocument();
   });
@@ -124,7 +124,7 @@ describe('VendorListPage (Comb)', () => {
     mockGetVendors.mockResolvedValue([vendor()]);
     render(<VendorListPage />);
     await screen.findByTestId('vendors-table');
-    expect(screen.queryByText('Add Vendor')).not.toBeInTheDocument();
+    expect(screen.queryByText('New Vendor')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Row actions')).not.toBeInTheDocument();
   });
 

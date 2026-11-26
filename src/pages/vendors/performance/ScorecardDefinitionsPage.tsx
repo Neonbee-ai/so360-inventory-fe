@@ -49,6 +49,7 @@ export default function ScorecardDefinitionsPage() {
       description="Define what counts, how much it weighs and how many records are needed before a score is shown."
       count={loading ? undefined : rows.length}
       loading={loading}
+      loadingColumns={cols.length}
       isEmpty={!loading && !error && rows.length === 0}
       empty={<EmptyState title="No scorecard defined" description="Until you activate one, vendors show the default scorecard." />}
       primaryAction={<Button onClick={() => setOpen(true)}>New scorecard</Button>}

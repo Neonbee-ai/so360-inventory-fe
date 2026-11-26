@@ -83,12 +83,11 @@ describe('Given StockLocationsPage warehouse-quota gating', () => {
   });
 
   describe('Given a finite limit with headroom', () => {
-    it('When used < limit / Then banner shows "used of limit" and button stays enabled', async () => {
+    it('When used < limit / Then the header quota chip shows "used of limit" and button stays enabled', async () => {
       mockGetQuota.mockReturnValue(quota({ is_unlimited: false, limit: 5, current_usage: 3 }));
       mockGetLocations.mockResolvedValue(warehouses(3));
       render(<StockLocationsPage />);
-      const banner = await screen.findByTestId('warehouse-limit-banner');
-      expect(banner.textContent?.replace(/\s+/g, ' ').trim()).toBe('3 of 5 used');
+      expect(await screen.findByRole('meter', { name: 'Warehouses: 3 of 5 used' })).toBeInTheDocument();
       expect(createBtn()).toBeEnabled();
     });
   });
@@ -98,8 +97,7 @@ describe('Given StockLocationsPage warehouse-quota gating', () => {
       mockGetQuota.mockReturnValue(quota({ is_unlimited: false, limit: 2, current_usage: 2 }));
       mockGetLocations.mockResolvedValue(warehouses(2));
       render(<StockLocationsPage />);
-      const banner = await screen.findByTestId('warehouse-limit-banner');
-      expect(banner.textContent?.replace(/\s+/g, ' ').trim()).toBe('2 of 2 used');
+      expect(await screen.findByRole('meter', { name: 'Warehouses: 2 of 2 used' })).toBeInTheDocument();
       expect(createBtn()).toBeDisabled();
     });
   });

@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Loader2, X, ExternalLink } from 'lucide-react';
-import { Alert, Button, Card, EmptyState, IconButton, Select, Tabs, TextField } from '@so360/design-system';
+import { X, ExternalLink } from 'lucide-react';
+import { Alert, Button, Card, EmptyState, IconButton, Select, Tabs, TextField, Skeleton } from '@so360/design-system';
 import { useBusinessSettings } from '@so360/shell-context';
 import { inventoryService } from '../../services/inventoryService';
 import {
@@ -293,8 +293,8 @@ export const AvailabilityMatrix: React.FC<AvailabilityMatrixProps> = ({
 
     if (loading) {
         return (
-            <div className="flex items-center gap-2 text-fg-subtle text-sm py-8" data-testid="availability-loading">
-                <Loader2 size={16} className="animate-spin" /> Loading availability…
+            <div role="status" aria-busy="true" aria-label="Loading availability" data-testid="availability-loading">
+                <Skeleton.Table count={6} columns={5} />
             </div>
         );
     }
@@ -321,8 +321,8 @@ export const AvailabilityMatrix: React.FC<AvailabilityMatrixProps> = ({
             )}
 
             {towerLoading ? (
-                <div className="flex items-center gap-2 text-fg-subtle text-sm py-6">
-                    <Loader2 size={16} className="animate-spin" /> Loading tower…
+                <div role="status" aria-busy="true" aria-label="Loading tower" data-testid="tower-loading">
+                    <Skeleton.Table count={5} columns={6} header={false} />
                 </div>
             ) : grid.floors.length === 0 ? (
                 <div data-testid="availability-empty">

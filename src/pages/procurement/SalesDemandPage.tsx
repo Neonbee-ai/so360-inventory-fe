@@ -128,6 +128,7 @@ const SalesDemandPage = () => {
                     />
                 )}
                 loading={loading}
+                loadingColumns={columns.length}
                 isEmpty={!loading && !error && orders.length === 0}
                 empty={(
                     <EmptyState

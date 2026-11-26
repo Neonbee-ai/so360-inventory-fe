@@ -75,6 +75,7 @@ const ExpectedReceiptsPage = () => {
             description="Deliveries the supplier has confirmed. A notice is not stock; receive it to post a goods receipt."
             count={rows.length > 0 ? `${rows.length} expected` : undefined}
             loading={loading && rows.length === 0}
+            loadingColumns={columns.length}
             isEmpty={!loading && !error && rows.length === 0}
             empty={<EmptyState title="No expected receipts." description="Notices appear when a supplier confirms a delivery schedule." />}
             filters={<Select name="expected-receipt-status" label="Status" value={status} options={STATUS_OPTIONS} onChange={(e: any) => setStatus(e?.target ? e.target.value : e)} />}

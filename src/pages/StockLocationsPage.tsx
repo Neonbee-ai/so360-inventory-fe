@@ -17,7 +17,7 @@ import {
 } from '../utils/validators';
 import { useActivity, useShellBridge, useQuota } from '@so360/shell-context';
 import {
-    QuotaBar, QuotaGate, FeatureGate, ListPageTemplate, DataTable, Button, Modal, TextField, Select,
+    QuotaGate, FeatureGate, ListPageTemplate, DataTable, Button, Modal, TextField, Select,
     Checkbox, Alert, Badge, EmptyState, Tooltip,
     type DataTableColumn, FieldGrid, FieldGridItem,
 } from '@so360/design-system';
@@ -389,17 +389,10 @@ const StockLocationsPage = () => {
             title="Warehouses"
             description="Manage physical storage facilities and fulfillment centers"
             count={warehouses.length}
+            searchMode="field"
+            quota={quotaData ? { label: 'Warehouses', used: whUsed, limit: quotaData.limit, isUnlimited: whUnlimited } : undefined}
             primaryAction={primaryAction}
         >
-            {quotaData && (
-                <QuotaBar label="Warehouses" used={whUsed} limit={quotaData.limit} isUnlimited={whUnlimited} />
-            )}
-
-            {whLimit !== null && (
-                <p data-testid="warehouse-limit-banner" className="text-nb-caption text-fg-subtle">
-                    {whUsed} of {whLimit} used
-                </p>
-            )}
 
             {error && (
                 <Alert variant="error" action={{ label: 'Dismiss', onClick: () => setError(null) }}>

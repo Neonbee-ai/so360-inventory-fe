@@ -1,6 +1,6 @@
 import React from 'react';
 import { CheckCircle2, XCircle, Package, RotateCcw } from 'lucide-react';
-import { Button, Spinner } from '@so360/design-system';
+import { Button, Skeleton } from '@so360/design-system';
 
 interface RowResult {
     row_index: number;
@@ -23,7 +23,7 @@ const ImportResultStep: React.FC<Props> = ({ result, loading, submittedRows, onG
     if (loading) {
         return (
             <div className="flex flex-col items-center gap-nb-4 py-nb-10">
-                <Spinner aria-label="Importing" />
+                <div role="status" aria-label="Importing" className="w-full"><Skeleton.Table count={3} columns={3} /></div>
                 <p className="text-fg-muted text-nb-caption" aria-busy="true">Importing {submittedRows.length} items…</p>
             </div>
         );

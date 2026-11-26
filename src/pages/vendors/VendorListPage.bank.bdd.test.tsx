@@ -49,8 +49,8 @@ const type = (name: string, value: string) => fireEvent.change(field(name), { ta
 
 async function openForm() {
   render(<VendorListPage />);
-  await waitFor(() => screen.getByText('Add Vendor'));
-  fireEvent.click(screen.getByText('Add Vendor'));
+  await waitFor(() => screen.getByText('New Vendor'));
+  fireEvent.click(screen.getByText('New Vendor'));
   await waitFor(() => screen.getByRole('dialog'));
   fireEvent.change(screen.getByPlaceholderText('Company name'), { target: { value: 'New Vendor' } });
 }

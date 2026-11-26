@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { rfqService } from '../../services/rfqService';
 import { useInventoryFormatters } from '../../utils/formatters';
 import {
-    Alert, Badge, Checkbox, DataTable, EmptyState, NumberInput, SectionCard, Select, Skeleton, TextField, WizardPageTemplate,
+    Alert, Badge, Checkbox, DataTable, EmptyState, NumberInput, SectionCard, Select, TextField, WizardPageTemplate,
     toast, getErrorMessage, type DataTableColumn,
 } from '@so360/design-system';
 
@@ -80,6 +80,7 @@ const RFQFromDemandWizardPage = () => {
 
     return (
         <WizardPageTemplate
+            loading={groups === null && !error}
             trail={[{ label: 'Demand Coverage', onClick: () => navigate('/procurement/coverage') }]}
             title="Create RFQ from demand"
             description="Source consolidated demand: each requisition allocation stays linked to the RFQ line it is sourced on."
@@ -92,7 +93,7 @@ const RFQFromDemandWizardPage = () => {
                     id: 'groups',
                     label: 'Demand groups',
                     validate: () => (chosen.length > 0 ? true : 'Select at least one demand group'),
-                    content: groups === null && !error ? <Skeleton /> : error ? <Alert variant="error">{error}</Alert> : (
+                    content: error ? <Alert variant="error">{error}</Alert> : (
                         usable.length === 0
                             ? <EmptyState title="No consolidated demand is waiting to be sourced." />
                             : <DataTable columns={columns} rows={usable} rowKey={(g: any) => g.id} />

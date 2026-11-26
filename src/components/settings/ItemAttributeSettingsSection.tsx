@@ -3,7 +3,7 @@ import { Plus, Pencil, Trash2, X, Check, Info } from 'lucide-react';
 import { inventoryService } from '../../services/inventoryService';
 import { ItemAttributeDefinition, ItemCategory } from '../../types/inventory';
 import { toBound } from '../../utils/attributeBounds';
-import { useConfirm, Button, IconButton, TextField, Textarea, Select, Checkbox, Alert, Card, EmptyState, Badge, DataTable, type DataTableColumn, FieldGrid } from '@so360/design-system';
+import { useConfirm, Button, IconButton, TextField, Textarea, Select, Checkbox, Alert, Card, EmptyState, Badge, DataTable, type DataTableColumn, FieldGrid, Skeleton } from '@so360/design-system';
 
 interface Props {
     categories: ItemCategory[];
@@ -251,7 +251,7 @@ const ItemAttributeSettingsSection: React.FC<Props> = ({ categories, canManage }
             )}
 
             {loading ? (
-                <p className="text-sm text-fg-subtle animate-pulse">Loading...</p>
+                <div role="status" aria-busy="true" aria-label="Loading attributes"><Skeleton.Form count={4} columns={1} /></div>
             ) : (
                 <>
                     {defs.length > 0 ? (

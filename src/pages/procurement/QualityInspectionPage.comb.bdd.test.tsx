@@ -33,7 +33,7 @@ describe('QualityInspectionPage (Comb)', () => {
     const { container } = render(<QualityInspectionPage />);
     await waitFor(() => screen.getByText('QC-1'));
     expect(screen.getByRole('heading', { name: 'Quality Inspection' })).toBeInTheDocument();
-    expect(screen.getByText('+ Open Inspection')).toBeInTheDocument();
+    expect(screen.getByText('New Inspection')).toBeInTheDocument();
     expect(container.querySelector('[data-template="list"]')).toBeInTheDocument();
   });
 

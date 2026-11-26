@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useActivity, useShellBridge } from '@so360/shell-context';
 import {
-    Alert, Button, EmptyState, Modal, FeatureGate, IconButton, SettingsCard, SettingsPageTemplate, Skeleton, StatusBadge, TextField, useConfirm, Grid,
+    Alert, Button, EmptyState, Modal, FeatureGate, IconButton, SettingsCard, SettingsPageTemplate, StatusBadge, TextField, useConfirm, Grid,
 } from '@so360/design-system';
 import { Plus, Trash2, ChevronRight, Sliders } from 'lucide-react';
 import { ProductType, ProductTypeAttribute } from '../../types/productTypes';
@@ -122,12 +122,11 @@ const ProductTypeSettingsPage = () => {
         }
     };
 
-    if (loading) return <div className="p-nb-6" aria-busy="true"><Skeleton variant="rect" /></div>;
-
     const canEditSelected = !!selectedType && !selectedType.is_system && canManageProductTypes;
 
     return (
         <SettingsPageTemplate
+            loading={loading}
             title="Product Types"
             description="Manage product type templates and their attribute schemas"
             trail={[{ label: 'Settings', to: '/inventory/settings', onClick: () => navigate('/inventory/settings') }]}

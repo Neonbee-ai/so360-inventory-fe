@@ -64,9 +64,9 @@ describe('ItemsPage', () => {
       expect(screen.getByText('Items')).toBeInTheDocument();
     });
 
-    it('When user has create permission / Then shows Register Item button', () => {
+    it('When user has create permission / Then shows New Item button', () => {
       render(<ItemsPage />);
-      expect(screen.getByText('Register Item')).toBeInTheDocument();
+      expect(screen.getByText('New Item')).toBeInTheDocument();
     });
   });
 
@@ -223,7 +223,7 @@ describe('ItemsPage', () => {
   });
 
   describe('Given effectiveFlagsLoaded is false (matrix still resolving)', () => {
-    it('When page renders / Then Register Item button is not shown', async () => {
+    it('When page renders / Then New Item button is not shown', async () => {
       mockUseShellBridge.mockReturnValue({
         isFeatureEnabled: () => true,
         currentOrg: { id: 'org-1', name: 'Test Org' },
@@ -232,10 +232,10 @@ describe('ItemsPage', () => {
       });
       render(<ItemsPage />);
       await waitFor(() => expect(screen.getByText('Items')).toBeInTheDocument());
-      expect(screen.queryByText('Register Item')).not.toBeInTheDocument();
+      expect(screen.queryByText('New Item')).not.toBeInTheDocument();
     });
 
-    it('When effectiveFlagsLoaded becomes true with enabled flag / Then Register Item button appears', async () => {
+    it('When effectiveFlagsLoaded becomes true with enabled flag / Then New Item button appears', async () => {
       mockUseShellBridge.mockReturnValue({
         isFeatureEnabled: () => true,
         currentOrg: { id: 'org-1', name: 'Test Org' },
@@ -243,31 +243,31 @@ describe('ItemsPage', () => {
         permissionsLoaded: true, hasPermission: () => true, hasAnyPermission: () => true, getFeatureState: () => 'enabled',
       });
       render(<ItemsPage />);
-      await waitFor(() => expect(screen.getByText('Register Item')).toBeInTheDocument());
+      await waitFor(() => expect(screen.getByText('New Item')).toBeInTheDocument());
     });
   });
 });
 
 // ── Role-permission gating (RBAC action-level) ─────────────────────────────
-// Register Item was gated only on the plan feature-state; it now also requires
+// New Item was gated only on the plan feature-state; it now also requires
 // items.create via the live Shell entitlements, fail-closed.
-describe('ItemsPage — Register Item permission gating', () => {
-  it('Given the user lacks items.create / Then Register Item is hidden', () => {
+describe('ItemsPage — New Item permission gating', () => {
+  it('Given the user lacks items.create / Then New Item is hidden', () => {
     mockUseShellBridge.mockReturnValue({
       currentOrg: { id: 'org-1' }, effectiveFlagsLoaded: true, getFeatureState: () => 'enabled',
       permissionsLoaded: true, hasPermission: (c: string) => c !== 'items.create', hasAnyPermission: () => true,
     });
     render(<ItemsPage />);
-    expect(screen.queryByText('Register Item')).not.toBeInTheDocument();
+    expect(screen.queryByText('New Item')).not.toBeInTheDocument();
   });
 
-  it('Given entitlements have not resolved / Then Register Item fails closed (hidden)', () => {
+  it('Given entitlements have not resolved / Then New Item fails closed (hidden)', () => {
     mockUseShellBridge.mockReturnValue({
       currentOrg: { id: 'org-1' }, effectiveFlagsLoaded: true, getFeatureState: () => 'enabled',
       permissionsLoaded: false, hasPermission: () => true, hasAnyPermission: () => true,
     });
     render(<ItemsPage />);
-    expect(screen.queryByText('Register Item')).not.toBeInTheDocument();
+    expect(screen.queryByText('New Item')).not.toBeInTheDocument();
   });
 });
 

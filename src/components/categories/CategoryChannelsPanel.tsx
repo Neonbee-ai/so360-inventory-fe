@@ -6,7 +6,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 // Instagram/Facebook/Globe are not used anywhere else here to vouch for them.
 import { Check, Loader2 } from 'lucide-react';
 import { inventoryService } from '../../services/inventoryService';
-import { Alert, Badge, Button, Checkbox, Switch, FieldGrid } from '@so360/design-system';
+import { Alert, Badge, Button, Checkbox, Switch, FieldGrid, Skeleton } from '@so360/design-system';
 
 export interface ChannelVisibilityRow {
     category_id: string;
@@ -207,9 +207,8 @@ const CategoryChannelsPanel: React.FC<Props> = ({ categoryId, canManage, onSaved
 
     if (isLoading) {
         return (
-            <div className="flex items-center gap-2 text-fg-subtle text-sm py-4">
-                <Loader2 size={14} className="animate-spin" />
-                Loading channels…
+            <div role="status" aria-busy="true" aria-label="Loading channels" data-testid="channels-loading">
+                <Skeleton.Cards count={3} />
             </div>
         );
     }

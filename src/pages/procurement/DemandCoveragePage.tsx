@@ -181,6 +181,7 @@ const DemandCoveragePage = () => {
                 />
             )}
             loading={loading && rows.length === 0}
+            loadingColumns={columns.length}
             isEmpty={!loading && !error && rows.length === 0}
             empty={<EmptyState title="No approved requisition lines need coverage." />}
         >

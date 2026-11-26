@@ -262,7 +262,9 @@ const PRListPage = () => {
                     </FeatureGate>
                 }
                 kpis={kpis}
+                kpisCollapsible
                 loading={loading}
+                loadingColumns={6}
                 isEmpty={!loading && !fetchError && prs.length === 0}
                 empty={<EmptyState title="No purchase requisitions found." />}
             >

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { procurementService } from '../../services/procurementService';
-import { Alert, Button, NumberInput, Select, SettingsCard, SettingsPageTemplate, Skeleton, toast, getErrorMessage } from '@so360/design-system';
+import { Alert, Button, NumberInput, Select, SettingsCard, SettingsPageTemplate, toast, getErrorMessage } from '@so360/design-system';
 
 /** Coverage settings: where stock is netted, the default purchase lead time and the consolidation window. */
 const CoverageSettingsPage = () => {
@@ -28,13 +28,13 @@ const CoverageSettingsPage = () => {
 
     return (
         <SettingsPageTemplate
+            loading={!form && !error}
             trail={[{ label: 'Inventory Settings', onClick: () => navigate('/inventory/settings') }]}
             title="Coverage Settings"
             description="How demand is netted against stock and supply."
         >
             <div className="flex flex-col gap-nb-4">
                 {error && <Alert variant="error">{error}</Alert>}
-                {!form && !error && <Skeleton />}
                 {form && (
                     <SettingsCard title="Coverage" description="Stock is only counted inside the scope below; quarantined warehouses and reserved stock never count.">
                         <div className="flex flex-col gap-nb-3">
