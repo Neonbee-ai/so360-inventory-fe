@@ -373,3 +373,35 @@ describe('ItemDetailPage', () => {
     });
   });
 });
+
+describe('ItemDetailPage lazy edit tabs', () => {
+  describe('Given the item opens in view mode', () => {
+    it('When loaded / Then no edit-tab chunk content is mounted', async () => {
+      render(<ItemDetailPage />);
+      await waitFor(() => expect(screen.getAllByText('Premium Widget').length).toBeGreaterThan(0));
+      for (const id of ['basic-tab', 'pricing-tab', 'media-tab', 'category-tab', 'stock-tab', 'shipping-tab', 'attributes-tab']) {
+        expect(screen.queryByTestId(id)).not.toBeInTheDocument();
+      }
+    });
+  });
+
+  describe('Given the user enters edit mode', () => {
+    it('When Edit is clicked / Then the default Basic tab loads behind the Suspense fallback', async () => {
+      render(<ItemDetailPage />);
+      await waitFor(() => expect(screen.getAllByText('Premium Widget').length).toBeGreaterThan(0));
+      fireEvent.click(screen.getByText('Edit'));
+      expect(await screen.findByTestId('basic-tab')).toBeInTheDocument();
+    });
+
+    it('When the Pricing tab is chosen / Then the lazily loaded PricingTab replaces Basic', async () => {
+      render(<ItemDetailPage />);
+      await waitFor(() => expect(screen.getAllByText('Premium Widget').length).toBeGreaterThan(0));
+      fireEvent.click(screen.getByText('Edit'));
+      await screen.findByTestId('basic-tab');
+      fireEvent.click(screen.getByText('Pricing'));
+      expect(await screen.findByTestId('pricing-tab')).toBeInTheDocument();
+      expect(screen.queryByTestId('basic-tab')).not.toBeInTheDocument();
+    });
+  });
+});
+
