@@ -76,7 +76,7 @@ describe('Given StockLocationsPage warehouse-quota gating', () => {
       mockGetQuota.mockReturnValue(quota({ is_unlimited: true, limit: -1 }));
       mockGetLocations.mockResolvedValue(warehouses(4));
       render(<StockLocationsPage />);
-      await waitFor(() => expect(screen.getByText('Warehouses')).toBeInTheDocument());
+      await waitFor(() => expect(screen.getByRole('heading', { level: 1, name: 'Warehouses' })).toBeInTheDocument());
       expect(screen.queryByTestId('warehouse-limit-banner')).not.toBeInTheDocument();
       expect(createBtn()).toBeEnabled();
     });
@@ -107,7 +107,7 @@ describe('Given StockLocationsPage warehouse-quota gating', () => {
       mockGetQuota.mockReturnValue(quota({ is_unlimited: false, limit: 0, current_usage: 3 }));
       mockGetLocations.mockResolvedValue(warehouses(3));
       render(<StockLocationsPage />);
-      await waitFor(() => expect(screen.getByText('Warehouses')).toBeInTheDocument());
+      await waitFor(() => expect(screen.getByRole('heading', { level: 1, name: 'Warehouses' })).toBeInTheDocument());
       expect(screen.queryByTestId('warehouse-limit-banner')).not.toBeInTheDocument();
       expect(createBtn()).toBeEnabled();
     });
@@ -118,7 +118,7 @@ describe('Given StockLocationsPage warehouse-quota gating', () => {
       mockGetQuota.mockReturnValue(null);
       mockGetLocations.mockResolvedValue(warehouses(1));
       render(<StockLocationsPage />);
-      await waitFor(() => expect(screen.getByText('Warehouses')).toBeInTheDocument());
+      await waitFor(() => expect(screen.getByRole('heading', { level: 1, name: 'Warehouses' })).toBeInTheDocument());
       expect(screen.queryByTestId('warehouse-limit-banner')).not.toBeInTheDocument();
       expect(createBtn()).toBeEnabled();
     });

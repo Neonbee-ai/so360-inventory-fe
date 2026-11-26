@@ -237,7 +237,7 @@ export default function Vendor360Page() {
       activeTab={tab}
       onTabChange={setTab}
     >
-      {renderTab(tab)}
+      {data ? renderTab(tab) : null}
     </DetailPageTemplate>
   );
 }

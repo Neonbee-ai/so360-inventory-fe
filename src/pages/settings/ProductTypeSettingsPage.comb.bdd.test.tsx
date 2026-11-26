@@ -76,11 +76,13 @@ describe('Given the Comb ProductTypeSettingsPage', () => {
     expect(screen.getByText('Electronics')).toBeInTheDocument();
   });
 
-  it('Given the API is pending / When rendered / Then a busy skeleton shows and no title', () => {
+  it('Given the API is pending / When rendered / Then the header stays, one Loading status and a busy skeleton replace the content', () => {
     mockGetAll.mockReturnValue(new Promise(() => {}));
     const { container } = render(<ProductTypeSettingsPage />);
     expect(container.querySelector('[aria-busy="true"]')).not.toBeNull();
-    expect(screen.queryByText('Product Types')).toBeNull();
+    expect(screen.getAllByText('Loading…')).toHaveLength(1);
+    expect(screen.getByText('Product Types')).toBeInTheDocument();
+    expect(screen.queryByText('Electronics')).toBeNull();
   });
 
   it('Given no type selected / When rendered / Then the empty state prompts selection', async () => {

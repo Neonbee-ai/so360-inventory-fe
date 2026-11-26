@@ -35,10 +35,13 @@ describe('ItemsPage on the Comb list floorplan', () => {
     expect(document.querySelector('[data-slot="primary"]')).toHaveTextContent('New Item');
   });
 
-  it('Given the fetch is pending / When rendered / Then a loading state is shown instead of rows', () => {
+  it('Given the fetch is pending / When rendered / Then the template is busy with one Loading status and layout-matching skeleton rows instead of rows', () => {
     mockGetItems.mockReturnValue(new Promise(() => {}));
     render(<ItemsPage />);
-    expect(screen.getByTestId('datatable-loading')).toBeInTheDocument();
+    expect(document.querySelector('[data-template="list"]')).toHaveAttribute('aria-busy', 'true');
+    expect(screen.getAllByText('Loading…')).toHaveLength(1);
+    expect(screen.getAllByTestId('list-skeleton-row').length).toBeGreaterThan(0);
+    expect(screen.queryByTestId('row-i1')).toBeNull();
   });
 
   it('Given no items exist / When loaded / Then the empty state is shown', async () => {
