@@ -23,7 +23,6 @@ export default defineConfig(({ mode }) => {
                 react: { singleton: true, requiredVersion: '^19.2.0' },
                 'react-dom': { singleton: true, requiredVersion: '^19.2.0' },
                 'react-router-dom': { singleton: true, requiredVersion: '^7.12.0' },
-                'framer-motion': { singleton: true },
                 '@so360/shell-context': { singleton: true },
                 '@so360/design-system': { singleton: true },
                 '@so360/event-bus': { singleton: true },
@@ -37,6 +36,19 @@ export default defineConfig(({ mode }) => {
         minify: 'esbuild',
         cssCodeSplit: false,
         emptyOutDir: false,
+        rollupOptions: {
+            output: {
+                // lucide-react icons -> ONE `icons` chunk (instead of many single-icon
+                // micro-chunks). The federation importShared runtime keeps its own chunk:
+                // otherwise Rollup hoists it into a vendor chunk and the exposed ./App
+                // statically imports that whole chunk on every open.
+                manualChunks(id: string) {
+                    if (id.includes('__federation_fn_import')) return '__federation_fn_import';
+                    if (id.includes('node_modules/lucide-react')) return 'icons';
+                    return undefined;
+                },
+            },
+        },
     },
     server: {
         port: 3005,

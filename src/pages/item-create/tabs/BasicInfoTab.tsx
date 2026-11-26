@@ -1,4 +1,5 @@
 import React from 'react';
+import { Check } from 'lucide-react';
 import FormSection from '../components/FormSection';
 import { ITEM_CLASSIFICATIONS, ItemClassification } from '../../../types/itemTypes';
 import { Unit } from '../../../types/inventory';
@@ -45,7 +46,7 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
     return (
         <div className="space-y-nb-6">
             <FormSection title="Identification">
-                <FieldGrid columns={3}>
+                <FieldGrid columns={3} className="items-start">
                     <TextField
                         label="Item Name"
                         name="name"
@@ -56,8 +57,17 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
                         placeholder="e.g. MacBook Pro 14"
                     />
                     <div className="min-w-0">
+                        <TextField
+                            label="SKU"
+                            name="sku"
+                            required
+                            value={sku}
+                            onChange={e => updateField('sku', e.target.value)}
+                            error={errorFor('sku')}
+                            placeholder="e.g. LAP-001"
+                        />
                         {(isSkuAutoEnabled || (isSkuManuallyEdited && onResetSku)) && (
-                            <div className="flex flex-wrap items-center justify-end gap-nb-2 mb-nb-1">
+                            <div className="flex flex-wrap items-center justify-end gap-nb-2 mt-nb-1">
                                 {isSkuAutoEnabled && (
                                     <span data-testid="sku-autogen-badge">
                                         <Badge tone={isSkuManuallyEdited ? 'neutral' : 'primary'} size="sm">
@@ -72,15 +82,6 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
                                 )}
                             </div>
                         )}
-                        <TextField
-                            label="SKU"
-                            name="sku"
-                            required
-                            value={sku}
-                            onChange={e => updateField('sku', e.target.value)}
-                            error={errorFor('sku')}
-                            placeholder="e.g. LAP-001"
-                        />
                     </div>
                     <TextField
                         label="Barcode / UPC"
@@ -168,15 +169,17 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
                                 type="button"
                                 aria-pressed={isSelected}
                                 onClick={() => updateField('type', cls.value)}
-                                className={`p-nb-3 rounded-nb-md border text-left ${
-                                    isSelected ? 'border-primary bg-surface-raised' : 'border-line-strong bg-surface hover:bg-surface-raised'
+                                className={`relative p-nb-3 rounded-nb-lg border text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${
+                                    isSelected ? 'border-primary ring-2 ring-primary bg-primary/10' : 'border-line-strong bg-surface hover:border-primary/50 hover:bg-surface-raised'
                                 }`}
+                                data-selected={isSelected ? 'true' : 'false'}
                             >
                                 <div className="flex items-center gap-nb-2 mb-nb-1">
                                     <Icon size={16} className={isSelected ? 'text-primary' : 'text-fg-subtle'} />
                                     <span className={`text-nb-body font-semibold ${isSelected ? 'text-primary' : 'text-fg-muted'}`}>{cls.label}</span>
                                 </div>
                                 <p className="text-nb-caption text-fg-subtle">{cls.description}</p>
+                                {isSelected && <Check size={14} aria-hidden="true" data-testid="classification-check" className="absolute top-nb-2 right-nb-2 text-primary" />}
                             </button>
                         );
                     })}

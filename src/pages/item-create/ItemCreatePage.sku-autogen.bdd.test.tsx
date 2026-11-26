@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent, act } from '@testing-library/react';
 import React from 'react';
 import ItemCreatePage from './ItemCreatePage';
 import { inventoryService } from '../../services/inventoryService';
@@ -188,6 +188,8 @@ describe('ItemCreatePage — SKU Auto-Generation & Manual Override (P0)', () => 
       await waitFor(() => {
         expect(mockGetNumberingSettings).toHaveBeenCalled();
       });
+      // Let the (disabled) numbering settings land before typing; until then the form defaults to auto-generation.
+      await act(async () => { await new Promise((r) => setTimeout(r, 0)); });
 
       const nameInput = screen.getByPlaceholderText(/macbook pro 14/i);
       fireEvent.change(nameInput, { target: { value: 'Manual SKU Item' } });
