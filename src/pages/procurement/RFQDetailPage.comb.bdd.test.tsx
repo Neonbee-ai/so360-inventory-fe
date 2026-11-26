@@ -50,7 +50,7 @@ describe('RFQDetailPage (Comb)', () => {
   it('Given the RFQ is still loading, When rendered, Then the skeleton slot is shown', () => {
     mockGetRFQ.mockReturnValue(new Promise(() => {}));
     const { container } = render(<RFQDetailPage />);
-    expect(container.querySelector('[data-slot="skeleton"]')).toBeTruthy();
+    expect(container.querySelector('[data-slot="loading"]')).toBeTruthy();
   });
 
   it('Given the RFQ fails to load, When rendered, Then an empty state with a back action shows', async () => {

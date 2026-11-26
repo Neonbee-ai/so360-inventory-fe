@@ -251,7 +251,7 @@ const ItemAttributeSettingsSection: React.FC<Props> = ({ categories, canManage }
             )}
 
             {loading ? (
-                <div role="status" aria-busy="true" aria-label="Loading attributes"><Skeleton.Form count={4} columns={1} /></div>
+                <div role="status" aria-busy="true" aria-label="Loading attributes"><Skeleton.Form announce={false} count={4} columns={1} /></div>
             ) : (
                 <>
                     {defs.length > 0 ? (

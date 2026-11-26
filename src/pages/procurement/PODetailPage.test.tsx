@@ -80,7 +80,7 @@ describe('PODetailPage', () => {
       mockGetPODetail.mockReturnValue(new Promise(() => {}));
       const { container } = render(<PODetailPage />);
       // Comb DetailPageTemplate renders a skeleton while loading
-      expect(container.querySelector('[data-slot="skeleton"]')).toBeInTheDocument();
+      expect(container.querySelector('[data-slot="loading"]')).toBeInTheDocument();
     });
   });
 

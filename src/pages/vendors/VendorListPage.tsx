@@ -310,7 +310,6 @@ const VendorListPage = () => {
                     />
                 }
             >
-                {loading && <span className="sr-only" role="status">Loading vendor ecosystem...</span>}
 
                 {error && <Alert variant="error" onDismiss={() => setError(null)}>{error}</Alert>}
                 {successMessage && <Alert variant="success">{successMessage}</Alert>}

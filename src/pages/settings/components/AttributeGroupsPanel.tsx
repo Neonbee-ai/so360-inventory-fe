@@ -434,7 +434,7 @@ const AttributeGroupsPanel: React.FC<AttributeGroupsPanelProps> = ({
 
             {isLoading ? (
                 <div role="status" aria-busy="true" aria-label="Loading groups">
-                    <Skeleton.Table count={4} columns={3} />
+                    <Skeleton.Table announce={false} count={4} columns={3} />
                 </div>
             ) : orderedGroups.length === 0 ? (
                 <EmptyState

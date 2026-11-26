@@ -61,7 +61,7 @@ describe('PRDetailPage (Comb)', () => {
   it('Given the PR is loading, When rendered, Then the skeleton slot shows', () => {
     mockGetPRDetail.mockReturnValue(new Promise(() => {}));
     const { container } = render(<PRDetailPage />);
-    expect(container.querySelector('[data-slot="skeleton"]')).toBeTruthy();
+    expect(container.querySelector('[data-slot="loading"]')).toBeTruthy();
   });
 
   it('Given a PR with no approval gates, When it loads, Then the empty workflow message shows', async () => {

@@ -182,8 +182,10 @@ const DemandCoveragePage = () => {
             )}
             loading={loading && rows.length === 0}
             loadingColumns={columns.length}
-            kpisCollapsible
-            kpis={(
+            isEmpty={!loading && !error && rows.length === 0}
+            empty={<EmptyState title="No approved requisition lines need coverage." />}
+        >
+            <div className="flex flex-col gap-nb-4">
                 <Grid columns="auto" data-testid="coverage-kpis">
                     {[
                         { label: 'Fully Covered', value: summary.fully_covered ?? 0 },
@@ -194,11 +196,6 @@ const DemandCoveragePage = () => {
                         <GridItem key={k.label} span={3}><KpiCard label={k.label} value={k.value} /></GridItem>
                     ))}
                 </Grid>
-            )}
-            isEmpty={!loading && !error && rows.length === 0}
-            empty={<EmptyState title="No approved requisition lines need coverage." />}
-        >
-            <div className="flex flex-col gap-nb-4">
                 {error && <Alert variant="error">{error}</Alert>}
                 {staleCount > 0 && (
                     <Alert variant="warning">{staleCount} line(s) were calculated before stock, reservations or purchase orders changed. Recalculate before deciding.</Alert>

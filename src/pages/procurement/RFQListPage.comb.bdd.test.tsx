@@ -53,7 +53,7 @@ describe('RFQListPage on Comb ListPageTemplate', () => {
   it('Given the request is pending / When rendered / Then the skeleton is shown', () => {
     mockGetRFQs.mockReturnValue(new Promise(() => {}));
     render(<RFQListPage />);
-    expect(document.querySelector('[data-slot="skeleton"]')).not.toBeNull();
+    expect(document.querySelector('[data-slot="loading"]')).not.toBeNull();
   });
 
   it('Given no RFQs / When loaded / Then the empty state is shown', async () => {

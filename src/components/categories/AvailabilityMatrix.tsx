@@ -294,7 +294,7 @@ export const AvailabilityMatrix: React.FC<AvailabilityMatrixProps> = ({
     if (loading) {
         return (
             <div role="status" aria-busy="true" aria-label="Loading availability" data-testid="availability-loading">
-                <Skeleton.Table count={6} columns={5} />
+                <Skeleton.Table announce={false} count={6} columns={5} />
             </div>
         );
     }
@@ -322,7 +322,7 @@ export const AvailabilityMatrix: React.FC<AvailabilityMatrixProps> = ({
 
             {towerLoading ? (
                 <div role="status" aria-busy="true" aria-label="Loading tower" data-testid="tower-loading">
-                    <Skeleton.Table count={5} columns={6} header={false} />
+                    <Skeleton.Table announce={false} count={5} columns={6} header={false} />
                 </div>
             ) : grid.floors.length === 0 ? (
                 <div data-testid="availability-empty">

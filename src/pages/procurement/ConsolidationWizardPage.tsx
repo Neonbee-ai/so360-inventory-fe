@@ -73,8 +73,6 @@ const ConsolidationWizardPage = () => {
         }
     };
 
-    const body = (content: React.ReactNode) => content;
-
     return (
         <WizardPageTemplate
             loading={groups === null && !error}
@@ -90,7 +88,7 @@ const ConsolidationWizardPage = () => {
                     id: 'select',
                     label: 'Select lines',
                     validate: () => (chosen.length > 0 ? true : 'Select at least one requisition line'),
-                    content: body(error ? <Alert variant="error">{error}</Alert> : (
+                    content: (error ? <Alert variant="error">{error}</Alert> : (
                         lines.length === 0 ? <EmptyState title="Nothing is waiting to be bought." /> : (
                             <div className="flex flex-col gap-nb-4">
                                 {(groups || []).map((g) => (

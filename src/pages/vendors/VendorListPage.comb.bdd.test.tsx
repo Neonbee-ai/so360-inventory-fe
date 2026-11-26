@@ -67,7 +67,7 @@ describe('VendorListPage (Comb)', () => {
   it('Given a pending request / When loading / Then loading status is announced', () => {
     mockGetVendors.mockReturnValue(new Promise(() => {}));
     render(<VendorListPage />);
-    expect(screen.getByRole('status')).toHaveTextContent('Loading vendor ecosystem...');
+    expect(screen.getByTestId('page-loading-status')).toHaveTextContent('Loading…');
   });
 
   it('Given no vendors / When loaded / Then the empty state is shown', async () => {

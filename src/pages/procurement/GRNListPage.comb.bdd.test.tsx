@@ -62,7 +62,7 @@ describe('GRNListPage on Comb ListPageTemplate', () => {
   it('Given the request is pending / When rendered / Then the skeleton shows and no table', () => {
     mockGetGRNs.mockReturnValue(new Promise(() => {}));
     render(<GRNListPage />);
-    expect(document.querySelector('[data-slot="skeleton"]')).not.toBeNull();
+    expect(document.querySelector('[data-slot="loading"]')).not.toBeNull();
     expect(screen.queryByTestId('grn-table')).toBeNull();
   });
 

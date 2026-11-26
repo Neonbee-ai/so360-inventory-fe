@@ -100,7 +100,7 @@ export const DeveloperCard: React.FC<DeveloperCardProps> = ({ partnerId, project
     if (loading) {
         return (
             <div role="status" aria-busy="true" aria-label="Loading developer" data-testid="developer-loading">
-                <Skeleton.Detail count={1} />
+                <Skeleton.Detail announce={false} count={1} />
             </div>
         );
     }

@@ -168,7 +168,7 @@ const MfeShellInitializer = ({ children }: { children: React.ReactNode }) => {
     if (!isSynced) {
         return (
             <div role="status" aria-busy="true" aria-label="Connecting to shell">
-                <Skeleton.Page template="list" />
+                <Skeleton.Page announce={false} template="list" />
             </div>
         );
     }
@@ -185,7 +185,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                 <main className="w-full">
                     <Suspense fallback={
                         <div role="status" aria-busy="true" aria-label="Loading Inventory Module">
-                            <Skeleton.Page template="list" />
+                            <Skeleton.Page announce={false} template="list" />
                         </div>
                     }>
                         {children}

@@ -208,7 +208,7 @@ const CategoryChannelsPanel: React.FC<Props> = ({ categoryId, canManage, onSaved
     if (isLoading) {
         return (
             <div role="status" aria-busy="true" aria-label="Loading channels" data-testid="channels-loading">
-                <Skeleton.Cards count={3} />
+                <Skeleton.Cards announce={false} count={3} />
             </div>
         );
     }

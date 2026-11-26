@@ -40,7 +40,7 @@ describe('QualityInspectionPage (Comb)', () => {
   it('Given a slow API / When loading / Then the list skeleton shows', () => {
     mockGetInspections.mockReturnValue(new Promise(() => {}));
     const { container } = render(<QualityInspectionPage />);
-    expect(container.querySelector('[data-slot="skeleton"]')).toBeInTheDocument();
+    expect(container.querySelector('[data-slot="loading"]')).toBeInTheDocument();
   });
 
   it('Given no inspections / When loaded / Then the empty state shows', async () => {

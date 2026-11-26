@@ -33,7 +33,7 @@ const ProductTypePicker: React.FC<ProductTypePickerProps> = ({ value, onChange }
     };
 
     if (loading) {
-        return <div role="status" aria-busy="true" aria-label="Loading product types"><Skeleton variant="rect" className="h-nb-8 w-full" /></div>;
+        return <div role="status" aria-busy="true" aria-label="Loading product types"><Skeleton announce={false} variant="rect" className="h-nb-8 w-full" /></div>;
     }
 
     if (types.length === 0) {

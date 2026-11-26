@@ -129,8 +129,14 @@ const SalesDemandPage = () => {
                 )}
                 loading={loading}
                 loadingColumns={columns.length}
-                kpisCollapsible
-                kpis={(
+                isEmpty={!loading && !error && orders.length === 0}
+                empty={(
+                    <EmptyState
+                        title={onlyShort ? 'Every confirmed order is covered by stock or existing purchase orders.' : 'No confirmed sales orders.'}
+                    />
+                )}
+            >
+                <div className="flex flex-col gap-nb-4">
                     <Grid columns="auto" data-testid="sales-demand-kpis">
                         {[
                             { label: 'Orders Shown', value: summary.order_count ?? 0 },
@@ -143,15 +149,6 @@ const SalesDemandPage = () => {
                             </GridItem>
                         ))}
                     </Grid>
-                )}
-                isEmpty={!loading && !error && orders.length === 0}
-                empty={(
-                    <EmptyState
-                        title={onlyShort ? 'Every confirmed order is covered by stock or existing purchase orders.' : 'No confirmed sales orders.'}
-                    />
-                )}
-            >
-                <div className="flex flex-col gap-nb-4">
                     {error && <Alert variant="error">{error}</Alert>}
                     <DataTable
                         data-testid="sales-demand-table"

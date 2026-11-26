@@ -52,7 +52,7 @@ describe('PODetailPage (Comb)', () => {
   it('Given a slow fetch / When loading / Then a skeleton is shown', () => {
     mockGetPODetail.mockReturnValue(new Promise(() => {}));
     const { container } = render(<PODetailPage />);
-    expect(container.querySelector('[data-slot="skeleton"]')).toBeInTheDocument();
+    expect(container.querySelector('[data-slot="loading"]')).toBeInTheDocument();
   });
 
   it('Given a failed fetch / When Back is clicked / Then it navigates to the PO list', async () => {
@@ -72,7 +72,7 @@ describe('PODetailPage (Comb)', () => {
     const { container } = render(<PODetailPage />);
     expect(await screen.findByText(/Record not found/i)).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Purchase Order' })).toBeInTheDocument();
-    expect(container.querySelector('[data-slot="skeleton"]')).not.toBeInTheDocument();
+    expect(container.querySelector('[data-slot="loading"]')).not.toBeInTheDocument();
   });
 
   it('Given the API answers 400 for a malformed id / When loaded / Then it shows "PO not found"', async () => {

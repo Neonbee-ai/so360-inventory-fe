@@ -54,7 +54,7 @@ export const UnitAllocationSection: React.FC<UnitAllocationSectionProps> = ({ it
     if (loading) {
         return (
             <div role="status" aria-busy="true" aria-label="Loading agents" data-testid="unit-allocation-loading">
-                <Skeleton.Table count={3} columns={3} />
+                <Skeleton.Table announce={false} count={3} columns={3} />
             </div>
         );
     }

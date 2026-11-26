@@ -280,7 +280,7 @@ describe('Given ContractsPage', () => {
 
     render(<ContractsPage />);
 
-    expect(screen.getByText(/Loading contracts/i)).toBeInTheDocument();
+    expect(screen.getByTestId('page-loading-status')).toHaveTextContent('Loading…');
   });
 
   it('Given no contracts exist / When loaded / Then an empty state message is shown', async () => {
@@ -329,7 +329,7 @@ describe('Given VendorDetailPage', () => {
 
     const { container } = render(<VendorDetailPage />);
 
-    expect(container.querySelector('[data-slot="skeleton"]')).toBeInTheDocument();
+    expect(container.querySelector('[data-slot="loading"]')).toBeInTheDocument();
   });
 
   it('Given vendor data is fetched / When rendered / Then vendor name, email and phone are shown', async () => {

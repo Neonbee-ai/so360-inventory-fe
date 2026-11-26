@@ -67,7 +67,7 @@ describe('PRListPage on Comb ListPageTemplate', () => {
   it('Given the request is pending / When rendered / Then the skeleton shows', () => {
     mockGetPRs.mockReturnValue(new Promise(() => {}));
     render(<PRListPage />);
-    expect(document.querySelector('[data-slot="skeleton"]')).not.toBeNull();
+    expect(document.querySelector('[data-slot="loading"]')).not.toBeNull();
   });
 
   it('Given no requisitions exist / When loaded / Then the empty state is shown', async () => {

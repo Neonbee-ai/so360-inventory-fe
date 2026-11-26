@@ -263,7 +263,7 @@ describe('VendorListPage — vendor count display', () => {
 
       renderPage();
 
-      expect(screen.getByText('Loading vendor ecosystem...')).toBeDefined();
+      expect(screen.getByTestId('page-loading-status')).toHaveTextContent('Loading…');
     });
   });
 

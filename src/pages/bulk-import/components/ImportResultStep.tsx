@@ -22,9 +22,9 @@ interface Props {
 const ImportResultStep: React.FC<Props> = ({ result, loading, submittedRows, onGoToItems, onReset, onNavigateToItem }) => {
     if (loading) {
         return (
-            <div className="flex flex-col items-center gap-nb-4 py-nb-10">
-                <div role="status" aria-label="Importing" className="w-full"><Skeleton.Table count={3} columns={3} /></div>
-                <p className="text-fg-muted text-nb-caption" aria-busy="true">Importing {submittedRows.length} items…</p>
+            <div role="status" aria-busy="true" aria-label="Importing" className="flex flex-col items-center gap-nb-4 py-nb-10">
+                <Skeleton.Table announce={false} count={3} columns={3} className="w-full" />
+                <p className="text-fg-muted text-nb-caption">Importing {submittedRows.length} items…</p>
             </div>
         );
     }

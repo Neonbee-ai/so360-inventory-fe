@@ -61,7 +61,7 @@ describe('VendorReturnsPage (Comb)', () => {
     it('Given the request is pending, When rendered, Then the loading skeleton is shown', () => {
         mockGetReturns.mockReturnValue(new Promise(() => {}));
         const { container } = render(<VendorReturnsPage />);
-        expect(container.querySelector('[data-slot="skeleton"]')).not.toBeNull();
+        expect(container.querySelector('[data-slot="loading"]')).not.toBeNull();
     });
 
     it('Given no returns, When loaded, Then the empty state is shown', async () => {

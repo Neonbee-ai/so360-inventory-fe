@@ -163,7 +163,7 @@ describe('ItemDetailPage', () => {
       mockGetItem.mockReturnValue(new Promise(() => {}));
       mockGetLedger.mockReturnValue(new Promise(() => {}));
       render(<ItemDetailPage />);
-      expect(document.querySelector('[data-slot="skeleton"]')).toBeInTheDocument();
+      expect(document.querySelector('[data-slot="loading"]')).toBeInTheDocument();
     });
   });
 

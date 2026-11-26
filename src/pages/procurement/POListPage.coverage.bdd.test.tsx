@@ -237,7 +237,7 @@ describe('POListPage — permission-aware loading', () => {
       renderPage();
       await settled();
       expect(h.getPOs).not.toHaveBeenCalled();
-      expect(document.querySelector('[data-slot="skeleton"]')).toBeInTheDocument();
+      expect(document.querySelector('[data-slot="loading"]')).toBeInTheDocument();
     });
   });
 

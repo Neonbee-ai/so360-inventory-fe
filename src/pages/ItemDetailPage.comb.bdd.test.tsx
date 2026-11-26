@@ -191,7 +191,7 @@ describe('ItemDetailPage (Comb)', () => {
     mockGetItem.mockReturnValue(new Promise(() => {}));
     mockGetLedger.mockReturnValue(new Promise(() => {}));
     render(<ItemDetailPage />);
-    expect(document.querySelector('[data-slot="skeleton"]')).toBeInTheDocument();
+    expect(document.querySelector('[data-slot="loading"]')).toBeInTheDocument();
   });
 
   it('Given no movements / When opening the Ledger tab / Then shows the empty state', async () => {

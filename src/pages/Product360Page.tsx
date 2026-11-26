@@ -60,7 +60,7 @@ export default function Product360Page() {
     <DetailPageTemplate
       title={data?.profile?.name || 'Product 360'}
       trail={trail}
-      loading={!data}
+      loading={!!id && !data}
       meta={data?.profile?.sku ? `SKU ${data.profile.sku}` : undefined}
       secondaryActions={[<Button key="back" variant="secondary" onClick={() => navigate(`/inventory/items/${id}`)}>Back to item</Button>]}
     >

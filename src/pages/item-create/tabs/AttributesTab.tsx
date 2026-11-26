@@ -58,7 +58,7 @@ const AttributesTab: React.FC<AttributesTabProps> = ({ product_type_id, custom_a
     }
 
     if (loading) {
-        return <div role="status" aria-busy="true" aria-label="Loading attributes"><Skeleton.Fields count={4} /></div>;
+        return <div role="status" aria-busy="true" aria-label="Loading attributes"><Skeleton.Fields announce={false} count={4} /></div>;
     }
 
     if (!productType || !productType.product_type_attributes || productType.product_type_attributes.length === 0) {
