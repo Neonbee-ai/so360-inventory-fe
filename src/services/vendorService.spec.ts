@@ -10,6 +10,7 @@ beforeEach(() => {
   inventoryService.setTenantId('t-1');
   inventoryService.setAccessToken('tok');
   vendorService.setUserId('user-1');
+  vendorService.clearLookupCache();
 });
 
 afterEach(() => {
@@ -45,6 +46,42 @@ describe('vendorService', () => {
     it('When API fails / Then throws error', async () => {
       mockFetch.mockReturnValue(jsonFail(500, 'Server error'));
       await expect(vendorService.getVendors()).rejects.toThrow('Server error');
+    });
+
+    it('When called twice within the TTL / Then one request serves both (cached lookup)', async () => {
+      mockFetch.mockReturnValue(jsonOk([{ id: 'v1' }]));
+      await vendorService.getVendors();
+      await vendorService.getVendors();
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+
+    it('When called concurrently / Then requests coalesce into one', async () => {
+      mockFetch.mockReturnValue(jsonOk([{ id: 'v1' }]));
+      await Promise.all([vendorService.getVendors(), vendorService.getVendors()]);
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+
+    it('When a failed call is followed by a retry / Then the failure is not cached', async () => {
+      mockFetch.mockReturnValueOnce(jsonFail(500, 'boom')).mockReturnValueOnce(jsonOk([{ id: 'v1' }]));
+      await expect(vendorService.getVendors()).rejects.toThrow('boom');
+      const retry = await vendorService.getVendors();
+      expect(retry[0].id).toBe('v1');
+    });
+
+    it('When a vendor is created between reads / Then the next read refetches', async () => {
+      mockFetch.mockReturnValue(jsonOk([{ id: 'v1' }]));
+      await vendorService.getVendors();
+      await vendorService.createVendor({ name: 'N' });
+      await vendorService.getVendors();
+      expect(mockFetch).toHaveBeenCalledTimes(3);
+    });
+
+    it('When clearLookupCache is called / Then the next read refetches', async () => {
+      mockFetch.mockReturnValue(jsonOk([{ id: 'v1' }]));
+      await vendorService.getVendors();
+      vendorService.clearLookupCache();
+      await vendorService.getVendors();
+      expect(mockFetch).toHaveBeenCalledTimes(2);
     });
   });
 
