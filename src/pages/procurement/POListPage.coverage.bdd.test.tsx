@@ -413,16 +413,19 @@ describe('POListPage — purchase order table', () => {
 });
 
 describe('POListPage — quota and feature gating', () => {
-  it('Given quota data is available / When rendered / Then the quota bar reflects it', async () => {
+  it('Given quota data is available / When rendered / Then the header quota chip reflects it', async () => {
     h.getQuota.mockReturnValue({ current_usage: 3, limit: 10, is_unlimited: false });
     renderPage();
-    await waitFor(() => expect(screen.getByTestId('quota-bar')).toHaveTextContent('Purchase Orders:3/10:false'));
+    const chip = await screen.findByTestId('quota-chip');
+    expect(chip).toHaveTextContent('Purchase Orders');
+    expect(chip).toHaveTextContent('3 / 10');
+    expect(screen.getByRole('meter', { name: 'Purchase Orders: 3 of 10 used' })).toBeInTheDocument();
   });
 
-  it('Given no quota data / When rendered / Then no quota bar is shown', async () => {
+  it('Given no quota data / When rendered / Then no quota chip is shown', async () => {
     renderPage();
     await settled();
-    expect(screen.queryByTestId('quota-bar')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('quota-chip')).not.toBeInTheDocument();
   });
 
   it('Given the create-PO feature is locked / When Upgrade is clicked / Then billing opens', async () => {
