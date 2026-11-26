@@ -518,7 +518,7 @@ const POListPage = () => {
                         </div>
                     )
                 }
-                notice={renderNotice(fetchError ?? vendorNotice) || undefined}
+                notice={[renderNotice(fetchError), renderNotice(vendorNotice)].filter(Boolean)}
                 empty={<EmptyState title={searchTerm.trim() ? 'No purchase orders match your search.' : 'No purchase orders found.'} />}
             >
                 {showPrMenu && approvedPrs.length > 0 && (

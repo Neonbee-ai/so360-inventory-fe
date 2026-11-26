@@ -291,6 +291,15 @@ describe('POListPage — permission-aware loading', () => {
       expect(screen.getByText('Retry')).toBeInTheDocument();
     });
 
+    it('When both the PO list and vendors fail / Then both notices are shown together', async () => {
+      h.getPOs.mockRejectedValue(Object.assign(new Error('boom'), { status: 500 }));
+      renderPage();
+      await waitFor(() => {
+        expect(screen.getByText(/Failed to load purchase orders/i)).toBeInTheDocument();
+        expect(screen.getByText(/Vendor information could not be loaded/i)).toBeInTheDocument();
+      });
+    });
+
     it('When vendors fail genuinely / Then the failure is logged for diagnostics', async () => {
       renderPage();
       await waitFor(() => expect(consoleErr).toHaveBeenCalledWith('Failed to fetch vendors', expect.any(Error)));
