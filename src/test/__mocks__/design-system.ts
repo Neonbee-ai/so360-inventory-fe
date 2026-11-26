@@ -169,9 +169,9 @@ export const ListPageTemplate = (p: any) =>
     slot('kpis', p.kpis),
     React.createElement('div', { 'data-slot': 'toolbar' }, p.views ? React.createElement('div', { 'data-slot': 'views' }, p.views) : null, p.search, p.filterConfig ? React.createElement(ListFilters, p.filterConfig) : null, p.filters, p.toolbar, p.toolbarEnd),
     p.loading ? Skeleton.Table({ announce: false, 'data-slot': 'loading', count: p.loadingRows, itemTestId: 'list-skeleton-row' }) : [
-      p.isEmpty ? React.createElement('div', { key: 'empty', 'data-slot': 'empty' }, p.empty) : null,
+      (p.isEmpty ?? p.empty !== undefined) ? React.createElement('div', { key: 'empty', 'data-slot': 'empty' }, p.empty) : null,
       p.isFilteredEmpty ? React.createElement('div', { key: 'fe', 'data-slot': 'filtered-empty' }, React.createElement('button', { onClick: p.onClearFilters }, 'Clear filters')) : null,
-      !p.isEmpty ? React.createElement(React.Fragment, { key: 'children' }, p.children) : null],
+      !(p.isEmpty ?? p.empty !== undefined) ? React.createElement(React.Fragment, { key: 'children' }, p.children) : null],
     slot('pagination', p.pagination));
 export const DetailPageTemplate = (p: any) =>
   React.createElement('div', { 'data-template': 'detail', 'aria-busy': p.loading || undefined },
@@ -226,7 +226,7 @@ const SkeletonBase = ({ variant = 'text', lines = 1, announce = true, ...rest }:
 export const Skeleton = Object.assign(SkeletonBase, {
   Table: skPreset('table', 'skeleton-row', 6), Cards: skPreset('cards', 'skeleton-card', 3), Form: skPreset('form', 'skeleton-field', 6),
   Fields: skPreset('fields', 'skeleton-field', 4), Detail: skPreset('detail', 'skeleton-block', 3), Kpis: skPreset('kpis', 'skeleton-kpi', 4),
-  Settings: skPreset('settings', 'skeleton-card', 2), List: skPreset('list', 'skeleton-list-item', 8), Dashboard: skPreset('dashboard', null, 0),
+  Settings: skPreset('settings', 'skeleton-settings-card', 2), List: skPreset('list', 'skeleton-list-item', 8), Dashboard: skPreset('dashboard', null, 0),
   Canvas: skPreset('canvas', null, 0), Header: skPreset('header', null, 0), Toolbar: skPreset('toolbar', null, 0),
   Tabs: skPreset('tabs', null, 0), Aside: skPreset('aside', null, 0), Page: skPreset('page', null, 0),
 });
@@ -247,9 +247,9 @@ const mirrorQuota = (q: any) => {
   const ratio = limit > 0 ? used / limit : used > 0 ? 1 : 0;
   const upgrade = onUpgrade ?? onBuyMore;
   const name = isUnlimited ? `${label}: ${used} used, unlimited` : `${label}: ${used} of ${limit} used`;
-  return mkEl('span', { 'data-slot': 'quota', 'data-testid': (q as any)['data-testid'] ?? 'quota-chip', 'data-used': String(used), 'data-limit': String(limit), 'data-tone': isUnlimited ? 'unlimited' : ratio >= 1 ? 'danger' : ratio >= warnAt ? 'warning' : 'normal' },
+  return mkEl('span', { 'data-slot': 'quota', 'data-testid': (q as any)['data-testid'] ?? 'quota-chip', 'data-tone': isUnlimited ? 'unlimited' : ratio >= 1 ? 'danger' : ratio >= warnAt ? 'warning' : 'normal' },
     mkEl('span', null, label), mkEl('span', null, isUnlimited ? `${quotaNum(used)} / ∞` : `${quotaNum(used)} / ${quotaNum(limit)}`),
-    isUnlimited ? mkEl('span', { className: 'sr-only' }, name) : mkEl('span', { role: 'meter', 'aria-label': name, 'aria-valuemin': 0, 'aria-valuemax': limit, 'aria-valuenow': Math.min(used, limit) }),
+    isUnlimited ? mkEl('span', { className: 'sr-only' }, name) : mkEl('span', { role: 'meter', 'aria-label': name, 'aria-valuemin': 0, 'aria-valuemax': Math.max(limit, 1), 'aria-valuenow': Math.min(used, Math.max(limit, 1)) }),
     upgrade && !isUnlimited && (showBuyMore || ratio >= warnAt) ? mkEl('button', { type: 'button', 'data-slot': 'quota-upgrade', onClick: upgrade }, upgradeLabel) : null);
 };
 /** PageContainer: aria-busy + the ONE sr-only "Loading…" status while a template is loading. */
