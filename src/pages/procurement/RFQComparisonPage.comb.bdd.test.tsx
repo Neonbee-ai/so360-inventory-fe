@@ -40,7 +40,7 @@ describe('RFQComparisonPage (Comb)', () => {
   it('Given quotations, When it loads, Then the title and criteria rows show', async () => {
     render(<RFQComparisonPage />);
     expect(await screen.findByRole('heading', { name: 'Quotation Comparison' })).toBeTruthy();
-    expect(screen.getByText('Landed Total')).toBeTruthy();
+    expect(await screen.findByText('Landed Total')).toBeTruthy();
   });
 
   it('Given the comparison is loading, When rendered, Then the skeleton slot shows', () => {
