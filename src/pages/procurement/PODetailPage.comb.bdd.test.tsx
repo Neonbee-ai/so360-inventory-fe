@@ -14,6 +14,11 @@ vi.mock('../../services/procurementService', () => ({
     getDocumentTrace: () => Promise.resolve({ chain: [] }),
   },
 }));
+// These cases cover the legacy draft -> sent path; the PO approval / acknowledgement / closeout rollout flags are off.
+vi.mock('@so360/shell-context', async (importOriginal) => {
+  const actual: any = await importOriginal();
+  return { ...actual, useShell: () => ({ ...actual.useShell(), isFeatureEnabled: () => false }) };
+});
 vi.mock('react-router-dom', () => ({ useParams: () => ({ id: 'po-1' }), useNavigate: () => mockNavigate }));
 vi.mock('../../utils/formatters', () => ({
   useInventoryFormatters: () => ({

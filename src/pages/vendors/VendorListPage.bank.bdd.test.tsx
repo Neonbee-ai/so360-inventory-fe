@@ -8,6 +8,13 @@ const mockCreateBank = vi.fn();
 vi.mock('../../services/vendorService', () => ({
   vendorService: {
     getVendors: (...a: any[]) => mockGetVendors(...a),
+    // Paged read (perf): adapt the getVendors fixture the way the real service treats an old BE's bare array.
+    getVendorsPage: async () => {
+      const res = await mockGetVendors();
+      if (Array.isArray(res)) return { data: res, total: res.length, legacy: true };
+      const data = Array.isArray(res?.data) ? res.data : [];
+      return { data, total: typeof res?.total === 'number' ? res.total : data.length, legacy: false };
+    },
     createVendor: (...a: any[]) => mockCreateVendor(...a),
     deleteVendor: vi.fn(),
     createBankAccount: (...a: any[]) => mockCreateBank(...a),
@@ -22,7 +29,8 @@ vi.mock('@so360/design-system', async () => ({
   QuotaGate: ({ children }: any) => <>{children}</>,
   FeatureGate: ({ children }: any) => <>{children}</>,
 }));
-const mockFlag = vi.hoisted(() => vi.fn((_k: string) => true));
+// The quick-create modal is the legacy path; the Vendor Master flag (full form page) stays off here.
+const mockFlag = vi.hoisted(() => vi.fn((k: string) => k !== 'submodule:inventory:vendor_master'));
 vi.mock('@so360/shell-context', () => ({
   useShellBridge: () => ({
     isFeatureEnabled: mockFlag, currentOrg: { id: 'org-1', name: 'Test Org' },
@@ -56,7 +64,7 @@ function fillValidBank() {
 beforeEach(() => {
   vi.clearAllMocks();
   mockCan.mockImplementation(() => true);
-  mockFlag.mockImplementation(() => true);
+  mockFlag.mockImplementation((k) => k !== 'submodule:inventory:vendor_master');
   mockGetVendors.mockResolvedValue([]);
   mockCreateVendor.mockResolvedValue({ id: 'vendor-new' });
   mockCreateBank.mockResolvedValue({ id: 'acct-1' });
@@ -65,7 +73,7 @@ beforeEach(() => {
 describe('VendorListPage — bank details on create', () => {
   describe('Given the vendor bank flag is off', () => {
     it('When the create form opens / Then the bank option is not offered', async () => {
-      mockFlag.mockImplementation((k) => k !== 'submodule:inventory:vendor_bank_details');
+      mockFlag.mockImplementation((k) => k !== 'submodule:inventory:vendor_bank_details' && k !== 'submodule:inventory:vendor_master');
       await openForm();
       expect(field('add_bank_details')).toBeNull();
     });

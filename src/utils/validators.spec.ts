@@ -15,6 +15,7 @@ import {
     validateAddress,
     validateBarcode,
     validateCode,
+    validateHsnSac,
     validateName,
     validatePersonName,
     validatePhone,
@@ -339,5 +340,17 @@ describe('Given firstError and isClean', () => {
         const errors = { name: 'Name is required.', code: 'Code is required.' };
         expect(firstError(errors)).toBe('Name is required.');
         expect(isClean(errors)).toBe(false);
+    });
+});
+
+describe('Given validateHsnSac', () => {
+    it.each(['', '  ', '8517', '851712', '85171200', '7318.15'])('Given %j / Then accepted', (v) => {
+        expect(validateHsnSac(v)).toBeNull();
+    });
+    it.each(['85', '85171', '851712345'])('Given %j / Then length error', (v) => {
+        expect(validateHsnSac(v)).toMatch(/4, 6 or 8/);
+    });
+    it('Given letters / Then digits-only error', () => {
+        expect(validateHsnSac('85A7')).toMatch(/digits only/);
     });
 });

@@ -1,10 +1,12 @@
 import React, { Suspense, lazy } from 'react';
+import Vendor360Page from './pages/vendors/Vendor360Page';
 import { Routes, Route, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom';
 
 // Lazy load pages for performance
 const ItemsPage = lazy(() => import('./pages/ItemsPage'));
 const ItemCreatePage = lazy(() => import('./pages/item-create/ItemCreatePage'));
 const ItemDetailPage = lazy(() => import('./pages/ItemDetailPage'));
+const Product360Page = lazy(() => import('./pages/Product360Page'));
 const StockLocationsPage = lazy(() => import('./pages/StockLocationsPage'));
 const WarehouseDetailPage = lazy(() => import('./pages/WarehouseDetailPage'));
 const StockOverviewPage = lazy(() => import('./pages/StockOverviewPage'));
@@ -20,7 +22,20 @@ const GRNDetailPage = lazy(() => import('./pages/procurement/GRNDetailPage'));
 const GRNEntryPage = lazy(() => import('./pages/procurement/GRNEntryPage'));
 const VendorListPage = lazy(() => import('./pages/vendors/VendorListPage'));
 const VendorDetailPage = lazy(() => import('./pages/vendors/VendorDetailPage'));
+const VendorFormPage = lazy(() => import('./pages/vendors/VendorFormPage'));
 const ContractsPage = lazy(() => import('./pages/vendors/ContractsPage'));
+const ReviewQueuePage = lazy(() => import('./pages/vendors/ReviewQueuePage'));
+const ComplianceQueuePage = lazy(() => import('./pages/vendors/evidence/ComplianceQueuePage'));
+const VendorIntegrationExceptionsPage = lazy(() => import('./pages/vendors/outcomes/VendorIntegrationExceptionsPage'));
+const ProfileChangeRequestsPage = lazy(() => import('./pages/vendors/portal/ProfileChangeRequestsPage'));
+const ProfileChangeRequestDetailPage = lazy(() => import('./pages/vendors/portal/ProfileChangeRequestDetailPage'));
+const PayeeChangeApprovalsPage = lazy(() => import('./pages/vendors/finance/PayeeChangeApprovalsPage'));
+const PayeeChangeDetailPage = lazy(() => import('./pages/vendors/finance/PayeeChangeDetailPage'));
+const CorrectiveActionsListPage = lazy(() => import('./pages/vendors/quality/CorrectiveActionsListPage'));
+const CorrectiveActionDetailPage = lazy(() => import('./pages/vendors/quality/CorrectiveActionDetailPage'));
+const VendorGovernancePage = lazy(() => import('./pages/vendors/performance/VendorGovernancePage'));
+const ScorecardDefinitionsPage = lazy(() => import('./pages/vendors/performance/ScorecardDefinitionsPage'));
+const VendorConfigurationPage = lazy(() => import('./pages/vendors/VendorConfigurationPage'));
 const OpeningBalancePage = lazy(() => import('./pages/procurement/OpeningBalancePage'));
 const RFQListPage = lazy(() => import('./pages/procurement/RFQListPage'));
 const RFQDetailPage = lazy(() => import('./pages/procurement/RFQDetailPage'));
@@ -32,6 +47,20 @@ const ProcurementReportsPage = lazy(() => import('./pages/procurement/Procuremen
 const VendorPerformancePage = lazy(() => import('./pages/procurement/VendorPerformancePage'));
 const SerialRegisterPage = lazy(() => import('./pages/SerialRegisterPage'));
 const SalesDemandPage = lazy(() => import('./pages/procurement/SalesDemandPage'));
+const ProcurementExceptionsPage = lazy(() => import('./pages/procurement/ProcurementExceptionsPage'));
+const DemandCoveragePage = lazy(() => import('./pages/procurement/DemandCoveragePage'));
+const ConsolidationWizardPage = lazy(() => import('./pages/procurement/ConsolidationWizardPage'));
+const RFQFromDemandWizardPage = lazy(() => import('./pages/procurement/RFQFromDemandWizardPage'));
+const RFQAwardWizardPage = lazy(() => import('./pages/procurement/RFQAwardWizardPage'));
+const EvaluationSettingsPage = lazy(() => import('./pages/procurement/EvaluationSettingsPage'));
+const ApprovalPoliciesPage = lazy(() => import('./pages/procurement/ApprovalPoliciesPage'));
+const ExpeditingPage = lazy(() => import('./pages/procurement/ExpeditingPage'));
+const ExpectedReceiptsPage = lazy(() => import('./pages/procurement/ExpectedReceiptsPage'));
+const MatchWorkbenchPage = lazy(() => import('./pages/procurement/MatchWorkbenchPage'));
+const MatchCasePage = lazy(() => import('./pages/procurement/MatchCasePage'));
+const SupplierPerformancePage = lazy(() => import('./pages/procurement/SupplierPerformancePage'));
+const ReconciliationPage = lazy(() => import('./pages/procurement/ReconciliationPage'));
+const CoverageSettingsPage = lazy(() => import('./pages/procurement/CoverageSettingsPage'));
 const CategoriesPage = lazy(() => import('./pages/CategoriesPage'));
 const BulkImportPage = lazy(() => import('./pages/bulk-import/BulkImportPage'));
 
@@ -198,6 +227,7 @@ const App = () => {
                 <Route path="items/bulk-import" element={<PermissionGuard permission="items.import"><FeatureGate flagKey="action:inventory:bulk_import"><BulkImportPage /></FeatureGate></PermissionGuard>} />
                 <Route path="items/new" element={<PermissionGuard permission="items.create"><ItemCreatePage /></PermissionGuard>} />
                 <Route path="items/:id" element={<PermissionGuard permission="items.read"><ItemDetailPage /></PermissionGuard>} />
+                <Route path="items/:id/360" element={<PermissionGuard permission="items.read"><Product360Page /></PermissionGuard>} />
                 <Route path="locations" element={<PermissionGuard permission="warehouses.read"><FeatureGate flagKey="submodule:inventory:warehouses"><StockLocationsPage /></FeatureGate></PermissionGuard>} />
                 <Route path="warehouses/:id" element={<PermissionGuard permission="warehouses.read"><WarehouseDetailPage /></PermissionGuard>} />
                 <Route path="overview" element={<PermissionGuard permission="stock.view"><StockOverviewPage /></PermissionGuard>} />
@@ -208,6 +238,9 @@ const App = () => {
                 <Route path="adjustments" element={<Navigate to="../movements?type=adjustment" replace />} />
                 <Route path="transfers" element={<Navigate to="../movements?type=transfer" replace />} />
                 <Route path="settings" element={<PermissionGuard permission={['items.update', 'warehouses.update']}><SettingsPage /></PermissionGuard>} />
+                <Route path="settings/coverage" element={<PermissionGuard permission="items.update"><FeatureGate flagKey="submodule:inventory:demand_coverage"><CoverageSettingsPage /></FeatureGate></PermissionGuard>} />
+                <Route path="settings/evaluation" element={<PermissionGuard permission="items.update"><FeatureGate flagKey="submodule:inventory:sourcing_evaluation"><EvaluationSettingsPage /></FeatureGate></PermissionGuard>} />
+                <Route path="settings/approvals" element={<PermissionGuard permission="purchase_orders.approve"><FeatureGate flagKey="action:inventory:procurement:po_approval"><ApprovalPoliciesPage /></FeatureGate></PermissionGuard>} />
                 <Route path="settings/product-types" element={<PermissionGuard permission={['items.update', 'warehouses.update']}><FeatureGate flagKey="submodule:inventory:product_types"><ProductTypeSettingsPage /></FeatureGate></PermissionGuard>} />
                 <Route path="categories" element={<PermissionGuard permission="categories.read"><CategoriesPage /></PermissionGuard>} />
 
@@ -223,15 +256,37 @@ const App = () => {
                 <Route path="rfq" element={<PermissionGuard permission="purchase_orders.read"><FeatureGate flagKey="submodule:inventory:rfq"><RFQListPage /></FeatureGate></PermissionGuard>} />
                 <Route path="rfq/:id" element={<PermissionGuard permission="purchase_orders.read"><FeatureGate flagKey="submodule:inventory:rfq"><RFQDetailPage /></FeatureGate></PermissionGuard>} />
                 <Route path="rfq/:id/compare" element={<PermissionGuard permission="purchase_orders.read"><FeatureGate flagKey="submodule:inventory:rfq"><RFQComparisonPage /></FeatureGate></PermissionGuard>} />
+                <Route path="rfq/:id/award" element={<PermissionGuard permission="purchase_orders.create"><FeatureGate flagKey="submodule:inventory:sourcing_evaluation"><RFQAwardWizardPage /></FeatureGate></PermissionGuard>} />
                 <Route path="quality" element={<PermissionGuard permission="goods_receipts.read"><FeatureGate flagKey="submodule:inventory:quality"><QualityInspectionPage /></FeatureGate></PermissionGuard>} />
                 <Route path="returns" element={<PermissionGuard permission="goods_receipts.read"><FeatureGate flagKey="submodule:inventory:returns"><VendorReturnsPage /></FeatureGate></PermissionGuard>} />
                 <Route path="dashboard" element={<PermissionGuard permission="procurement_analytics.read"><FeatureGate flagKey="submodule:inventory:procurement"><ProcurementDashboardPage /></FeatureGate></PermissionGuard>} />
                 <Route path="reports" element={<PermissionGuard permission="procurement_analytics.read"><FeatureGate flagKey="submodule:inventory:procurement"><ProcurementReportsPage /></FeatureGate></PermissionGuard>} />
                 <Route path="vendor-performance" element={<PermissionGuard permission="procurement_analytics.read"><FeatureGate flagKey="submodule:inventory:procurement"><VendorPerformancePage /></FeatureGate></PermissionGuard>} />
                 <Route path="sales-demand" element={<PermissionGuard permission="procurement_analytics.read"><FeatureGate flagKey="submodule:inventory:procurement"><SalesDemandPage /></FeatureGate></PermissionGuard>} />
+                <Route path="exceptions" element={<PermissionGuard permission="purchase_orders.read"><FeatureGate flagKey="submodule:inventory:demand_intake"><ProcurementExceptionsPage /></FeatureGate></PermissionGuard>} />
+                <Route path="expediting" element={<PermissionGuard permission="purchase_orders.read"><FeatureGate flagKey="submodule:inventory:procurement_expediting"><ExpeditingPage /></FeatureGate></PermissionGuard>} />
+                <Route path="expected-receipts" element={<PermissionGuard permission="goods_receipts.read"><FeatureGate flagKey="submodule:inventory:procurement_expected_receipts"><ExpectedReceiptsPage /></FeatureGate></PermissionGuard>} />
+                <Route path="match-cases" element={<PermissionGuard permission="vendor_invoices.read"><FeatureGate flagKey="submodule:inventory:procurement_match_workbench"><MatchWorkbenchPage /></FeatureGate></PermissionGuard>} />
+                <Route path="match-cases/:id" element={<PermissionGuard permission="vendor_invoices.read"><FeatureGate flagKey="submodule:inventory:procurement_match_workbench"><MatchCasePage /></FeatureGate></PermissionGuard>} />
+                <Route path="supplier-performance" element={<PermissionGuard permission="procurement_analytics.read"><FeatureGate flagKey="submodule:inventory:supplier_performance_v2"><SupplierPerformancePage /></FeatureGate></PermissionGuard>} />
+                <Route path="reconciliation" element={<PermissionGuard permission="purchase_orders.read"><FeatureGate flagKey="submodule:inventory:procurement_reconciliation"><ReconciliationPage /></FeatureGate></PermissionGuard>} />
+                <Route path="coverage" element={<PermissionGuard permission="purchase_orders.read"><FeatureGate flagKey="submodule:inventory:demand_coverage"><DemandCoveragePage /></FeatureGate></PermissionGuard>} />
+                <Route path="coverage/create-rfq" element={<PermissionGuard permission="purchase_orders.create"><FeatureGate flagKey="submodule:inventory:sourcing"><RFQFromDemandWizardPage /></FeatureGate></PermissionGuard>} />
+                <Route path="coverage/consolidate" element={<PermissionGuard permission="purchase_orders.update"><FeatureGate flagKey="submodule:inventory:demand_coverage"><ConsolidationWizardPage /></FeatureGate></PermissionGuard>} />
 
                 {/* ── Vendor routes (mounted at /vendors/*) ── */}
                 <Route path="contracts" element={<PermissionGuard permission="suppliers.read"><ContractsPage /></PermissionGuard>} />
+                {/* Vendor Master form (Pulse 3fc12200) — declared before ":id" so "new" is not read as an id. */}
+                <Route path="configuration" element={<PermissionGuard permission="suppliers.read"><FeatureGate flagKey="submodule:inventory:vendor_integration_health"><VendorConfigurationPage /></FeatureGate></PermissionGuard>} />
+                <Route path="compliance-queue" element={<PermissionGuard permission="suppliers.read"><FeatureGate flagKey="submodule:inventory:vendor_compliance_automation"><ComplianceQueuePage /></FeatureGate></PermissionGuard>} />
+                <Route path="governance" element={<PermissionGuard permission="suppliers.read"><FeatureGate flagKey="submodule:inventory:vendor_governance_analytics"><VendorGovernancePage /></FeatureGate></PermissionGuard>} />
+                <Route path="scorecards" element={<PermissionGuard permission="suppliers.read"><FeatureGate flagKey="submodule:inventory:vendor_scorecards"><ScorecardDefinitionsPage /></FeatureGate></PermissionGuard>} />
+                <Route path="integration-exceptions" element={<PermissionGuard permission="suppliers.read"><FeatureGate flagKey="submodule:inventory:vendor_outcome_facts"><VendorIntegrationExceptionsPage /></FeatureGate></PermissionGuard>} />
+                <Route path="corrective-actions" element={<PermissionGuard permission="suppliers.read"><FeatureGate flagKey="submodule:inventory:vendor_corrective_actions"><CorrectiveActionsListPage /></FeatureGate></PermissionGuard>} />
+                <Route path="corrective-actions/:id" element={<PermissionGuard permission="suppliers.read"><FeatureGate flagKey="submodule:inventory:vendor_corrective_actions"><CorrectiveActionDetailPage /></FeatureGate></PermissionGuard>} />
+                <Route path="review-queue" element={<PermissionGuard permission="suppliers.read"><FeatureGate flagKey="submodule:inventory:vendor_lifecycle"><ReviewQueuePage /></FeatureGate></PermissionGuard>} />
+                <Route path="new" element={<PermissionGuard permission="suppliers.create"><FeatureGate flagKey="submodule:inventory:vendor_master"><VendorFormPage /></FeatureGate></PermissionGuard>} />
+                <Route path=":id/edit" element={<PermissionGuard permission="suppliers.update"><FeatureGate flagKey="submodule:inventory:vendor_master"><VendorFormPage /></FeatureGate></PermissionGuard>} />
                 <Route path=":id" element={<PermissionGuard permission="suppliers.read"><VendorDetailPage /></PermissionGuard>} />
 
                 {/* ── Backward-compat: old /inventory/procurement/... and /inventory/vendors/... ── */}
@@ -246,14 +301,40 @@ const App = () => {
                 <Route path="procurement/rfq" element={<PermissionGuard permission="purchase_orders.read"><FeatureGate flagKey="submodule:inventory:rfq"><RFQListPage /></FeatureGate></PermissionGuard>} />
                 <Route path="procurement/rfq/:id" element={<PermissionGuard permission="purchase_orders.read"><FeatureGate flagKey="submodule:inventory:rfq"><RFQDetailPage /></FeatureGate></PermissionGuard>} />
                 <Route path="procurement/rfq/:id/compare" element={<PermissionGuard permission="purchase_orders.read"><FeatureGate flagKey="submodule:inventory:rfq"><RFQComparisonPage /></FeatureGate></PermissionGuard>} />
+                <Route path="procurement/rfq/:id/award" element={<PermissionGuard permission="purchase_orders.create"><FeatureGate flagKey="submodule:inventory:sourcing_evaluation"><RFQAwardWizardPage /></FeatureGate></PermissionGuard>} />
                 <Route path="procurement/quality" element={<PermissionGuard permission="goods_receipts.read"><FeatureGate flagKey="submodule:inventory:quality"><QualityInspectionPage /></FeatureGate></PermissionGuard>} />
                 <Route path="procurement/returns" element={<PermissionGuard permission="goods_receipts.read"><FeatureGate flagKey="submodule:inventory:returns"><VendorReturnsPage /></FeatureGate></PermissionGuard>} />
                 <Route path="procurement/dashboard" element={<PermissionGuard permission="procurement_analytics.read"><FeatureGate flagKey="submodule:inventory:procurement"><ProcurementDashboardPage /></FeatureGate></PermissionGuard>} />
                 <Route path="procurement/reports" element={<PermissionGuard permission="procurement_analytics.read"><FeatureGate flagKey="submodule:inventory:procurement"><ProcurementReportsPage /></FeatureGate></PermissionGuard>} />
                 <Route path="procurement/vendor-performance" element={<PermissionGuard permission="procurement_analytics.read"><FeatureGate flagKey="submodule:inventory:procurement"><VendorPerformancePage /></FeatureGate></PermissionGuard>} />
                 <Route path="procurement/sales-demand" element={<PermissionGuard permission="procurement_analytics.read"><FeatureGate flagKey="submodule:inventory:procurement"><SalesDemandPage /></FeatureGate></PermissionGuard>} />
+                <Route path="procurement/exceptions" element={<PermissionGuard permission="purchase_orders.read"><FeatureGate flagKey="submodule:inventory:demand_intake"><ProcurementExceptionsPage /></FeatureGate></PermissionGuard>} />
+                <Route path="procurement/expediting" element={<PermissionGuard permission="purchase_orders.read"><FeatureGate flagKey="submodule:inventory:procurement_expediting"><ExpeditingPage /></FeatureGate></PermissionGuard>} />
+                <Route path="procurement/expected-receipts" element={<PermissionGuard permission="goods_receipts.read"><FeatureGate flagKey="submodule:inventory:procurement_expected_receipts"><ExpectedReceiptsPage /></FeatureGate></PermissionGuard>} />
+                <Route path="procurement/match-cases" element={<PermissionGuard permission="vendor_invoices.read"><FeatureGate flagKey="submodule:inventory:procurement_match_workbench"><MatchWorkbenchPage /></FeatureGate></PermissionGuard>} />
+                <Route path="procurement/match-cases/:id" element={<PermissionGuard permission="vendor_invoices.read"><FeatureGate flagKey="submodule:inventory:procurement_match_workbench"><MatchCasePage /></FeatureGate></PermissionGuard>} />
+                <Route path="procurement/supplier-performance" element={<PermissionGuard permission="procurement_analytics.read"><FeatureGate flagKey="submodule:inventory:supplier_performance_v2"><SupplierPerformancePage /></FeatureGate></PermissionGuard>} />
+                <Route path="procurement/reconciliation" element={<PermissionGuard permission="purchase_orders.read"><FeatureGate flagKey="submodule:inventory:procurement_reconciliation"><ReconciliationPage /></FeatureGate></PermissionGuard>} />
+                <Route path="procurement/coverage" element={<PermissionGuard permission="purchase_orders.read"><FeatureGate flagKey="submodule:inventory:demand_coverage"><DemandCoveragePage /></FeatureGate></PermissionGuard>} />
+                <Route path="procurement/coverage/create-rfq" element={<PermissionGuard permission="purchase_orders.create"><FeatureGate flagKey="submodule:inventory:sourcing"><RFQFromDemandWizardPage /></FeatureGate></PermissionGuard>} />
+                <Route path="procurement/coverage/consolidate" element={<PermissionGuard permission="purchase_orders.update"><FeatureGate flagKey="submodule:inventory:demand_coverage"><ConsolidationWizardPage /></FeatureGate></PermissionGuard>} />
                 <Route path="vendors" element={<PermissionGuard permission="suppliers.read"><VendorListPage /></PermissionGuard>} />
+                <Route path="vendors/configuration" element={<PermissionGuard permission="suppliers.read"><FeatureGate flagKey="submodule:inventory:vendor_integration_health"><VendorConfigurationPage /></FeatureGate></PermissionGuard>} />
+                <Route path="vendors/compliance-queue" element={<PermissionGuard permission="suppliers.read"><FeatureGate flagKey="submodule:inventory:vendor_compliance_automation"><ComplianceQueuePage /></FeatureGate></PermissionGuard>} />
+                <Route path="vendors/governance" element={<PermissionGuard permission="suppliers.read"><FeatureGate flagKey="submodule:inventory:vendor_governance_analytics"><VendorGovernancePage /></FeatureGate></PermissionGuard>} />
+                <Route path="vendors/scorecards" element={<PermissionGuard permission="suppliers.read"><FeatureGate flagKey="submodule:inventory:vendor_scorecards"><ScorecardDefinitionsPage /></FeatureGate></PermissionGuard>} />
+                <Route path="vendors/integration-exceptions" element={<PermissionGuard permission="suppliers.read"><FeatureGate flagKey="submodule:inventory:vendor_outcome_facts"><VendorIntegrationExceptionsPage /></FeatureGate></PermissionGuard>} />
+                <Route path="vendors/change-requests" element={<PermissionGuard permission="vendors.portal.manage"><FeatureGate flagKey="submodule:inventory:vendor_portal"><ProfileChangeRequestsPage /></FeatureGate></PermissionGuard>} />
+                <Route path="vendors/change-requests/:id" element={<PermissionGuard permission="vendors.portal.manage"><FeatureGate flagKey="submodule:inventory:vendor_portal"><ProfileChangeRequestDetailPage /></FeatureGate></PermissionGuard>} />
+                <Route path="vendors/finance-approvals" element={<PermissionGuard permission="vendor_finance.approve"><FeatureGate flagKey="action:inventory:vendor_payee_change_control"><PayeeChangeApprovalsPage /></FeatureGate></PermissionGuard>} />
+                <Route path="vendors/finance-approvals/:id" element={<PermissionGuard permission="suppliers.read"><FeatureGate flagKey="action:inventory:vendor_payee_change_control"><PayeeChangeDetailPage /></FeatureGate></PermissionGuard>} />
+                <Route path="finance-approvals" element={<PermissionGuard permission="vendor_finance.approve"><FeatureGate flagKey="action:inventory:vendor_payee_change_control"><PayeeChangeApprovalsPage /></FeatureGate></PermissionGuard>} />
+                <Route path="finance-approvals/:id" element={<PermissionGuard permission="suppliers.read"><FeatureGate flagKey="action:inventory:vendor_payee_change_control"><PayeeChangeDetailPage /></FeatureGate></PermissionGuard>} />
+                <Route path="vendors/corrective-actions" element={<PermissionGuard permission="suppliers.read"><FeatureGate flagKey="submodule:inventory:vendor_corrective_actions"><CorrectiveActionsListPage /></FeatureGate></PermissionGuard>} />
+                <Route path="vendors/corrective-actions/:id" element={<PermissionGuard permission="suppliers.read"><FeatureGate flagKey="submodule:inventory:vendor_corrective_actions"><CorrectiveActionDetailPage /></FeatureGate></PermissionGuard>} />
+                <Route path="vendors/review-queue" element={<PermissionGuard permission="suppliers.read"><FeatureGate flagKey="submodule:inventory:vendor_lifecycle"><ReviewQueuePage /></FeatureGate></PermissionGuard>} />
                 <Route path="vendors/:id" element={<PermissionGuard permission="suppliers.read"><VendorDetailPage /></PermissionGuard>} />
+                <Route path="vendors/:id/360" element={<PermissionGuard permission="suppliers.read"><Vendor360Page /></PermissionGuard>} />
                 <Route path="vendors/contracts" element={<PermissionGuard permission="suppliers.read"><ContractsPage /></PermissionGuard>} />
 
                 {/* Legacy Redirects */}

@@ -24,6 +24,7 @@ vi.mock('./pages/procurement/GRNListPage', () => ({ default: () => <div>GRNList<
 vi.mock('./pages/procurement/GRNDetailPage', () => ({ default: () => <div>GRNDetail</div> }));
 vi.mock('./pages/procurement/GRNEntryPage', () => ({ default: () => <div>GRNEntry</div> }));
 vi.mock('./pages/vendors/VendorListPage', () => ({ default: () => <div data-testid="vendor-list-page">VendorList</div> }));
+vi.mock('./pages/vendors/VendorFormPage', () => ({ default: () => <div>VendorForm</div> }));
 vi.mock('./pages/vendors/VendorDetailPage', () => ({ default: () => <div>VendorDetail</div> }));
 vi.mock('./pages/vendors/ContractsPage', () => ({ default: () => <div>Contracts</div> }));
 vi.mock('./pages/procurement/OpeningBalancePage', () => ({ default: () => <div>OpeningBalance</div> }));
@@ -43,11 +44,41 @@ vi.mock('./pages/bulk-import/BulkImportPage', () => ({ default: () => <div>BulkI
 // Route renders its element regardless of path, so every route in App is
 // exercised in a single render — exactly what a "can any URL be typed" guard
 // test wants.
+// Pages added by the pulse batch: stub them so the route tree renders without their services.
+vi.mock('./pages/Product360Page', () => ({ default: () => null }));
+vi.mock('./pages/vendors/ReviewQueuePage', () => ({ default: () => null }));
+vi.mock('./pages/vendors/evidence/ComplianceQueuePage', () => ({ default: () => null }));
+vi.mock('./pages/vendors/outcomes/VendorIntegrationExceptionsPage', () => ({ default: () => null }));
+vi.mock('./pages/vendors/portal/ProfileChangeRequestsPage', () => ({ default: () => null }));
+vi.mock('./pages/vendors/portal/ProfileChangeRequestDetailPage', () => ({ default: () => null }));
+vi.mock('./pages/vendors/finance/PayeeChangeApprovalsPage', () => ({ default: () => null }));
+vi.mock('./pages/vendors/finance/PayeeChangeDetailPage', () => ({ default: () => null }));
+vi.mock('./pages/vendors/quality/CorrectiveActionsListPage', () => ({ default: () => null }));
+vi.mock('./pages/vendors/quality/CorrectiveActionDetailPage', () => ({ default: () => null }));
+vi.mock('./pages/vendors/performance/VendorGovernancePage', () => ({ default: () => null }));
+vi.mock('./pages/vendors/performance/ScorecardDefinitionsPage', () => ({ default: () => null }));
+vi.mock('./pages/vendors/VendorConfigurationPage', () => ({ default: () => null }));
+vi.mock('./pages/procurement/ProcurementExceptionsPage', () => ({ default: () => null }));
+vi.mock('./pages/procurement/DemandCoveragePage', () => ({ default: () => null }));
+vi.mock('./pages/procurement/ConsolidationWizardPage', () => ({ default: () => null }));
+vi.mock('./pages/procurement/RFQFromDemandWizardPage', () => ({ default: () => null }));
+vi.mock('./pages/procurement/RFQAwardWizardPage', () => ({ default: () => null }));
+vi.mock('./pages/procurement/EvaluationSettingsPage', () => ({ default: () => null }));
+vi.mock('./pages/procurement/ApprovalPoliciesPage', () => ({ default: () => null }));
+vi.mock('./pages/procurement/ExpeditingPage', () => ({ default: () => null }));
+vi.mock('./pages/procurement/ExpectedReceiptsPage', () => ({ default: () => null }));
+vi.mock('./pages/procurement/MatchWorkbenchPage', () => ({ default: () => null }));
+vi.mock('./pages/procurement/MatchCasePage', () => ({ default: () => null }));
+vi.mock('./pages/procurement/SupplierPerformancePage', () => ({ default: () => null }));
+vi.mock('./pages/procurement/ReconciliationPage', () => ({ default: () => null }));
+vi.mock('./pages/procurement/CoverageSettingsPage', () => ({ default: () => null }));
+
 vi.mock('react-router-dom', () => ({
   Routes: ({ children }: any) => <div data-testid="routes">{children}</div>,
   Route: ({ element }: any) => element || null,
   Navigate: ({ to }: any) => <div data-testid="navigate-to">{to}</div>,
   useLocation: () => ({ pathname: '/vendors' }),
+  useParams: () => ({}),
   useNavigate: () => vi.fn(),
   useParams: () => ({}),
 }));

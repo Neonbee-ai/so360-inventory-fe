@@ -20,6 +20,9 @@ interface PRLine {
     required_delivery_date?: string;
     converted_quantity?: number;
     remaining_quantity?: number;
+    source_module?: string | null;
+    source_id?: string | null;
+    source_version?: number | null;
     items?: { name: string; sku: string };
 }
 
@@ -70,11 +73,27 @@ interface PR {
     created_at: string;
     requester?: { full_name: string; email: string };
     pr_lines: PRLine[];
+    source_module?: string | null;
+    source_id?: string | null;
+    source_version?: number | null;
+    source_change_pending?: boolean;
     linked_pos?: LinkedPO[];
     approval_gates?: ApprovalGate[];
 }
 
 const RFQ_FLAG = 'submodule:inventory:rfq';
+const RETURN_FLAG = 'action:inventory:procurement:return_pr';
+const COVERAGE_FLAG = 'submodule:inventory:demand_coverage';
+
+/** Route of the originating record, per source module (link shown only when the viewer has that module). */
+const SOURCE_ROUTES: Record<string, { label: string; flag: string; path: (id: string) => string }> = {
+    manufacturing: { label: 'Manufacturing order', flag: 'module:manufacturing', path: (id) => `/manufacturing/orders/${id}` },
+    projects: { label: 'Project', flag: 'module:projects', path: (id) => `/projects/${id}` },
+    maintenance: { label: 'Work order', flag: 'module:maintenance', path: (id) => `/maintenance/work-orders/${id}` },
+    crm: { label: 'Sales order', flag: 'module:crm', path: (id) => `/crm/sales-orders/${id}` },
+    fulfillment: { label: 'Fulfillment order', flag: 'module:fulfillment', path: (id) => `/fulfillment/orders/${id}` },
+    inventory: { label: 'Reorder signal', flag: 'module:inventory', path: () => '/inventory/items' },
+};
 
 const PRDetailPage = () => {
     const [confirm, confirmDialog] = useConfirm();
@@ -91,6 +110,9 @@ const PRDetailPage = () => {
     const [isCreatingRfq, setIsCreatingRfq] = useState(false);
     const [linkedRfqs, setLinkedRfqs] = useState<LinkedRFQ[]>([]);
     const shell = useShellBridge() as any;
+    const [coverage, setCoverage] = useState<any[] | null>(null);
+    const [returnDialog, setReturnDialog] = useState<{ reason: string } | null>(null);
+    const flagOn = (flag: string) => { try { return shell?.isFeatureEnabled?.(flag) === true; } catch { return false; } };
     const rfqEnabled = (() => { try { return shell?.isFeatureEnabled?.(RFQ_FLAG) === true; } catch { return false; } })();
 
     const fetchLinkedRfqs = async () => {
@@ -104,6 +126,12 @@ const PRDetailPage = () => {
     };
 
     useEffect(() => { fetchLinkedRfqs(); }, [id, rfqEnabled]);
+
+    const coverageEnabled = (() => { try { return shell?.isFeatureEnabled?.(COVERAGE_FLAG) === true; } catch { return false; } })();
+    useEffect(() => {
+        if (!id || !coverageEnabled) return;
+        procurementService.getCoverage({ pr_id: id }).then((d: any) => setCoverage(d?.rows ?? [])).catch(() => setCoverage(null));
+    }, [id, coverageEnabled]);
 
     useEffect(() => {
         if (id) fetchPR();
@@ -212,6 +240,31 @@ const PRDetailPage = () => {
         }
     };
 
+    const handleSubmitPR = async () => {
+        if (!id) return;
+        setIsLoading(true);
+        try {
+            await procurementService.submitPR(id);
+            toast.success('Requisition submitted for approval');
+            await fetchPR();
+        } catch (err: any) {
+            toast.error(getErrorMessage(err, 'Failed to submit the requisition'));
+            setIsLoading(false);
+        }
+    };
+
+    const submitReturn = async () => {
+        if (!id || !returnDialog?.reason.trim()) return;
+        try {
+            await procurementService.returnPR(id, returnDialog.reason.trim());
+            setReturnDialog(null);
+            toast.success('Returned to the requester for clarification');
+            await fetchPR();
+        } catch (err: any) {
+            toast.error(getErrorMessage(err, 'Failed to return the requisition'));
+        }
+    };
+
     const handleClosePR = async () => {
         if (!id) return;
         if (!(await confirm({ title: 'Close requisition', message: 'Are you sure you want to close this Purchase Requisition? ' +
@@ -231,6 +284,7 @@ const PRDetailPage = () => {
 
     const STATUS_TONES: Record<string, 'neutral' | 'success' | 'warning' | 'danger' | 'primary' | 'info'> = {
         approved: 'success', pending_approval: 'warning', rejected: 'danger', converted_to_po: 'primary',
+        draft: 'neutral', submitted: 'info', returned: 'warning',
         partially_converted: 'info', fully_converted: 'primary', closed: 'neutral',
     };
 
@@ -268,13 +322,27 @@ const PRDetailPage = () => {
     const firstMeta = gates[0]?.metadata;
     const statusText = pr.status.replace(/_/g, ' ');
 
+    const originLabel = (module?: string | null, sourceId?: string | null, version?: number | null, changePending?: boolean) => {
+        const route = module ? SOURCE_ROUTES[module] : undefined;
+        const text = `${route?.label || module}${sourceId ? ` ${sourceId}` : ''}${version ? ` v${version}` : ''}`;
+        const linkable = !!(route && sourceId && flagOn(route.flag));
+        return (
+            <span className="inline-flex flex-wrap items-center gap-2">
+                {linkable ? <Button variant="ghost" size="sm" onClick={() => navigate(route!.path(sourceId!))}>{text}</Button> : <span>{text}</span>}
+                {changePending && <Badge tone="warning">Source changed - review</Badge>}
+            </span>
+        );
+    };
+
     const overview = [
         { label: 'Requester', value: pr.requester?.full_name || 'System' },
         { label: 'Required Date', value: pr.required_date ? formatters.formatDate(pr.required_date) : 'Not set' },
         { label: 'Created', value: formatters.formatDateTime(pr.created_at) },
         pr.description ? { label: 'Description', value: pr.description } : null,
+        pr.source_module ? { label: 'Origin', value: originLabel(pr.source_module, pr.source_id, pr.source_version, pr.source_change_pending) } : null,
         { label: 'Estimated Total', value: `${formatters.formatCurrency(totalAmount)} (${pr.pr_lines?.length || 0} line items)` },
     ].filter(Boolean) as { label: string; value: React.ReactNode }[];
+
 
     const primaryAction = canConvert ? (
         <Button onClick={handleCreatePO} disabled={isLoadingConversion}>
@@ -288,6 +356,12 @@ const PRDetailPage = () => {
     }
     if (canClose && pr.status !== 'closed') {
         secondaryList.push(<Button key="close" variant="secondary" onClick={handleClosePR} disabled={isLoading}>Close PR</Button>);
+    }
+    if (['draft', 'returned'].includes(pr.status)) {
+        secondaryList.push(<Button key="submit" variant="secondary" onClick={handleSubmitPR} disabled={isLoading}>Submit for approval</Button>);
+    }
+    if (pr.status === 'pending_approval' && flagOn(RETURN_FLAG)) {
+        secondaryList.push(<Button key="return" variant="secondary" onClick={() => setReturnDialog({ reason: '' })}>Return for clarification</Button>);
     }
     const secondaryActions = secondaryList.length ? secondaryList : undefined;
 
@@ -324,12 +398,50 @@ const PRDetailPage = () => {
                     autoFocus
                 />
             </Modal>
+            <Modal
+                open={!!returnDialog}
+                onClose={() => setReturnDialog(null)}
+                size="sm"
+                name="pr-return-dialog"
+                title="Return for clarification"
+                footer={(
+                    <>
+                        <Button variant="secondary" onClick={() => setReturnDialog(null)}>Cancel</Button>
+                        <Button onClick={submitReturn} disabled={!returnDialog?.reason.trim()}>Return to requester</Button>
+                    </>
+                )}
+            >
+                <TextField
+                    name="pr-return-dialog-reason"
+                    label="What needs clarifying?"
+                    type="text"
+                    value={returnDialog?.reason ?? ''}
+                    onChange={(e) => setReturnDialog((d) => (d ? { ...d, reason: e.target.value } : d))}
+                    autoFocus
+                />
+            </Modal>
             <Grid>
                 <Grid.Item span={4} className="space-y-6">
                     <SectionCard title="Overview"><DescriptionList items={overview} /></SectionCard>
                 </Grid.Item>
 
                 <Grid.Item span={8} className="space-y-6">
+                    {coverageEnabled && coverage && coverage.length > 0 && (
+                        <SectionCard title="Coverage" actions={<Button variant="ghost" size="sm" onClick={() => navigate('/procurement/coverage')}>Open workbench</Button>}>
+                            <DataTable
+                                data-testid="pr-coverage-table"
+                                rows={coverage}
+                                rowKey={(c: any) => c.pr_line_id}
+                                columns={[
+                                    { key: 'line', header: 'Line', render: (c: any) => c.line?.description || c.line?.item_id || c.pr_line_id.slice(0, 8) },
+                                    { key: 'gross', header: 'Gross', align: 'right', render: (c: any) => c.gross_qty },
+                                    { key: 'covered', header: 'Covered', align: 'right', render: (c: any) => Number(c.available_qty) + Number(c.inbound_confirmed_qty) },
+                                    { key: 'net', header: 'To buy', align: 'right', render: (c: any) => c.net_purchase_qty },
+                                    { key: 'status', header: 'Status', render: (c: any) => <span className="inline-flex gap-2">{String(c.status).replace(/_/g, ' ')}{c.stale && <Badge tone="warning">Stale</Badge>}</span> },
+                                ]}
+                            />
+                        </SectionCard>
+                    )}
                     <SectionCard title="Requested Items">
                         <DataTable
                             data-testid="pr-lines-table"
@@ -346,6 +458,12 @@ const PRDetailPage = () => {
                                     ),
                                 },
                                 { key: 'qty', header: 'Qty', align: 'center', render: (line: PRLine) => line.quantity },
+                                ...(pr.source_module ? [{
+                                    key: 'origin', header: 'Origin',
+                                    render: (line: PRLine) => line.source_module
+                                        ? originLabel(line.source_module, line.source_id, line.source_version, pr.source_change_pending && (pr.source_version ?? 0) > (line.source_version ?? 0))
+                                        : <span className="text-fg-subtle">-</span>,
+                                }] : []),
                                 {
                                     key: 'converted', header: 'Converted', align: 'center',
                                     render: (line: PRLine) => {

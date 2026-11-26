@@ -119,7 +119,7 @@ const ImageUploadZone: React.FC<{
             </div>
             {currentUrl ? (
                 <div className={`relative ${aspectClass} rounded-xl overflow-hidden bg-surface-raised border border-line-strong`}>
-                    <img
+                    <img loading="lazy"
                         src={currentUrl}
                         alt={alt}
                         className="w-full h-full object-cover"
@@ -204,7 +204,7 @@ const CategoryCardsView: React.FC<{
             >
                 {/* Background */}
                 {cat.image_url ? (
-                    <img src={cat.image_url} alt={cat.name} className="absolute inset-0 w-full h-full object-cover" />
+                    <img loading="lazy" src={cat.image_url} alt={cat.name} className="absolute inset-0 w-full h-full object-cover" />
                 ) : (
                     <div
                         className="absolute inset-0"

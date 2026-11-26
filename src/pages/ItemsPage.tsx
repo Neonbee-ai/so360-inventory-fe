@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Upload } from 'lucide-react';
 import { inventoryService } from '../services/inventoryService';
@@ -37,10 +37,10 @@ const ItemsPage = () => {
         return () => clearTimeout(t);
     }, [searchTerm]);
 
-    // Any change of search/filter/page size restarts from page 1.
-    useEffect(() => {
-        setPage(1);
-    }, [debouncedSearch, typeFilter, attentionOnly, pageSize]);
+    // Any change of search/filter/page size restarts from page 1. The reset is
+    // folded into the fetch effect below (one request, not a stale page + page 1).
+    const filterKey = `${debouncedSearch}|${typeFilter}|${attentionOnly}|${pageSize}`;
+    const prevFilterKey = useRef(filterKey);
 
     const fetchItems = async () => {
         setIsLoading(true);
@@ -74,6 +74,14 @@ const ItemsPage = () => {
     };
 
     useEffect(() => {
+        if (prevFilterKey.current !== filterKey) {
+            prevFilterKey.current = filterKey;
+            if (page !== 1) {
+                // Page change re-runs this effect and fetches page 1 once.
+                setPage(1);
+                return;
+            }
+        }
         fetchItems();
     }, [attentionOnly, page, pageSize, debouncedSearch, typeFilter]);
 

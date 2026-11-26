@@ -12,6 +12,13 @@ const mockShell = vi.fn();
 vi.mock('../../services/vendorService', () => ({
   vendorService: {
     getVendors: (...a: any[]) => mockGetVendors(...a),
+    // Paged read (perf): adapt the getVendors fixture the way the real service treats an old BE's bare array.
+    getVendorsPage: async () => {
+      const res = await mockGetVendors();
+      if (Array.isArray(res)) return { data: res, total: res.length, legacy: true };
+      const data = Array.isArray(res?.data) ? res.data : [];
+      return { data, total: typeof res?.total === 'number' ? res.total : data.length, legacy: false };
+    },
     createVendor: (...a: any[]) => mockCreateVendor(...a),
     deleteVendor: (...a: any[]) => mockDeleteVendor(...a),
   },
@@ -92,6 +99,14 @@ describe('VendorListPage (Comb)', () => {
     fireEvent.change(screen.getByPlaceholderText('Company name'), { target: { value: 'New Vendor' } });
     fireEvent.click(screen.getByText('Add Vendor', { selector: 'button[type="submit"]' }));
     await waitFor(() => expect(mockCreateVendor).toHaveBeenCalledWith(expect.objectContaining({ name: 'New Vendor' })));
+  });
+
+  it('Given the Vendor Master flag is on / When Add Vendor is clicked / Then it opens the full vendor form page instead of the modal (Pulse 3fc12200)', async () => {
+    mockShell.mockReturnValue(shellState({ isFeatureEnabled: (k: string) => k === 'submodule:inventory:vendor_master' }));
+    render(<VendorListPage />);
+    fireEvent.click(await screen.findByText('Add Vendor'));
+    expect(mockNavigate).toHaveBeenCalledWith('/vendors/new');
+    expect(screen.queryByRole('dialog', { name: 'Add New Vendor' })).not.toBeInTheDocument();
   });
 
   it('Given a vendor / When Delete Vendor is confirmed / Then deleteVendor is called', async () => {

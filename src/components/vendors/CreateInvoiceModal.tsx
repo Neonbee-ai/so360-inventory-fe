@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Alert, Button, FileUpload, Modal, Select, TextField, FieldGrid } from '@so360/design-system';
 import { procurementService } from '../../services/procurementService';
 import { mediaService } from '../../services/mediaService';
@@ -10,7 +10,8 @@ interface CreateInvoiceModalProps {
     onClose: () => void;
     vendorId: string;
     vendorPOs: Array<{ id: string; po_number: string; status: string; total_amount: number }>;
-    onSuccess: () => void;
+    /** Receives the create response, including its Accounting bill state. */
+    onSuccess: (result?: any) => void;
 }
 
 export const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
@@ -26,6 +27,20 @@ export const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
     const [dueDate, setDueDate] = useState('');
     const [totalAmount, setTotalAmount] = useState('');
     const [selectedPO, setSelectedPO] = useState('');
+    // Pulse a4e95994: the GST on the invoice, so Accounting can post input tax
+    // without guessing. '' = not stated (the bill waits for an accountant).
+    const [taxChoice, setTaxChoice] = useState('');
+    const [taxCodes, setTaxCodes] = useState<Array<{ id: string; name: string; rate: number }>>([]);
+    useEffect(() => {
+        if (!isOpen) return;
+        let cancelled = false;
+        // Tax codes are optional help: any failure leaves the choice at "not stated".
+        Promise.resolve()
+            .then(() => inventoryService.getTaxCodes())
+            .then((codes) => { if (!cancelled) setTaxCodes(Array.isArray(codes) ? codes : []); })
+            .catch(() => { if (!cancelled) setTaxCodes([]); });
+        return () => { cancelled = true; };
+    }, [isOpen]);
     const [file, setFile] = useState<File | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -39,6 +54,7 @@ export const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
         setDueDate('');
         setTotalAmount('');
         setSelectedPO('');
+        setTaxChoice('');
         setFile(null);
         setError(null);
     };
@@ -85,7 +101,8 @@ export const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
             }
 
             // Create the invoice
-            await procurementService.createVendorInvoice({
+            const tax = taxCodes.find((c) => c.id === taxChoice);
+            const result = await procurementService.createVendorInvoice({
                 vendor_id: vendorId,
                 invoice_number: invoiceNumber,
                 invoice_date: invoiceDate,
@@ -93,16 +110,24 @@ export const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
                 total_amount: parseFloat(totalAmount),
                 po_id: selectedPO || undefined,
                 attachment_url: attachmentUrl,
+                ...(tax ? { tax_code_id: tax.id, tax_rate: Number(tax.rate) } : {}),
+                ...(taxChoice === 'none' ? { no_tax: true } : {}),
             });
 
             resetForm();
-            onSuccess();
+            onSuccess(result);
         } catch (err: any) {
             setError(err.message || 'Failed to create invoice');
         } finally {
             setIsSubmitting(false);
         }
     };
+
+    const taxOptions = [
+        { value: '', label: 'Not stated — an accountant completes it' },
+        { value: 'none', label: 'No GST on this invoice' },
+        ...taxCodes.map((c) => ({ value: c.id, label: `${c.name} (${Number(c.rate)}%)` })),
+    ];
 
     const poOptions = [
         { value: '', label: 'No PO (standalone invoice)' },
@@ -170,6 +195,14 @@ export const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
                     value={totalAmount}
                     onChange={(e) => setTotalAmount(e.target.value)}
                     placeholder="0.00"
+                />
+
+                <Select
+                    name="tax_code_id"
+                    label="GST on this invoice (the total includes it)"
+                    value={taxChoice}
+                    onChange={(e) => setTaxChoice(e.target.value)}
+                    options={taxOptions}
                 />
 
                 <Select

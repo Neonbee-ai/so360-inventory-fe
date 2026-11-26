@@ -34,6 +34,13 @@ const mockRecordActivity = vi.fn();
 vi.mock('../../../services/vendorService', () => ({
   vendorService: {
     getVendors: (...args: any[]) => mockGetVendors(...args),
+    // Paged read (perf): adapt the getVendors fixture the way the real service treats an old BE's bare array.
+    getVendorsPage: async () => {
+      const res = await mockGetVendors();
+      if (Array.isArray(res)) return { data: res, total: res.length, legacy: true };
+      const data = Array.isArray(res?.data) ? res.data : [];
+      return { data, total: typeof res?.total === 'number' ? res.total : data.length, legacy: false };
+    },
     createVendor: (...args: any[]) => mockCreateVendor(...args),
     deleteVendor: (...args: any[]) => mockDeleteVendor(...args),
     getContracts: (...args: any[]) => mockGetContracts(...args),
@@ -60,12 +67,18 @@ vi.mock('react-router-dom', () => ({
 vi.mock('../../../components/vendors/VendorBankAccountsSection', () => ({
   VendorBankAccountsSection: () => null,
 }));
+vi.mock('../../../components/vendors/VendorDocumentsSection', () => ({
+  VendorDocumentsSection: ({ vendorId }: any) => <div data-testid="vendor-documents-stub" data-vendor={vendorId} />,
+}));
+vi.mock('../../../components/vendors/VendorActivitySection', () => ({
+  VendorActivitySection: ({ vendorId }: any) => <div data-testid="vendor-activity-stub" data-vendor={vendorId} />,
+}));
 vi.mock('../../../hooks/useAuth', () => ({
   useAuth: () => ({ can: () => true }),
 }));
 
 vi.mock('@so360/shell-context', () => ({
-  useShellBridge: () => ({ isFeatureEnabled: () => true, currentOrg: { id: 'org-1' } }),
+  useShellBridge: () => ({ isFeatureEnabled: (k: string) => k !== 'submodule:inventory:vendor_master', currentOrg: { id: 'org-1' } }),
   useActivity: () => ({ recordActivity: mockRecordActivity }),
   useBusinessSettings: () => ({ settings: { base_currency: 'USD', document_language: 'en-US', timezone: 'UTC' } }),
   useQuota: () => ({ getQuota: () => null }),

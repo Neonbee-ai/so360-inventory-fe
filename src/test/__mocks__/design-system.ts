@@ -28,7 +28,7 @@ export const Select = ({ value, onChange, options = [], placeholder, label, hint
     options.map((o: any) => React.createElement('option', { key: String(o.value), value: o.value, disabled: o.disabled }, o.label)));
   return label || error ? React.createElement('div', null, label ? React.createElement('label', { htmlFor: el?.props?.id ?? `f-${name}` }, label) : null, el, error ? React.createElement('p', { role: 'alert' }, error) : null) : el;
 };
-export const Modal = ({ open, onClose, title, description, footer, children, dismissible = true, 'data-testid': testId }: any) => {
+export const Modal = ({ open, onClose, title, description, footer, children, dismissible = true, formId, submitLabel = 'Save', cancelLabel = 'Cancel', submitLoading = false, submitDisabled = false, 'data-testid': testId }: any) => {
   React.useEffect(() => {
     if (!open || !dismissible) return;
     const h = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose?.(); };
@@ -43,7 +43,11 @@ export const Modal = ({ open, onClose, title, description, footer, children, dis
         description ? React.createElement('div', null, description) : null,
         React.createElement('button', { type: 'button', 'aria-label': 'Close', disabled: !dismissible, onClick: dismissible ? onClose : undefined }, 'x'),
         React.createElement('div', null, children),
-        footer ? React.createElement('div', null, footer) : null))
+        footer ? React.createElement('div', null, footer)
+          : formId ? React.createElement('div', null,
+            React.createElement('button', { type: 'button', disabled: submitLoading || !dismissible, onClick: onClose }, cancelLabel),
+            React.createElement('button', { type: 'submit', form: formId, disabled: submitDisabled || submitLoading }, submitLabel))
+          : null))
     : null;
 };
 export const Drawer = ({ isOpen, onClose, title, subtitle, footer, toolbar, children, name, 'data-testid': testId }: any) => {
@@ -157,7 +161,7 @@ const slot = (name: string, node: any) => (node ? React.createElement('div', { '
 export const ListPageTemplate = (p: any) =>
   React.createElement('div', { 'data-template': 'list' },
     React.createElement('header', { 'data-slot': 'header' },
-      React.createElement(Trail, p), React.createElement('h1', null, p.title), p.count != null ? React.createElement('span', { 'data-slot': 'count' }, p.count) : null,
+      React.createElement(Trail, p), React.createElement('h1', null, p.title), p.description ? React.createElement('p', { 'data-slot': 'description' }, p.description) : null, p.count != null ? React.createElement('span', { 'data-slot': 'count' }, p.count) : null,
       slot('primary', p.primaryAction), slot('secondary', p.headerSecondaryActions), slot('overflow', Array.isArray(p.overflowActions) ? p.overflowActions.map((a: any) => React.createElement('button', { key: a.label, onClick: a.onSelect }, a.label)) : p.overflowActions)),
     slot('kpis', p.kpis),
     React.createElement('div', { 'data-slot': 'toolbar' }, p.views ? React.createElement('div', { 'data-slot': 'views' }, p.views) : null, p.search, p.filterConfig ? React.createElement(ListFilters, p.filterConfig) : null, p.filters, p.toolbar, p.toolbarEnd),
@@ -242,7 +246,7 @@ export const KpiCard = ({ label, value, hint, onClick, 'data-testid': testId }: 
 export const KpiGrid = ({ children }: any) => React.createElement('div', null, children);
 export const CountUp = ({ value }: any) => React.createElement(React.Fragment, null, String(value));
 export const useCountUp = (target: number) => target;
-export const StatusBadge = ({ status, 'data-testid': testId }: any) => React.createElement('span', { 'data-testid': testId }, status);
+export const StatusBadge = ({ status, label, 'data-testid': testId }: any) => React.createElement('span', { 'data-testid': testId }, label ?? status);
 export const Alert = ({ title, children, variant, action, 'data-testid': testId }: any) =>
     React.createElement('div', { role: 'alert', 'data-variant': variant, 'data-testid': testId }, title ? React.createElement('p', null, title) : null, children,
         action ? React.createElement('button', { type: 'button', onClick: action.onClick }, action.label) : null);
@@ -275,8 +279,10 @@ export const DatePicker = ({ label, hint: _h, error, size: _sz, name, onChange, 
 export const DateInput = DatePicker;
 export const TimePicker = ({ label, hint: _h, error, size: _sz, name, onChange, format: _f, step: _st, minTime: _mi, maxTime: _ma, ...rest }: any) =>
   fieldWrap(name, label, error, React.createElement('input', { id: rest.id ?? (label ? `f-${name}` : undefined), name, type: 'time', onChange: (e: any) => onChange?.(e.target.value), ...rest }));
-export const Checkbox = ({ label, description: _d, indeterminate: _i, name, ...rest }: any) =>
-  React.createElement('label', null, React.createElement('input', { type: 'checkbox', name, ...rest }), label);
+export const Checkbox = ({ label, description, indeterminate: _i, hideLabel: _h, name, ...rest }: any) =>
+  React.createElement(React.Fragment, null,
+    React.createElement('label', null, React.createElement('input', { type: 'checkbox', name, ...rest }), label),
+    description ? React.createElement('span', { 'data-slot': 'description' }, description) : null);
 export const Switch = ({ label, name, checked, onCheckedChange, disabled, 'data-testid': testId, ...rest }: any) =>
   React.createElement('button', { type: 'button', role: 'switch', name, 'aria-checked': !!checked, 'aria-label': label, disabled, 'data-testid': testId, onClick: () => onCheckedChange?.(!checked), ...rest });
 export const RadioGroup = ({ name, label, options = [], value, onChange, disabled, 'data-testid': testId }: any) =>
@@ -426,7 +432,19 @@ export const FileUpload = ({ label, name, accept, multiple, onChange, onReject, 
         if (ok.length !== all.length) onReject?.(all.filter(f => !ok.includes(f)).map(file => ({ file, reason: 'type', message: `${file.name}: file type not allowed` })));
         if (ok.length) onChange?.(ok);
       } })));
-export const Combobox = ({ label, name, options = [], value, onChange, placeholder, error, disabled, 'data-testid': testId, 'aria-label': ariaLabel }: any) =>
+/** Async variant (loadOptions): a text box that searches and lists results as buttons; real DS Combobox behaves the same for the specs. */
+const AsyncCombobox = ({ label, name, value, onChange, loadOptions, placeholder, error, clearable }: any) => {
+  const [q, setQ] = React.useState('');
+  const [res, setRes] = React.useState<any[]>([]);
+  const [open, setOpen] = React.useState(false);
+  const search = (t: string) => { setQ(t); setOpen(true); loadOptions(t).then(setRes); };
+  return fieldWrap(name, label, error, h('div', null,
+    h('input', { id: `f-${name}`, name, 'aria-label': label ? undefined : placeholder, placeholder, value: open ? q : (value ?? ''), onFocus: () => { setOpen(true); loadOptions('').then(setRes); }, onChange: (e: any) => search(e.target.value) }),
+    open ? h('ul', null, res.map((o: any) => h('li', { key: o.value }, h('button', { type: 'button', onClick: () => { onChange?.(o.value, o); setOpen(false); setQ(''); } }, `${o.label} - ${o.description ?? ''}`)))) : null,
+    clearable && value ? h('button', { type: 'button', 'aria-label': 'Clear', onClick: () => onChange?.(null, null) }, 'x') : null));
+};
+export const Combobox = (props: any) => props.loadOptions ? h(AsyncCombobox, props) : SyncCombobox(props);
+const SyncCombobox = ({ label, name, options = [], value, onChange, placeholder, error, disabled, 'data-testid': testId, 'aria-label': ariaLabel }: any) =>
   fieldWrap(name, label, error, h('select', { id: label ? `f-${name}` : undefined, name, disabled, 'aria-label': ariaLabel ?? (label ? undefined : placeholder), 'data-testid': testId, value: value ?? '',
     onChange: (e: any) => onChange?.(e.target.value || null) }, h('option', { value: '' }, placeholder ?? ''), options.map((o: any) => h('option', { key: String(o.value), value: o.value, disabled: o.disabled }, o.label))));
 export const Chip = ({ children, selected, onSelectedChange, onClick, onRemove, removeLabel = 'Remove', disabled, 'data-testid': testId }: any) =>
@@ -453,3 +471,61 @@ export const SectionCard = Card;
 export const ChoiceCardGrid = passthrough('choice-card-grid');
 export const SelectableCard = ({ children, selected, onClick, onSelect, 'data-testid': testId }: any) =>
   h('button', { type: 'button', 'aria-pressed': !!selected, 'data-testid': testId, onClick: onClick ?? onSelect }, children);
+
+export const MultiSelect = ({ label, name, options = [], value = [], onChange, 'data-testid': testId }: any) =>
+  React.createElement('div', { role: 'group', 'aria-label': label, 'data-testid': testId ?? `multi-${name}` },
+    options.map((o: any) => React.createElement('label', { key: o.value },
+      React.createElement('input', { type: 'checkbox', name, value: o.value, checked: value.includes(o.value),
+        onChange: (e: any) => onChange?.(e.target.checked ? [...value, o.value] : value.filter((v: string) => v !== o.value)) }), o.label)));
+
+// Mirrors the real FilePickerTrigger: the trigger plus a hidden file input
+// (`name` doubles as the automation id), firing onFiles with picked files.
+export const FilePickerTrigger = ({ accept, name = 'file', onFiles, children, 'data-testid': testId }: any) => {
+  const ref = React.useRef<HTMLInputElement | null>(null);
+  const open = () => ref.current?.click();
+  const trigger = typeof children === 'function'
+    ? children(open)
+    : React.cloneElement(children, { onClick: (e: any) => { children.props?.onClick?.(e); open(); } });
+  return React.createElement(React.Fragment, null, trigger,
+    React.createElement('input', {
+      ref, type: 'file', accept, name, hidden: true, 'data-testid': testId,
+      onChange: (e: any) => { const files = Array.from(e.target.files ?? []); if (files.length) onFiles(files); },
+    }));
+};
+
+// ---- Wizard / Timeline / PeopleSelector (mirror the real DS behaviour the pages rely on) ----
+export const WizardPageTemplate = ({ title, description, steps = [], onFinish, onCancel, cancelLabel = 'Cancel', backLabel = 'Back', nextLabel = 'Next', finishLabel = 'Finish', finishing = false, current, initialStep = 0, onStepChange }: any) => {
+  const [inner, setInner] = React.useState(initialStep);
+  const [error, setError] = React.useState<string | null>(null);
+  const last = Math.max(steps.length - 1, 0);
+  const index = Math.min(Math.max(current ?? inner, 0), last);
+  const step = steps[index];
+  const go = (i: number) => { setError(null); if (current === undefined) setInner(i); onStepChange?.(i); };
+  const passes = () => {
+    const r = step?.validate ? step.validate() : true;
+    if (r === true) { setError(null); return true; }
+    setError(typeof r === 'string' ? r : null);
+    return false;
+  };
+  return React.createElement('section', { 'data-testid': 'wizard-page-template' },
+    React.createElement('h1', null, title),
+    description ? React.createElement('p', null, description) : null,
+    step ? React.createElement('section', { 'aria-label': step.label, 'data-step-id': step.id },
+      step.content,
+      error ? React.createElement('p', { role: 'alert', 'data-testid': 'wizard-error' }, error) : null) : null,
+    React.createElement('footer', null,
+      index > 0 ? React.createElement('button', { onClick: () => go(index - 1) }, backLabel) : null,
+      onCancel ? React.createElement('button', { onClick: onCancel }, cancelLabel) : null,
+      index === last
+        ? React.createElement('button', { disabled: finishing, onClick: () => { if (passes()) onFinish?.(); } }, finishLabel)
+        : React.createElement('button', { onClick: () => { if (passes()) go(index + 1); } }, nextLabel)));
+};
+export const Timeline = ({ items = [], name }: any) =>
+  React.createElement('ol', { 'data-comb-id': name },
+    items.map((i: any) => React.createElement('li', { key: i.id },
+      i.actor ? React.createElement('span', null, i.actor) : null, ' ',
+      React.createElement('span', null, i.title),
+      i.body ? React.createElement('p', null, i.body) : null,
+      i.time ? React.createElement('time', { dateTime: i.dateTime }, i.time) : null)));
+export const PeopleSelector = ({ name, value, onChange, placeholder, disabled }: any) =>
+  React.createElement('input', { 'data-comb-id': name, name, placeholder, disabled, value: Array.isArray(value) ? value.join(',') : (value ?? ''), onChange: (e: any) => onChange?.(e.target.value || null) });

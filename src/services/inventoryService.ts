@@ -243,6 +243,21 @@ class InventoryService {
         return this.request(`/items/detail/${id}`);
     }
 
+    /** Product 360 — stock, purchase history and sales history, composed by the API. */
+    async getItem360<T = any>(id: string): Promise<T> {
+        return this.request(`/products/${id}/360`);
+    }
+
+    /** HSN/SAC master search (proxied to Accounting). `unavailable: true` = fall back to free text. */
+    async searchHsnSac(params: { q?: string; kind?: string; page?: number; page_size?: number } = {}) {
+        const qs = new URLSearchParams();
+        Object.entries(params).forEach(([k, v]) => {
+            if (v !== undefined && v !== null && v !== '') qs.set(k, String(v));
+        });
+        const query = qs.toString();
+        return this.request(`/hsn-sac${query ? `?${query}` : ''}`);
+    }
+
     async createItem(dto: any) {
         return this.request('/items', {
             method: 'POST',
@@ -392,8 +407,14 @@ class InventoryService {
     }
 
     // Stock Overview
-    async getStockOverview() {
-        return this.request(`/stock-overview/${this.orgId}`);
+    // Optional paging: backends that ignore these params return the full array.
+    async getStockOverview(params?: { limit?: number; offset?: number; include_total?: boolean }): Promise<any> {
+        const qs = new URLSearchParams();
+        if (params?.limit !== undefined) qs.set('limit', String(params.limit));
+        if (params?.offset !== undefined) qs.set('offset', String(params.offset));
+        if (params?.include_total) qs.set('include_total', 'true');
+        const q = qs.toString();
+        return this.request(`/stock-overview/${this.orgId}${q ? `?${q}` : ''}`);
     }
 
     // GL Inventory Valuation (from Accounting)

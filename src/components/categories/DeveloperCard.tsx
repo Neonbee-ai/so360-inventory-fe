@@ -144,7 +144,7 @@ export const DeveloperCard: React.FC<DeveloperCardProps> = ({ partnerId, project
         <section className="rounded-xl border border-line p-4 space-y-3 text-xs" aria-label="Developer" data-testid="developer-card">
             <div className="flex items-center gap-3">
                 {dev.logo_url && !logoFailed ? (
-                    <img
+                    <img loading="lazy"
                         src={dev.logo_url}
                         alt={`${dev.name} logo`}
                         className="w-10 h-10 rounded-lg object-cover bg-surface-raised"

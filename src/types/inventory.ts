@@ -276,6 +276,8 @@ export interface Item {
     barcode?: string;
     brand?: string;
     hsn_code?: string;
+    /** goods (HSN) or service (SAC); null/absent = derived from type by Accounting. */
+    hsn_sac_kind?: 'goods' | 'service' | null;
     tax_class?: string;
     weight?: number;
     weight_unit?: string;

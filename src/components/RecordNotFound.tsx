@@ -15,7 +15,7 @@ export function RecordNotFound({ listPath, listLabel }: RecordNotFoundProps) {
   return (
     <EmptyState
       name="record-not-found"
-      icon={<SearchX />}
+      icon={SearchX}
       title="Record not found"
       description="This record doesn't exist or you don't have access to it."
       action={{ label: `Back to ${listLabel}`, onClick: () => navigate(listPath) }}

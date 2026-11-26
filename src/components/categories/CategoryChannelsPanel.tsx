@@ -16,7 +16,13 @@ export interface ChannelVisibilityRow {
     label_override?: string | null;
     /** 0 = this category has its own row; > 0 = value inherited from an ancestor. */
     inherited_from_depth?: number;
+    /** The category's own value is on, but an ancestor is off, so it is not published. */
+    hidden_by_ancestor?: boolean;
 }
+
+/** The category's own switch position: effective value, or on-but-held-back by an ancestor. */
+export const ownVisible = (r?: ChannelVisibilityRow): boolean =>
+    !!r && (r.is_visible || r.hidden_by_ancestor === true);
 
 type GlyphProps = { className?: string; size?: number };
 
@@ -129,7 +135,7 @@ const CategoryChannelsPanel: React.FC<Props> = ({ categoryId, canManage, onSaved
             setRows(list);
             const next: Record<string, boolean> = {};
             CHANNEL_META.forEach(({ code }) => {
-                next[code] = list.find(r => r.channel === code)?.is_visible ?? false;
+                next[code] = ownVisible(list.find(r => r.channel === code));
             });
             setDraft(next);
         } catch (err: any) {
@@ -151,10 +157,24 @@ const CategoryChannelsPanel: React.FC<Props> = ({ categoryId, canManage, onSaved
         return set;
     }, [rows]);
 
+    const heldBackChannels = useMemo(() => {
+        const set = new Set<string>();
+        rows.forEach(r => {
+            if (r.hidden_by_ancestor) set.add(r.channel);
+        });
+        return set;
+    }, [rows]);
+
+    // Channels the merchant has just ticked off: their subcategories go dark too.
+    const turnedOff = useMemo(
+        () => CHANNEL_META.filter(({ code }) => ownVisible(rows.find(r => r.channel === code)) && draft[code] === false),
+        [draft, rows],
+    );
+
     const isDirty = useMemo(
         () =>
             CHANNEL_META.some(({ code }) => {
-                const current = rows.find(r => r.channel === code)?.is_visible ?? false;
+                const current = ownVisible(rows.find(r => r.channel === code));
                 return draft[code] !== current;
             }),
         [draft, rows],
@@ -218,12 +238,18 @@ const CategoryChannelsPanel: React.FC<Props> = ({ categoryId, canManage, onSaved
             </div>
 
             {error && <Alert variant="error">{error}</Alert>}
+            {turnedOff.length > 0 && (
+                <Alert variant="warning">
+                    Turning off {turnedOff.map(c => c.label).join(', ')} also hides every subcategory of this category there.
+                </Alert>
+            )}
             {saved && !isDirty && <Alert variant="success">Channel visibility saved</Alert>}
 
             <FieldGrid>
                 {CHANNEL_META.map(({ code, label, hint, Icon }) => {
                     const on = draft[code] ?? false;
                     const inherited = inheritedChannels.has(code);
+                    const heldBack = heldBackChannels.has(code);
                     return (
                         <div key={code} className="flex items-start gap-3 p-3 rounded-nb border border-line">
                             <Icon size={16} className={on ? 'text-primary mt-0.5' : 'text-fg-subtle mt-0.5'} />
@@ -237,7 +263,8 @@ const CategoryChannelsPanel: React.FC<Props> = ({ categoryId, canManage, onSaved
                                     onCheckedChange={() => toggle(code)}
                                 />
                             </div>
-                            {inherited && <Badge tone="warning" size="sm">inherited</Badge>}
+                            {heldBack && <Badge tone="warning" size="sm">Hidden because parent is off</Badge>}
+                            {inherited && !heldBack && <Badge tone="warning" size="sm">inherited</Badge>}
                         </div>
                     );
                 })}

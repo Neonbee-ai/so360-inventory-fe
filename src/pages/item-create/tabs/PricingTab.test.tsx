@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
 
+vi.mock('../../../services/inventoryService', () => ({ inventoryService: { searchHsnSac: vi.fn().mockResolvedValue({ data: [] }) } }));
 vi.mock('../components/FormSection', () => ({
   default: ({ title, children }: any) => <div><h4>{title}</h4>{children}</div>,
 }));
@@ -73,5 +74,35 @@ describe('PricingTab', () => {
       fireEvent.change(priceInput, { target: { value: '129.99' } });
       expect(updateField).toHaveBeenCalledWith('price', '129.99');
     });
+  });
+
+  describe('Given an invalid HSN / SAC code', () => {
+    it('When the tab is told of the error / Then it shows beside the field', () => {
+      render(<PricingTab {...makeProps({ hsn_code: '85', hsnError: 'HSN / SAC must be 4, 6 or 8 digits.' })} />);
+      expect(screen.getByText('HSN / SAC must be 4, 6 or 8 digits.')).toBeInTheDocument();
+    });
+    it('When there is no error / Then no message is shown', () => {
+      render(<PricingTab {...makeProps({ hsn_code: '8517' })} />);
+      expect(screen.queryByText(/must be 4, 6 or 8/)).not.toBeInTheDocument();
+    });
+  });
+});
+
+describe('PricingTab — HSN/SAC master (flag)', () => {
+  it('Given the flag is off / Then the HSN field is plain text and there is no goods/service select', () => {
+    render(<PricingTab {...makeProps({ hsnSacMaster: false, hsn_code: '8471' })} />);
+    expect(screen.getByDisplayValue('8471')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Goods or service')).toBeNull();
+  });
+  it('Given the flag is on / Then the goods/service select and the searchable picker show', () => {
+    render(<PricingTab {...makeProps({ hsnSacMaster: true, hsn_sac_kind: 'service', itemType: 'product' })} />);
+    expect(screen.getByLabelText('Goods or service')).toBeInTheDocument();
+    expect(screen.getByLabelText('SAC Code')).toBeInTheDocument();
+  });
+  it('Given the flag is on / When the kind changes / Then updateField is called', () => {
+    const updateField = vi.fn();
+    render(<PricingTab {...makeProps({ hsnSacMaster: true, updateField })} />);
+    fireEvent.change(screen.getByLabelText('Goods or service'), { target: { value: 'goods' } });
+    expect(updateField).toHaveBeenCalledWith('hsn_sac_kind', 'goods');
   });
 });

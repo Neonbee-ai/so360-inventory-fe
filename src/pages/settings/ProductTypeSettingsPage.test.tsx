@@ -14,6 +14,7 @@ const mockCreate = vi.fn();
 const mockDelete = vi.fn();
 const mockAddAttribute = vi.fn();
 const mockDeleteAttribute = vi.fn();
+const mockGetAttributeGroups = vi.fn();
 const mockNavigate = vi.fn();
 
 vi.mock('../../services/productTypeService', () => ({
@@ -25,6 +26,11 @@ vi.mock('../../services/productTypeService', () => ({
     addAttribute: (...args: any[]) => mockAddAttribute(...args),
     updateAttribute: vi.fn().mockResolvedValue({}),
     deleteAttribute: (...args: any[]) => mockDeleteAttribute(...args),
+    // The groups panel mounts with the type detail (Task 11).
+    getAttributeGroups: (...args: any[]) => mockGetAttributeGroups(...args),
+    createAttributeGroup: vi.fn().mockResolvedValue({}),
+    updateAttributeGroup: vi.fn().mockResolvedValue({}),
+    deleteAttributeGroup: vi.fn().mockResolvedValue({}),
   },
 }));
 
@@ -61,6 +67,7 @@ beforeEach(() => {
   mockDelete.mockResolvedValue({});
   mockAddAttribute.mockResolvedValue({});
   mockDeleteAttribute.mockResolvedValue({});
+  mockGetAttributeGroups.mockResolvedValue([]);
   mockUseShellBridgePT.mockReturnValue({
     effectiveFlagsLoaded: true,
     getFeatureState: () => 'enabled',
@@ -130,17 +137,17 @@ describe('ProductTypeSettingsPage', () => {
       render(<ProductTypeSettingsPage />);
       await waitFor(() => expect(screen.getByText('Product Types')).toBeInTheDocument());
       fireEvent.click(screen.getByText('New'));
-      expect(screen.getByPlaceholderText('Name *')).toBeInTheDocument();
+      expect(screen.getByLabelText(/^Name/)).toBeInTheDocument();
     });
 
     it('When Cancel in form clicked / Then hides create form', async () => {
       render(<ProductTypeSettingsPage />);
       await waitFor(() => expect(screen.getByText('Product Types')).toBeInTheDocument());
       fireEvent.click(screen.getByText('New'));
-      expect(screen.getByPlaceholderText('Name *')).toBeInTheDocument();
+      expect(screen.getByLabelText(/^Name/)).toBeInTheDocument();
       fireEvent.click(screen.getByText('Cancel'));
       await waitFor(() => {
-        expect(screen.queryByPlaceholderText('Name *')).not.toBeInTheDocument();
+        expect(screen.queryByLabelText(/^Name/)).not.toBeInTheDocument();
       });
     });
 
@@ -148,7 +155,7 @@ describe('ProductTypeSettingsPage', () => {
       render(<ProductTypeSettingsPage />);
       await waitFor(() => expect(screen.getByText('Product Types')).toBeInTheDocument());
       fireEvent.click(screen.getByText('New'));
-      fireEvent.change(screen.getByPlaceholderText('Name *'), { target: { value: 'Clothing' } });
+      fireEvent.change(screen.getByLabelText(/^Name/), { target: { value: 'Clothing' } });
       fireEvent.click(screen.getByText('Create'));
       await waitFor(() => {
         expect(mockCreate).toHaveBeenCalled();
@@ -175,6 +182,25 @@ describe('ProductTypeSettingsPage', () => {
         // Detail panel also shows "Electronics"
         expect(screen.getAllByText('Electronics').length).toBeGreaterThan(0);
       });
+    });
+
+    it('When type loaded / Then the attribute-groups editor mounts for that type', async () => {
+      render(<ProductTypeSettingsPage />);
+      await waitFor(() => expect(screen.getByText('Electronics')).toBeInTheDocument());
+      fireEvent.click(screen.getByText('Electronics'));
+      await waitFor(() => {
+        expect(mockGetAttributeGroups).toHaveBeenCalledWith('pt-1');
+        expect(screen.getByTestId('attribute-groups-panel')).toBeInTheDocument();
+      });
+    });
+
+    it('When a system template is selected / Then its groups are presented as read-only', async () => {
+      mockGetOne.mockResolvedValue(makeProductType({ is_system: true }));
+      render(<ProductTypeSettingsPage />);
+      await waitFor(() => expect(screen.getByText('Electronics')).toBeInTheDocument());
+      fireEvent.click(screen.getByText('Electronics'));
+      await waitFor(() => expect(screen.getByTestId('attribute-groups-panel')).toBeInTheDocument());
+      expect(screen.getByText(/shared by every organization/)).toBeInTheDocument();
     });
   });
 

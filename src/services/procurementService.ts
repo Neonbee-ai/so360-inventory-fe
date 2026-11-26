@@ -84,8 +84,16 @@ class ProcurementService {
     }
 
     // Purchase Orders
-    async getPOs() {
-        return this.request(`/po/${inventoryService.getOrgId()}`);
+    /**
+     * Without `opts` the bare list is returned (unchanged). With `opts` the BE
+     * is asked for a page with `include_total`; an older BE ignores the params
+     * and answers with the bare array.
+     */
+    async getPOs(opts?: { limit: number; offset: number; search?: string }) {
+        if (!opts) return this.request(`/po/${inventoryService.getOrgId()}`);
+        const qs = new URLSearchParams({ include_total: 'true', limit: String(opts.limit), offset: String(opts.offset) });
+        if (opts.search && opts.search.trim()) qs.set('search', opts.search.trim());
+        return this.request(`/po/${inventoryService.getOrgId()}?${qs.toString()}`);
     }
 
     async createPO(dto: any) {
@@ -154,6 +162,71 @@ class ProcurementService {
         });
     }
 
+    // PR submit / return for clarification
+    async submitPR(id: string) {
+        return this.request(`/pr/${id}/submit`, { method: 'PATCH' });
+    }
+
+    async returnPR(id: string, reason: string) {
+        return this.request(`/pr/${id}/return`, { method: 'PATCH', body: JSON.stringify({ reason }) });
+    }
+
+    // Shared procurement exception queue (demand intake, coverage variance, ...)
+    async getExceptions(filters: { kind?: string; status?: string } = {}) {
+        const qs = new URLSearchParams();
+        if (filters.kind) qs.append('kind', filters.kind);
+        if (filters.status) qs.append('status', filters.status);
+        const suffix = qs.toString() ? `?${qs.toString()}` : '';
+        return this.request(`/exceptions/${inventoryService.getOrgId()}${suffix}`);
+    }
+
+    async assignException(id: string, personId: string) {
+        return this.request(`/exceptions/${id}/assign`, { method: 'PATCH', body: JSON.stringify({ person_id: personId }) });
+    }
+
+    async retryException(id: string) {
+        return this.request(`/exceptions/${id}/retry`, { method: 'POST' });
+    }
+
+    async resolveException(id: string, resolution: string) {
+        return this.request(`/exceptions/${id}/resolve`, { method: 'PATCH', body: JSON.stringify({ resolution }) });
+    }
+
+    // Demand coverage + consolidation (Procurement Flow 02)
+    async getCoverage(filters: { pr_id?: string; status?: string; stale?: boolean } = {}) {
+        const qs = new URLSearchParams();
+        if (filters.pr_id) qs.append('pr_id', filters.pr_id);
+        if (filters.status) qs.append('status', filters.status);
+        if (filters.stale !== undefined) qs.append('stale', String(filters.stale));
+        const suffix = qs.toString() ? `?${qs.toString()}` : '';
+        return this.request(`/coverage/${inventoryService.getOrgId()}${suffix}`);
+    }
+
+    async recalculateCoverage(prLineIds: string[]) {
+        return this.request('/coverage/recalculate', { method: 'POST', body: JSON.stringify({ pr_line_ids: prLineIds }) });
+    }
+
+    async decideCoverage(prLineId: string, dto: { decision: string; split?: Record<string, number>; reason?: string }) {
+        return this.request(`/coverage/${prLineId}/decision`, { method: 'POST', body: JSON.stringify(dto) });
+    }
+
+    async getCoverageSettings() {
+        return this.request(`/coverage-settings/${inventoryService.getOrgId()}`);
+    }
+
+    async updateCoverageSettings(dto: Record<string, any>) {
+        return this.request(`/coverage-settings/${inventoryService.getOrgId()}`, { method: 'PATCH', body: JSON.stringify(dto) });
+    }
+
+    async getConsolidationCandidates() {
+        return this.request(`/consolidation/${inventoryService.getOrgId()}/candidates`);
+    }
+
+    async createConsolidationGroup(dto: { pr_line_ids: string[]; allocations?: Array<{ pr_line_id: string; qty: number }>; override_reason?: string }) {
+        const path = dto.override_reason ? '/consolidation/groups/override' : '/consolidation/groups';
+        return this.request(path, { method: 'POST', body: JSON.stringify(dto) });
+    }
+
     /** The paper trail around any procurement document. */
     async getDocumentTrace(type: 'pr' | 'rfq' | 'po' | 'grn' | 'inspection' | 'invoice' | 'return', id: string) {
         return this.request(`/trace/${inventoryService.getOrgId()}/${type}/${id}`);
@@ -168,6 +241,9 @@ class ProcurementService {
         total_amount: number;
         po_id?: string;
         attachment_url?: string;
+        tax_code_id?: string;
+        tax_rate?: number;
+        no_tax?: boolean;
     }) {
         return this.request('/vendor-invoice', {
             method: 'POST',
