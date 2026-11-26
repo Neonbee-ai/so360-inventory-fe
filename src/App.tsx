@@ -1,5 +1,4 @@
 import React, { Suspense, lazy } from 'react';
-import Vendor360Page from './pages/vendors/Vendor360Page';
 import { Routes, Route, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom';
 
 // Lazy load pages for performance
@@ -20,6 +19,7 @@ const PODetailPage = lazy(() => import('./pages/procurement/PODetailPage'));
 const GRNListPage = lazy(() => import('./pages/procurement/GRNListPage'));
 const GRNDetailPage = lazy(() => import('./pages/procurement/GRNDetailPage'));
 const GRNEntryPage = lazy(() => import('./pages/procurement/GRNEntryPage'));
+const Vendor360Page = lazy(() => import('./pages/vendors/Vendor360Page'));
 const VendorListPage = lazy(() => import('./pages/vendors/VendorListPage'));
 const VendorDetailPage = lazy(() => import('./pages/vendors/VendorDetailPage'));
 const VendorFormPage = lazy(() => import('./pages/vendors/VendorFormPage'));

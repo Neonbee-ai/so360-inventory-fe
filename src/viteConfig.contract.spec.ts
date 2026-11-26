@@ -8,6 +8,8 @@
 //      its own copy of the package — a duplicated @so360/shell-context is
 //      what broke the context singleton and forced the window-bridge fallback.
 import { describe, it, expect, beforeAll, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 const captured = vi.hoisted(() => ({
   federation: undefined as { shared?: Record<string, { singleton?: boolean }> } | undefined,
@@ -42,7 +44,6 @@ const REQUIRED_SHARED_SINGLETONS = [
   '@so360/design-system',
   '@so360/event-bus',
   '@so360/cross-link',
-  'framer-motion',
   '@so360/formatters',
 ];
 
@@ -81,6 +82,47 @@ describe('Production build configuration (MFE perf contract)', () => {
       const shared = captured.federation?.shared ?? {};
       expect(shared[dep], `${dep} must be in the federation shared list`).toBeDefined();
       expect(shared[dep]?.singleton, `${dep} must be a singleton`).toBe(true);
+    });
+  });
+
+  describe('Given the manual chunk rules', () => {
+    it('Given the federation importShared runtime, When chunks are assigned, Then it gets its own chunk (never hoisted into a vendor chunk)', () => {
+      const manualChunks = config.build?.rollupOptions?.output?.manualChunks;
+      expect(manualChunks('\0virtual:__federation_fn_import')).toBe('__federation_fn_import');
+      expect(manualChunks('__federation_fn_import')).toBe('__federation_fn_import');
+    });
+
+    it('Given lucide-react icon modules, When chunks are assigned, Then they group into the single icons chunk', () => {
+      const manualChunks = config.build?.rollupOptions?.output?.manualChunks;
+      expect(manualChunks('/repo/node_modules/lucide-react/dist/esm/icons/plus.js')).toBe('icons');
+      expect(manualChunks('/repo/node_modules/lucide-react/dist/esm/createLucideIcon.js')).toBe('icons');
+    });
+
+    it('Given ordinary app and node_modules files, When chunks are assigned, Then Rollup default chunking applies', () => {
+      const manualChunks = config.build?.rollupOptions?.output?.manualChunks;
+      expect(manualChunks('/repo/src/pages/SomePage.tsx')).toBeUndefined();
+      expect(manualChunks('/repo/node_modules/react/index.js')).toBeUndefined();
+    });
+  });
+
+  describe('Given the shared list and the unused framer-motion dependency', () => {
+    it('Then framer-motion is not shared (no source imports it; the host owns the design-system copy)', () => {
+      const shared = captured.federation?.shared ?? {};
+      expect(shared['framer-motion'], 'framer-motion must stay out of the shared list').toBeUndefined();
+    });
+
+    it('Then package.json no longer depends on framer-motion', () => {
+      const pkg = JSON.parse(readFileSync(resolve(__dirname, '../package.json'), 'utf8'));
+      expect(pkg.dependencies?.['framer-motion']).toBeUndefined();
+    });
+  });
+
+  describe('Given the initial-load performance budget', () => {
+    const budget = JSON.parse(readFileSync(resolve(__dirname, '../perf-budget.json'), 'utf8'));
+
+    it('Then the budget caps the initial ./App closure at 20 KB brotli and 10 files', () => {
+      expect(budget.initialAppClosure.maxBrotliKB).toBeLessThanOrEqual(20);
+      expect(budget.initialAppClosure.maxFiles).toBeLessThanOrEqual(10);
     });
   });
 });

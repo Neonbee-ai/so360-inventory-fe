@@ -1,10 +1,14 @@
 import { inventoryService } from './inventoryService';
 import { notifyQuotaExceeded } from './quotaExceeded';
+import { createRequestCache } from './requestCache';
 
 class VendorService {
     private readonly origin: string;
     private readonly baseUrl: string;
     private userId: string | null = null;
+    // Vendor master list is org-static lookup data read by several pages (RFQ list,
+    // exceptions, pickers): coalesce + 30 s TTL; any write through this service clears it.
+    private lookupCache = createRequestCache({ defaultTtlMs: 30_000, maxEntries: 20 });
 
     constructor() {
         const win = typeof window !== 'undefined' ? (window as any) : undefined;
@@ -35,7 +39,13 @@ class VendorService {
         this.userId = id;
     }
 
+    clearLookupCache() {
+        this.lookupCache.invalidate();
+    }
+
     private async request(endpoint: string, options: RequestInit = {}) {
+        const method = (options.method || 'GET').toUpperCase();
+        if (method !== 'GET') this.lookupCache.invalidate();
         const orgId = inventoryService.getOrgId();
         const tenantId = (inventoryService as any).tenantId;
         const response = await fetch(`${this.baseUrl}${endpoint}`, {
@@ -77,7 +87,8 @@ class VendorService {
     }
 
     async getVendors() {
-        return this.request(`/${inventoryService.getOrgId()}`);
+        const orgId = inventoryService.getOrgId();
+        return this.lookupCache.run(`vendors|${orgId}`, () => this.request(`/${orgId}`));
     }
 
     /**
