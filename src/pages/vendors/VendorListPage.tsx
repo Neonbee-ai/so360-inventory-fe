@@ -437,7 +437,7 @@ const VendorListPage = () => {
                 message={
                     <>
                         Are you sure you want to delete <strong>{deletingVendor?.name}</strong>?
-                        Vendors with purchase orders or invoices cannot be deleted. This action cannot be undone.
+                        A vendor with purchase orders, invoices or bills is removed from active use and its history is kept; an administrator can restore it. A vendor with no history is deleted permanently.
                     </>
                 }
                 confirmLabel={isDeleting ? 'Deleting...' : 'Delete'}

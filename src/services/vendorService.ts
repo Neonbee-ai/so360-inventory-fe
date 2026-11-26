@@ -291,6 +291,16 @@ class VendorService {
         });
     }
 
+    /** Vendors removed from active use (suppliers.delete). */
+    async getArchivedVendors() {
+        return this.request(`/${inventoryService.getOrgId()}/archived`);
+    }
+
+    /** Bring an archived vendor back into active use (suppliers.delete). */
+    async restoreVendor(id: string) {
+        return this.request(`/${id}/restore`, { method: 'POST' });
+    }
+
     async getContracts() {
         return this.request(`/contracts/${inventoryService.getOrgId()}`);
     }
