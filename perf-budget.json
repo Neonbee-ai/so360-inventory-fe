@@ -1,0 +1,7 @@
+{
+  "initialAppClosure": {
+    "expose": "./App",
+    "maxBrotliKB": 20,
+    "maxFiles": 10
+  }
+}

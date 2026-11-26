@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { dimensionRole, orderAttributesForDisplay, orderWithDimensions } from '../utils/dimensionOrder';
 import { useParams, useNavigate } from 'react-router-dom';
 import { RecordNotFound, NOT_FOUND_ERROR, isNotFoundError } from '../components/RecordNotFound';
@@ -21,19 +21,22 @@ import { describeItemDeleteResult, describeItemDeleteError } from '../utils/item
 import { useAuth } from '../hooks/useAuth';
 import TabNavigation from './item-create/components/TabNavigation';
 import FormSection from './item-create/components/FormSection';
-import BasicInfoTab from './item-create/tabs/BasicInfoTab';
-import MediaTab from './item-create/tabs/MediaTab';
 import { imageMetaForUrls, type ImageMetaEntry } from '../utils/imageMeta';
-import PricingTab, { TaxCodeOption } from './item-create/tabs/PricingTab';
-import CategoryTab from './item-create/tabs/CategoryTab';
-import StockTrackingTab from './item-create/tabs/StockTrackingTab';
-import ShippingTab from './item-create/tabs/ShippingTab';
-import AttributesTab from './item-create/tabs/AttributesTab';
+import type { TaxCodeOption } from './item-create/tabs/PricingTab';
 import LifecycleStatusPanel from '../components/lifecycle/LifecycleStatusPanel';
 import { useInventoryFormatters, useInventoryCurrencySymbol } from '../utils/formatters';
 import { parseUtcDate } from '../utils/datetime';
 import { useActivity, useShellBridge } from '@so360/shell-context';
 import { isHsnSacMasterEnabled, hsnValidationWarning, hsnKindLabel } from '../utils/hsnSac';
+
+// Edit-mode tabs load on demand: view mode (the default) never needs them.
+const BasicInfoTab = lazy(() => import('./item-create/tabs/BasicInfoTab'));
+const MediaTab = lazy(() => import('./item-create/tabs/MediaTab'));
+const PricingTab = lazy(() => import('./item-create/tabs/PricingTab'));
+const CategoryTab = lazy(() => import('./item-create/tabs/CategoryTab'));
+const StockTrackingTab = lazy(() => import('./item-create/tabs/StockTrackingTab'));
+const ShippingTab = lazy(() => import('./item-create/tabs/ShippingTab'));
+const AttributesTab = lazy(() => import('./item-create/tabs/AttributesTab'));
 
 // ── Types ─────────────────────────────────────────────
 type ViewTabId = TabId | 'ledger' | 'sales';
@@ -657,7 +660,9 @@ const ItemDetailPage = () => {
                             <div className="bg-surface/50 border border-line rounded-xl ring-1 ring-focus/20">
                                 <TabNavigation activeTab={editTab} onTabChange={setEditTab} tabErrors={tabErrors} />
                                 <div className="p-6 min-h-96">
-                                    {renderEditTab()}
+                                    <Suspense fallback={<div className="py-8 text-center text-sm text-fg-subtle" role="status">Loading…</div>}>
+                                        {renderEditTab()}
+                                    </Suspense>
                                 </div>
                             </div>
                         </Grid.Item>
