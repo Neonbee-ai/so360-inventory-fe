@@ -239,6 +239,14 @@ class ProcurementService {
         invoice_date: string;
         due_date?: string;
         total_amount: number;
+        /** Value before GST; with the components below, total_amount = taxable + GST (Pulse c55520ce). */
+        taxable_amount?: number;
+        cgst_rate?: number;
+        cgst_amount?: number;
+        sgst_rate?: number;
+        sgst_amount?: number;
+        igst_rate?: number;
+        igst_amount?: number;
         po_id?: string;
         attachment_url?: string;
         tax_code_id?: string;
