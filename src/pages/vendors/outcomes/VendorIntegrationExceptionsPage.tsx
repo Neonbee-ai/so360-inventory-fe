@@ -87,6 +87,7 @@ export default function VendorIntegrationExceptionsPage({ canResolve = true }: {
         description="Receipts and returns that need a vendor confirmed before they count towards performance."
         count={loading ? undefined : rows.length}
         loading={loading}
+        loadingColumns={columns.length}
         isEmpty={!loading && !error && rows.length === 0}
         empty={<EmptyState title="Nothing to fix" description="Every receipt and return is attributed to a vendor." />}
         filterConfig={{

@@ -231,6 +231,7 @@ const StockOverviewPage = () => {
                 </Button>,
             ]}
             kpis={kpis}
+            kpisCollapsible
             search={<SearchInput placeholder="Filter by item or SKU..." value={searchTerm} onChange={setSearchTerm} />}
             filterConfig={{
                 fields: [

@@ -37,7 +37,7 @@ export default function VendorCorrectiveActionsPanel({ vendorId }: { vendorId: s
       {!loading && !error && rows.length === 0 ? (
         <EmptyState title="No corrective actions" description="Serious or repeated verified defects open one automatically." />
       ) : (
-        <DataTable data-testid="vendor-vca-table" columns={columns} rows={rows} rowKey={(r) => r.id} onRowClick={(r) => navigate(`/vendors/corrective-actions/${r.id}`)} />
+        <DataTable data-testid="vendor-vca-table" loading={loading} columns={columns} rows={rows} rowKey={(r) => r.id} onRowClick={(r) => navigate(`/vendors/corrective-actions/${r.id}`)} />
       )}
     </Card>
   );

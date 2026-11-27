@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Sliders } from 'lucide-react';
-import { FieldGrid } from '@so360/design-system';
+import { FieldGrid, Skeleton } from '@so360/design-system';
 import { ProductType, ProductTypeAttribute } from '../../../types/productTypes';
 import { productTypeService } from '../../../services/productTypeService';
 import DynamicAttributeField from '../../../components/attributes/DynamicAttributeField';
@@ -58,7 +58,7 @@ const AttributesTab: React.FC<AttributesTabProps> = ({ product_type_id, custom_a
     }
 
     if (loading) {
-        return <div className="text-sm text-fg-subtle animate-pulse py-8 text-center">Loading attributes...</div>;
+        return <div role="status" aria-busy="true" aria-label="Loading attributes"><Skeleton.Fields announce={false} count={4} /></div>;
     }
 
     if (!productType || !productType.product_type_attributes || productType.product_type_attributes.length === 0) {

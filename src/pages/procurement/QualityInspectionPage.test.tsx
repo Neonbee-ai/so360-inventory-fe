@@ -168,8 +168,8 @@ describe('QualityInspectionPage', () => {
     describe('Given an inspection is opened by hand', () => {
         it('When no receipt is chosen / Then it is blocked', async () => {
             render(<QualityInspectionPage />);
-            await waitFor(() => screen.getByText('+ Open Inspection'));
-            fireEvent.click(screen.getByText('+ Open Inspection'));
+            await waitFor(() => screen.getByText('New Inspection'));
+            fireEvent.click(screen.getByText('New Inspection'));
 
             await waitFor(() => screen.getByLabelText('Goods Receipt'));
             fireEvent.click(screen.getByRole('button', { name: 'Open Inspection' }));
@@ -182,8 +182,8 @@ describe('QualityInspectionPage', () => {
 
         it('When a receipt is chosen / Then the inspection is opened against it', async () => {
             render(<QualityInspectionPage />);
-            await waitFor(() => screen.getByText('+ Open Inspection'));
-            fireEvent.click(screen.getByText('+ Open Inspection'));
+            await waitFor(() => screen.getByText('New Inspection'));
+            fireEvent.click(screen.getByText('New Inspection'));
 
             await waitFor(() => expect(mockGetGRNs).toHaveBeenCalled());
             // The fetch resolving is not the same as React having committed the

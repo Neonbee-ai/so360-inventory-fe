@@ -94,7 +94,7 @@ export default function VendorOutcomesPanel({ vendorId, canDispute = false }: { 
         {!loading && rows.length === 0 ? (
           <EmptyState title="No receipts or returns yet" description="Goods received against this vendor's orders, and returns sent back, appear here." />
         ) : (
-          <DataTable data-testid="vendor-outcomes-table" columns={columns} rows={rows} rowKey={(r) => r.id} />
+          <DataTable data-testid="vendor-outcomes-table" loading={loading} columns={columns} rows={rows} rowKey={(r) => r.id} />
         )}
       </Card>
       <Modal open={!!disputing} onClose={() => setDisputing(null)} title="Dispute this record" footer={<Button onClick={submitDispute} disabled={!reason.trim()}>Send for review</Button>}>

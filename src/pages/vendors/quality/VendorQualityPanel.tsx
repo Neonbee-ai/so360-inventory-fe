@@ -71,7 +71,7 @@ export default function VendorQualityPanel({ vendorId }: { vendorId: string }) {
         {!loading && rows.length === 0 ? (
           <EmptyState title="No inspections yet" description="Inspections of this vendor's receipts, and any NCR they raise, appear here." />
         ) : (
-          <DataTable data-testid="vendor-quality-table" columns={columns} rows={rows} rowKey={(r) => r.inspection_id} />
+          <DataTable data-testid="vendor-quality-table" loading={loading} columns={columns} rows={rows} rowKey={(r) => r.inspection_id} />
         )}
       </Card>
     </div>

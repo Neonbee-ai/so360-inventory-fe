@@ -55,7 +55,7 @@ describe('WarehouseDetailPage (Comb)', () => {
   it('Given a pending fetch / When rendered / Then the template skeleton shows', () => {
     mockGetWarehouse.mockReturnValue(new Promise(() => {}));
     const { container } = render(<WarehouseDetailPage />);
-    expect(container.querySelector('[data-slot="skeleton"]')).toBeInTheDocument();
+    expect(container.querySelector('[data-slot="loading"]')).toBeInTheDocument();
   });
 
   it('Given no locations / When rendered / Then the empty state offers the first location', async () => {

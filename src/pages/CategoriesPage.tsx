@@ -493,17 +493,9 @@ const CategoriesPage = () => {
         }
     };
 
-    if (isLoading) {
-        return (
-            <div className="p-8 flex items-center gap-3 text-fg-subtle">
-                <Loader2 size={18} className="animate-spin" />
-                Loading categories...
-            </div>
-        );
-    }
-
     return (
         <ListPageTemplate trail={[]}
+            loading={isLoading}
             title={propertyUnits ? labels.categories : 'Product Categories'}
             description={propertyUnits
                 ? 'Projects, their towers and unit availability'

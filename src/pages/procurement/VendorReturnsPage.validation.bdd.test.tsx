@@ -51,8 +51,8 @@ beforeEach(() => {
 
 const openForm = async () => {
     render(<VendorReturnsPage />);
-    await waitFor(() => screen.getByText('+ New Return'));
-    fireEvent.click(screen.getByText('+ New Return'));
+    await waitFor(() => screen.getByText('New Return'));
+    fireEvent.click(screen.getByText('New Return'));
     await screen.findByRole('dialog', { name: 'New Vendor Return' });
 };
 

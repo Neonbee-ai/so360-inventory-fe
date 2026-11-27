@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Cpu, Shirt, Armchair, Monitor, Tv, Smartphone, UtensilsCrossed, Car, Hammer, Paperclip, Package, LucideIcon } from 'lucide-react';
-import { Button, EmptyState, FieldGrid } from '@so360/design-system';
+import { Button, EmptyState, FieldGrid, Skeleton } from '@so360/design-system';
 import { ProductType } from '../../types/productTypes';
 import { productTypeService } from '../../services/productTypeService';
 
@@ -33,7 +33,7 @@ const ProductTypePicker: React.FC<ProductTypePickerProps> = ({ value, onChange }
     };
 
     if (loading) {
-        return <p className="text-nb-body text-fg-subtle" aria-busy="true">Loading product types...</p>;
+        return <div role="status" aria-busy="true" aria-label="Loading product types"><Skeleton announce={false} variant="rect" className="h-nb-8 w-full" /></div>;
     }
 
     if (types.length === 0) {

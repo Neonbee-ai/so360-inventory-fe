@@ -230,7 +230,7 @@ describe('Given untagged units and a slow tower request', () => {
       mockGetAvailability.mockImplementation((id: string) =>
         id === 'p1' ? Promise.resolve({ towers, units: [] }) : new Promise(() => {}));
       render(<AvailabilityMatrix categoryId="p1" />);
-      expect(await screen.findByText(/Loading tower/)).toBeTruthy();
+      expect(await screen.findByRole('status', { name: 'Loading tower' })).toBeTruthy();
     });
   });
 
@@ -245,7 +245,7 @@ describe('Given untagged units and a slow tower request', () => {
         return t1Calls === 1 ? slowT1.promise : Promise.resolve({ towers: [], units: [untaggedUnit('a2', '302')] });
       });
       render(<AvailabilityMatrix categoryId="p1" />);
-      await screen.findByText(/Loading tower/);
+      await screen.findByRole('status', { name: 'Loading tower' });
       fireEvent.click(screen.getAllByRole('tab')[1]);
       expect(await screen.findByRole('button', { name: 'Unit 401 Available' })).toBeTruthy();
 
@@ -265,7 +265,7 @@ describe('Given untagged units and a slow tower request', () => {
         return slowT1.promise;
       });
       render(<AvailabilityMatrix categoryId="p1" />);
-      await screen.findByText(/Loading tower/);
+      await screen.findByRole('status', { name: 'Loading tower' });
       fireEvent.click(screen.getAllByRole('tab')[1]);
       expect(await screen.findByRole('button', { name: 'Unit 401 Available' })).toBeTruthy();
 

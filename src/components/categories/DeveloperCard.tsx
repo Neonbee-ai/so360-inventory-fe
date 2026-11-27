@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Building2, Globe, Mail, Phone, MapPin, User, Loader2, Pencil } from 'lucide-react';
-import { Alert, Button, IconButton, Select, TextField, FieldGrid, FieldGridItem } from '@so360/design-system';
+import { Building2, Globe, Mail, Phone, MapPin, User, Pencil } from 'lucide-react';
+import { Alert, Button, IconButton, Select, TextField, FieldGrid, FieldGridItem, Skeleton } from '@so360/design-system';
 import { inventoryService } from '../../services/inventoryService';
 import type { DeveloperProfile, DeveloperUpdate } from '../../types/inventory';
 
@@ -99,8 +99,8 @@ export const DeveloperCard: React.FC<DeveloperCardProps> = ({ partnerId, project
 
     if (loading) {
         return (
-            <div className="flex items-center gap-2 text-xs text-fg-muted p-4" data-testid="developer-loading">
-                <Loader2 size={14} className="animate-spin" /> Loading developer…
+            <div role="status" aria-busy="true" aria-label="Loading developer" data-testid="developer-loading">
+                <Skeleton.Detail announce={false} count={1} />
             </div>
         );
     }

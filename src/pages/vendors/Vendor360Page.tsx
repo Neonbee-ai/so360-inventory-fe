@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Button, Card, EmptyState, Tabs } from '@so360/design-system';
+import { Alert, Button, Card, DetailPageTemplate, EmptyState } from '@so360/design-system';
 import VendorLifecyclePanel from './lifecycle/VendorLifecyclePanel';
 import VendorQualificationsPanel from './lifecycle/VendorQualificationsPanel';
 import VendorRiskPanel from './lifecycle/VendorRiskPanel';
@@ -82,24 +82,19 @@ export default function Vendor360Page() {
     return () => { alive = false; };
   }, [id]);
 
-  if (error) return <div className="p-6 text-fg-muted">{error}</div>;
-  if (!data) return null;
+  const trail = [{ label: 'Vendors', to: '/inventory/vendors', onClick: () => navigate('/inventory/vendors') }];
+  if (error) {
+    return (
+      <DetailPageTemplate title="Vendor 360" trail={trail}>
+        <Alert variant="error">{error}</Alert>
+      </DetailPageTemplate>
+    );
+  }
 
-  const p = data.panels ?? {};
+  const p = data?.panels ?? {};
   const rows = (list: any[] | undefined) => list ?? [];
 
-  return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-nb-3 p-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-fg">{data.profile?.name || 'Vendor 360'}</h1>
-        <Button variant="ghost" onClick={() => navigate(`/inventory/vendors/${id}`)}>Back to vendor</Button>
-      </div>
-
-      <Tabs
-        name="vendor-360-tabs"
-        value={tab}
-        onChange={setTab}
-        items={[
+  const tabItems = [
           { id: 'overview', label: 'Overview' },
           { id: 'qualifications', label: 'Categories & Capabilities' },
           { id: 'risk', label: 'Risk & Due Diligence' },
@@ -112,9 +107,9 @@ export default function Vendor360Page() {
           ...(procurementOn ? [{ id: 'procurement', label: 'RFQs & POs' }] : []),
           ...(financeOn ? [{ id: 'finance', label: 'Finance' }] : []),
           ...(portalOn && can([PORTAL_PERMISSION]) ? [{ id: 'portal', label: 'Portal & Contacts' }] : []),
-        ]}
-      >
-        {(active) => {
+        ];
+
+  const renderTab = (active: string) => {
           if (active === 'portal' && portalOn) {
             return <VendorPortalPanel vendorId={id} canManage={can([PORTAL_PERMISSION])} canInvite={portalInviteOn && can([PORTAL_PERMISSION])} />;
           }
@@ -230,8 +225,19 @@ export default function Vendor360Page() {
       </Card>
             </div>
           );
-        }}
-      </Tabs>
-    </div>
+  };
+
+  return (
+    <DetailPageTemplate
+      title={data?.profile?.name || 'Vendor 360'}
+      trail={trail}
+      loading={!!id && !data}
+      secondaryActions={[<Button key="back" variant="secondary" onClick={() => navigate(`/inventory/vendors/${id}`)}>Back to vendor</Button>]}
+      tabs={tabItems}
+      activeTab={tab}
+      onTabChange={setTab}
+    >
+      {data ? renderTab(tab) : null}
+    </DetailPageTemplate>
   );
 }

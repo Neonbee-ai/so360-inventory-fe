@@ -32,7 +32,7 @@ describe('ProductTypePicker', () => {
     it('When loading / Then shows loading indicator', () => {
       mockGetAll.mockReturnValue(new Promise(() => {}));
       render(<ProductTypePicker value="" onChange={vi.fn()} />);
-      expect(screen.getByText('Loading product types...')).toBeInTheDocument();
+      expect(screen.getByRole('status', { name: 'Loading product types' })).toBeInTheDocument();
     });
   });
 

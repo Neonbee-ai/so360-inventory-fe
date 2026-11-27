@@ -182,6 +182,7 @@ const RFQListPage = () => {
                 count={rfqs.length}
                 primaryAction={<Button onClick={() => setShowForm(true)}><Plus size={16} aria-hidden="true" /> New RFQ</Button>}
                 kpis={kpis}
+                kpisCollapsible
                 filterConfig={{
                     fields: [{
                         key: 'status', label: 'Status', type: 'select',
@@ -197,6 +198,7 @@ const RFQListPage = () => {
                     onClear: () => setStatusFilter(''),
                 }}
                 loading={loading}
+                loadingColumns={6}
                 isEmpty={!loading && !fetchError && rfqs.length === 0 && !statusFilter}
                 isFilteredEmpty={!loading && !fetchError && rfqs.length === 0 && !!statusFilter}
                 onClearFilters={() => setStatusFilter('')}

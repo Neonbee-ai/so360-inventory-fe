@@ -37,10 +37,10 @@ const ContractsPage = () => {
             description="Lump-sum and value-based service agreements."
             count={loading ? undefined : contracts.length}
             loading={loading}
+            loadingColumns={columns.length}
             isEmpty={!loading && !error && contracts.length === 0}
             empty={<EmptyState title="No active contracts found." />}
         >
-            {loading && <span className="sr-only" role="status">Loading contracts...</span>}
             {error && <Alert variant="error">{error}</Alert>}
             {!loading && contracts.length > 0 && (
                 <DataTable

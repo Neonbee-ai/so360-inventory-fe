@@ -297,7 +297,7 @@ describe('Given ProductTypePicker', () => {
 
     render(<ProductTypePicker value="" onChange={vi.fn()} />);
 
-    expect(screen.getByText(/Loading product types/i)).toBeInTheDocument();
+    expect(screen.getByRole('status', { name: /Loading product types/i })).toBeInTheDocument();
   });
 
   it('Given no product types exist / When loaded / Then a no-types message is shown', async () => {

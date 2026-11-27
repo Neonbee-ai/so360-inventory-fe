@@ -46,6 +46,7 @@ export default function PayeeChangeApprovalsPage() {
       description="Bank and payment-detail changes wait here until an independent Finance reviewer verifies and approves them."
       count={loading ? undefined : rows.length}
       loading={loading}
+      loadingColumns={columns.length}
       isEmpty={!loading && !error && rows.length === 0}
       empty={<EmptyState title="Nothing waiting" description="New bank or payment-detail change requests appear here." />}
       filterConfig={{

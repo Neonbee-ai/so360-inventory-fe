@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Button, Card, EmptyState } from '@so360/design-system';
+import { Alert, Button, Card, DetailPageTemplate, EmptyState } from '@so360/design-system';
 import { useShellBridge } from '@so360/shell-context';
 import { inventoryService } from '../services/inventoryService';
 
@@ -43,23 +43,28 @@ export default function Product360Page() {
     return () => { alive = false; };
   }, [id]);
 
-  if (error) return <div className="p-6 text-fg-muted">{error}</div>;
-  if (!data) return null;
+  const trail = [{ label: 'Items', to: '/inventory/items', onClick: () => navigate('/inventory/items') }];
+  if (error) {
+    return (
+      <DetailPageTemplate title="Product 360" trail={trail}>
+        <Alert variant="error">{error}</Alert>
+      </DetailPageTemplate>
+    );
+  }
 
-  const p = data.panels ?? {};
+  const p = data?.panels ?? {};
   const rows = (list: any[] | undefined) => list ?? [];
   const stock = p.stock;
 
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-nb-3 p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-semibold text-fg">{data.profile?.name || 'Product 360'}</h1>
-          {data.profile?.sku && <p className="text-sm text-fg-muted">SKU {data.profile.sku}</p>}
-        </div>
-        <Button variant="ghost" onClick={() => navigate(`/inventory/items/${id}`)}>Back to item</Button>
-      </div>
-
+    <DetailPageTemplate
+      title={data?.profile?.name || 'Product 360'}
+      trail={trail}
+      loading={!!id && !data}
+      meta={data?.profile?.sku ? `SKU ${data.profile.sku}` : undefined}
+      secondaryActions={[<Button key="back" variant="secondary" onClick={() => navigate(`/inventory/items/${id}`)}>Back to item</Button>]}
+    >
+      <div className="flex flex-col gap-nb-3">
       <Card title="Stock and movement">
         <div className="grid grid-cols-2 gap-nb-3 md:grid-cols-4">
           <div>
@@ -116,6 +121,7 @@ export default function Product360Page() {
           <Button variant="ghost" onClick={() => navigate(p.sales.deep_link)}>Sales orders</Button>
         </Card>
       )}
-    </div>
+      </div>
+    </DetailPageTemplate>
   );
 }

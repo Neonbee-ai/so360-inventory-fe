@@ -11,8 +11,7 @@ import {
     IconButton,
     Select,
     Switch,
-    TextField,
-} from '@so360/design-system';
+    TextField, Skeleton } from '@so360/design-system';
 import { productTypeService } from '../../../services/productTypeService';
 import type { AttributeGroup, ProductTypeAttribute, SurfacePlacements } from '../../../types/productTypes';
 
@@ -434,9 +433,8 @@ const AttributeGroupsPanel: React.FC<AttributeGroupsPanelProps> = ({
             )}
 
             {isLoading ? (
-                <div className="flex items-center gap-2 py-4 text-sm text-fg-subtle">
-                    <Loader2 size={14} className="animate-spin" />
-                    Loading groups…
+                <div role="status" aria-busy="true" aria-label="Loading groups">
+                    <Skeleton.Table announce={false} count={4} columns={3} />
                 </div>
             ) : orderedGroups.length === 0 ? (
                 <EmptyState

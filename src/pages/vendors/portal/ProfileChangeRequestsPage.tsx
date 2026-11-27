@@ -46,6 +46,7 @@ export default function ProfileChangeRequestsPage() {
       description="Company, contact and address changes proposed by suppliers wait here until someone other than the requester approves them."
       count={loading ? undefined : rows.length}
       loading={loading}
+      loadingColumns={columns.length}
       isEmpty={!loading && !error && rows.length === 0}
       empty={<EmptyState title="Nothing waiting" description="Changes proposed from the supplier portal appear here." />}
       filterConfig={{

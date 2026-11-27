@@ -60,7 +60,7 @@ describe('StockMovementRegisterPage (Comb)', () => {
   it('Given a pending fetch / When rendered / Then the loading skeleton shows', () => {
     inv.getMovements.mockReturnValue(new Promise(() => {}));
     const { container } = renderPage();
-    expect(container.querySelector('[data-slot="skeleton"]')).toBeInTheDocument();
+    expect(container.querySelector('[data-slot="loading"]')).toBeInTheDocument();
   });
 
   it('Given no movements / When loaded / Then the empty state shows', async () => {

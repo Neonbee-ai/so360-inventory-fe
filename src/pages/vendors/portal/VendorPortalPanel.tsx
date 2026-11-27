@@ -63,7 +63,7 @@ export default function VendorPortalPanel({ vendorId, canManage, canInvite }: Pr
       {!loading && !error && rows.length === 0 ? (
         <EmptyState title="No portal users" description="Invite a contact so the supplier can respond to RFQs and acknowledge orders online." />
       ) : (
-        <DataTable data-testid="portal-users-table" columns={columns} rows={rows} rowKey={(r) => r.access.id} />
+        <DataTable data-testid="portal-users-table" loading={loading} columns={columns} rows={rows} rowKey={(r) => r.access.id} />
       )}
 
       <Modal

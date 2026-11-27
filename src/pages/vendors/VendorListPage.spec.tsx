@@ -31,13 +31,6 @@ vi.mock('../../services/vendorService', () => ({
 
 vi.mock('@so360/design-system', async () => ({
   ...(await vi.importActual<any>('@so360/design-system')),
-  QuotaBar: ({ used, isUnlimited, limit }: any) =>
-    React.createElement('div', {
-      'data-testid': 'quota-bar',
-      'data-used': String(used),
-      'data-unlimited': String(isUnlimited),
-      'data-limit': String(limit),
-    }),
   QuotaGate: ({ children, used }: any) =>
     React.createElement('div', { 'data-testid': 'quota-gate', 'data-used': String(used) }, children),
   FeatureGate: ({ children }: any) => React.createElement(React.Fragment, null, children),
@@ -88,93 +81,93 @@ beforeEach(() => {
 describe('VendorListPage — vendor count display', () => {
 
   describe('Given vendor count source priority', () => {
-    it('When quotaData.current_usage=0 and 3 vendors load / Then QuotaBar used=3 (not 0)', async () => {
+    it('When quotaData.current_usage=0 and 3 vendors load / Then quota chip used=3 (not 0)', async () => {
       quotaState.data = { current_usage: 0, is_unlimited: true, limit: 0 };
       vendorMocks.getVendors.mockResolvedValue(makeVendors(3));
 
       renderPage();
 
       await waitFor(() => {
-        expect(screen.getByTestId('quota-bar').getAttribute('data-used')).toBe('3');
+        expect(screen.getByTestId('quota-chip')).toHaveTextContent(/(^|\D)3 \//);
       });
     });
 
-    it('When quotaData.current_usage=0 and 18 vendors load / Then QuotaBar used=18', async () => {
+    it('When quotaData.current_usage=0 and 18 vendors load / Then quota chip used=18', async () => {
       quotaState.data = { current_usage: 0, is_unlimited: true, limit: 0 };
       vendorMocks.getVendors.mockResolvedValue(makeVendors(18));
 
       renderPage();
 
       await waitFor(() => {
-        expect(screen.getByTestId('quota-bar').getAttribute('data-used')).toBe('18');
+        expect(screen.getByTestId('quota-chip')).toHaveTextContent(/(^|\D)18 \//);
       });
     });
 
-    it('When quotaData is null and 5 vendors load / Then QuotaBar used=5', async () => {
+    it('When quotaData is null and 5 vendors load / Then quota chip used=5', async () => {
       quotaState.data = null;
       vendorMocks.getVendors.mockResolvedValue(makeVendors(5));
 
       renderPage();
 
       await waitFor(() => {
-        expect(screen.getByTestId('quota-bar').getAttribute('data-used')).toBe('5');
+        expect(screen.getByTestId('quota-chip')).toHaveTextContent(/(^|\D)5 \//);
       });
     });
   });
 
-  describe('Given QuotaBar visibility condition', () => {
-    it('When no quotaData and vendors still loading / Then QuotaBar is not rendered', () => {
+  describe('Given quota chip visibility condition', () => {
+    it('When no quotaData and vendors still loading / Then quota chip is not rendered', () => {
       quotaState.data = null;
       vendorMocks.getVendors.mockReturnValue(new Promise(() => {})); // never resolves
 
       renderPage();
 
-      expect(screen.queryByTestId('quota-bar')).toBeNull();
+      expect(screen.queryByTestId('quota-chip')).toBeNull();
     });
 
-    it('When quotaData present and vendors array is empty / Then QuotaBar is rendered', async () => {
+    it('When quotaData present and vendors array is empty / Then quota chip is rendered', async () => {
       quotaState.data = { current_usage: 0, is_unlimited: true, limit: 0 };
       vendorMocks.getVendors.mockResolvedValue([]);
 
       renderPage();
 
       await waitFor(() => {
-        expect(screen.queryByTestId('quota-bar')).not.toBeNull();
+        expect(screen.queryByTestId('quota-chip')).not.toBeNull();
       });
     });
 
-    it('When no quotaData but vendors loaded (length>0) / Then QuotaBar appears', async () => {
+    it('When no quotaData but vendors loaded (length>0) / Then quota chip appears', async () => {
       quotaState.data = null;
       vendorMocks.getVendors.mockResolvedValue(makeVendors(2));
 
       renderPage();
 
       await waitFor(() => {
-        expect(screen.queryByTestId('quota-bar')).not.toBeNull();
+        expect(screen.queryByTestId('quota-chip')).not.toBeNull();
       });
     });
   });
 
   describe('Given is_unlimited flag passthrough', () => {
-    it('When quotaData.is_unlimited=true / Then QuotaBar data-unlimited=true', async () => {
+    it('When quotaData.is_unlimited=true / Then quota chip shows unlimited', async () => {
       quotaState.data = { current_usage: 0, is_unlimited: true, limit: 0 };
       vendorMocks.getVendors.mockResolvedValue(makeVendors(3));
 
       renderPage();
 
       await waitFor(() => {
-        expect(screen.getByTestId('quota-bar').getAttribute('data-unlimited')).toBe('true');
+        expect(screen.getByTestId('quota-chip')).toHaveTextContent('/ ∞');
       });
     });
 
-    it('When quotaData is null / Then QuotaBar data-unlimited=undefined', async () => {
+    it('When quotaData is null / Then quota chip is not unlimited', async () => {
       quotaState.data = null;
       vendorMocks.getVendors.mockResolvedValue(makeVendors(2));
 
       renderPage();
 
       await waitFor(() => {
-        expect(screen.getByTestId('quota-bar').getAttribute('data-unlimited')).toBe('undefined');
+        expect(screen.getByTestId('quota-chip')).not.toHaveTextContent('∞');
       });
     });
   });
@@ -239,21 +232,21 @@ describe('VendorListPage — vendor count display', () => {
   });
 
   describe('Given search filtering', () => {
-    it('When search term filters results / Then QuotaBar still shows total vendor count', async () => {
+    it('When search term filters results / Then quota chip still shows total vendor count', async () => {
       vendorMocks.getVendors.mockResolvedValue(makeVendors(5));
 
       renderPage();
 
       await waitFor(() => {
-        expect(screen.getByTestId('quota-bar').getAttribute('data-used')).toBe('5');
+        expect(screen.getByTestId('quota-chip')).toHaveTextContent(/(^|\D)5 \//);
       });
 
       fireEvent.change(screen.getByPlaceholderText('Search vendors...'), {
         target: { value: 'Vendor 1' },
       });
 
-      // QuotaBar uses vendors.length (5), not filteredVendors.length (1)
-      expect(screen.getByTestId('quota-bar').getAttribute('data-used')).toBe('5');
+      // quota chip uses vendors.length (5), not filteredVendors.length (1)
+      expect(screen.getByTestId('quota-chip')).toHaveTextContent(/(^|\D)5 \//);
     });
   });
 
@@ -263,7 +256,7 @@ describe('VendorListPage — vendor count display', () => {
 
       renderPage();
 
-      expect(screen.getByText('Loading vendor ecosystem...')).toBeDefined();
+      expect(screen.getByTestId('page-loading-status')).toHaveTextContent('Loading…');
     });
   });
 
@@ -277,7 +270,7 @@ describe('VendorListPage — vendor count display', () => {
       renderPage();
 
       await waitFor(() => {
-        expect(screen.getByTestId('quota-bar').getAttribute('data-used')).toBe('3');
+        expect(screen.getByTestId('quota-chip')).toHaveTextContent(/(^|\D)3 \//);
       });
 
       // Confirm getVendors was called once on mount
@@ -293,7 +286,7 @@ describe('VendorListPage — vendor count display', () => {
       renderPage();
 
       await waitFor(() => {
-        expect(screen.getByTestId('quota-bar').getAttribute('data-used')).toBe('3');
+        expect(screen.getByTestId('quota-chip')).toHaveTextContent(/(^|\D)3 \//);
       });
 
       expect(vendorMocks.getVendors).toHaveBeenCalledTimes(1);
@@ -303,14 +296,14 @@ describe('VendorListPage — vendor count display', () => {
 
 describe('VendorListPage — server paging', () => {
   describe('Given the BE returns { data, total } for page 1', () => {
-    it('When the page loads / Then it asks for limit 50 offset 0 and shows the server total in QuotaBar', async () => {
+    it('When the page loads / Then it asks for limit 50 offset 0 and shows the server total in quota chip', async () => {
       quotaState.data = null;
       vendorMocks.getVendorsPage.mockResolvedValue({ data: makeVendors(50), total: 120, legacy: false });
 
       renderPage();
 
       await waitFor(() => {
-        expect(screen.getByTestId('quota-bar').getAttribute('data-used')).toBe('120');
+        expect(screen.getByTestId('quota-chip')).toHaveTextContent(/(^|\D)120 \//);
       });
       expect(vendorMocks.getVendorsPage).toHaveBeenCalledWith({ limit: 50, offset: 0, search: '' });
     });
@@ -324,7 +317,7 @@ describe('VendorListPage — server paging', () => {
       renderPage();
 
       await waitFor(() => {
-        expect(screen.getByTestId('quota-bar').getAttribute('data-used')).toBe('60');
+        expect(screen.getByTestId('quota-chip')).toHaveTextContent(/(^|\D)60 \//);
       });
       expect(screen.getAllByText(/^Vendor \d+$/).length).toBe(50);
     });

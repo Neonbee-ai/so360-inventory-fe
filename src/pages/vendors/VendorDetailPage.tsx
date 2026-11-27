@@ -7,7 +7,6 @@ import {
     Modal, ConfirmDialog, TextField, Textarea, Select, Checkbox, EmptyState, FieldGrid,
 } from '@so360/design-system';
 import { vendorService } from '../../services/vendorService';
-import { TableSkeleton } from '../../components/common/Skeleton';
 import { useAuth } from '../../hooks/useAuth';
 import { CreateInvoiceModal } from '../../components/vendors/CreateInvoiceModal';
 import { VendorBankAccountsSection } from '../../components/vendors/VendorBankAccountsSection';
@@ -188,11 +187,7 @@ const VendorDetailPage = () => {
     const canManage = can('suppliers.create');
 
     if (isLoading) {
-        return (
-            <DetailPageTemplate title="Vendor" trail={[{ label: 'Vendors', to: '/vendors', onClick: () => navigate('/vendors') }]}>
-                <TableSkeleton />
-            </DetailPageTemplate>
-        );
+        return <DetailPageTemplate title="Vendor" trail={[{ label: 'Vendors', to: '/vendors', onClick: () => navigate('/vendors') }]} loading />;
     }
     if (!vendor && (error === NOT_FOUND_ERROR || !error)) {
         return (

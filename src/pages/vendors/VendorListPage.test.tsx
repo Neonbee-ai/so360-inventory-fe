@@ -32,10 +32,8 @@ vi.mock('../../hooks/useAuth', () => ({
 }));
 
 const mockUseShellBridgeV = vi.fn();
-const mockQuotaBar = vi.fn();
 vi.mock('@so360/design-system', async () => ({
   ...(await vi.importActual<any>('@so360/design-system')),
-  QuotaBar: (props: any) => { mockQuotaBar(props); return <div data-testid="quota-bar" data-used={props.used} />; },
   QuotaGate: ({ children }: any) => <>{children}</>,
   FeatureGate: ({ children, loading }: any) => loading ? null : <>{children}</>,
 }));
@@ -66,7 +64,6 @@ const makeVendor = (overrides: any = {}) => ({
 beforeEach(() => {
   vi.clearAllMocks();
   mockCanVendorList.mockImplementation((_action: string) => true);
-  mockQuotaBar.mockClear();
   mockGetVendors.mockResolvedValue([]);
   mockCreateVendor.mockResolvedValue({ id: 'vendor-new' });
   mockDeleteVendor.mockResolvedValue({});
@@ -91,7 +88,7 @@ describe('VendorListPage', () => {
     it('When user has permission / Then shows Add Vendor button', async () => {
       render(<VendorListPage />);
       await waitFor(() => {
-        expect(screen.getByText('Add Vendor')).toBeInTheDocument();
+        expect(screen.getByText('New Vendor')).toBeInTheDocument();
       });
     });
 
@@ -168,8 +165,8 @@ describe('VendorListPage', () => {
   describe('Given create vendor flow', () => {
     it('When Add Vendor clicked / Then opens create modal', async () => {
       render(<VendorListPage />);
-      await waitFor(() => screen.getByText('Add Vendor'));
-      fireEvent.click(screen.getByText('Add Vendor'));
+      await waitFor(() => screen.getByText('New Vendor'));
+      fireEvent.click(screen.getByText('New Vendor'));
       await waitFor(() => {
         expect(screen.getByRole('dialog')).toBeInTheDocument();
       });
@@ -177,8 +174,8 @@ describe('VendorListPage', () => {
 
     it('When form submitted / Then calls createVendor', async () => {
       render(<VendorListPage />);
-      await waitFor(() => screen.getByText('Add Vendor'));
-      fireEvent.click(screen.getByText('Add Vendor'));
+      await waitFor(() => screen.getByText('New Vendor'));
+      fireEvent.click(screen.getByText('New Vendor'));
       await waitFor(() => screen.getByRole('dialog'));
       fireEvent.change(screen.getByPlaceholderText('Company name'), { target: { value: 'New Vendor' } });
       fireEvent.click(screen.getByText('Add Vendor', { selector: 'button[type="submit"]' }));
@@ -192,8 +189,8 @@ describe('VendorListPage', () => {
     it('When a vendor is created and the refetch omits it / Then it is still listed and searchable', async () => {
       mockCreateVendor.mockResolvedValue({ id: 'vendor-new', name: 'Fresh Vendor Co' });
       render(<VendorListPage />);
-      await waitFor(() => screen.getByText('Add Vendor'));
-      fireEvent.click(screen.getByText('Add Vendor'));
+      await waitFor(() => screen.getByText('New Vendor'));
+      fireEvent.click(screen.getByText('New Vendor'));
       await waitFor(() => screen.getByRole('dialog'));
       fireEvent.change(screen.getByPlaceholderText('Company name'), { target: { value: 'Fresh Vendor Co' } });
       fireEvent.click(screen.getByText('Add Vendor', { selector: 'button[type="submit"]' }));
@@ -222,8 +219,8 @@ describe('VendorListPage', () => {
     });
   });
 
-  describe('Given vendor count display (QuotaBar)', () => {
-    it('When 3 vendors are fetched / Then QuotaBar receives used=3 from actual vendor list', async () => {
+  describe('Given vendor count display (quota chip)', () => {
+    it('When 3 vendors are fetched / Then quota chip receives used=3 from actual vendor list', async () => {
       mockGetVendors.mockResolvedValue([
         makeVendor({ id: 'v1', name: 'V1' }),
         makeVendor({ id: 'v2', name: 'V2' }),
@@ -231,23 +228,23 @@ describe('VendorListPage', () => {
       ]);
       render(<VendorListPage />);
       await waitFor(() => screen.getByText('V1'));
-      const bar = screen.getByTestId('quota-bar');
-      expect(bar.getAttribute('data-used')).toBe('3');
+      const bar = screen.getByTestId('quota-chip');
+      expect(bar).toHaveTextContent(/(^|\D)3 \//);
     });
 
-    it('When 0 vendors are fetched / Then QuotaBar receives used=0, not undefined', async () => {
+    it('When 0 vendors are fetched / Then quota chip receives used=0, not undefined', async () => {
       mockGetVendors.mockResolvedValue([]);
       render(<VendorListPage />);
       await waitFor(() => expect(screen.queryByText(/Loading/i)).not.toBeInTheDocument());
-      const bar = screen.queryByTestId('quota-bar');
-      if (bar) expect(bar.getAttribute('data-used')).toBe('0');
+      const bar = screen.queryByTestId('quota-chip');
+      if (bar) expect(bar).toHaveTextContent(/(^|\D)0 \//);
     });
 
-    it('When fetch fails / Then QuotaBar is not rendered (no stale zero count shown)', async () => {
+    it('When fetch fails / Then quota chip is not rendered (no stale zero count shown)', async () => {
       mockGetVendors.mockRejectedValue(new Error('Network error'));
       render(<VendorListPage />);
       await waitFor(() => screen.getByText('Network error'));
-      expect(screen.queryByTestId('quota-bar')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('quota-chip')).not.toBeInTheDocument();
     });
   });
 
@@ -261,7 +258,7 @@ describe('VendorListPage', () => {
       });
       render(<VendorListPage />);
       await waitFor(() => expect(screen.getByText('Vendors & Subcontractors')).toBeInTheDocument());
-      expect(screen.queryByText('Add Vendor')).not.toBeInTheDocument();
+      expect(screen.queryByText('New Vendor')).not.toBeInTheDocument();
     });
 
     it('When effectiveFlagsLoaded becomes true with enabled flag / Then Add Vendor button appears', async () => {
@@ -272,7 +269,7 @@ describe('VendorListPage', () => {
         permissionsLoaded: true, hasPermission: () => true, hasAnyPermission: () => true, getFeatureState: () => 'enabled',
       });
       render(<VendorListPage />);
-      await waitFor(() => expect(screen.getByText('Add Vendor')).toBeInTheDocument());
+      await waitFor(() => expect(screen.getByText('New Vendor')).toBeInTheDocument());
     });
   });
 
@@ -281,13 +278,13 @@ describe('VendorListPage', () => {
       mockCanVendorList.mockImplementation((action: string) => action !== 'suppliers.create');
       render(<VendorListPage />);
       await waitFor(() => expect(screen.getByText('Vendors & Subcontractors')).toBeInTheDocument());
-      expect(screen.queryByText('Add Vendor')).not.toBeInTheDocument();
+      expect(screen.queryByText('New Vendor')).not.toBeInTheDocument();
     });
 
     it('When can("suppliers.create") is granted / Then Add Vendor button is shown', async () => {
       mockCanVendorList.mockImplementation((action: string) => action === 'suppliers.create');
       render(<VendorListPage />);
-      await waitFor(() => expect(screen.getByText('Add Vendor')).toBeInTheDocument());
+      await waitFor(() => expect(screen.getByText('New Vendor')).toBeInTheDocument());
     });
   });
 });

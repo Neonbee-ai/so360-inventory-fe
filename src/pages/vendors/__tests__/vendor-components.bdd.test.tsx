@@ -259,8 +259,8 @@ describe('Given VendorListPage', () => {
 
     render(<VendorListPage />);
 
-    await waitFor(() => screen.getByRole('button', { name: /Add Vendor/i }));
-    await user.click(screen.getByRole('button', { name: /Add Vendor/i }));
+    await waitFor(() => screen.getByRole('button', { name: /New Vendor/i }));
+    await user.click(screen.getByRole('button', { name: /New Vendor/i }));
 
     expect(screen.getByRole('dialog')).toBeInTheDocument();
   });
@@ -280,7 +280,7 @@ describe('Given ContractsPage', () => {
 
     render(<ContractsPage />);
 
-    expect(screen.getByText(/Loading contracts/i)).toBeInTheDocument();
+    expect(screen.getByTestId('page-loading-status')).toHaveTextContent('Loading…');
   });
 
   it('Given no contracts exist / When loaded / Then an empty state message is shown', async () => {
@@ -327,9 +327,9 @@ describe('Given VendorDetailPage', () => {
   it('Given vendor data is loading / When rendered / Then a skeleton loader is shown', () => {
     mockGetVendorDetail.mockReturnValue(new Promise(() => {}));
 
-    render(<VendorDetailPage />);
+    const { container } = render(<VendorDetailPage />);
 
-    expect(screen.getByTestId('table-skeleton')).toBeInTheDocument();
+    expect(container.querySelector('[data-slot="loading"]')).toBeInTheDocument();
   });
 
   it('Given vendor data is fetched / When rendered / Then vendor name, email and phone are shown', async () => {

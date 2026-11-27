@@ -42,7 +42,7 @@ describe('ContractsPage (Comb)', () => {
   it('Given a pending request / When loading / Then it shows the loading status', () => {
     mockGetContracts.mockReturnValue(new Promise(() => {}));
     render(<ContractsPage />);
-    expect(screen.getByRole('status')).toHaveTextContent('Loading contracts...');
+    expect(screen.getByTestId('page-loading-status')).toHaveTextContent('Loading…');
   });
 
   it('Given no contracts / When loaded / Then it shows the empty state', async () => {

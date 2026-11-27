@@ -41,7 +41,7 @@ describe('ProcurementReportsPage (Comb)', () => {
     it('Given the report is running, When rendered, Then the loading skeleton is shown', () => {
         mockGetReport.mockReturnValue(new Promise(() => {}));
         const { container } = render(<ProcurementReportsPage />);
-        expect(container.querySelector('[data-slot="skeleton"]')).not.toBeNull();
+        expect(container.querySelector('[data-slot="loading"]')).not.toBeNull();
     });
 
     it('Given a report with no rows, When loaded, Then the empty state is shown', async () => {

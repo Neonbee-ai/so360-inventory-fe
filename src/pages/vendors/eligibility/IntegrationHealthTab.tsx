@@ -45,7 +45,7 @@ export default function IntegrationHealthTab({ canReplay }: { canReplay: boolean
       {!loading && rows.length === 0 ? (
         <EmptyState title="No consumers yet" description="Modules that listen to vendor events appear here once they start." />
       ) : (
-        <DataTable data-testid="integration-health-table" columns={columns} rows={rows} rowKey={(r) => r.consumer} />
+        <DataTable data-testid="integration-health-table" loading={loading} columns={columns} rows={rows} rowKey={(r) => r.consumer} />
       )}
     </Card>
   );
