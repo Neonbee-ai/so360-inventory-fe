@@ -6,7 +6,7 @@ import { useAuth } from '../hooks/useAuth';
 import CategoryTreeView from '../components/categories/CategoryTreeView';
 import { buildCategoryTree } from '../utils/categoryTree';
 import ItemAttributeSettingsSection from '../components/settings/ItemAttributeSettingsSection';
-import { Alert, Button, IconButton, SettingsCard, SettingsPageTemplate, Skeleton, Switch, TextField, useConfirm } from '@so360/design-system';
+import { Alert, Button, IconButton, SettingsCard, SettingsPageTemplate, Switch, TextField, useConfirm } from '@so360/design-system';
 
 interface UomItem {
     id: string;
@@ -157,10 +157,8 @@ const SettingsPage = () => {
         }
     };
 
-    if (isLoading) return <div className="p-nb-6" aria-busy="true"><Skeleton variant="rect" /></div>;
-
     return (
-        <SettingsPageTemplate trail={[]} title="Inventory Settings" description="Configure units, categories, and module defaults">
+        <SettingsPageTemplate loading={isLoading} trail={[]} title="Inventory Settings" description="Configure units, categories, and module defaults">
             {confirmDialog}
             <div className="flex flex-col gap-nb-4">
                 {error && <Alert variant="error">{error}</Alert>}

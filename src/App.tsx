@@ -67,7 +67,7 @@ const BulkImportPage = lazy(() => import('./pages/bulk-import/BulkImportPage'));
 
 
 import { useShellBridge } from '@so360/shell-context';
-import { FeatureRoute, CombScope, Button } from '@so360/design-system';
+import { FeatureRoute, CombScope, Button, Skeleton } from '@so360/design-system';
 import { inventoryService } from './services/inventoryService';
 import { procurementService } from './services/procurementService';
 import { vendorService } from './services/vendorService';
@@ -167,9 +167,8 @@ const MfeShellInitializer = ({ children }: { children: React.ReactNode }) => {
 
     if (!isSynced) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-96 gap-4">
-                <div className="w-12 h-12 border-4 border-primary/10 border-t-primary rounded-full animate-spin"></div>
-                <div className="text-fg-subtle font-medium animate-pulse text-sm">Connecting to shell...</div>
+            <div role="status" aria-busy="true" aria-label="Connecting to shell">
+                <Skeleton.Page announce={false} template="list" />
             </div>
         );
     }
@@ -185,9 +184,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
             <MfeShellInitializer>
                 <main className="w-full">
                     <Suspense fallback={
-                        <div className="flex flex-col items-center justify-center min-h-96 gap-4">
-                            <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
-                            <div className="text-fg-subtle font-medium animate-pulse text-sm">Loading Inventory Module...</div>
+                        <div role="status" aria-busy="true" aria-label="Loading Inventory Module">
+                            <Skeleton.Page announce={false} template="list" />
                         </div>
                     }>
                         {children}

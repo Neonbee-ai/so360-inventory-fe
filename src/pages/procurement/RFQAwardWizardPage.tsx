@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { rfqService } from '../../services/rfqService';
 import {
-    Alert, Badge, DataTable, EmptyState, NumberInput, SectionCard, Skeleton, TextField, WizardPageTemplate,
+    Alert, Badge, DataTable, EmptyState, NumberInput, SectionCard, TextField, WizardPageTemplate,
     toast, getErrorMessage, type DataTableColumn,
 } from '@so360/design-system';
 
@@ -85,10 +85,11 @@ const RFQAwardWizardPage = () => {
         }
     };
 
-    const body = (content: React.ReactNode) => (error ? <Alert variant="error">{error}</Alert> : !data ? <Skeleton /> : content);
+    const body = (content: React.ReactNode) => (error ? <Alert variant="error">{error}</Alert> : content);
 
     return (
         <WizardPageTemplate
+            loading={!error && !data}
             trail={[{ label: 'Comparison', onClick: () => navigate(`/procurement/rfq/${id}/compare`) }]}
             title="Award RFQ"
             description="Choose vendors and quantities from the locked evaluation. A line can be split between vendors."

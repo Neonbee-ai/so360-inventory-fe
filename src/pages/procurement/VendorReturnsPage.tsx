@@ -269,7 +269,7 @@ const VendorReturnsPage = () => {
                 title="Vendor Returns"
                 description="Send back damaged, wrong, excess or expired goods and track the credit."
                 count={returns.length > 0 ? `${returns.length} return(s)` : undefined}
-                primaryAction={<Button onClick={() => { setErrors({}); setShowForm(true); }}>+ New Return</Button>}
+                primaryAction={<Button onClick={() => { setErrors({}); setShowForm(true); }}>New Return</Button>}
                 filterConfig={{
                     fields: [{
                         key: 'status',
@@ -287,11 +287,9 @@ const VendorReturnsPage = () => {
                     onClear: () => setStatusFilter(''),
                 }}
                 loading={loading}
-                isEmpty={!loading && !fetchError && returns.length === 0}
-                empty={<EmptyState title="No vendor returns raised." />}
-            >
-                <div className="flex flex-col gap-nb-4">
-                    {fetchError && <Alert variant="error">{fetchError}</Alert>}
+                loadingColumns={columns.length}
+                kpisCollapsible
+                kpis={(
                     <Grid columns="auto" data-testid="vendor-returns-kpis">
                         {[
                             { label: 'Open Returns', value: returns.filter(r => ['draft', 'approved', 'dispatched'].includes(r.status)).length },
@@ -304,6 +302,12 @@ const VendorReturnsPage = () => {
                             </GridItem>
                         ))}
                     </Grid>
+                )}
+                isEmpty={!loading && !fetchError && returns.length === 0}
+                empty={<EmptyState title="No vendor returns raised." />}
+            >
+                <div className="flex flex-col gap-nb-4">
+                    {fetchError && <Alert variant="error">{fetchError}</Alert>}
                     <DataTable
                         data-testid="vendor-returns-table"
                         columns={columns}

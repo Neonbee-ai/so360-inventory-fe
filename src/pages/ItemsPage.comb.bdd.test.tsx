@@ -28,17 +28,20 @@ beforeEach(() => {
 });
 
 describe('ItemsPage on the Comb list floorplan', () => {
-  it('Given the page renders / When loaded / Then the ListPageTemplate shows the title and Register Item as primary action', async () => {
+  it('Given the page renders / When loaded / Then the ListPageTemplate shows the title and New Item as primary action', async () => {
     render(<ItemsPage />);
     expect(screen.getByRole('heading', { name: 'Items' })).toBeInTheDocument();
     await waitFor(() => expect(screen.getByTestId('row-i1')).toBeInTheDocument());
-    expect(document.querySelector('[data-slot="primary"]')).toHaveTextContent('Register Item');
+    expect(document.querySelector('[data-slot="primary"]')).toHaveTextContent('New Item');
   });
 
-  it('Given the fetch is pending / When rendered / Then a loading state is shown instead of rows', () => {
+  it('Given the fetch is pending / When rendered / Then the template is busy with one Loading status and layout-matching skeleton rows instead of rows', () => {
     mockGetItems.mockReturnValue(new Promise(() => {}));
     render(<ItemsPage />);
-    expect(screen.getByTestId('datatable-loading')).toBeInTheDocument();
+    expect(document.querySelector('[data-template="list"]')).toHaveAttribute('aria-busy', 'true');
+    expect(screen.getAllByText('Loading…')).toHaveLength(1);
+    expect(screen.getAllByTestId('list-skeleton-row').length).toBeGreaterThan(0);
+    expect(screen.queryByTestId('row-i1')).toBeNull();
   });
 
   it('Given no items exist / When loaded / Then the empty state is shown', async () => {
@@ -67,11 +70,11 @@ describe('ItemsPage on the Comb list floorplan', () => {
     expect(screen.getByTestId('row-i1')).toBeInTheDocument();
   });
 
-  it('Given the user lacks items.create / When rendered / Then Register Item is hidden', async () => {
+  it('Given the user lacks items.create / When rendered / Then New Item is hidden', async () => {
     mockCan.mockImplementation((p: string) => p !== 'items.create');
     render(<ItemsPage />);
     await waitFor(() => screen.getByTestId('row-i1'));
-    expect(screen.queryByText('Register Item')).not.toBeInTheDocument();
+    expect(screen.queryByText('New Item')).not.toBeInTheDocument();
   });
 
   it('Given the bulk-import feature flag is hidden / When rendered / Then Bulk Import is not offered', async () => {

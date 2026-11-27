@@ -33,14 +33,14 @@ describe('QualityInspectionPage (Comb)', () => {
     const { container } = render(<QualityInspectionPage />);
     await waitFor(() => screen.getByText('QC-1'));
     expect(screen.getByRole('heading', { name: 'Quality Inspection' })).toBeInTheDocument();
-    expect(screen.getByText('+ Open Inspection')).toBeInTheDocument();
+    expect(screen.getByText('New Inspection')).toBeInTheDocument();
     expect(container.querySelector('[data-template="list"]')).toBeInTheDocument();
   });
 
   it('Given a slow API / When loading / Then the list skeleton shows', () => {
     mockGetInspections.mockReturnValue(new Promise(() => {}));
     const { container } = render(<QualityInspectionPage />);
-    expect(container.querySelector('[data-slot="skeleton"]')).toBeInTheDocument();
+    expect(container.querySelector('[data-slot="loading"]')).toBeInTheDocument();
   });
 
   it('Given no inspections / When loaded / Then the empty state shows', async () => {

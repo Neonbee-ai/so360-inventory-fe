@@ -77,7 +77,7 @@ describe('Given ItemAttributeSettingsSection', () => {
       let resolve: (v: any) => void;
       mockInventoryService.getAttributeDefinitions.mockReturnValue(new Promise(r => { resolve = r; }));
       render(<ItemAttributeSettingsSection categories={mockCategories} canManage />);
-      expect(screen.getByText(/loading/i)).toBeInTheDocument();
+      expect(screen.getByRole('status', { name: /loading attributes/i })).toBeInTheDocument();
       resolve!(mockDefs);
     });
   });

@@ -82,6 +82,7 @@ const ReconciliationPage = () => {
                 description="Mismatches found between Procurement, Inventory, Quality and Finance. Nothing is corrected automatically."
                 count={rows.length > 0 ? `${rows.length} issue(s)` : undefined}
                 loading={loading && rows.length === 0}
+                loadingColumns={columns.length}
                 isEmpty={!loading && !error && rows.length === 0}
                 empty={<EmptyState title="Nothing to reconcile." description="The nightly check found no mismatches." />}
                 filters={<Select name="recon-status" label="Show" value={status} options={FILTERS} onChange={(e: any) => setStatus(e?.target ? e.target.value : e)} />}

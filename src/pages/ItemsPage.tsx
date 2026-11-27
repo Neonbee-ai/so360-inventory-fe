@@ -6,7 +6,7 @@ import { Item } from '../types/inventory';
 import PhotoAttentionIndicator from '../components/media/PhotoAttentionIndicator';
 import { useAuth } from '../hooks/useAuth';
 import { useShellBridge, useQuota, useSandboxLimit } from '@so360/shell-context';
-import { QuotaBar, QuotaGate, FeatureGate, ListPageTemplate, DataTable, Button, SearchInput, StatusBadge, Badge, EmptyState, Alert, Tooltip, Pagination, type DataTableColumn, type FilterValues } from '@so360/design-system';
+import { QuotaGate, FeatureGate, ListPageTemplate, DataTable, Button, SearchInput, StatusBadge, Badge, EmptyState, Alert, Tooltip, Pagination, type DataTableColumn, type FilterValues } from '@so360/design-system';
 
 const ItemsPage = () => {
     const navigate = useNavigate();
@@ -151,6 +151,7 @@ const ItemsPage = () => {
             trail={[]}
             title="Items"
             description="Manage physical products and trackable assets"
+            quota={quotaData && totalItemCount !== null ? { label: 'SKUs', used: totalItemCount, limit: quotaData.limit, isUnlimited: quotaData.is_unlimited } : undefined}
             headerSecondaryActions={importAllowed ? [
                 <FeatureGate key="bulk" state={bulkImportState} loading={(shell?.effectiveFlagsLoaded === false)} onUpgradeClick={() => navigate('/org/billing')}>
                     <Tooltip content="Upload a CSV of items, name image files after the SKU, preview the rows, then confirm.">
@@ -171,7 +172,7 @@ const ItemsPage = () => {
                         disableOnExceeded
                     >
                         <Button onClick={() => navigate('/inventory/items/new')}><Plus size={18} />
-                            Register Item
+                            New Item
                         </Button>
                     </QuotaGate>
                 </FeatureGate>
@@ -198,6 +199,7 @@ const ItemsPage = () => {
                 onClear: () => { setTypeFilter('All'); setAttentionOnly(false); },
             }}
             loading={isLoading && items.length === 0}
+            loadingColumns={columns.length}
             pagination={!attentionOnly && matchCount > 0 ? (
                 <Pagination
                     currentPage={page}
@@ -209,11 +211,6 @@ const ItemsPage = () => {
                 />
             ) : undefined}
         >
-            {quotaData && totalItemCount !== null && (
-                <div className="mb-nb-4">
-                    <QuotaBar label="SKUs" used={totalItemCount} limit={quotaData.limit} isUnlimited={quotaData.is_unlimited} />
-                </div>
-            )}
             {error && <Alert variant="error" className="mb-nb-4">{error}</Alert>}
             {isSandboxMode && isLimited(filteredItems.length) && (
                 <Alert variant="warning" title="Sandbox mode" className="mb-nb-4">

@@ -77,7 +77,7 @@ describe('WarehouseDetailPage', () => {
     it('When page is loading / Then shows skeleton', () => {
       mockGetWarehouse.mockReturnValue(new Promise(() => {}));
       const { container } = render(<WarehouseDetailPage />);
-      expect(container.querySelector('[data-slot="skeleton"]')).toBeInTheDocument();
+      expect(container.querySelector('[data-slot="loading"]')).toBeInTheDocument();
     });
   });
 

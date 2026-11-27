@@ -124,7 +124,7 @@ export default function VendorQualificationsPanel({ vendorId, canEdit }: { vendo
       {!loading && rows.length === 0 ? (
         <EmptyState title="No qualifications" description="A vendor can only be selected for scopes it is qualified for." />
       ) : (
-        <DataTable data-testid="qualifications-table" columns={columns} rows={rows} rowKey={(q) => q.id} />
+        <DataTable data-testid="qualifications-table" loading={loading} columns={columns} rows={rows} rowKey={(q) => q.id} />
       )}
       <Modal
         open={open}

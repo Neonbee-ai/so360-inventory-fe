@@ -46,11 +46,13 @@ describe('Given the Comb SettingsPage', () => {
     expect(screen.getByText('Default Logic')).toBeInTheDocument();
   });
 
-  it('Given the API is pending / When rendered / Then a busy skeleton shows', () => {
+  it('Given the API is pending / When rendered / Then the header stays and one Loading status with a busy skeleton replaces the cards', () => {
     mockGetSettings.mockReturnValue(new Promise(() => {}));
     const { container } = render(<SettingsPage />);
     expect(container.querySelector('[aria-busy="true"]')).not.toBeNull();
-    expect(screen.queryByText('Inventory Settings')).toBeNull();
+    expect(screen.getAllByText('Loading…')).toHaveLength(1);
+    expect(screen.getByText('Inventory Settings')).toBeInTheDocument();
+    expect(screen.queryByText('Item Categories')).toBeNull();
   });
 
   it('Given no UoMs / When rendered / Then only the Add Unit action shows', async () => {

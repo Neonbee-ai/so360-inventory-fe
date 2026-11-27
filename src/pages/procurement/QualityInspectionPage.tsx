@@ -221,7 +221,8 @@ const QualityInspectionPage = () => {
             <ListPageTemplate trail={[]}
                 title="Quality Inspection"
                 description="Receipts held for inspection. Stock is released only for what passes."
-                primaryAction={<Button onClick={() => setShowOpenForm(true)}>+ Open Inspection</Button>}
+                primaryAction={<Button onClick={() => setShowOpenForm(true)}>New Inspection</Button>}
+                kpisCollapsible
                 kpis={
                     <Grid gap="md">
                         <GridItem span={{ md: 4, lg: 3 }}><KpiCard label="Awaiting Inspection" value={inspections.filter(i => i.status === 'pending').length} /></GridItem>
@@ -237,6 +238,7 @@ const QualityInspectionPage = () => {
                     onClear: () => setStatusFilter(''),
                 }}
                 loading={loading}
+                loadingColumns={columns.length}
                 isEmpty={!loading && !fetchError && inspections.length === 0}
                 empty={
                     <EmptyState

@@ -59,7 +59,7 @@ describe('GRNDetailPage (Comb)', () => {
   it('Given a slow API / When loading / Then the template shows its skeleton', () => {
     mockGetGRNDetail.mockReturnValue(new Promise(() => {}));
     const { container } = render(<GRNDetailPage />);
-    expect(container.querySelector('[data-slot="skeleton"]')).toBeInTheDocument();
+    expect(container.querySelector('[data-slot="loading"]')).toBeInTheDocument();
   });
 
   it('Given a GRN with no lines / When loaded / Then the line table renders no rows', async () => {

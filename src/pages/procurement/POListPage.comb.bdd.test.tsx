@@ -64,7 +64,7 @@ describe('POListPage (Comb)', () => {
   it('Given a pending request / When rendering / Then a skeleton shows', () => {
     h.getPOs.mockReturnValue(new Promise(() => {}));
     render(<POListPage />);
-    expect(document.querySelector('[data-slot="skeleton"]')).not.toBeNull();
+    expect(document.querySelector('[data-slot="loading"]')).not.toBeNull();
   });
 
   it('Given no POs / When loaded / Then the empty state shows', async () => {

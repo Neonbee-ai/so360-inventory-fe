@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { rfqService } from '../../services/rfqService';
-import { Alert, Button, Checkbox, NumberInput, Select, SettingsCard, SettingsPageTemplate, Skeleton, toast, getErrorMessage } from '@so360/design-system';
+import { Alert, Button, Checkbox, NumberInput, Select, SettingsCard, SettingsPageTemplate, toast, getErrorMessage } from '@so360/design-system';
 
 const WEIGHT_KEYS = [
     { key: 'price', label: 'Price (evaluated cost)' },
@@ -43,13 +43,13 @@ const EvaluationSettingsPage = () => {
 
     return (
         <SettingsPageTemplate
+            loading={!policy && !error}
             trail={[{ label: 'Inventory Settings', onClick: () => navigate('/inventory/settings') }]}
             title="Evaluation Settings"
             description="How quotations are scored, costed and compared."
         >
             <div className="flex flex-col gap-nb-4">
                 {error && <Alert variant="error">{error}</Alert>}
-                {!policy && !error && <Skeleton />}
                 {policy && (
                     <>
                         <SettingsCard title="Scoring weights" description={`Criteria without data are left out and the rest re-weighted. Current total: ${total}.`}>

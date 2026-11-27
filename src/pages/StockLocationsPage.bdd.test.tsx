@@ -118,10 +118,10 @@ describe('StockLocationsPage — atWarehouseLimit enforced (NOT unlimited)', () 
       await waitFor(() => expect(getByRole('button', { name: /New Warehouse/i })).toBeDisabled());
     });
 
-    it('shows the "X of Y used" limit banner', async () => {
-      const { findByText } = renderPage();
-      const label = await findByText(/3 of 3 used/i);
-      expect(label).toBeTruthy();
+    it('shows the "X of Y used" quota chip in the header', async () => {
+      const { findByRole } = renderPage();
+      const meter = await findByRole('meter', { name: 'Warehouses: 3 of 3 used' });
+      expect(meter).toBeTruthy();
     });
   });
 });
@@ -134,10 +134,10 @@ describe('StockLocationsPage — label format', () => {
       h.quotaData = { current_usage: 2, limit: 5, is_unlimited: false };
     });
 
-    it('displays "X of Y used" — not the old "X / Y" slash format', async () => {
-      const { findByText } = renderPage();
-      const label = await findByText(/2 of 5 used/i);
-      expect(label.textContent).not.toMatch(/\d+ \/ \d+/);
+    it('exposes "X of Y used" as the quota chip meter name', async () => {
+      const { findByRole } = renderPage();
+      const meter = await findByRole('meter', { name: 'Warehouses: 2 of 5 used' });
+      expect(meter).toBeTruthy();
     });
   });
 });

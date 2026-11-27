@@ -121,8 +121,11 @@ const SerialRegisterPage = () => {
                     <Button key="clear" variant="secondary" onClick={() => setCustomer(null)}>Clear customer</Button>,
                 ] : []}
                 kpis={kpis}
+                kpisCollapsible
+                searchMode="field"
                 search={<SearchInput placeholder="Find a serial number..." value={query} onChange={setQuery} />}
                 loading={loading}
+                loadingColumns={columns.length}
                 isEmpty={!loading && !error && rows.length === 0}
                 empty={(
                     <EmptyState

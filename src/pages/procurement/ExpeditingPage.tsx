@@ -41,6 +41,7 @@ const ExpeditingPage = () => {
             description="Purchase order schedules a buyer should chase: overdue acknowledgements, at-risk and late deliveries, follow-ups due."
             count={rows.length > 0 ? `${rows.length} schedule(s)` : undefined}
             loading={loading && rows.length === 0}
+            loadingColumns={columns.length}
             isEmpty={!loading && !error && rows.length === 0}
             empty={<EmptyState title="Nothing to chase right now." />}
             filters={<Select name="expediting-view" label="Show" value={view} options={VIEWS} onChange={(e: any) => setView(e?.target ? e.target.value : e)} />}

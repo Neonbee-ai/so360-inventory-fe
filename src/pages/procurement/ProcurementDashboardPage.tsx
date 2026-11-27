@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { procurementInsightsService } from '../../services/procurementInsightsService';
 import { useInventoryFormatters } from '../../utils/formatters';
-import { Alert, Button, DashboardPageTemplate, DataTable, DescriptionList, EmptyState, Grid, GridItem, KpiCard, Progress, SectionCard, Spinner, getErrorMessage, type DataTableColumn } from '@so360/design-system';
+import { Alert, Button, DashboardPageTemplate, DataTable, DescriptionList, EmptyState, Grid, GridItem, KpiCard, Progress, SectionCard, getErrorMessage, type DataTableColumn } from '@so360/design-system';
 
 /** Where each alert type takes the buyer when they act on it. */
 const ALERT_ROUTES: Record<string, string> = {
@@ -53,11 +53,7 @@ const ProcurementDashboardPage = () => {
     const description = 'The whole purchasing pipeline — requisition to payment — in one place.';
 
     if (loading) {
-        return (
-            <DashboardPageTemplate trail={[]} title={title} description={description}>
-                <div className="flex items-center justify-center py-8"><Spinner aria-label="Loading dashboard" /></div>
-            </DashboardPageTemplate>
-        );
+        return <DashboardPageTemplate trail={[]} title={title} description={description} loading />;
     }
 
     if (error) {

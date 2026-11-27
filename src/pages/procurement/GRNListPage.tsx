@@ -64,6 +64,7 @@ const GRNListPage = () => {
                 </FeatureGate>
             }
             kpis={kpis}
+            kpisCollapsible
             search={
                 <SearchInput
                     value={searchTerm}
@@ -73,6 +74,7 @@ const GRNListPage = () => {
                 />
             }
             loading={loading}
+            loadingColumns={6}
             isEmpty={!loading && filteredGrns.length === 0}
             empty={<EmptyState title={searchTerm ? 'No GRNs match your search.' : 'No goods receipt notes found.'} />}
         >

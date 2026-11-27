@@ -150,8 +150,8 @@ describe('VendorReturnsPage', () => {
     describe('Given a new return is raised from a receipt', () => {
         const openForm = async () => {
             render(<VendorReturnsPage />);
-            await waitFor(() => screen.getByText('+ New Return'));
-            fireEvent.click(screen.getByText('+ New Return'));
+            await waitFor(() => screen.getByText('New Return'));
+            fireEvent.click(screen.getByText('New Return'));
             await waitFor(() => expect(mockGetGRNs).toHaveBeenCalled());
             fireEvent.change(screen.getByLabelText('Goods Receipt'), { target: { value: 'grn-1' } });
             await waitFor(() => screen.getByLabelText('Return quantity for Cement 50kg'));

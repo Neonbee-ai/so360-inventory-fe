@@ -46,7 +46,7 @@ describe('RFQComparisonPage (Comb)', () => {
   it('Given the comparison is loading, When rendered, Then the skeleton slot shows', () => {
     mockGetComparison.mockReturnValue(new Promise(() => {}));
     const { container } = render(<RFQComparisonPage />);
-    expect(container.querySelector('[data-slot="skeleton"]')).toBeTruthy();
+    expect(container.querySelector('[data-slot="loading"]')).toBeTruthy();
   });
 
   it('Given no quotations, When it loads, Then the empty state shows', async () => {

@@ -139,6 +139,7 @@ const ProcurementReportsPage = () => {
                 onClear: () => { setSearchTerm(''); setRange({ from: '', to: '' }); run({ from: '', to: '' }); },
             }}
             loading={loading && rows.length === 0}
+            loadingColumns={columns.length}
             isEmpty={!loading && !error && visibleRows.length === 0}
             empty={<EmptyState title="No rows for this report." />}
         >

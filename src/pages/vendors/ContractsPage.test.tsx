@@ -68,7 +68,7 @@ describe('ContractsPage', () => {
     it('When data is loading / Then shows loading indicator', () => {
       mockGetContracts.mockReturnValue(new Promise(() => {})); // never resolves
       render(<ContractsPage />);
-      expect(screen.getByText(/Loading contracts/i)).toBeInTheDocument();
+      expect(screen.getByTestId('page-loading-status')).toHaveTextContent('Loading…');
     });
   });
 

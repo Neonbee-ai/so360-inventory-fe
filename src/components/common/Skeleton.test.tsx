@@ -6,7 +6,7 @@ import { Skeleton, TableSkeleton } from './Skeleton';
 describe('Skeleton (Comb wrapper)', () => {
   it('Given no className / When rendered / Then a Comb skeleton is shown', () => {
     render(<Skeleton />);
-    expect(screen.getByTestId('skeleton')).toBeInTheDocument();
+    expect(screen.getByTestId('skeleton-rect')).toBeInTheDocument();
   });
 
   it('Given a className / When rendered / Then it still renders without error', () => {
@@ -19,14 +19,14 @@ describe('Skeleton (Comb wrapper)', () => {
 describe('TableSkeleton', () => {
   it('Given the component / When rendered / Then shows 5 skeleton rows', () => {
     render(<TableSkeleton />);
-    expect(screen.getAllByTestId('skeleton')).toHaveLength(5);
+    expect(screen.getAllByTestId('skeleton-rect')).toHaveLength(5);
   });
 
   it('Given two renders / When compared / Then row count is stable', () => {
     const a = render(<TableSkeleton />);
     const b = render(<TableSkeleton />);
-    expect(a.container.querySelectorAll('[data-testid="skeleton"]').length).toBe(
-      b.container.querySelectorAll('[data-testid="skeleton"]').length,
+    expect(a.container.querySelectorAll('[data-testid="skeleton-rect"]').length).toBe(
+      b.container.querySelectorAll('[data-testid="skeleton-rect"]').length,
     );
   });
 });

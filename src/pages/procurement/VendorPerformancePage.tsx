@@ -79,6 +79,7 @@ const VendorPerformancePage = () => {
             title="Vendor Performance"
             description="Scored from what actually happened — deliveries, rejections, quotes and spend."
             loading={loading}
+            loadingColumns={columns.length}
             isEmpty={!loading && !error && sorted.length === 0}
             empty={<EmptyState title="No purchase history to score yet." />}
             toolbarEnd={(

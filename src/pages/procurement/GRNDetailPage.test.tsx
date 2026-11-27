@@ -78,7 +78,7 @@ describe('GRNDetailPage', () => {
     it('When data is loading / Then shows loading spinner', () => {
       mockGetGRNDetail.mockReturnValue(new Promise(() => {}));
       const { container } = render(<GRNDetailPage />);
-      expect(container.querySelector('[data-slot="skeleton"]')).toBeInTheDocument();
+      expect(container.querySelector('[data-slot="loading"]')).toBeInTheDocument();
     });
   });
 

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { inventoryService } from '../services/inventoryService';
-import { TextField, Button } from '@so360/design-system';
+import { TextField, Button, Skeleton } from '@so360/design-system';
 
 interface SelectedItem {
     id: string;
@@ -111,7 +111,10 @@ const ItemSearchSelector: React.FC<ItemSearchSelectorProps> = ({
             {open && (query.length > 0 || results.length > 0) && (
                 <div className="absolute z-50 top-full mt-1 left-0 right-0 bg-surface border border-line-strong rounded-lg shadow-overlay overflow-hidden max-h-56 overflow-y-auto">
                     {loading ? (
-                        <div className="px-nb-3 py-nb-3 text-nb-caption text-fg-subtle">Searching...</div>
+                        <div role="status" aria-busy="true" aria-label="Searching items" className="flex flex-col gap-nb-2 px-nb-3 py-nb-3">
+                            <Skeleton announce={false} variant="text" className="w-3/4" />
+                            <Skeleton announce={false} variant="text" className="w-1/2" />
+                        </div>
                     ) : results.length === 0 ? (
                         <div className="px-nb-3 py-nb-3 text-nb-caption text-fg-subtle">No items found.</div>
                     ) : results.map((item) => (

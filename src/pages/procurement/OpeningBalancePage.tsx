@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Alert, Button, Card, DataTable, DescriptionList, DatePicker, EmptyState, FieldGrid, FieldGridItem,
-    FormPageTemplate, FormSection, Select, Spinner, TextField, type DataTableColumn,
+    FormPageTemplate, FormSection, Select, TextField, type DataTableColumn,
 } from '@so360/design-system';
 import { procurementService } from '../../services/procurementService';
 import { vendorService } from '../../services/vendorService';
@@ -180,11 +180,7 @@ const OpeningBalancePage = () => {
     };
 
     if (loading) {
-        return (
-            <FormPageTemplate title="Opening Balance" trail={poListTrail}>
-                <Spinner aria-label="Loading opening balance form" />
-            </FormPageTemplate>
-        );
+        return <FormPageTemplate title="Opening Balance" trail={poListTrail} loading />;
     }
 
     if (result) {
