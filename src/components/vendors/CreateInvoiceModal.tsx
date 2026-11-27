@@ -1,9 +1,18 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Alert, Button, FileUpload, Modal, Select, TextField, FieldGrid } from '@so360/design-system';
 import { procurementService } from '../../services/procurementService';
 import { mediaService } from '../../services/mediaService';
 import { inventoryService } from '../../services/inventoryService';
 import { useInventoryFormatters } from '../../utils/formatters';
+
+type GstType = 'none' | 'intra' | 'inter';
+type GstComponent = 'cgst' | 'sgst' | 'igst';
+
+const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
+const num = (v: string) => {
+    const n = parseFloat(v);
+    return Number.isFinite(n) ? n : 0;
+};
 
 interface CreateInvoiceModalProps {
     isOpen: boolean;
@@ -25,22 +34,13 @@ export const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
     const [invoiceNumber, setInvoiceNumber] = useState('');
     const [invoiceDate, setInvoiceDate] = useState(formatters.businessToday());
     const [dueDate, setDueDate] = useState('');
-    const [totalAmount, setTotalAmount] = useState('');
+    // Pulse c55520ce: taxable value + separate CGST/SGST (intra-state) or IGST
+    // (inter-state). The total is derived, never typed, so the parts always sum.
+    const [taxableAmount, setTaxableAmount] = useState('');
+    const [gstType, setGstType] = useState<GstType>('none');
+    const [rates, setRates] = useState<Record<GstComponent, string>>({ cgst: '', sgst: '', igst: '' });
+    const [taxAmounts, setTaxAmounts] = useState<Record<GstComponent, string>>({ cgst: '', sgst: '', igst: '' });
     const [selectedPO, setSelectedPO] = useState('');
-    // Pulse a4e95994: the GST on the invoice, so Accounting can post input tax
-    // without guessing. '' = not stated (the bill waits for an accountant).
-    const [taxChoice, setTaxChoice] = useState('');
-    const [taxCodes, setTaxCodes] = useState<Array<{ id: string; name: string; rate: number }>>([]);
-    useEffect(() => {
-        if (!isOpen) return;
-        let cancelled = false;
-        // Tax codes are optional help: any failure leaves the choice at "not stated".
-        Promise.resolve()
-            .then(() => inventoryService.getTaxCodes())
-            .then((codes) => { if (!cancelled) setTaxCodes(Array.isArray(codes) ? codes : []); })
-            .catch(() => { if (!cancelled) setTaxCodes([]); });
-        return () => { cancelled = true; };
-    }, [isOpen]);
     const [file, setFile] = useState<File | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -52,9 +52,11 @@ export const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
         setInvoiceNumber('');
         setInvoiceDate(formatters.businessToday());
         setDueDate('');
-        setTotalAmount('');
+        setTaxableAmount('');
+        setGstType('none');
+        setRates({ cgst: '', sgst: '', igst: '' });
+        setTaxAmounts({ cgst: '', sgst: '', igst: '' });
         setSelectedPO('');
-        setTaxChoice('');
         setFile(null);
         setError(null);
     };
@@ -84,9 +86,64 @@ export const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
         setFile(f);
     };
 
+    const activeComponents: GstComponent[] =
+        gstType === 'intra' ? ['cgst', 'sgst'] : gstType === 'inter' ? ['igst'] : [];
+
+    const taxFromRate = (taxable: string, rate: string) =>
+        rate === '' ? '' : String(round2((num(taxable) * num(rate)) / 100));
+
+    const handleTaxableChange = (value: string) => {
+        setTaxableAmount(value);
+        // Keep amounts that were derived from a rate in step with the base.
+        setTaxAmounts((prev) => {
+            const next = { ...prev };
+            for (const c of activeComponents) {
+                if (rates[c] !== '') next[c] = taxFromRate(value, rates[c]);
+            }
+            return next;
+        });
+    };
+
+    const handleRateChange = (component: GstComponent, value: string) => {
+        // CGST and SGST are always equal halves, so a CGST/SGST rate mirrors.
+        const targets: GstComponent[] = component === 'igst' ? ['igst'] : ['cgst', 'sgst'];
+        setRates((prev) => {
+            const next = { ...prev };
+            for (const t of targets) next[t] = value;
+            return next;
+        });
+        setTaxAmounts((prev) => {
+            const next = { ...prev };
+            for (const t of targets) next[t] = taxFromRate(taxableAmount, value);
+            return next;
+        });
+    };
+
+    const handleAmountChange = (component: GstComponent, value: string) => {
+        setTaxAmounts((prev) => ({ ...prev, [component]: value }));
+    };
+
+    const handleGstTypeChange = (value: string) => {
+        setGstType(value as GstType);
+        setRates({ cgst: '', sgst: '', igst: '' });
+        setTaxAmounts({ cgst: '', sgst: '', igst: '' });
+    };
+
+    const totalTax = round2(activeComponents.reduce((sum, c) => sum + num(taxAmounts[c]), 0));
+    const computedTotal = round2(num(taxableAmount) + totalTax);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
+
+        if (gstType === 'intra' && Math.abs(num(taxAmounts.cgst) - num(taxAmounts.sgst)) > 0.01) {
+            setError('CGST and SGST amounts must be equal');
+            return;
+        }
+        if (gstType !== 'none' && !(totalTax > 0)) {
+            setError('Enter the GST amount charged on the invoice, or choose No GST');
+            return;
+        }
         setIsSubmitting(true);
 
         try {
@@ -101,17 +158,30 @@ export const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
             }
 
             // Create the invoice
-            const tax = taxCodes.find((c) => c.id === taxChoice);
             const result = await procurementService.createVendorInvoice({
                 vendor_id: vendorId,
                 invoice_number: invoiceNumber,
                 invoice_date: invoiceDate,
                 due_date: dueDate || undefined,
-                total_amount: parseFloat(totalAmount),
+                total_amount: computedTotal,
+                taxable_amount: num(taxableAmount),
+                ...(gstType === 'intra'
+                    ? {
+                        cgst_amount: num(taxAmounts.cgst),
+                        sgst_amount: num(taxAmounts.sgst),
+                        ...(rates.cgst !== '' ? { cgst_rate: num(rates.cgst) } : {}),
+                        ...(rates.sgst !== '' ? { sgst_rate: num(rates.sgst) } : {}),
+                    }
+                    : {}),
+                ...(gstType === 'inter'
+                    ? {
+                        igst_amount: num(taxAmounts.igst),
+                        ...(rates.igst !== '' ? { igst_rate: num(rates.igst) } : {}),
+                    }
+                    : {}),
                 po_id: selectedPO || undefined,
                 attachment_url: attachmentUrl,
-                ...(tax ? { tax_code_id: tax.id, tax_rate: Number(tax.rate) } : {}),
-                ...(taxChoice === 'none' ? { no_tax: true } : {}),
+                ...(gstType === 'none' ? { no_tax: true } : {}),
             });
 
             resetForm();
@@ -122,12 +192,6 @@ export const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
             setIsSubmitting(false);
         }
     };
-
-    const taxOptions = [
-        { value: '', label: 'Not stated — an accountant completes it' },
-        { value: 'none', label: 'No GST on this invoice' },
-        ...taxCodes.map((c) => ({ value: c.id, label: `${c.name} (${Number(c.rate)}%)` })),
-    ];
 
     const poOptions = [
         { value: '', label: 'No PO (standalone invoice)' },
@@ -186,23 +250,62 @@ export const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
                 </FieldGrid>
 
                 <TextField
-                    name="total_amount"
-                    label="Total Amount"
+                    name="taxable_amount"
+                    label="Taxable Amount (before GST)"
                     type="number"
                     step="0.01"
                     min="0.01"
                     required
-                    value={totalAmount}
-                    onChange={(e) => setTotalAmount(e.target.value)}
+                    value={taxableAmount}
+                    onChange={(e) => handleTaxableChange(e.target.value)}
                     placeholder="0.00"
                 />
 
                 <Select
-                    name="tax_code_id"
-                    label="GST on this invoice (the total includes it)"
-                    value={taxChoice}
-                    onChange={(e) => setTaxChoice(e.target.value)}
-                    options={taxOptions}
+                    name="gst_type"
+                    label="GST charged"
+                    value={gstType}
+                    onChange={(e) => handleGstTypeChange(e.target.value)}
+                    options={[
+                        { value: 'none', label: 'No GST' },
+                        { value: 'intra', label: 'CGST + SGST (same state)' },
+                        { value: 'inter', label: 'IGST (other state)' },
+                    ]}
+                />
+
+                {activeComponents.map((c) => (
+                    <FieldGrid key={c}>
+                        <TextField
+                            name={`${c}_rate`}
+                            label={`${c.toUpperCase()} Rate %`}
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            max="100"
+                            value={rates[c]}
+                            onChange={(e) => handleRateChange(c, e.target.value)}
+                            placeholder="Rate"
+                        />
+                        <TextField
+                            name={`${c}_amount`}
+                            label={`${c.toUpperCase()} Amount`}
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={taxAmounts[c]}
+                            onChange={(e) => handleAmountChange(c, e.target.value)}
+                            placeholder="Amount"
+                        />
+                    </FieldGrid>
+                ))}
+
+                <TextField
+                    name="total_amount"
+                    label="Total Amount (incl. GST)"
+                    type="number"
+                    readOnly
+                    value={taxableAmount === '' ? '' : String(computedTotal)}
+                    placeholder="Calculated"
                 />
 
                 <Select
