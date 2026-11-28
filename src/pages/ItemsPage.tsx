@@ -6,7 +6,7 @@ import { Item } from '../types/inventory';
 import PhotoAttentionIndicator from '../components/media/PhotoAttentionIndicator';
 import { useAuth } from '../hooks/useAuth';
 import { useShellBridge, useQuota, useSandboxLimit } from '@so360/shell-context';
-import { QuotaGate, ListPageTemplate, DataTable, Button, SearchInput, StatusBadge, Badge, EmptyState, Alert, Tooltip, Pagination, type DataTableColumn, type FilterValues } from '@so360/design-system';
+import { ListPageTemplate, DataTable, Button, SearchInput, StatusBadge, Badge, EmptyState, Alert, Pagination, type DataTableColumn, type FilterValues } from '@so360/design-system';
 
 const ItemsPage = () => {
     const navigate = useNavigate();
