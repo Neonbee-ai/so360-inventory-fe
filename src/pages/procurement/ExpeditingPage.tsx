@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { poScheduleService } from '../../services/poScheduleService';
 import { useInventoryFormatters } from '../../utils/formatters';
-import { Alert, Badge, Button, DataTable, EmptyState, ListPageTemplate, Select, getErrorMessage, type DataTableColumn } from '@so360/design-system';
+import { Alert, Badge, Button, DataTable, EmptyState, ListPageTemplate, getErrorMessage, type DataTableColumn } from '@so360/design-system';
 
 const REASON_LABELS: Record<string, string> = {
     overdue_ack: 'Acknowledgement overdue', at_risk: 'At risk', overdue_delivery: 'Delivery overdue', follow_up_due: 'Follow-up due',
@@ -44,8 +44,12 @@ const ExpeditingPage = () => {
             loadingColumns={columns.length}
             isEmpty={!loading && !error && rows.length === 0}
             empty={<EmptyState title="Nothing to chase right now." />}
-            // TODO(comb-title-area): manual - move inline filters into drawer fields (filters={{ fields, values, onChange, onClear }})
-            filters={<Select name="expediting-view" label="Show" value={view} options={VIEWS} onChange={(e: any) => setView(e?.target ? e.target.value : e)} />}
+            filters={{
+                fields: [{ key: 'view', label: 'Show', type: 'select', options: VIEWS, default: '' }],
+                values: { view },
+                onChange: (v) => setView(String(v.view ?? '')),
+                onClear: () => setView(''),
+            }}
         >
             <div className="flex flex-col gap-nb-4">
                 {error && <Alert variant="error">{error}</Alert>}

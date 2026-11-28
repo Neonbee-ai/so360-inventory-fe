@@ -83,7 +83,7 @@ describe('GRNListPage on Comb ListPageTemplate', () => {
     mockGetGRNs.mockResolvedValue([makeGRN()]);
     render(<GRNListPage />);
     await waitFor(() => screen.getByText('GRN-2025-0001'));
-    fireEvent.change(screen.getByTestId('grn-search'), { target: { value: 'zzz' } });
+    fireEvent.change(screen.getByTestId('titlearea-search'), { target: { value: 'zzz' } });
     await waitFor(() => expect(screen.getByText('No GRNs match your search.')).toBeInTheDocument());
   });
 

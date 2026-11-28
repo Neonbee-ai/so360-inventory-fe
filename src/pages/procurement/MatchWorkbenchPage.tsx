@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { matchService } from '../../services/matchService';
 import { useInventoryFormatters } from '../../utils/formatters';
-import { Alert, Badge, Button, DataTable, EmptyState, ListPageTemplate, Select, getErrorMessage, type BadgeTone, type DataTableColumn } from '@so360/design-system';
+import { Alert, Badge, Button, DataTable, EmptyState, ListPageTemplate, getErrorMessage, type BadgeTone, type DataTableColumn } from '@so360/design-system';
 
 export const CASE_STATUS_LABELS: Record<string, string> = {
     pending: 'Pending', matched: 'Matched', exception: 'Exception', on_hold: 'On hold (Finance)', resolved: 'Resolved', cancelled: 'Cancelled',
@@ -73,8 +73,12 @@ const MatchWorkbenchPage = () => {
             loadingColumns={columns.length}
             isEmpty={!loading && !error && rows.length === 0}
             empty={<EmptyState title="No invoices to match." description="Invoices captured against a purchase order appear here." />}
-            // TODO(comb-title-area): manual - move inline filters into drawer fields (filters={{ fields, values, onChange, onClear }})
-            filters={<Select name="match-queue" label="Queue" value={queue} options={QUEUES} onChange={(e: any) => setQueue(e?.target ? e.target.value : e)} />}
+            filters={{
+                fields: [{ key: 'queue', label: 'Queue', type: 'select', options: QUEUES, default: '' }],
+                values: { queue },
+                onChange: (v) => setQueue(String(v.queue ?? '')),
+                onClear: () => setQueue(''),
+            }}
         >
             <div className="flex flex-col gap-nb-4">
                 {error && <Alert variant="error">{error}</Alert>}

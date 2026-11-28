@@ -4,7 +4,7 @@ import { Plus } from 'lucide-react';
 import { procurementService } from '../../services/procurementService';
 import { useShellBridge } from '@so360/shell-context';
 import { useInventoryFormatters } from '../../utils/formatters';
-import { FeatureGate, ListPageTemplate, Button, DataTable, SearchInput, KpiCard, EmptyState, Grid } from '@so360/design-system';
+import { ListPageTemplate, Button, DataTable, KpiCard, EmptyState, Grid } from '@so360/design-system';
 
 interface GRN {
     id: string;
@@ -66,15 +66,7 @@ const GRNListPage = () => {
                 gate: { feature: { state: createGrnState, loading: (shell?.effectiveFlagsLoaded === false), onUpgradeClick: () => navigate('/org/billing') } },
             }}
             kpis={kpis}
-            // TODO(comb-title-area): manual - SearchInput prop data-testid
-            search={
-                <SearchInput
-                    value={searchTerm}
-                    onChange={setSearchTerm}
-                    placeholder="Search by GRN number, PO, or vendor..."
-                    data-testid="grn-search"
-                />
-            }
+            search={{ placeholder: 'Search by GRN number, PO, or vendor...', value: searchTerm, onChange: setSearchTerm }}
             loading={loading}
             loadingColumns={6}
             isEmpty={!loading && filteredGrns.length === 0}

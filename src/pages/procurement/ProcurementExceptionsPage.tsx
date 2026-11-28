@@ -4,7 +4,7 @@ import { procurementService } from '../../services/procurementService';
 import { inventoryService } from '../../services/inventoryService';
 import { useInventoryFormatters } from '../../utils/formatters';
 import {
-    Alert, Badge, Button, DataTable, EmptyState, ListPageTemplate, Modal, PeopleSelector, Select, TextField,
+    Alert, Badge, Button, DataTable, EmptyState, ListPageTemplate, Modal, PeopleSelector, TextField,
     toast, getErrorMessage, type DataTableColumn,
 } from '@so360/design-system';
 
@@ -134,25 +134,15 @@ const ProcurementExceptionsPage = () => {
             loadingColumns={columns.length}
             isEmpty={!loading && !error && rows.length === 0}
             empty={<EmptyState title={status === 'open' ? 'No open exceptions.' : 'No exceptions match this filter.'} />}
-            // TODO(comb-title-area): manual - move inline filters into drawer fields (filters={{ fields, values, onChange, onClear }})
-            filters={(
-                <div className="flex flex-wrap items-center gap-2">
-                    <Select
-                        name="exception-status"
-                        label="Status"
-                        value={status}
-                        options={[{ value: '', label: 'All' }, { value: 'open', label: 'Open' }, { value: 'assigned', label: 'Assigned' }, { value: 'resolved', label: 'Resolved' }, { value: 'dismissed', label: 'Dismissed' }]}
-                        onChange={(e: any) => setStatus(e?.target ? e.target.value : e)}
-                    />
-                    <Select
-                        name="exception-kind"
-                        label="Type"
-                        value={kind}
-                        options={[{ value: '', label: 'All' }, ...Object.entries(KIND_LABELS).map(([value, label]) => ({ value, label }))]}
-                        onChange={(e: any) => setKind(e?.target ? e.target.value : e)}
-                    />
-                </div>
-            )}
+            filters={{
+                fields: [
+                    { key: 'status', label: 'Status', type: 'select', default: 'open', options: [{ value: '', label: 'All' }, { value: 'open', label: 'Open' }, { value: 'assigned', label: 'Assigned' }, { value: 'resolved', label: 'Resolved' }, { value: 'dismissed', label: 'Dismissed' }] },
+                    { key: 'kind', label: 'Type', type: 'select', default: '', options: [{ value: '', label: 'All' }, ...Object.entries(KIND_LABELS).map(([value, label]) => ({ value, label }))] },
+                ],
+                values: { status, kind },
+                onChange: (v) => { setStatus(String(v.status ?? '')); setKind(String(v.kind ?? '')); },
+                onClear: () => { setStatus('open'); setKind(''); },
+            }}
         >
             <div className="flex flex-col gap-nb-4">
                 {error && <Alert variant="error">{error}</Alert>}

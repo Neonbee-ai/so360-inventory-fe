@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { procurementService } from '../../services/procurementService';
 import { useInventoryFormatters } from '../../utils/formatters';
-import { Alert, Button, Checkbox, DataTable, EmptyState, Grid, GridItem, KpiCard, ListPageTemplate, SectionCard, toast, getErrorMessage, useConfirm, type DataTableColumn } from '@so360/design-system';
+import { Alert, Button, DataTable, EmptyState, Grid, GridItem, KpiCard, ListPageTemplate, SectionCard, toast, getErrorMessage, useConfirm, type DataTableColumn } from '@so360/design-system';
 
 /**
  * Sales demand — the buy list a confirmed customer order creates.
@@ -118,16 +118,12 @@ const SalesDemandPage = () => {
                 count={orders.length > 0
                     ? `${summary.order_count ?? orders.length} order(s) · ${summary.short_line_count ?? 0} short line(s) · ${formatters.formatCurrency(summary.shortfall_value || 0)} shortfall`
                     : undefined}
-                // TODO(comb-title-area): manual - move into drawer fields / view / R1 actions
-                toolbar={(
-                    <Checkbox
-                        name="only-short"
-                        label="Only orders needing purchase"
-                        aria-label="Only orders needing purchase"
-                        checked={onlyShort}
-                        onChange={(e: any) => setOnlyShort(e.target.checked)}
-                    />
-                )}
+                filters={{
+                    fields: [{ key: 'onlyShort', label: 'Only orders needing purchase', type: 'switch' }],
+                    values: { onlyShort },
+                    onChange: (v) => setOnlyShort(!!v.onlyShort),
+                    onClear: () => setOnlyShort(false),
+                }}
                 loading={loading}
                 loadingColumns={columns.length}
                 isEmpty={!loading && !error && orders.length === 0}

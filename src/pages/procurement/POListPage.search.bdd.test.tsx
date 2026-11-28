@@ -59,7 +59,7 @@ describe('POListPage search', () => {
   it('Given two POs / When searching by PO number / Then only the matching row shows', async () => {
     render(<POListPage />);
     await screen.findByText('#PO-2');
-    fireEvent.change(screen.getByTestId('po-search'), { target: { value: 'po-2' } });
+    fireEvent.change(screen.getByTestId('titlearea-search'), { target: { value: 'po-2' } });
     expect(screen.getByText('#PO-2')).toBeInTheDocument();
     expect(screen.queryByText('#PO-1')).not.toBeInTheDocument();
   });
@@ -67,7 +67,7 @@ describe('POListPage search', () => {
   it('Given two POs / When searching by vendor name / Then the vendor PO shows', async () => {
     render(<POListPage />);
     await screen.findByText('#PO-1');
-    fireEvent.change(screen.getByTestId('po-search'), { target: { value: 'acme' } });
+    fireEvent.change(screen.getByTestId('titlearea-search'), { target: { value: 'acme' } });
     expect(screen.getByText('#PO-1')).toBeInTheDocument();
     expect(screen.queryByText('#PO-2')).not.toBeInTheDocument();
   });
@@ -75,7 +75,7 @@ describe('POListPage search', () => {
   it('Given a PO with terms text / When searching a word from its terms / Then that PO shows', async () => {
     render(<POListPage />);
     await screen.findByText('#PO-1');
-    fireEvent.change(screen.getByTestId('po-search'), { target: { value: 'abc123' } });
+    fireEvent.change(screen.getByTestId('titlearea-search'), { target: { value: 'abc123' } });
     expect(screen.getByText('#PO-2')).toBeInTheDocument();
     expect(screen.queryByText('#PO-1')).not.toBeInTheDocument();
   });
@@ -83,15 +83,15 @@ describe('POListPage search', () => {
   it('Given POs / When the search matches nothing / Then the no-match empty state shows', async () => {
     render(<POListPage />);
     await screen.findByText('#PO-1');
-    fireEvent.change(screen.getByTestId('po-search'), { target: { value: 'zzz-none' } });
+    fireEvent.change(screen.getByTestId('titlearea-search'), { target: { value: 'zzz-none' } });
     expect(await screen.findByText('No purchase orders match your search.')).toBeInTheDocument();
   });
 
   it('Given a search / When it is cleared / Then all POs show again', async () => {
     render(<POListPage />);
     await screen.findByText('#PO-1');
-    fireEvent.change(screen.getByTestId('po-search'), { target: { value: 'po-2' } });
-    fireEvent.change(screen.getByTestId('po-search'), { target: { value: '' } });
+    fireEvent.change(screen.getByTestId('titlearea-search'), { target: { value: 'po-2' } });
+    fireEvent.change(screen.getByTestId('titlearea-search'), { target: { value: '' } });
     expect(screen.getByText('#PO-1')).toBeInTheDocument();
     expect(screen.getByText('#PO-2')).toBeInTheDocument();
   });

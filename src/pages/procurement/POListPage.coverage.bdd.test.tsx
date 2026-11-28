@@ -188,8 +188,8 @@ const openForm = async () => {
   await waitFor(() => expect(screen.getAllByText('Create Purchase Order').length).toBeGreaterThan(0));
 };
 const openConvert = async () => {
-  await waitFor(() => expect(screen.getByText('Convert Approved PRs')).toBeInTheDocument());
-  fireEvent.click(screen.getByText('Convert Approved PRs'));
+  await waitFor(() => expect(screen.getByText(/Convert approved PRs/)).toBeInTheDocument());
+  fireEvent.click(screen.getByText(/Convert approved PRs/));
   await waitFor(() => expect(screen.getByText('Convert')).toBeInTheDocument());
 };
 const selects = () => Array.from(document.querySelectorAll('select')) as HTMLSelectElement[];
@@ -320,7 +320,7 @@ describe('POListPage — permission-aware loading', () => {
     it('When PRs come back as an envelope / Then approved ones are still detected', async () => {
       h.getPRs.mockResolvedValue({ data: [makePR()] });
       renderPage();
-      await waitFor(() => expect(screen.getByText('Convert Approved PRs')).toBeInTheDocument());
+      await waitFor(() => expect(screen.getByText(/Convert approved PRs/)).toBeInTheDocument());
     });
 
     it('When PRs are denied with 403 / Then nothing is logged and the shortcut stays hidden', async () => {
@@ -329,7 +329,7 @@ describe('POListPage — permission-aware loading', () => {
       await settled();
       await waitFor(() => expect(h.getPRs).toHaveBeenCalled());
       expect(consoleErr).not.toHaveBeenCalled();
-      expect(screen.queryByText('Convert Approved PRs')).not.toBeInTheDocument();
+      expect(screen.queryByText(/Convert approved PRs/)).not.toBeInTheDocument();
     });
 
     it('When PRs fail for a genuine reason / Then the failure is logged', async () => {
@@ -351,7 +351,7 @@ describe('POListPage — permission-aware loading', () => {
       renderPage();
       await settled();
       await waitFor(() => expect(h.getPRs).toHaveBeenCalled());
-      expect(screen.queryByText('Convert Approved PRs')).not.toBeInTheDocument();
+      expect(screen.queryByText(/Convert approved PRs/)).not.toBeInTheDocument();
     });
 
     it('When a rejection has no message at all / Then it is treated as a genuine failure', async () => {
@@ -458,7 +458,7 @@ describe('POListPage — quota and feature gating', () => {
   it('Given the Opening Balance action / When clicked / Then it navigates to opening balance', async () => {
     renderPage();
     await settled();
-    fireEvent.click(screen.getByText('Opening Balance'));
+    fireEvent.click(screen.getByText('Opening balance'));
     expect(h.navigate).toHaveBeenCalledWith('/procurement/opening-balance');
   });
 });

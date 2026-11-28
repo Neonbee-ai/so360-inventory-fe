@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { procurementInsightsService } from '../../services/procurementInsightsService';
 import { useInventoryFormatters } from '../../utils/formatters';
-import { Alert, Badge, DataTable, EmptyState, ListPageTemplate, Select, getErrorMessage, type DataTableColumn } from '@so360/design-system';
+import { Alert, Badge, DataTable, EmptyState, ListPageTemplate, getErrorMessage, type DataTableColumn } from '@so360/design-system';
 
 type SortKey = 'purchase_value' | 'delivery_performance_percent' | 'quality_score' | 'rejection_percent';
 
@@ -82,16 +82,11 @@ const VendorPerformancePage = () => {
             loadingColumns={columns.length}
             isEmpty={!loading && !error && sorted.length === 0}
             empty={<EmptyState title="No purchase history to score yet." />}
-            // TODO(comb-title-area): manual - move into drawer fields / view / R1 actions
-            toolbarEnd={(
-                <Select
-                    name="vendor_sort"
-                    aria-label="Rank by"
-                    value={sortKey}
-                    onChange={e => setSortKey(e.target.value as SortKey)}
-                    options={SORT_OPTIONS}
-                />
-            )}
+            sort={{
+                options: SORT_OPTIONS,
+                value: sortKey,
+                onChange: (v) => setSortKey(v as SortKey),
+            }}
         >
             <div className="flex flex-col gap-nb-4">
                 {error && <Alert variant="error">{error}</Alert>}

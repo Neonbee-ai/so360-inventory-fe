@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { receivingService } from '../../services/receivingService';
 import { useInventoryFormatters } from '../../utils/formatters';
-import { Alert, Badge, Button, DataTable, EmptyState, ListPageTemplate, Select, getErrorMessage, type BadgeTone, type DataTableColumn } from '@so360/design-system';
+import { Alert, Badge, Button, DataTable, EmptyState, ListPageTemplate, getErrorMessage, type BadgeTone, type DataTableColumn } from '@so360/design-system';
 
 const STATUS_LABELS: Record<string, string> = {
     expected: 'Expected', partially_received: 'Partially received', received: 'Received', cancelled: 'Cancelled', superseded: 'Superseded',
@@ -78,8 +78,12 @@ const ExpectedReceiptsPage = () => {
             loadingColumns={columns.length}
             isEmpty={!loading && !error && rows.length === 0}
             empty={<EmptyState title="No expected receipts." description="Notices appear when a supplier confirms a delivery schedule." />}
-            // TODO(comb-title-area): manual - move inline filters into drawer fields (filters={{ fields, values, onChange, onClear }})
-            filters={<Select name="expected-receipt-status" label="Status" value={status} options={STATUS_OPTIONS} onChange={(e: any) => setStatus(e?.target ? e.target.value : e)} />}
+            filters={{
+                fields: [{ key: 'status', label: 'Status', type: 'select', options: STATUS_OPTIONS, default: '' }],
+                values: { status },
+                onChange: (v) => setStatus(String(v.status ?? '')),
+                onClear: () => setStatus(''),
+            }}
         >
             <div className="flex flex-col gap-nb-4">
                 {error && <Alert variant="error">{error}</Alert>}

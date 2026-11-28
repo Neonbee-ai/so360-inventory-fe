@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { matchService } from '../../services/matchService';
-import { Alert, Badge, DataTable, EmptyState, KpiCard, ListPageTemplate, Select, getErrorMessage, type DataTableColumn } from '@so360/design-system';
+import { Alert, Badge, DataTable, EmptyState, KpiCard, ListPageTemplate, getErrorMessage, type DataTableColumn } from '@so360/design-system';
 
 const SEGMENTS = [{ value: 'vendor', label: 'By supplier' }, { value: 'category', label: 'By item category' }, { value: 'site', label: 'By warehouse / site' }];
 const PERIODS = [{ value: '30d', label: 'Last 30 days' }, { value: '90d', label: 'Last 90 days' }, { value: '365d', label: 'Last 12 months' }];
@@ -74,13 +74,15 @@ const SupplierPerformancePage = () => {
                     <KpiCard label="Receipt lines measured" value={rows.reduce((s, r) => s + (r.sample_size || 0), 0)} />
                 </div>
             ) : undefined}
-            // TODO(comb-title-area): manual - move inline filters into drawer fields (filters={{ fields, values, onChange, onClear }})
-            filters={(
-                <div className="flex flex-wrap gap-nb-3">
-                    <Select name="perf-segment" label="Group" value={segment} options={SEGMENTS} onChange={(e: any) => setSegment(e?.target ? e.target.value : e)} />
-                    <Select name="perf-period" label="Period" value={period} options={PERIODS} onChange={(e: any) => setPeriod(e?.target ? e.target.value : e)} />
-                </div>
-            )}
+            filters={{
+                fields: [
+                    { key: 'segment', label: 'Group', type: 'select', options: SEGMENTS, default: 'vendor' },
+                    { key: 'period', label: 'Period', type: 'select', options: PERIODS, default: '90d' },
+                ],
+                values: { segment, period },
+                onChange: (v) => { setSegment(String(v.segment || 'vendor')); setPeriod(String(v.period || '90d')); },
+                onClear: () => { setSegment('vendor'); setPeriod('90d'); },
+            }}
         >
             <div className="flex flex-col gap-nb-4">
                 {error && <Alert variant="error">{error}</Alert>}

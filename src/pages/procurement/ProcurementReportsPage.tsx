@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { procurementInsightsService, type ProcurementReport } from '../../services/procurementInsightsService';
 import { useInventoryFormatters } from '../../utils/formatters';
 import { buildCsv, downloadCsv } from '../../utils/csvDownload';
-import { Alert, Button, DataTable, EmptyState, ListPageTemplate, SearchInput, Tabs, getErrorMessage, toast, type DataTableColumn, type FilterValues } from '@so360/design-system';
+import { Alert, Button, DataTable, EmptyState, ListPageTemplate, SearchInput, getErrorMessage, toast, type DataTableColumn, type FilterValues } from '@so360/design-system';
 
 const REPORTS: Array<{ key: ProcurementReport; label: string; hint: string }> = [
     { key: 'purchase_register', label: 'Purchase Register', hint: 'Every purchase order with its value' },
@@ -119,19 +119,13 @@ const ProcurementReportsPage = () => {
                 label: 'Run',
                 onSelect: () => run(),
             }}
-            // TODO(comb-title-area): manual - use tabs (navigation) or a drawer field
-            views={(
-                <div className="min-w-0 max-w-full max-md:hidden">
-                <Tabs
-                    name="report"
-                    variant="pill"
-                    maxVisible={5}
-                    items={REPORTS.map(r => ({ id: r.key, label: r.label }))}
-                    value={report}
-                    onChange={id => setReport(id as ProcurementReport)}
-                />
-                </div>
-            )}
+            tabs={{
+                name: 'report',
+                maxVisible: 5,
+                items: REPORTS.map(r => ({ id: r.key, label: r.label })),
+                value: report,
+                onChange: id => setReport(id as ProcurementReport),
+            }}
             search={{ placeholder: 'Search this report', value: searchTerm, onChange: setSearchTerm }}
             filters={{
                 fields: [

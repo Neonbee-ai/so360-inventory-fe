@@ -11,8 +11,8 @@ import { useEligibleVendors } from '../../hooks/useEligibleVendors';
 import IneligibleVendorsList from '../../components/procurement/IneligibleVendorsList';
 import { vendorCollabService } from '../../services/vendorCollabService';
 import {
-    QuotaGate, FeatureGate, toast, getErrorMessage,
-    ListPageTemplate, Button, DataTable, SearchInput, EmptyState, Alert, Badge, StatusBadge,
+    toast, getErrorMessage,
+    ListPageTemplate, Button, DataTable, EmptyState, Alert, Badge, StatusBadge,
     Modal, TextField, Select, Textarea, Progress, SectionCard, FieldGrid, Pagination,
 } from '@so360/design-system';
 
@@ -65,6 +65,11 @@ const POListPage = () => {
     const clearParam = (key: string) => {
         const next = new URLSearchParams(location.search);
         next.delete(key);
+        navigate(`${location.pathname}${next.toString() ? `?${next}` : ''}`, { replace: true });
+    };
+    const setVendorParam = (id: string) => {
+        const next = new URLSearchParams(location.search);
+        if (id) next.set('vendor', id); else next.delete('vendor');
         navigate(`${location.pathname}${next.toString() ? `?${next}` : ''}`, { replace: true });
     };
     const [searchTerm, setSearchTerm] = useState('');
@@ -440,44 +445,32 @@ const POListPage = () => {
                 description="Official commercial documents issued to sellers."
                 count={matchCount}
                 meta={quotaData ? { kind: 'quota', label: 'Purchase Orders', used: quotaData.current_usage, limit: quotaData.limit, isUnlimited: quotaData.is_unlimited } : undefined}
-                // TODO(comb-title-area): manual - not a Button (<div>)
-                primaryAction={
-                    <div className="flex flex-wrap items-center gap-nb-2">
-                        {approvedPrs.length > 0 && (
-                            <Button variant="tonal" onClick={() => setShowPrMenu(v => !v)} aria-expanded={showPrMenu}>
-                                <Badge tone="primary">{approvedPrs.length}</Badge> Convert Approved PRs
-                            </Button>
-                        )}
-                        <Button variant="secondary" onClick={() => navigate('/procurement/opening-balance')}>Opening Balance</Button>
-                        <FeatureGate state={createPoState} loading={(shell?.effectiveFlagsLoaded === false)} onUpgradeClick={() => navigate('/org/billing')}>
-                            <QuotaGate
-                                quotaKey="max_po_per_month"
-                                moduleCode="inventory"
-                                used={quotaData?.current_usage ?? 0}
-                                limit={quotaData?.limit ?? 0}
-                                isUnlimited={quotaData?.is_unlimited}
-                                disableOnExceeded
-                            >
-                                <Button
-                                    onClick={openNewPOForm}
-                                    disabled={!!vendorNotice}
-                                    title={vendorNotice ? vendorNotice.message : undefined}
-                                >
-                                    <Plus size={16} aria-hidden="true" /> New PO
-                                </Button>
-                            </QuotaGate>
-                        </FeatureGate>
-                    </div>
-                }
-                // TODO(comb-title-area): manual - SearchInput prop data-testid
-                search={
-                    <SearchInput
-                        value={searchTerm}
-                        onChange={setSearchTerm}
-                        placeholder="Search by PO number, vendor, or status..."
-                        data-testid="po-search"
-                    />
-                }
+                primaryAction={{
+                    id: 'new-po',
+                    label: 'New PO',
+                    icon: <Plus size={16} aria-hidden="true" />,
+                    onSelect: openNewPOForm,
+                    disabled: !!vendorNotice,
+                    disabledReason: vendorNotice ? vendorNotice.message : undefined,
+                    gate: {
+                        feature: { state: createPoState, loading: (shell?.effectiveFlagsLoaded === false), onUpgradeClick: () => navigate('/org/billing') },
+                        quota: {
+                            quotaKey: 'max_po_per_month',
+                            moduleCode: 'inventory',
+                            used: quotaData?.current_usage ?? 0,
+                            limit: quotaData?.limit ?? 0,
+                            isUnlimited: quotaData?.is_unlimited,
+                            disableOnExceeded: true,
+                        },
+                    },
+                }}
+                secondaryActions={[
+                    ...(approvedPrs.length > 0
+                        ? [{ id: 'convert-prs', label: `Convert approved PRs (${approvedPrs.length})`, onSelect: () => setShowPrMenu(v => !v) }]
+                        : []),
+                    { id: 'opening-balance', label: 'Opening balance', onSelect: () => navigate('/procurement/opening-balance') },
+                ]}
+                search={{ placeholder: 'Search by PO number, vendor, or status...', value: searchTerm, onChange: setSearchTerm }}
                 pagination={matchCount > 0 ? (
                     <Pagination
                         currentPage={page}
@@ -491,36 +484,20 @@ const POListPage = () => {
                 loading={loading && pos.length === 0}
                 loadingColumns={6}
                 isEmpty={!loading && !fetchError && !showPrMenu && filteredPos.length === 0}
-                // TODO(comb-title-area): manual - move inline filters into drawer fields (filters={{ fields, values, onChange, onClear }})
-                filters={
-                    (
-                        <div className="flex flex-wrap items-center gap-2">
-                            <Button variant={reviewOnly ? 'tonal' : 'secondary'} size="sm" aria-pressed={reviewOnly} onClick={() => setReviewOnly(v => !v)}>
-                                Vendor suspended - decision needed
-                            </Button>
-                            {vendorFilter && (
-                                <>
-                                    <Badge tone="neutral">
-                                        Vendor: {vendors.find((v: any) => v.id === vendorFilter)?.name
-                                            ?? vendors.find((v: any) => v.id === vendorFilter)?.business_name
-                                            ?? vendorFilter.slice(0, 8)}
-                                    </Badge>
-                                    <Button variant="ghost" size="sm" onClick={() => clearParam('vendor')}>
-                                        Clear
-                                    </Button>
-                                </>
-                            )}
-                            {itemFilter && (
-                                <>
-                                    <Badge tone="neutral">Item filter applied</Badge>
-                                    <Button variant="ghost" size="sm" onClick={() => clearParam('item')}>
-                                        Clear
-                                    </Button>
-                                </>
-                            )}
-                        </div>
-                    )
-                }
+                filters={{
+                    fields: [
+                        { key: 'reviewOnly', label: 'Vendor suspended - decision needed', type: 'switch' },
+                        { key: 'vendor', label: 'Vendor', type: 'select', default: '', options: [{ value: '', label: 'All' }, ...vendors.map((v: any) => ({ value: String(v.id), label: String(v.name ?? v.business_name ?? v.id) }))] },
+                        ...(itemFilter ? [{ key: 'item', label: 'Item filter applied', type: 'switch' as const }] : []),
+                    ],
+                    values: { reviewOnly, vendor: vendorFilter, item: !!itemFilter },
+                    onChange: (v) => {
+                        setReviewOnly(!!v.reviewOnly);
+                        if (String(v.vendor ?? '') !== vendorFilter) setVendorParam(String(v.vendor ?? ''));
+                        if (itemFilter && !v.item) clearParam('item');
+                    },
+                    onClear: () => { setReviewOnly(false); if (vendorFilter) clearParam('vendor'); if (itemFilter) clearParam('item'); },
+                }}
                 banner={[renderNotice(fetchError), renderNotice(vendorNotice)].filter(Boolean)}
                 empty={<EmptyState title={searchTerm.trim() ? 'No purchase orders match your search.' : 'No purchase orders found.'} />}
             >

@@ -187,16 +187,12 @@ const DemandCoveragePage = () => {
                     disabled: recalculating || rows.length === 0,
                 },
             ]}
-            // TODO(comb-title-area): manual - move inline filters into drawer fields (filters={{ fields, values, onChange, onClear }})
-            filters={(
-                <Select
-                    name="coverage-status"
-                    label="Status"
-                    value={status}
-                    options={[{ value: '', label: 'All' }, ...Object.entries(STATUS_LABELS).map(([value, label]) => ({ value, label }))]}
-                    onChange={(e: any) => setStatus(e?.target ? e.target.value : e)}
-                />
-            )}
+            filters={{
+                fields: [{ key: 'status', label: 'Status', type: 'select', default: '', options: [{ value: '', label: 'All' }, ...Object.entries(STATUS_LABELS).map(([value, label]) => ({ value, label }))] }],
+                values: { status },
+                onChange: (v) => setStatus(String(v.status ?? '')),
+                onClear: () => setStatus(''),
+            }}
             loading={loading && rows.length === 0}
             loadingColumns={columns.length}
             isEmpty={!loading && !error && rows.length === 0}
