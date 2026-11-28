@@ -66,7 +66,7 @@ describe('WarehouseDetailPage (Comb)', () => {
 
   it('Given Edit Warehouse clicked / When the modal opens / Then Cancel and Save Changes are in the footer', async () => {
     render(<WarehouseDetailPage />);
-    fireEvent.click(await screen.findByLabelText('Edit Warehouse'));
+    fireEvent.click(await screen.findByRole('button', { name: 'Edit warehouse' }));
     const dialog = await screen.findByRole('dialog', { name: 'Edit Warehouse' });
     expect(dialog).toBeInTheDocument();
     expect(screen.getByText('Cancel')).toBeInTheDocument();
@@ -83,7 +83,7 @@ describe('WarehouseDetailPage (Comb)', () => {
     mockCan.mockImplementation(() => false);
     render(<WarehouseDetailPage />);
     await waitFor(() => expect(screen.getByRole('heading', { name: 'Dubai Hub' })).toBeInTheDocument());
-    expect(screen.queryByLabelText('Edit Warehouse')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Edit warehouse' })).not.toBeInTheDocument();
     expect(screen.queryByText('Add Location')).not.toBeInTheDocument();
   });
 });

@@ -29,7 +29,7 @@ import {
 import { fitImageFile, describeFit, IMAGE_FIT_SLOTS, type ImageFitSlot } from '../utils/imageFit';
 import ImageSpecChip from '../components/media/ImageSpecChip';
 import { useActivity, useShellBridge } from '@so360/shell-context';
-import { Alert, Button, Card, Cluster, FeatureGate, IconButton, ListPageTemplate, SegmentedControl, TextField, Textarea, Grid, GridItem } from '@so360/design-system';
+import { Alert, Button, Card, Cluster, IconButton, ListPageTemplate, SegmentedControl, TextField, Textarea, Grid, GridItem } from '@so360/design-system';
 
 const PRESET_COLORS = ['#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#EC4899', '#06B6D4', '#64748B'];
 
@@ -500,21 +500,17 @@ const CategoriesPage = () => {
             description={propertyUnits
                 ? 'Projects, their towers and unit availability'
                 : 'Organize your products with a hierarchical category system'}
-            // TODO(comb-title-area): manual - label is not a plain string
-            primaryAction={canManage ? (
-                <FeatureGate state={createState} loading={(shell?.effectiveFlagsLoaded === false)} onUpgradeClick={() => navigate('/org/billing')}>
-                    <Button
-                        variant="primary"
-                        onClick={() => {
-                            setSelectedId(null);
-                            setViewMode('tree');
-                            setShowAddRoot(true);
-                        }}
-                    ><Plus size={16} />
-                        {`New ${labels.category}`}
-                    </Button>
-                </FeatureGate>
-            ) : undefined}
+            primaryAction={canManage ? {
+                id: 'new-category',
+                label: `New ${labels.category}`,
+                icon: <Plus size={16} />,
+                onSelect: () => {
+                    setSelectedId(null);
+                    setViewMode('tree');
+                    setShowAddRoot(true);
+                },
+                gate: { feature: { state: createState, loading: (shell?.effectiveFlagsLoaded === false), onUpgradeClick: () => navigate('/org/billing') } },
+            } : undefined}
         >
             {error && (
                 <div className="mb-4">

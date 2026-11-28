@@ -77,10 +77,10 @@ describe('ItemsPage on the Comb list floorplan', () => {
     expect(screen.queryByText('New Item')).not.toBeInTheDocument();
   });
 
-  it('Given the bulk-import feature flag is hidden / When rendered / Then Bulk Import is not offered', async () => {
+  it('Given the bulk-import feature flag is hidden / When rendered / Then Bulk import is not offered', async () => {
     mockShell.mockReturnValue({ currentOrg: { id: 'o1' }, permissionsLoaded: true, hasPermission: () => true, effectiveFlagsLoaded: true, getFeatureState: (k: string) => (k.includes('bulk_import') ? 'hidden' : 'enabled') });
     render(<ItemsPage />);
     await waitFor(() => screen.getByTestId('row-i1'));
-    expect(screen.queryByText('Bulk Import')).not.toBeInTheDocument();
+    expect(screen.queryByText('Bulk import')).not.toBeInTheDocument();
   });
 });

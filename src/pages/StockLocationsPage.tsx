@@ -17,8 +17,8 @@ import {
 } from '../utils/validators';
 import { useActivity, useShellBridge, useQuota } from '@so360/shell-context';
 import {
-    QuotaGate, FeatureGate, ListPageTemplate, DataTable, Button, Modal, TextField, Select,
-    Checkbox, Alert, Badge, EmptyState, Tooltip,
+    ListPageTemplate, DataTable, Button, Modal, TextField, Select,
+    Checkbox, Alert, Badge, EmptyState,
     type DataTableColumn, FieldGrid, FieldGridItem,
 } from '@so360/design-system';
 
@@ -359,30 +359,25 @@ const StockLocationsPage = () => {
         />
     );
 
-    const primaryAction = can('warehouses.create') ? (
-        <FeatureGate state={createWarehouseState} loading={(shell?.effectiveFlagsLoaded === false)} onUpgradeClick={() => navigate('/org/billing')}>
-            <QuotaGate
-                quotaKey="max_warehouses"
-                moduleCode="inventory"
-                used={whUsed}
-                limit={quotaData?.limit ?? 0}
-                isUnlimited={whUnlimited}
-                disableOnExceeded
-            >
-                <Tooltip content={limitTitle ?? 'New Warehouse'}>
-                    <Button
-                        variant="primary"
-                        disabled={atWarehouseLimit}
-                        title={limitTitle}
-                        onClick={() => !atWarehouseLimit && setIsCreateModalOpen(true)}
-                    ><Plus size={16} />
-                        New Warehouse
-                        {atWarehouseLimit && <span> ({whUsed}/{whLimit})</span>}
-                    </Button>
-                </Tooltip>
-            </QuotaGate>
-        </FeatureGate>
-    ) : undefined;
+    const primaryAction = can('warehouses.create') ? {
+        id: 'new-warehouse',
+        label: atWarehouseLimit ? `New warehouse (${whUsed}/${whLimit})` : 'New warehouse',
+        icon: <Plus size={16} />,
+        onSelect: () => !atWarehouseLimit && setIsCreateModalOpen(true),
+        disabled: atWarehouseLimit,
+        disabledReason: limitTitle,
+        gate: {
+            feature: { state: createWarehouseState, loading: (shell?.effectiveFlagsLoaded === false), onUpgradeClick: () => navigate('/org/billing') },
+            quota: {
+                quotaKey: 'max_warehouses',
+                moduleCode: 'inventory',
+                used: whUsed,
+                limit: quotaData?.limit ?? 0,
+                isUnlimited: whUnlimited,
+                disableOnExceeded: true,
+            },
+        },
+    } : undefined;
 
     return (
         <ListPageTemplate trail={[]}
@@ -390,7 +385,6 @@ const StockLocationsPage = () => {
             description="Manage physical storage facilities and fulfillment centers"
             count={warehouses.length}
             meta={quotaData ? { kind: 'quota', label: 'Warehouses', used: whUsed, limit: quotaData.limit, isUnlimited: whUnlimited } : undefined}
-            // TODO(comb-title-area): manual - not a Button (<Tooltip>) (via const primaryAction)
             primaryAction={primaryAction}
         >
 

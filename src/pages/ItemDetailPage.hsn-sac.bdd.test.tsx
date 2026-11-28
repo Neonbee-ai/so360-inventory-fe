@@ -175,7 +175,7 @@ async function openPricingEdit() {
   render(<ItemDetailPage />);
   await waitFor(() => expect(screen.getByText('Edit')).toBeInTheDocument());
   fireEvent.click(screen.getByText('Edit'));
-  await waitFor(() => expect(screen.getByText('Cancel Editing')).toBeInTheDocument());
+  await waitFor(() => expect(screen.getByText('Cancel editing')).toBeInTheDocument());
   fireEvent.click(screen.getByText('Pricing'));
 }
 

@@ -11,7 +11,7 @@ import {
     LOCATION_TYPE_OPTIONS, LocationType, locationTypeLabel, parentError, parentOptions, sortByHierarchy, typeOf,
 } from '../utils/locationHierarchy';
 import {
-    FeatureGate, DetailPageTemplate, DataTable, Button, IconButton, Modal, TextField, Textarea, Checkbox, Select,
+    DetailPageTemplate, DataTable, Button, IconButton, Modal, TextField, Textarea, Checkbox, Select,
     Alert, Badge, EmptyState, DescriptionList, Card,
     type DataTableColumn,
 } from '@so360/design-system';
@@ -275,12 +275,13 @@ const WarehouseDetailPage = () => {
             trail={[{ label: 'Warehouses', onClick: () => navigate('/inventory/locations') }]}
             status={<Badge tone={warehouse.is_active ? 'success' : 'neutral'}>{warehouse.is_active ? 'Operational' : 'Inactive'}</Badge>}
             meta={<span className="font-mono">{warehouse.code || 'NO-CODE'}</span>}
-            // TODO(comb-title-area): manual - unsupported Button prop aria-label
-            primaryAction={can('warehouses.create') ? (
-                <FeatureGate key="manage" state={warehouseState} loading={(shell?.effectiveFlagsLoaded === false)} onUpgradeClick={() => navigate('/org/billing')}>
-                    <Button aria-label="Edit Warehouse" title="Edit Warehouse" onClick={handleEditClick}><Edit2 size={16} /> Edit</Button>
-                </FeatureGate>
-            ) : undefined}
+            primaryAction={can('warehouses.create') ? {
+                id: 'edit-warehouse',
+                label: 'Edit warehouse',
+                icon: <Edit2 size={16} />,
+                onSelect: handleEditClick,
+                gate: { feature: { state: warehouseState, loading: (shell?.effectiveFlagsLoaded === false), onUpgradeClick: () => navigate('/org/billing') } },
+            } : undefined}
             overflowActions={can('warehouses.create') && warehouseState === 'enabled' && shell?.effectiveFlagsLoaded !== false
                 ? [{ label: 'Delete Warehouse', danger: true, onSelect: () => setShowDeleteConfirm(true) }]
                 : undefined}

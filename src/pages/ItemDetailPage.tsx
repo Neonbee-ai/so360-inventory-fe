@@ -497,9 +497,8 @@ const ItemDetailPage = () => {
                 status={isEditing
                     ? <Badge tone="info">Editing</Badge>
                     : <Badge tone={item.is_active ? 'success' : 'neutral'}>{item.is_active ? 'Active' : 'Inactive'}</Badge>}
-                // TODO(comb-title-area): manual - not a JSX Button
                 secondaryActions={isEditing ? [
-                    <Button key="cancel-editing" variant="secondary" onClick={handleCancelEdit}>Cancel Editing</Button>,
+                    { id: 'cancel-editing', label: 'Cancel editing', onSelect: handleCancelEdit },
                 ] : undefined}
                 primaryAction={!isEditing && can('items.update') ? {
                     id: 'edit',

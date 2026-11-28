@@ -6,7 +6,7 @@ import { Item } from '../types/inventory';
 import PhotoAttentionIndicator from '../components/media/PhotoAttentionIndicator';
 import { useAuth } from '../hooks/useAuth';
 import { useShellBridge, useQuota, useSandboxLimit } from '@so360/shell-context';
-import { QuotaGate, FeatureGate, ListPageTemplate, DataTable, Button, SearchInput, StatusBadge, Badge, EmptyState, Alert, Tooltip, Pagination, type DataTableColumn, type FilterValues } from '@so360/design-system';
+import { QuotaGate, ListPageTemplate, DataTable, Button, SearchInput, StatusBadge, Badge, EmptyState, Alert, Tooltip, Pagination, type DataTableColumn, type FilterValues } from '@so360/design-system';
 
 const ItemsPage = () => {
     const navigate = useNavigate();
@@ -152,15 +152,15 @@ const ItemsPage = () => {
             title="Items"
             description="Manage physical products and trackable assets"
             meta={quotaData && totalItemCount !== null ? { kind: 'quota', label: 'SKUs', used: totalItemCount, limit: quotaData.limit, isUnlimited: quotaData.is_unlimited } : undefined}
-            // TODO(comb-title-area): manual - not a plain Button (all items must be plain buttons to become PageActions)
-            headerSecondaryActions={importAllowed ? [
-                <FeatureGate key="bulk" state={bulkImportState} loading={(shell?.effectiveFlagsLoaded === false)} onUpgradeClick={() => navigate('/org/billing')}>
-                    <Tooltip content="Upload a CSV of items, name image files after the SKU, preview the rows, then confirm.">
-                        <Button variant="secondary" onClick={() => navigate('/inventory/items/bulk-import')}><Upload size={16} />
-                            Bulk Import
-                        </Button>
-                    </Tooltip>
-                </FeatureGate>,
+            secondaryActions={importAllowed ? [
+                {
+                    id: 'bulk-import',
+                    label: 'Bulk import',
+                    kind: 'import',
+                    icon: <Upload size={16} />,
+                    onSelect: () => navigate('/inventory/items/bulk-import'),
+                    gate: { feature: { state: bulkImportState, loading: (shell?.effectiveFlagsLoaded === false), onUpgradeClick: () => navigate('/org/billing') } },
+                },
             ] : undefined}
             primaryAction={createAllowed ? {
                 id: 'new-item',
