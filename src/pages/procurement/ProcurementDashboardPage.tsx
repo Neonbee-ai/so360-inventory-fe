@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { RefreshCw } from 'lucide-react';
 import { procurementInsightsService } from '../../services/procurementInsightsService';
 import { useInventoryFormatters } from '../../utils/formatters';
-import { Alert, Button, DashboardPageTemplate, DataTable, DescriptionList, EmptyState, Grid, GridItem, KpiCard, Progress, SectionCard, getErrorMessage, type DataTableColumn } from '@so360/design-system';
+import { Alert, Button, DashboardPageTemplate, DataTable, DescriptionList, EmptyState, Grid, GridItem, KpiCard, Progress, SectionCard, getErrorMessage, type DataTableColumn, type PageAction } from '@so360/design-system';
 
 /** Where each alert type takes the buyer when they act on it. */
 const ALERT_ROUTES: Record<string, string> = {
@@ -48,7 +49,7 @@ const ProcurementDashboardPage = () => {
         }
     };
 
-    const refreshAction = <Button variant="secondary" onClick={load}>Refresh</Button>;
+    const refreshAction: PageAction = { id: 'refresh', label: 'Refresh', kind: 'refresh', icon: <RefreshCw />, onSelect: load };
     const title = 'Procurement Dashboard';
     const description = 'The whole purchasing pipeline — requisition to payment — in one place.';
 
@@ -58,8 +59,8 @@ const ProcurementDashboardPage = () => {
 
     if (error) {
         return (
-            <DashboardPageTemplate trail={[]} title={title} description={description} // TODO(comb-title-area): manual - primaryAction={refreshAction} cannot be resolved in this file
-            primaryAction={refreshAction}>
+            <DashboardPageTemplate trail={[]} title={title} description={description}
+            moreActions={[refreshAction]}>
                 <Alert variant="error">{error}</Alert>
             </DashboardPageTemplate>
         );
@@ -127,8 +128,7 @@ const ProcurementDashboardPage = () => {
         <DashboardPageTemplate trail={[]}
             title={title}
             description={description}
-            // TODO(comb-title-area): manual - primaryAction={refreshAction} cannot be resolved in this file
-            primaryAction={refreshAction}
+            moreActions={[refreshAction]}
             secondaryActions={[
                 {
                     id: 'open-reports',

@@ -6,11 +6,11 @@ import { useInventoryFormatters } from '../../utils/formatters';
 import { useActivity, useShell, useBusinessSettings } from '@so360/shell-context';
 import {
     toast, getErrorMessage, useConfirm, DetailPageTemplate, Button, Badge, StatusBadge, SectionCard, DescriptionList,
-    DataTable, EmptyState, Select, TextField, Textarea, Progress,
+    DataTable, EmptyState, Select, TextField, Textarea, Progress, type PageAction,
 } from '@so360/design-system';
 import { poToDocumentData } from '../../utils/poToDocumentData';
 import ProcurementTrace from '../../components/ProcurementTrace';
-import { FileText, ListChecks, Split, ShieldCheck, History, Truck } from 'lucide-react';
+import { FileText, ListChecks, Split, ShieldCheck, History, Truck, Printer } from 'lucide-react';
 import { poApprovalService, PO_APPROVAL_FLAG, PO_AMEND_FLAG } from '../../services/poApprovalService';
 import { LINE_ACK_FLAG } from '../../services/poScheduleService';
 import { CLOSEOUT_FLAG } from '../../services/matchService';
@@ -261,28 +261,27 @@ const PODetailPage = () => {
     const ackOption = ACK_OPTIONS.find(o => o.value === po.acknowledgement_status);
 
     const closeLabel = (key: string) => (statusAction === key ? 'Working...' : null);
-    const closeBtn = (variant: 'primary' | 'secondary') => (
-        <Button key="close" variant={variant} onClick={() => (closeoutOn ? setTab('closeout') : handleStatusChange('closed'))} disabled={busy}>
-            {closeLabel('closed') ?? 'Close PO'}
-        </Button>
-    );
+    const closeAction: PageAction = {
+        id: 'close',
+        label: closeLabel('closed') ?? 'Close PO',
+        onSelect: () => (closeoutOn ? setTab('closeout') : handleStatusChange('closed')),
+        disabled: busy,
+    };
 
-    let primaryAction: React.ReactNode = null;
-    const secondaryActions: React.ReactNode[] = [];
+    let primaryAction: PageAction | undefined;
+    const secondaryActions: PageAction[] = [];
     if (approvalOn && po.status === 'draft') {
-        primaryAction = <Button onClick={() => handleApprovalAction('submit')} disabled={busy}>{closeLabel('submit') ?? 'Submit for approval'}</Button>;
+        primaryAction = { id: 'submit', label: closeLabel('submit') ?? 'Submit for approval', onSelect: () => handleApprovalAction('submit'), disabled: busy };
     } else if (approvalOn && po.status === 'pending_approval') {
-        primaryAction = <Button onClick={() => setTab('approvals')}>Review approval</Button>;
+        primaryAction = { id: 'review-approval', label: 'Review approval', onSelect: () => setTab('approvals') };
     } else if (approvalOn && po.status === 'approved') {
-        primaryAction = <Button onClick={() => handleApprovalAction('issue')} disabled={busy}>{closeLabel('issue') ?? 'Issue PO'}</Button>;
+        primaryAction = { id: 'issue', label: closeLabel('issue') ?? 'Issue PO', onSelect: () => handleApprovalAction('issue'), disabled: busy };
     } else if (po.status === 'draft') {
-        primaryAction = (
-            <Button onClick={() => handleStatusChange('sent')} disabled={busy}>{closeLabel('sent') ?? 'Send PO'}</Button>
-        );
+        primaryAction = { id: 'send', label: closeLabel('sent') ?? 'Send PO', onSelect: () => handleStatusChange('sent'), disabled: busy };
     } else if (po.status === 'sent' || po.status === 'partially_received') {
-        primaryAction = <Button onClick={() => navigate('/procurement/grn')}>Record GRN</Button>;
+        primaryAction = { id: 'record-grn', label: 'Record GRN', onSelect: () => navigate('/procurement/grn') };
     } else if (po.status === 'received') {
-        primaryAction = closeBtn('primary');
+        primaryAction = closeAction;
     }
     const overflowActions = (po.status === 'draft' || po.status === 'sent' || (approvalOn && ['pending_approval', 'approved'].includes(po.status)))
         ? [{
@@ -293,12 +292,12 @@ const PODetailPage = () => {
         }]
         : undefined;
     if ((po.status === 'sent' && receiveProgress === 100) || po.status === 'partially_received') {
-        secondaryActions.push(closeBtn('secondary'));
+        secondaryActions.push(closeAction);
     }
     if (approvalOn && amendOn && ['approved', 'sent', 'acknowledged', 'partially_received'].includes(po.status)) {
-        secondaryActions.push(<Button key="amend" variant="secondary" onClick={() => setTab('versions')}>Amend PO</Button>);
+        secondaryActions.push({ id: 'amend', label: 'Amend PO', onSelect: () => setTab('versions') });
     }
-    secondaryActions.push(<Button key="print" variant="secondary" onClick={handlePrint}>Print PO</Button>);
+    secondaryActions.push({ id: 'print', label: 'Print PO', kind: 'print', icon: <Printer />, onSelect: handlePrint });
 
     const overviewItems = [
         ...(po.vendor ? [{
@@ -477,9 +476,7 @@ const PODetailPage = () => {
                 trail={[{ label: 'Purchase Orders', onClick: backToList }]}
                 title={`#${po.po_number}`}
                 status={<StatusBadge status={statusText} map={{ [statusText]: STATUS_TONES[po.status] || 'neutral' }} />}
-                // TODO(comb-title-area): manual - primaryAction={primaryAction} cannot be resolved in this file
                 primaryAction={primaryAction}
-                // TODO(comb-title-area): manual - secondaryActions is not a literal list (unresolved secondaryActions)
                 secondaryActions={secondaryActions}
                 overflowActions={overflowActions}
                 sidePanel={sidePanel}

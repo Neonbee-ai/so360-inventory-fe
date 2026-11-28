@@ -34,7 +34,7 @@ const rfq = (o: any = {}) => ({
 
 const open = async () => {
   render(<RFQDetailPage />);
-  fireEvent.click(await screen.findByText('Record Quotation'));
+  fireEvent.click(await screen.findByText('Record quotation'));
   await screen.findByRole('dialog');
 };
 

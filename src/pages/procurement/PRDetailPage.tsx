@@ -7,7 +7,7 @@ import { rfqService } from '../../services/rfqService';
 import { useActivity, useShellBridge } from '@so360/shell-context';
 import {
     toast, getErrorMessage, useConfirm, DetailPageTemplate, Button, Badge, StatusBadge, SectionCard, DescriptionList,
-    DataTable, EmptyState, Grid, Modal, TextField,
+    DataTable, EmptyState, Grid, Modal, TextField, type PageAction,
 } from '@so360/design-system';
 import { useInventoryFormatters } from '../../utils/formatters';
 
@@ -352,18 +352,18 @@ const PRDetailPage = () => {
                 disabled: isLoadingConversion,
             } : undefined;
 
-    const secondaryList: React.ReactNode[] = [];
+    const secondaryList: PageAction[] = [];
     if (pr.status === 'approved' && rfqEnabled) {
-        secondaryList.push(<Button key="rfq" variant="secondary" onClick={handleCreateRFQ} disabled={isCreatingRfq}>{isCreatingRfq ? 'Creating RFQ...' : 'Create RFQ'}</Button>);
+        secondaryList.push({ id: 'rfq', label: isCreatingRfq ? 'Creating RFQ...' : 'Create RFQ', onSelect: handleCreateRFQ, disabled: isCreatingRfq });
     }
     if (canClose && pr.status !== 'closed') {
-        secondaryList.push(<Button key="close" variant="secondary" onClick={handleClosePR} disabled={isLoading}>Close PR</Button>);
+        secondaryList.push({ id: 'close', label: 'Close PR', onSelect: handleClosePR, disabled: isLoading });
     }
     if (['draft', 'returned'].includes(pr.status)) {
-        secondaryList.push(<Button key="submit" variant="secondary" onClick={handleSubmitPR} disabled={isLoading}>Submit for approval</Button>);
+        secondaryList.push({ id: 'submit', label: 'Submit for approval', onSelect: handleSubmitPR, disabled: isLoading });
     }
     if (pr.status === 'pending_approval' && flagOn(RETURN_FLAG)) {
-        secondaryList.push(<Button key="return" variant="secondary" onClick={() => setReturnDialog({ reason: '' })}>Return for clarification</Button>);
+        secondaryList.push({ id: 'return', label: 'Return for clarification', onSelect: () => setReturnDialog({ reason: '' }) });
     }
     const secondaryActions = secondaryList.length ? secondaryList : undefined;
 
@@ -373,7 +373,6 @@ const PRDetailPage = () => {
             title={`#PR-${pr.id.slice(0, 8).toUpperCase()}`}
             status={<StatusBadge status={statusText} map={{ [statusText]: STATUS_TONES[pr.status] || 'neutral' }} />}
             primaryAction={primaryAction}
-            // TODO(comb-title-area): manual - secondaryActions is not a literal list (unresolved secondaryActions)
             secondaryActions={secondaryActions}
         >
             {confirmDialog}

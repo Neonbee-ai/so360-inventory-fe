@@ -6,7 +6,7 @@ import { rfqService } from '../../services/rfqService';
 import { useInventoryFormatters } from '../../utils/formatters';
 import {
     toast, getErrorMessage, useConfirm, DetailPageTemplate, Button, Badge, StatusBadge, SectionCard, DescriptionList,
-    DataTable, EmptyState, Modal, TextField, Select, FieldGrid, Grid,
+    DataTable, EmptyState, Modal, TextField, Select, FieldGrid, Grid, type PageAction,
 } from '@so360/design-system';
 import { RFQ_STATUS_TONES } from './RFQListPage';
 import RFQInviteVendorsModal, { type InviteResult } from './RFQInviteVendorsModal';
@@ -262,16 +262,10 @@ const RFQDetailPage = () => {
         );
     }
 
-    const secondaryActions = [
-        canAct && (
-            <Button key="quote" variant="secondary" onClick={openQuoteForm}>Record Quotation</Button>
-        ),
-        quotations.length > 0 && (
-            <Button key="compare" variant="secondary" onClick={() => navigate(`/procurement/rfq/${rfq.id}/compare`)}>
-                <Scale size={16} /> Compare &amp; Award
-            </Button>
-        ),
-    ].filter(Boolean) as React.ReactElement[];
+    const secondaryActions: PageAction[] = [
+        ...(canAct ? [{ id: 'quote', label: 'Record quotation', onSelect: openQuoteForm }] : []),
+        ...(quotations.length > 0 ? [{ id: 'compare', label: 'Compare and award', icon: <Scale />, onSelect: () => navigate(`/procurement/rfq/${rfq.id}/compare`) }] : []),
+    ];
 
     const primaryAction = ['draft', 'approved', 'sent'].includes(rfq.status) ? {
                 id: 'send-to-new-vendors',
@@ -303,7 +297,6 @@ const RFQDetailPage = () => {
             trail={[{ label: 'RFQs', onClick: () => navigate('/procurement/rfq') }]}
             title={rfq.rfq_number}
             status={<StatusBadge status={rfq.status} map={{ [rfq.status]: RFQ_STATUS_TONES[rfq.status] || 'neutral' }} />}
-            // TODO(comb-title-area): manual - secondaryActions is not a literal list (unresolved secondaryActions)
             secondaryActions={secondaryActions}
             primaryAction={primaryAction}
             overflowActions={canAct ? [{ label: 'Cancel RFQ', danger: true, onSelect: handleCancel, disabled: busy === 'cancel' }] : undefined}

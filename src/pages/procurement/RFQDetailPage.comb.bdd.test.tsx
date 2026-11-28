@@ -73,11 +73,11 @@ describe('RFQDetailPage (Comb)', () => {
     render(<RFQDetailPage />);
     await screen.findByRole('heading', { name: 'RFQ-0001' });
     expect(screen.queryByText('Send to Vendors')).toBeNull();
-    expect(screen.queryByText('Record Quotation')).toBeNull();
+    expect(screen.queryByText('Record quotation')).toBeNull();
     expect(screen.queryByText('Cancel RFQ')).toBeNull();
   });
 
-  it('Given an RFQ with quotations, When Compare & Award is clicked, Then it navigates to the comparison', async () => {
+  it('Given an RFQ with quotations, When Compare and award is clicked, Then it navigates to the comparison', async () => {
     mockGetRFQ.mockResolvedValue(makeRFQ({ status: 'sent', vendor_quotations: [{ id: 'q1', vendor_id: 'v1', vendor_name: 'Acme', total_amount: 100, status: 'submitted' }] }));
     render(<RFQDetailPage />);
     fireEvent.click(await screen.findByText(/Compare/));
@@ -87,7 +87,7 @@ describe('RFQDetailPage (Comb)', () => {
   it('Given the quote form, When a price is entered and saved, Then recordQuotation is called', async () => {
     mockRecord.mockResolvedValue({});
     render(<RFQDetailPage />);
-    fireEvent.click(await screen.findByText('Record Quotation'));
+    fireEvent.click(await screen.findByText('Record quotation'));
     expect(await screen.findByRole('dialog')).toBeTruthy();
     fireEvent.change(screen.getByLabelText(/Vendor \(invited\)/), { target: { value: 'v1' } });
     fireEvent.change(screen.getByLabelText(/Payment Terms/), { target: { value: 'Net 30 days' } });
