@@ -114,8 +114,12 @@ const ProcurementReportsPage = () => {
             title="Procurement Reports"
             description={active?.hint}
             count={visibleRows.length > 0 ? `${visibleRows.length} row(s)` : undefined}
-            primaryAction={<Button onClick={() => run()}>Run</Button>}
-            headerSecondaryActions={[<Button key="export" variant="secondary" onClick={exportCsv}>Export CSV</Button>]}
+            primaryAction={{
+                id: 'run',
+                label: 'Run',
+                onSelect: () => run(),
+            }}
+            // TODO(comb-title-area): manual - use tabs (navigation) or a drawer field
             views={(
                 <div className="min-w-0 max-w-full max-md:hidden">
                 <Tabs
@@ -128,8 +132,8 @@ const ProcurementReportsPage = () => {
                 />
                 </div>
             )}
-            search={<SearchInput placeholder="Search this report..." value={searchTerm} onChange={setSearchTerm} />}
-            filterConfig={{
+            search={{ placeholder: 'Search this report', value: searchTerm, onChange: setSearchTerm }}
+            filters={{
                 fields: [
                     { key: 'period', label: 'Period', type: 'daterange' },
                     { key: 'report', label: 'Report', type: 'select', options: REPORTS.map(r => ({ value: r.key, label: r.label })) },
@@ -142,6 +146,7 @@ const ProcurementReportsPage = () => {
             loadingColumns={columns.length}
             isEmpty={!loading && !error && visibleRows.length === 0}
             empty={<EmptyState title="No rows for this report." />}
+            export={{ onExport: exportCsv }}
         >
             <div className="flex min-w-0 max-w-full flex-col gap-nb-4">
                 {error && <Alert variant="error">{error}</Alert>}

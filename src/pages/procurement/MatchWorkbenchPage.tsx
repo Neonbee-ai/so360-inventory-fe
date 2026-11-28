@@ -73,6 +73,7 @@ const MatchWorkbenchPage = () => {
             loadingColumns={columns.length}
             isEmpty={!loading && !error && rows.length === 0}
             empty={<EmptyState title="No invoices to match." description="Invoices captured against a purchase order appear here." />}
+            // TODO(comb-title-area): manual - move inline filters into drawer fields (filters={{ fields, values, onChange, onClear }})
             filters={<Select name="match-queue" label="Queue" value={queue} options={QUEUES} onChange={(e: any) => setQueue(e?.target ? e.target.value : e)} />}
         >
             <div className="flex flex-col gap-nb-4">

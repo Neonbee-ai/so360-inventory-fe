@@ -60,7 +60,7 @@ describe('AttributeEditor', () => {
 
     it('When label is empty / Then Add Attribute button is disabled', () => {
       render(<AttributeEditor onSave={vi.fn()} onCancel={vi.fn()} />);
-      expect(screen.getByText('Add Attribute').closest('button')).toBeDisabled();
+      expect(screen.getByText('Add Attribute').closest('button')).toHaveAttribute('aria-disabled', 'true');
     });
   });
 

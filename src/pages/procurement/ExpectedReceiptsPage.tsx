@@ -78,6 +78,7 @@ const ExpectedReceiptsPage = () => {
             loadingColumns={columns.length}
             isEmpty={!loading && !error && rows.length === 0}
             empty={<EmptyState title="No expected receipts." description="Notices appear when a supplier confirms a delivery schedule." />}
+            // TODO(comb-title-area): manual - move inline filters into drawer fields (filters={{ fields, values, onChange, onClear }})
             filters={<Select name="expected-receipt-status" label="Status" value={status} options={STATUS_OPTIONS} onChange={(e: any) => setStatus(e?.target ? e.target.value : e)} />}
         >
             <div className="flex flex-col gap-nb-4">

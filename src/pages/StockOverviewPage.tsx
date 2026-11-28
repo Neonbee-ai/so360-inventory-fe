@@ -225,15 +225,9 @@ const StockOverviewPage = () => {
         <ListPageTemplate trail={[]}
             title="Stock Overview"
             description="Real-time physical stock levels and valuation"
-            headerSecondaryActions={[
-                <Button key="refresh" variant="secondary" onClick={() => { setError(null); fetchStock(); }}><RefreshCcw size={16} />
-                    Refresh
-                </Button>,
-            ]}
             kpis={kpis}
-            kpisCollapsible
-            search={<SearchInput placeholder="Filter by item or SKU..." value={searchTerm} onChange={setSearchTerm} />}
-            filterConfig={{
+            search={{ placeholder: 'Filter by item or SKU', value: searchTerm, onChange: setSearchTerm }}
+            filters={{
                 fields: [
                     { key: 'warehouse', label: 'Warehouse', type: 'select', options: uniqueLocations.map(loc => ({ value: loc as string, label: loc as string })) },
                     { key: 'lowStock', label: 'Low Stock Only', type: 'boolean' },
@@ -254,6 +248,14 @@ const StockOverviewPage = () => {
                     onPageChange={setCurrentPage}
                 />
             ) : undefined}
+            moreActions={[
+                {
+                    id: 'refresh',
+                    label: 'Refresh',
+                    onSelect: () => { setError(null); fetchStock(); },
+                    kind: 'refresh',
+                },
+            ]}
         >
             {error && <Alert variant="error" className="mb-nb-4">{error}</Alert>}
             <DataTable

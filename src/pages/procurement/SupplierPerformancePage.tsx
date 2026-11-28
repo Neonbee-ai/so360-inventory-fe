@@ -62,7 +62,6 @@ const SupplierPerformancePage = () => {
         <ListPageTemplate
             trail={[]}
             title="Supplier Performance"
-            kpisCollapsible
             description={data ? `Formula ${data.formula_version} - last ${data.period_days} days. Buyer-caused delays are not held against the supplier.` : 'Delivery, quality, acknowledgement, price and claims by supplier.'}
             loading={loading && !data}
             loadingColumns={columns.length}
@@ -75,6 +74,7 @@ const SupplierPerformancePage = () => {
                     <KpiCard label="Receipt lines measured" value={rows.reduce((s, r) => s + (r.sample_size || 0), 0)} />
                 </div>
             ) : undefined}
+            // TODO(comb-title-area): manual - move inline filters into drawer fields (filters={{ fields, values, onChange, onClear }})
             filters={(
                 <div className="flex flex-wrap gap-nb-3">
                     <Select name="perf-segment" label="Group" value={segment} options={SEGMENTS} onChange={(e: any) => setSegment(e?.target ? e.target.value : e)} />

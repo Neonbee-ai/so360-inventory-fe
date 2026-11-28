@@ -41,7 +41,7 @@ export default function CorrectiveActionsListPage() {
       loadingColumns={columns.length}
       isEmpty={!loading && !error && rows.length === 0}
       empty={<EmptyState title="No corrective actions" description="They open when verified vendor defects are serious or repeated." />}
-      filterConfig={{
+      filters={{
         fields: [{ key: 'status', label: 'Status', type: 'select', options: Object.entries(VCA_STATUS_LABELS).map(([value, label]) => ({ value, label })) }],
         values: filters,
         onChange: (v: Record<string, any>) => setFilters({ status: v.status || '' }),

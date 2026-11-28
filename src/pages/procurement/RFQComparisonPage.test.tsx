@@ -136,7 +136,7 @@ describe('RFQComparisonPage', () => {
             render(<RFQComparisonPage />);
 
             await waitFor(() => expect(screen.getByText('Expired')).toBeInTheDocument());
-            expect(screen.getByRole('button', { name: /^Award$/i })).toBeDisabled();
+            expect(screen.getByRole('button', { name: /^Award$/i })).toHaveAttribute('aria-disabled', 'true');
         });
     });
 

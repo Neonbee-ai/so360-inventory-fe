@@ -344,11 +344,13 @@ const PRDetailPage = () => {
     ].filter(Boolean) as { label: string; value: React.ReactNode }[];
 
 
-    const primaryAction = canConvert ? (
-        <Button onClick={handleCreatePO} disabled={isLoadingConversion}>
-            <ShoppingCart size={16} /> {isLoadingConversion ? 'Preparing...' : 'Create PO from this PR'}
-        </Button>
-    ) : undefined;
+    const primaryAction = canConvert ? {
+                id: 'create-po-from-this-pr',
+                label: isLoadingConversion ? 'Preparing...' : 'Create PO from this PR',
+                icon: <ShoppingCart />,
+                onSelect: handleCreatePO,
+                disabled: isLoadingConversion,
+            } : undefined;
 
     const secondaryList: React.ReactNode[] = [];
     if (pr.status === 'approved' && rfqEnabled) {
@@ -371,6 +373,7 @@ const PRDetailPage = () => {
             title={`#PR-${pr.id.slice(0, 8).toUpperCase()}`}
             status={<StatusBadge status={statusText} map={{ [statusText]: STATUS_TONES[pr.status] || 'neutral' }} />}
             primaryAction={primaryAction}
+            // TODO(comb-title-area): manual - secondaryActions is not a literal list (unresolved secondaryActions)
             secondaryActions={secondaryActions}
         >
             {confirmDialog}

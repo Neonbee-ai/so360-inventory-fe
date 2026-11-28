@@ -82,6 +82,7 @@ const VendorPerformancePage = () => {
             loadingColumns={columns.length}
             isEmpty={!loading && !error && sorted.length === 0}
             empty={<EmptyState title="No purchase history to score yet." />}
+            // TODO(comb-title-area): manual - move into drawer fields / view / R1 actions
             toolbarEnd={(
                 <Select
                     name="vendor_sort"

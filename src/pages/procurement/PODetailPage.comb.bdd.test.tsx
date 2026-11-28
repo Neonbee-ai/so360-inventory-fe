@@ -100,7 +100,7 @@ describe('PODetailPage (Comb)', () => {
       po_lines: [{ id: 'l1', item_id: 'i1', description: 'Bolt', quantity: 10, unit_price: 10, received_quantity: 4 }],
     }));
     render(<PODetailPage />);
-    expect(await screen.findByRole('button', { name: 'Cancel PO' })).toBeDisabled();
+    expect(await screen.findByRole('button', { name: 'Cancel PO' })).toHaveAttribute('aria-disabled', 'true');
     fireEvent.click(screen.getByRole('button', { name: 'Record GRN' }));
     expect(mockNavigate).toHaveBeenCalledWith('/procurement/grn');
   });

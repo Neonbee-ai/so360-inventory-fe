@@ -58,7 +58,8 @@ const ProcurementDashboardPage = () => {
 
     if (error) {
         return (
-            <DashboardPageTemplate trail={[]} title={title} description={description} primaryAction={refreshAction}>
+            <DashboardPageTemplate trail={[]} title={title} description={description} // TODO(comb-title-area): manual - primaryAction={refreshAction} cannot be resolved in this file
+            primaryAction={refreshAction}>
                 <Alert variant="error">{error}</Alert>
             </DashboardPageTemplate>
         );
@@ -126,10 +127,19 @@ const ProcurementDashboardPage = () => {
         <DashboardPageTemplate trail={[]}
             title={title}
             description={description}
+            // TODO(comb-title-area): manual - primaryAction={refreshAction} cannot be resolved in this file
             primaryAction={refreshAction}
             secondaryActions={[
-                <Button key="reports" variant="secondary" onClick={() => navigate('/procurement/reports')}>Open Reports</Button>,
-                <Button key="vp" variant="secondary" onClick={() => navigate('/procurement/vendor-performance')}>Vendor Performance</Button>,
+                {
+                    id: 'open-reports',
+                    label: 'Open reports',
+                    onSelect: () => navigate('/procurement/reports'),
+                },
+                {
+                    id: 'vendor-performance',
+                    label: 'Vendor performance',
+                    onSelect: () => navigate('/procurement/vendor-performance'),
+                },
             ]}
             kpis={[
                 <KpiCard key="value" label="Total Procurement Value" value={formatters.formatCurrency(k.total_procurement_value || 0)} hint={`${k.po_issued || 0} orders issued · ${k.completed_orders || 0} completed`} />,

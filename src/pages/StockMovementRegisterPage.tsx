@@ -762,23 +762,14 @@ const StockMovementRegisterPage = () => {
         <ListPageTemplate trail={[]}
             title="Stock Transactions"
             description="Inventory movement register — every movement traceable end to end"
-            primaryAction={
-                can('stock.adjust') ? (
-                    <FeatureGate
-                        state={adjustStockState}
-                        loading={shell?.effectiveFlagsLoaded === false}
-                        onUpgradeClick={() => navigate('/org/billing')}
-                    >
-                        <Button
-                            variant="primary"
-                            onClick={() => { resetForm(); setIsModalOpen(true); }}
-                        ><Plus size={16} />
-                            New Transaction
-                        </Button>
-                    </FeatureGate>
-                ) : undefined
-            }
-            filterConfig={{
+            primaryAction={can('stock.adjust') ? {
+                id: 'new-transaction',
+                label: 'New transaction',
+                icon: <Plus />,
+                onSelect: () => { resetForm(); setIsModalOpen(true); },
+                gate: { feature: { state: adjustStockState, loading: shell?.effectiveFlagsLoaded === false, onUpgradeClick: () => navigate('/org/billing') } },
+            } : undefined}
+            filters={{
                 fields: [
                     {
                         key: 'movement_type', label: 'Movement Type', type: 'select',

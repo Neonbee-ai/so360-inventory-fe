@@ -148,7 +148,7 @@ describe('PreviewTableStep', () => {
         it('WHEN rendered THEN the Import button is disabled', () => {
             render(<PreviewTableStep rows={[ERROR_ROW]} onConfirm={onConfirm} onBack={onBack} />);
             const btn = screen.getByText(/Import 0 valid/).closest('button') as HTMLButtonElement;
-            expect(btn).toBeDisabled();
+            expect(btn).toHaveAttribute('aria-disabled', 'true');
         });
     });
 

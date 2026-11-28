@@ -118,6 +118,7 @@ const SalesDemandPage = () => {
                 count={orders.length > 0
                     ? `${summary.order_count ?? orders.length} order(s) · ${summary.short_line_count ?? 0} short line(s) · ${formatters.formatCurrency(summary.shortfall_value || 0)} shortfall`
                     : undefined}
+                // TODO(comb-title-area): manual - move into drawer fields / view / R1 actions
                 toolbar={(
                     <Checkbox
                         name="only-short"

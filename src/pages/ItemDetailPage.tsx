@@ -497,12 +497,16 @@ const ItemDetailPage = () => {
                 status={isEditing
                     ? <Badge tone="info">Editing</Badge>
                     : <Badge tone={item.is_active ? 'success' : 'neutral'}>{item.is_active ? 'Active' : 'Inactive'}</Badge>}
+                // TODO(comb-title-area): manual - not a JSX Button
                 secondaryActions={isEditing ? [
                     <Button key="cancel-editing" variant="secondary" onClick={handleCancelEdit}>Cancel Editing</Button>,
                 ] : undefined}
-                primaryAction={!isEditing && can('items.update')
-                    ? <Button onClick={handleEditClick}><Edit2 size={16} /> Edit</Button>
-                    : undefined}
+                primaryAction={!isEditing && can('items.update') ? {
+                    id: 'edit',
+                    label: 'Edit',
+                    icon: <Edit2 />,
+                    onSelect: handleEditClick,
+                } : undefined}
                 overflowActions={!isEditing && can('items.delete')
                     ? [{ label: 'Delete', danger: true, onSelect: () => setShowDeleteConfirm(true) }]
                     : undefined}

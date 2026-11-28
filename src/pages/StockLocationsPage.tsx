@@ -389,8 +389,8 @@ const StockLocationsPage = () => {
             title="Warehouses"
             description="Manage physical storage facilities and fulfillment centers"
             count={warehouses.length}
-            searchMode="field"
-            quota={quotaData ? { label: 'Warehouses', used: whUsed, limit: quotaData.limit, isUnlimited: whUnlimited } : undefined}
+            meta={quotaData ? { kind: 'quota', label: 'Warehouses', used: whUsed, limit: quotaData.limit, isUnlimited: whUnlimited } : undefined}
+            // TODO(comb-title-area): manual - not a Button (<Tooltip>) (via const primaryAction)
             primaryAction={primaryAction}
         >
 

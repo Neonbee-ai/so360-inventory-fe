@@ -439,7 +439,8 @@ const POListPage = () => {
                 title="Purchase Orders"
                 description="Official commercial documents issued to sellers."
                 count={matchCount}
-                quota={quotaData ? { label: 'Purchase Orders', used: quotaData.current_usage, limit: quotaData.limit, isUnlimited: quotaData.is_unlimited } : undefined}
+                meta={quotaData ? { kind: 'quota', label: 'Purchase Orders', used: quotaData.current_usage, limit: quotaData.limit, isUnlimited: quotaData.is_unlimited } : undefined}
+                // TODO(comb-title-area): manual - not a Button (<div>)
                 primaryAction={
                     <div className="flex flex-wrap items-center gap-nb-2">
                         {approvedPrs.length > 0 && (
@@ -468,6 +469,7 @@ const POListPage = () => {
                         </FeatureGate>
                     </div>
                 }
+                // TODO(comb-title-area): manual - SearchInput prop data-testid
                 search={
                     <SearchInput
                         value={searchTerm}
@@ -489,6 +491,7 @@ const POListPage = () => {
                 loading={loading && pos.length === 0}
                 loadingColumns={6}
                 isEmpty={!loading && !fetchError && !showPrMenu && filteredPos.length === 0}
+                // TODO(comb-title-area): manual - move inline filters into drawer fields (filters={{ fields, values, onChange, onClear }})
                 filters={
                     (
                         <div className="flex flex-wrap items-center gap-2">
@@ -518,7 +521,7 @@ const POListPage = () => {
                         </div>
                     )
                 }
-                notice={[renderNotice(fetchError), renderNotice(vendorNotice)].filter(Boolean)}
+                banner={[renderNotice(fetchError), renderNotice(vendorNotice)].filter(Boolean)}
                 empty={<EmptyState title={searchTerm.trim() ? 'No purchase orders match your search.' : 'No purchase orders found.'} />}
             >
                 {showPrMenu && approvedPrs.length > 0 && (

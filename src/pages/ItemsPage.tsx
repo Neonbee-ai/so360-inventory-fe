@@ -151,7 +151,8 @@ const ItemsPage = () => {
             trail={[]}
             title="Items"
             description="Manage physical products and trackable assets"
-            quota={quotaData && totalItemCount !== null ? { label: 'SKUs', used: totalItemCount, limit: quotaData.limit, isUnlimited: quotaData.is_unlimited } : undefined}
+            meta={quotaData && totalItemCount !== null ? { kind: 'quota', label: 'SKUs', used: totalItemCount, limit: quotaData.limit, isUnlimited: quotaData.is_unlimited } : undefined}
+            // TODO(comb-title-area): manual - not a plain Button (all items must be plain buttons to become PageActions)
             headerSecondaryActions={importAllowed ? [
                 <FeatureGate key="bulk" state={bulkImportState} loading={(shell?.effectiveFlagsLoaded === false)} onUpgradeClick={() => navigate('/org/billing')}>
                     <Tooltip content="Upload a CSV of items, name image files after the SKU, preview the rows, then confirm.">
@@ -161,24 +162,15 @@ const ItemsPage = () => {
                     </Tooltip>
                 </FeatureGate>,
             ] : undefined}
-            primaryAction={createAllowed ? (
-                <FeatureGate state={createItemState} loading={(shell?.effectiveFlagsLoaded === false)} onUpgradeClick={() => navigate('/org/billing')}>
-                    <QuotaGate
-                        quotaKey="max_skus"
-                        moduleCode="inventory"
-                        used={totalItemCount ?? quotaData?.current_usage ?? 0}
-                        limit={quotaData?.limit ?? 0}
-                        isUnlimited={quotaData?.is_unlimited}
-                        disableOnExceeded
-                    >
-                        <Button onClick={() => navigate('/inventory/items/new')}><Plus size={18} />
-                            New Item
-                        </Button>
-                    </QuotaGate>
-                </FeatureGate>
-            ) : undefined}
-            search={<SearchInput placeholder="Search SKU or Item Name..." value={searchTerm} onChange={setSearchTerm} />}
-            filterConfig={{
+            primaryAction={createAllowed ? {
+                id: 'new-item',
+                label: 'New item',
+                icon: <Plus />,
+                onSelect: () => navigate('/inventory/items/new'),
+                gate: { feature: { state: createItemState, loading: (shell?.effectiveFlagsLoaded === false), onUpgradeClick: () => navigate('/org/billing') }, quota: { quotaKey: "max_skus", moduleCode: "inventory", used: totalItemCount ?? quotaData?.current_usage ?? 0, limit: quotaData?.limit ?? 0, isUnlimited: quotaData?.is_unlimited, disableOnExceeded: true } },
+            } : undefined}
+            search={{ placeholder: 'Search SKU or Item Name', value: searchTerm, onChange: setSearchTerm }}
+            filters={{
                 fields: [
                     {
                         key: 'type', label: 'Type', type: 'select',

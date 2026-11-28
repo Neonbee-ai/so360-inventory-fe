@@ -18,7 +18,7 @@ describe('Given the Comb AttributeEditor', () => {
 
   it('Given empty fields / When rendered / Then primary is disabled', () => {
     render(<AttributeEditor onSave={vi.fn()} onCancel={vi.fn()} />);
-    expect(screen.getByText('Add Attribute').closest('button')).toBeDisabled();
+    expect(screen.getByText('Add Attribute').closest('button')).toHaveAttribute('aria-disabled', 'true');
   });
 
   it('Given a label is typed / When creating / Then field name auto-derives', () => {

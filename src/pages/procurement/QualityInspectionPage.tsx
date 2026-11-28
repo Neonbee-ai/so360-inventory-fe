@@ -221,8 +221,11 @@ const QualityInspectionPage = () => {
             <ListPageTemplate trail={[]}
                 title="Quality Inspection"
                 description="Receipts held for inspection. Stock is released only for what passes."
-                primaryAction={<Button onClick={() => setShowOpenForm(true)}>New Inspection</Button>}
-                kpisCollapsible
+                primaryAction={{
+                    id: 'new-inspection',
+                    label: 'New inspection',
+                    onSelect: () => setShowOpenForm(true),
+                }}
                 kpis={
                     <Grid gap="md">
                         <GridItem span={{ md: 4, lg: 3 }}><KpiCard label="Awaiting Inspection" value={inspections.filter(i => i.status === 'pending').length} /></GridItem>
@@ -231,7 +234,7 @@ const QualityInspectionPage = () => {
                         <GridItem span={{ md: 4, lg: 3 }}><KpiCard label="Partial" value={inspections.filter(i => i.result === 'partial').length} /></GridItem>
                     </Grid>
                 }
-                filterConfig={{
+                filters={{
                     fields: [{ key: 'status', label: 'Status', type: 'select', options: QC_STATUS_FILTER_OPTIONS }],
                     values: filterValues,
                     onChange: (v) => setStatusFilter(typeof v.status === 'string' ? v.status : ''),

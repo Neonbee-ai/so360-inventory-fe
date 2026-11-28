@@ -52,7 +52,11 @@ export default function ScorecardDefinitionsPage() {
       loadingColumns={cols.length}
       isEmpty={!loading && !error && rows.length === 0}
       empty={<EmptyState title="No scorecard defined" description="Until you activate one, vendors show the default scorecard." />}
-      primaryAction={<Button onClick={() => setOpen(true)}>New scorecard</Button>}
+      primaryAction={{
+          id: 'new-scorecard',
+          label: 'New scorecard',
+          onSelect: () => setOpen(true),
+      }}
     >
       {error && <Alert variant="error">{error}</Alert>}
       {rows.length > 0 && <DataTable data-testid="scorecard-definitions" columns={cols} rows={rows} rowKey={(r: any) => r.id} />}

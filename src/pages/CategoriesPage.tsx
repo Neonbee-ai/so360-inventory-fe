@@ -500,6 +500,7 @@ const CategoriesPage = () => {
             description={propertyUnits
                 ? 'Projects, their towers and unit availability'
                 : 'Organize your products with a hierarchical category system'}
+            // TODO(comb-title-area): manual - label is not a plain string
             primaryAction={canManage ? (
                 <FeatureGate state={createState} loading={(shell?.effectiveFlagsLoaded === false)} onUpgradeClick={() => navigate('/org/billing')}>
                     <Button

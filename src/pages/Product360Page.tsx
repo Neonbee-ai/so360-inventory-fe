@@ -62,7 +62,13 @@ export default function Product360Page() {
       trail={trail}
       loading={!!id && !data}
       meta={data?.profile?.sku ? `SKU ${data.profile.sku}` : undefined}
-      secondaryActions={[<Button key="back" variant="secondary" onClick={() => navigate(`/inventory/items/${id}`)}>Back to item</Button>]}
+      secondaryActions={[
+          {
+              id: 'back-to-item',
+              label: 'Back to item',
+              onSelect: () => navigate(`/inventory/items/${id}`),
+          },
+      ]}
     >
       <div className="flex flex-col gap-nb-3">
       <Card title="Stock and movement">

@@ -174,7 +174,7 @@ describe('ImageUploadStep', () => {
         it('WHEN rendered THEN Upload Images button is disabled', () => {
             render(<ImageUploadStep parsedRows={rows} onImagesUploaded={onImagesUploaded} onUpload={onUpload} onSkip={onSkip} />);
             const btn = screen.getByText('Upload Images').closest('button') as HTMLButtonElement;
-            expect(btn).toBeDisabled();
+            expect(btn).toHaveAttribute('aria-disabled', 'true');
         });
     });
 

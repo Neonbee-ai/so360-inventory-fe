@@ -44,6 +44,7 @@ const ExpeditingPage = () => {
             loadingColumns={columns.length}
             isEmpty={!loading && !error && rows.length === 0}
             empty={<EmptyState title="Nothing to chase right now." />}
+            // TODO(comb-title-area): manual - move inline filters into drawer fields (filters={{ fields, values, onChange, onClear }})
             filters={<Select name="expediting-view" label="Show" value={view} options={VIEWS} onChange={(e: any) => setView(e?.target ? e.target.value : e)} />}
         >
             <div className="flex flex-col gap-nb-4">

@@ -57,7 +57,7 @@ export default function ComplianceQueuePage({ canEdit = true }: { canEdit?: bool
       loadingColumns={(view === 'renewals' ? taskCols : noteCols).length}
       isEmpty={!loading && !error && rows === 0}
       empty={<EmptyState title="Nothing to do" description={view === 'renewals' ? 'No renewals are open.' : 'Every notice went out.'} />}
-      filterConfig={{
+      filters={{
         fields: [{ key: 'view', label: 'Show', type: 'select', options: [{ value: 'renewals', label: 'Renewals due' }, { value: 'notices', label: 'Failed notices' }] }],
         values: filters,
         onChange: (v: Record<string, any>) => setFilters({ view: v.view || 'renewals' }),

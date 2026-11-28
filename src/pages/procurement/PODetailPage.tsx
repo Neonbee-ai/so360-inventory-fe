@@ -477,7 +477,9 @@ const PODetailPage = () => {
                 trail={[{ label: 'Purchase Orders', onClick: backToList }]}
                 title={`#${po.po_number}`}
                 status={<StatusBadge status={statusText} map={{ [statusText]: STATUS_TONES[po.status] || 'neutral' }} />}
+                // TODO(comb-title-area): manual - primaryAction={primaryAction} cannot be resolved in this file
                 primaryAction={primaryAction}
+                // TODO(comb-title-area): manual - secondaryActions is not a literal list (unresolved secondaryActions)
                 secondaryActions={secondaryActions}
                 overflowActions={overflowActions}
                 sidePanel={sidePanel}

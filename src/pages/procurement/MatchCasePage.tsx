@@ -132,7 +132,13 @@ const MatchCasePage = () => {
                         {kase.finance_hold && <Badge tone="warning">Finance hold</Badge>}
                     </>
                 )}
-                secondaryActions={[<Button key="re" variant="secondary" onClick={reevaluate}>Re-evaluate</Button>]}
+                secondaryActions={[
+                    {
+                        id: 're-evaluate',
+                        label: 'Re-evaluate',
+                        onSelect: reevaluate,
+                    },
+                ]}
                 sidePanel={(
                     <Card title="Finance (read-only)">
                         <DescriptionList

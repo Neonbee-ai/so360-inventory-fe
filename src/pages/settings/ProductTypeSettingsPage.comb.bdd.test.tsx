@@ -111,10 +111,10 @@ describe('Given the Comb ProductTypeSettingsPage', () => {
     render(<ProductTypeSettingsPage />);
     await waitFor(() => expect(screen.getByText('New')).toBeInTheDocument());
     fireEvent.click(screen.getByText('New'));
-    expect(screen.getByText('Create').closest('button')).toBeDisabled();
+    expect(screen.getByText('Create').closest('button')).toHaveAttribute('aria-disabled', 'true');
     fireEvent.change(screen.getByLabelText(/^Name/), { target: { value: 'Clothing' } });
     expect(screen.getByDisplayValue('clothing')).toBeInTheDocument();
-    expect(screen.getByText('Create').closest('button')).not.toBeDisabled();
+    expect(screen.getByText('Create').closest('button')).not.toHaveAttribute('aria-disabled', 'true');
   });
 
   it('Given a type is clicked / When detail loads / Then the detail card and no-attributes text show', async () => {

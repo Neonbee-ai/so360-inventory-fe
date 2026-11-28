@@ -216,11 +216,12 @@ const VendorDetailPage = () => {
                 trail={[{ label: 'Vendors', to: '/vendors', onClick: () => navigate('/vendors') }]}
                 status={profile?.is_preferred ? <StatusBadge status="Preferred" /> : undefined}
                 meta={<span className="text-nb-sm text-fg-muted capitalize">{profile?.classification || 'Supplier'}</span>}
-                primaryAction={canManage ? (
-                    <Button variant="primary" onClick={() => setIsInvoiceModalOpen(true)}><Plus size={16} />
-                        Create Invoice
-                    </Button>
-                ) : undefined}
+                primaryAction={canManage ? {
+                    id: 'create-invoice',
+                    label: 'Create invoice',
+                    icon: <Plus />,
+                    onSelect: () => setIsInvoiceModalOpen(true),
+                } : undefined}
                 sidePanel={(
                     <div className="flex flex-col gap-nb-4">
                     {vendorMasterOn && (() => {

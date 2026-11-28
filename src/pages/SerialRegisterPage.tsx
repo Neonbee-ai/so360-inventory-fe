@@ -117,13 +117,12 @@ const SerialRegisterPage = () => {
             <ListPageTemplate trail={[]}
                 title="Serial Register"
                 description="Who bought each serialised unit, on which order, and its warranty."
+                // TODO(comb-title-area): manual - not a plain Button (all items must be plain buttons to become PageActions)
                 headerSecondaryActions={customer ? [
                     <Button key="clear" variant="secondary" onClick={() => setCustomer(null)}>Clear customer</Button>,
                 ] : []}
                 kpis={kpis}
-                kpisCollapsible
-                searchMode="field"
-                search={<SearchInput placeholder="Find a serial number..." value={query} onChange={setQuery} />}
+                search={{ placeholder: 'Find a serial number', value: query, onChange: setQuery }}
                 loading={loading}
                 loadingColumns={columns.length}
                 isEmpty={!loading && !error && rows.length === 0}

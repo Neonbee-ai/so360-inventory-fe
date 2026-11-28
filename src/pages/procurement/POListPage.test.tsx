@@ -281,7 +281,7 @@ describe('POListPage', () => {
       await waitFor(() =>
         expect(screen.getByText(/do not have permission to view vendor information/i)).toBeInTheDocument(),
       );
-      expect(screen.getByText('New PO').closest('button')).toBeDisabled();
+      expect(screen.getByText('New PO').closest('button')).toHaveAttribute('aria-disabled', 'true');
     });
   });
 

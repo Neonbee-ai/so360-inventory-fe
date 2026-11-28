@@ -275,6 +275,7 @@ const WarehouseDetailPage = () => {
             trail={[{ label: 'Warehouses', onClick: () => navigate('/inventory/locations') }]}
             status={<Badge tone={warehouse.is_active ? 'success' : 'neutral'}>{warehouse.is_active ? 'Operational' : 'Inactive'}</Badge>}
             meta={<span className="font-mono">{warehouse.code || 'NO-CODE'}</span>}
+            // TODO(comb-title-area): manual - unsupported Button prop aria-label
             primaryAction={can('warehouses.create') ? (
                 <FeatureGate key="manage" state={warehouseState} loading={(shell?.effectiveFlagsLoaded === false)} onUpgradeClick={() => navigate('/org/billing')}>
                     <Button aria-label="Edit Warehouse" title="Edit Warehouse" onClick={handleEditClick}><Edit2 size={16} /> Edit</Button>

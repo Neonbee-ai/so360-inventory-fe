@@ -49,7 +49,7 @@ export default function ProfileChangeRequestsPage() {
       loadingColumns={columns.length}
       isEmpty={!loading && !error && rows.length === 0}
       empty={<EmptyState title="Nothing waiting" description="Changes proposed from the supplier portal appear here." />}
-      filterConfig={{
+      filters={{
         fields: [{ key: 'status', label: 'Status', type: 'select', options: STATUS_FILTERS }],
         values: filters,
         onChange: (v: Record<string, any>) => setFilters({ status: v.status || 'submitted' }),

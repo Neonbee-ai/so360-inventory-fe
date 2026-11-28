@@ -85,6 +85,7 @@ const ReconciliationPage = () => {
                 loadingColumns={columns.length}
                 isEmpty={!loading && !error && rows.length === 0}
                 empty={<EmptyState title="Nothing to reconcile." description="The nightly check found no mismatches." />}
+                // TODO(comb-title-area): manual - move inline filters into drawer fields (filters={{ fields, values, onChange, onClear }})
                 filters={<Select name="recon-status" label="Show" value={status} options={FILTERS} onChange={(e: any) => setStatus(e?.target ? e.target.value : e)} />}
             >
                 <div className="flex flex-col gap-nb-4">

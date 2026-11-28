@@ -256,13 +256,14 @@ const PRListPage = () => {
                 title="Purchase Requisitions"
                 description="Manage and track spending requests across the organization."
                 count={prs.length}
-                primaryAction={
-                    <FeatureGate state={createPrState} loading={(shell?.effectiveFlagsLoaded === false)} onUpgradeClick={() => navigate('/org/billing')}>
-                        <Button onClick={() => setShowForm(true)}><Plus size={16} aria-hidden="true" /> New Requisition</Button>
-                    </FeatureGate>
-                }
+                primaryAction={{
+                    id: 'new-requisition',
+                    label: 'New requisition',
+                    icon: <Plus />,
+                    onSelect: () => setShowForm(true),
+                    gate: { feature: { state: createPrState, loading: (shell?.effectiveFlagsLoaded === false), onUpgradeClick: () => navigate('/org/billing') } },
+                }}
                 kpis={kpis}
-                kpisCollapsible
                 loading={loading}
                 loadingColumns={6}
                 isEmpty={!loading && !fetchError && prs.length === 0}

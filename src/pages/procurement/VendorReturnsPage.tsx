@@ -269,8 +269,12 @@ const VendorReturnsPage = () => {
                 title="Vendor Returns"
                 description="Send back damaged, wrong, excess or expired goods and track the credit."
                 count={returns.length > 0 ? `${returns.length} return(s)` : undefined}
-                primaryAction={<Button onClick={() => { setErrors({}); setShowForm(true); }}>New Return</Button>}
-                filterConfig={{
+                primaryAction={{
+                    id: 'new-return',
+                    label: 'New return',
+                    onSelect: () => { setErrors({}); setShowForm(true); },
+                }}
+                filters={{
                     fields: [{
                         key: 'status',
                         label: 'Status',
@@ -288,7 +292,6 @@ const VendorReturnsPage = () => {
                 }}
                 loading={loading}
                 loadingColumns={columns.length}
-                kpisCollapsible
                 kpis={(
                     <Grid columns="auto" data-testid="vendor-returns-kpis">
                         {[

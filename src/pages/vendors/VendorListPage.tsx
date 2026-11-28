@@ -262,34 +262,18 @@ const VendorListPage = () => {
     return (
         <>
             <ListPageTemplate trail={[]}
-                notice={bankWarning ? <Alert variant="warning" onDismiss={() => setBankWarning(null)}>{bankWarning}</Alert> : undefined}
+                banner={bankWarning ? <Alert variant="warning" onDismiss={() => setBankWarning(null)}>{bankWarning}</Alert> : undefined}
                 title="Vendors & Subcontractors"
                 description="Manage supply chain partners and commercial contracts."
                 count={loading ? undefined : matchCount}
-                quota={quotaData || vendors.length > 0 ? { label: 'Vendors', used: legacyRef.current ? vendors.length : serverTotal, limit: quotaData?.limit ?? 0, isUnlimited: quotaData?.is_unlimited } : undefined}
-                primaryAction={
-                    can('suppliers.create') ? (
-                        <FeatureGate state={createVendorState} loading={(shell?.effectiveFlagsLoaded === false)} onUpgradeClick={() => navigate('/org/billing')}>
-                            <QuotaGate
-                                quotaKey="max_vendors"
-                                moduleCode="inventory"
-                                used={legacyRef.current ? vendors.length : serverTotal}
-                                limit={quotaData?.limit ?? 0}
-                                isUnlimited={quotaData?.is_unlimited}
-                                disableOnExceeded
-                            >
-                                <Button onClick={() => (vendorMasterOn ? navigate('/vendors/new') : setShowCreateModal(true))}>New Vendor</Button>
-                            </QuotaGate>
-                        </FeatureGate>
-                    ) : undefined
-                }
-                search={
-                    <SearchInput
-                        placeholder="Search vendors..."
-                        value={searchTerm}
-                        onChange={setSearchTerm}
-                    />
-                }
+                meta={quotaData || vendors.length > 0 ? { kind: 'quota', label: 'Vendors', used: legacyRef.current ? vendors.length : serverTotal, limit: quotaData?.limit ?? 0, isUnlimited: quotaData?.is_unlimited } : undefined}
+                primaryAction={can('suppliers.create') ? {
+                    id: 'new-vendor',
+                    label: 'New vendor',
+                    onSelect: () => (vendorMasterOn ? navigate('/vendors/new') : setShowCreateModal(true)),
+                    gate: { feature: { state: createVendorState, loading: (shell?.effectiveFlagsLoaded === false), onUpgradeClick: () => navigate('/org/billing') }, quota: { quotaKey: "max_vendors", moduleCode: "inventory", used: legacyRef.current ? vendors.length : serverTotal, limit: quotaData?.limit ?? 0, isUnlimited: quotaData?.is_unlimited, disableOnExceeded: true } },
+                } : undefined}
+                search={{ placeholder: 'Search vendors', value: searchTerm, onChange: setSearchTerm }}
                 loading={loading}
                 loadingColumns={columns.length}
                 pagination={matchCount > 0 ? (

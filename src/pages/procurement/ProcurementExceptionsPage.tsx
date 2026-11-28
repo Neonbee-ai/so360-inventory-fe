@@ -134,6 +134,7 @@ const ProcurementExceptionsPage = () => {
             loadingColumns={columns.length}
             isEmpty={!loading && !error && rows.length === 0}
             empty={<EmptyState title={status === 'open' ? 'No open exceptions.' : 'No exceptions match this filter.'} />}
+            // TODO(comb-title-area): manual - move inline filters into drawer fields (filters={{ fields, values, onChange, onClear }})
             filters={(
                 <div className="flex flex-wrap items-center gap-2">
                     <Select

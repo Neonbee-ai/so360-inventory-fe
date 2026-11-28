@@ -273,11 +273,13 @@ const RFQDetailPage = () => {
         ),
     ].filter(Boolean) as React.ReactElement[];
 
-    const primaryAction = ['draft', 'approved', 'sent'].includes(rfq.status) ? (
-        <Button onClick={rfq.status !== 'sent' ? handleSend : () => setShowInvite(true)} disabled={busy === 'send' || busy === 'invite'}>
-            <Send size={16} /> {rfq.status !== 'sent' ? 'Send to Vendors' : 'Send to New Vendors'}
-        </Button>
-    ) : undefined;
+    const primaryAction = ['draft', 'approved', 'sent'].includes(rfq.status) ? {
+                id: 'send-to-new-vendors',
+                label: rfq.status !== 'sent' ? 'Send to vendors' : 'Send to new vendors',
+                icon: <Send />,
+                onSelect: rfq.status !== 'sent' ? handleSend : () => setShowInvite(true),
+                disabled: busy === 'send' || busy === 'invite',
+            } : undefined;
 
     const details = [
         rfq.title && { label: 'Title', value: rfq.title },
@@ -301,6 +303,7 @@ const RFQDetailPage = () => {
             trail={[{ label: 'RFQs', onClick: () => navigate('/procurement/rfq') }]}
             title={rfq.rfq_number}
             status={<StatusBadge status={rfq.status} map={{ [rfq.status]: RFQ_STATUS_TONES[rfq.status] || 'neutral' }} />}
+            // TODO(comb-title-area): manual - secondaryActions is not a literal list (unresolved secondaryActions)
             secondaryActions={secondaryActions}
             primaryAction={primaryAction}
             overflowActions={canAct ? [{ label: 'Cancel RFQ', danger: true, onSelect: handleCancel, disabled: busy === 'cancel' }] : undefined}

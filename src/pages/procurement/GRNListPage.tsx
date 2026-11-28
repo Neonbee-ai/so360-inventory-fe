@@ -58,13 +58,15 @@ const GRNListPage = () => {
             title="Goods Receipt Notes"
             description="Track all received shipments and inventory updates."
             count={grns.length}
-            primaryAction={
-                <FeatureGate state={createGrnState} loading={(shell?.effectiveFlagsLoaded === false)} onUpgradeClick={() => navigate('/org/billing')}>
-                    <Button onClick={() => navigate('/procurement/grn/new')}><Plus size={16} aria-hidden="true" /> New GRN</Button>
-                </FeatureGate>
-            }
+            primaryAction={{
+                id: 'new-grn',
+                label: 'New GRN',
+                icon: <Plus />,
+                onSelect: () => navigate('/procurement/grn/new'),
+                gate: { feature: { state: createGrnState, loading: (shell?.effectiveFlagsLoaded === false), onUpgradeClick: () => navigate('/org/billing') } },
+            }}
             kpis={kpis}
-            kpisCollapsible
+            // TODO(comb-title-area): manual - SearchInput prop data-testid
             search={
                 <SearchInput
                     value={searchTerm}

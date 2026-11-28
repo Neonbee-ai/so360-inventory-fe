@@ -232,7 +232,13 @@ export default function Vendor360Page() {
       title={data?.profile?.name || 'Vendor 360'}
       trail={trail}
       loading={!!id && !data}
-      secondaryActions={[<Button key="back" variant="secondary" onClick={() => navigate(`/inventory/vendors/${id}`)}>Back to vendor</Button>]}
+      secondaryActions={[
+          {
+              id: 'back-to-vendor',
+              label: 'Back to vendor',
+              onSelect: () => navigate(`/inventory/vendors/${id}`),
+          },
+      ]}
       tabs={tabItems}
       activeTab={tab}
       onTabChange={setTab}

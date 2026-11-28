@@ -180,10 +180,14 @@ const RFQListPage = () => {
                 title="Requests for Quotation"
                 description="Source competitive quotes before committing to a purchase order."
                 count={rfqs.length}
-                primaryAction={<Button onClick={() => setShowForm(true)}><Plus size={16} aria-hidden="true" /> New RFQ</Button>}
+                primaryAction={{
+                    id: 'new-rfq',
+                    label: 'New RFQ',
+                    icon: <Plus />,
+                    onSelect: () => setShowForm(true),
+                }}
                 kpis={kpis}
-                kpisCollapsible
-                filterConfig={{
+                filters={{
                     fields: [{
                         key: 'status', label: 'Status', type: 'select',
                         options: [

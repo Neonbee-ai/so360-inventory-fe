@@ -90,7 +90,7 @@ export default function VendorIntegrationExceptionsPage({ canResolve = true }: {
         loadingColumns={columns.length}
         isEmpty={!loading && !error && rows.length === 0}
         empty={<EmptyState title="Nothing to fix" description="Every receipt and return is attributed to a vendor." />}
-        filterConfig={{
+        filters={{
           fields: [
             { key: 'status', label: 'Status', type: 'select', options: [{ value: 'open', label: 'Open' }, { value: 'resolved', label: 'Resolved' }, { value: 'ignored', label: 'Ignored' }] },
             { key: 'source_module', label: 'Module', type: 'select', options: [{ value: 'inventory', label: 'Inventory' }] },

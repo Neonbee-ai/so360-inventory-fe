@@ -55,7 +55,7 @@ export default function ReviewQueuePage() {
       loadingColumns={columns.length}
       isEmpty={!loading && !error && rows.length === 0}
       empty={<EmptyState title="Nothing waiting" description="No vendor needs a lifecycle action right now." />}
-      filterConfig={{
+      filters={{
         fields: [
           { key: 'state', label: 'State', type: 'select', options: QUEUE_STATES.map((s) => ({ value: s, label: STATE_LABELS[s] })) },
           { key: 'risk', label: 'Risk', type: 'select', options: RISK_OPTIONS },
